@@ -51,3 +51,5 @@ Use README.md and LOCAL_RUNBOOK.md. Business suite: plus_point.testing.run_opera
 Verified MariaDB's actual isolation settings, reproduced error 1020 during concurrent writes, selected READ COMMITTED in Compose and tightened financial current-row locking reads. The 24 business tests pass again. Ten simultaneous HTTP attendance writes now give exactly one created draft and nine duplicate validation rejections; drafts are cleaned. Full mixed-write load/deadlock profiling remains unrun.
 
 GitHub static checks passed. The first fresh-runner integration installed the real stack and passed all 24 database tests, then exposed first-token authentication failure from a missing encryption key in cached web configuration. Bootstrap now initializes the native encryption key before web starts; the updated integration workflow reruns this fresh and includes the attendance write race. See the PR checks for final remote status.
+
+Browser workflow check also clicked Prepare daily attendance on the demo site, set a work date through the native dialog, verified a populated reviewable draft register and deleted that temporary draft successfully. No page JavaScript errors occurred.
