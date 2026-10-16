@@ -34,7 +34,8 @@ def setup_local_owner(email, organization):
     import os
     if not frappe.db.exists('User', email):
         from frappe.utils.password import update_password
-        roles = ['System Manager', 'HR Manager', 'Accounts Manager', 'Projects Manager', 'Sales Manager', 'Stock Manager']
+        roles = ['System Manager', 'HR Manager', 'Accounts Manager', 'Projects Manager',
+                 'Sales Manager', 'Purchase Manager', 'Stock Manager']
         frappe.get_doc(dict(doctype='User', email=email, first_name=organization,
             enabled=1, send_welcome_email=0, roles=[dict(role=role) for role in roles])).insert()
         update_password(email, os.environ['PP_ADMIN_PASSWORD'])

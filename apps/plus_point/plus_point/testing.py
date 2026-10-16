@@ -88,9 +88,14 @@ def seed_platform_demo():
 
 
 def _finish_demo_setup():
-    from frappe.desk.page.setup_wizard.setup_wizard import enable_setup_wizard_complete
+    from frappe.desk.page.setup_wizard.setup_wizard import (
+        disable_future_access, enable_setup_wizard_complete,
+    )
     for app in frappe.get_installed_apps():
         enable_setup_wizard_complete(app)
+    # Complete the native post-setup transition too. Leaving desktop:home_page
+    # on setup-wizard makes All apps repeatedly reload an already completed wizard.
+    disable_future_access()
     frappe.db.set_single_value('System Settings', {
         'setup_complete': 1, 'time_zone': 'Asia/Karachi', 'country': 'Pakistan',
         'currency': 'PKR', 'language': 'en', 'enable_onboarding': 0,

@@ -53,3 +53,9 @@ Verified MariaDB's actual isolation settings, reproduced error 1020 during concu
 GitHub static checks passed. The first fresh-runner integration installed the real stack and passed all 24 database tests, then exposed first-token authentication failure from a missing encryption key in cached web configuration. Bootstrap now initializes the native encryption key before web starts; the updated integration workflow reruns this fresh and includes the attendance write race. See the PR checks for final remote status.
 
 Browser workflow check also clicked Prepare daily attendance on the demo site, set a work date through the native dialog, verified a populated reviewable draft register and deleted that temporary draft successfully. No page JavaScript errors occurred.
+
+## HR and user navigation correction
+
+Reproduced a Purchase Order permission error on the native Home dashboard, rejection of the unlinked demo login by employee self-service, and a repeated setup-page reload from All apps. PLUS POINT now declares its canonical `/desk/plus-point` route; the demo seed executes the native post-setup transition that removes the old setup-wizard home default. Local tenant owners include the native Purchase Manager role needed by the Home dashboard. The requested local dummy accounts were corrected in their respective site databases; the tenant login was linked to the clearly labelled sample employee without adding restrictive worker-only User Permissions.
+
+Real Edge verification as the non-Administrator tenant dummy account passed the actual All apps → PLUS POINT → Frappe HR → All apps → Framework flow, Home dashboard cards, Users list and return to PLUS POINT. Linked HR employee self-service and browser Back also passed. No HTTP errors or JavaScript page errors were observed. The 11 offline project/harness checks passed again. Reproduce with `scripts/browser-navigation.cjs`; local screenshots remain ignored.

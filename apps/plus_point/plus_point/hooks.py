@@ -29,7 +29,7 @@ doc_events = {
 }
 
 # Existing Frappe Desk handles the frontend automatically; this adds an app entry.
-app_home = "/app/plus-point"
+app_home = "/desk/plus-point"
 add_to_apps_screen = [
     {
         "name": "plus_point",

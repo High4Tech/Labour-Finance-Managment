@@ -1,5 +1,9 @@
 # Development changelog
 
+## Navigation correction — 2026-10-16
+
+Fixed the completed setup wizard reloading from All apps by running Frappe's native post-setup transition in local demo seeding. Updated PLUS POINT's app entry to the canonical Desk route. Included Purchase Manager in local tenant owner roles so the native Home purchase card can load. Corrected the requested local dummy accounts and linked the tenant login to the sample employee for native HR self-service. Added a real browser regression covering the app switcher, HR, Home, Users, return navigation and optional employee self-service; verified as the tenant dummy login with no browser/server errors. All 11 offline checks also pass.
+
 ## 0.4.0 — 2026-10-16
 
 Integrated the discovered v0.3 source into the existing repository without replacing Git history; archived the original foundation documentation. Added pinned Windows Docker Desktop setup, persistent volumes, resumable native app installation and upstream setup defaults.

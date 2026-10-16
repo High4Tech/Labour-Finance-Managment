@@ -8,7 +8,7 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 2. Real MariaDB: 24 business regressions with rollback, run by plus_point.testing.run_operations.
 3. Real HTTP: native login/REST CRUD, anonymous denial, cross-site token/record isolation and 60 authenticated concurrent reads through scripts/verify-live.py.
 4. Real HTTP subscription: suspension, expiry, active seat limit, reactivation and cleanup through scripts/verify-subscription.py on the local QA site.
-5. Real browser: tenant/High4Tech workspaces and native list navigation using scripts/browser-smoke.cjs; screenshots in private .local/qa.
+5. Real browser: tenant/High4Tech workspaces and native list navigation using scripts/browser-smoke.cjs; app-switcher/HR/Home/Users round trip using scripts/browser-navigation.cjs, optionally as a named local account with linked employee self-service; screenshots in private .local/qa.
 6. Native installer: fresh disposable site/database/user through environment-only credentials, native cleanup limited to that generated test site.
 
 ## Release gates still required

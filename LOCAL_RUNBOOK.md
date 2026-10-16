@@ -6,7 +6,7 @@ The supported setup is Windows PowerShell + Docker Desktop Linux engine, compose
 
 Run START_PLUS_POINT_DEV.cmd. The launcher generates missing strong local credentials in ignored .env, creates persistent named volumes, installs pinned releases, migrates schemas and starts Bench. Initial setup needs network access to official GitHub repositories, PyPI, npm and Docker Hub. Re-running preserves existing databases and refuses source commit drift. Use docker compose stop to stop; run the launcher to resume. Do not delete volumes as a troubleshooting step.
 
-Local app: http://demo.localhost:8000/app/plus-point . Login Administrator with PP_ADMIN_PASSWORD in .env. Never paste or print credentials in issue reports. Local ports bind only to 127.0.0.1. Other devices cannot access this developer setup.
+Local app: http://demo.localhost:8000/desk/plus-point . Login Administrator with PP_ADMIN_PASSWORD in .env. Never paste or print credentials in issue reports. Local ports bind only to 127.0.0.1. Other devices cannot access this developer setup.
 
 If .localhost DNS is unavailable, use http://127.0.0.1:8000 and configure a Host header of demo.localhost in diagnostic requests. Native bench site routing uses hostnames. Multiple tenants must use their own hostname.
 
@@ -29,13 +29,15 @@ docker compose exec -T frappe bash -lc 'cd /home/frappe/frappe-bench && bench --
 
 This creates a PLUS POINT Demo company/customer/project/worker, one approved daily entry and a fixed milestone; reruns preserve existing demo records. It intentionally marks the local setup wizard complete. Do not run seed helpers on production.
 
+The seed also completes Frappe's native post-setup transition, so All apps opens the desktop rather than reloading the completed wizard. With Playwright and Chromium installed, run `node scripts/browser-navigation.cjs` to check the actual app switcher, HR, Home dashboard, Users and return to PLUS POINT. Set `PP_BROWSER_CHANNEL=msedge` to use installed Edge. Optional `PP_BROWSER_USER` and `PP_BROWSER_PASSWORD` select a local account instead of Administrator; credentials are never logged. Set `PP_BROWSER_EMPLOYEE_APP=1` to include HR employee self-service and browser Back. That check requires the login to be linked to an active Employee using its native User ID field. Screenshots stay in ignored `.local/qa`.
+
 ## Separate High4Tech platform
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local.ps1 -WithPlatform
 ```
 
-Open http://platform.localhost:8000/app/high4tech . This site has its own database and pp_control_plane=true. Administrator has the development bootstrap privileges; production must use individual High4Tech Platform Admin accounts plus appropriate native ERPNext accounting roles.
+Open http://platform.localhost:8000/desk/high4tech . This site has its own database and pp_control_plane=true. Administrator has the development bootstrap privileges; production must use individual High4Tech Platform Admin accounts plus appropriate native ERPNext accounting roles.
 
 Configure a native High4Tech Company, service Item, Customer for the subscriber, monthly Subscription Plan and Subscription (trial or active, with explicit period end). Add a PP Tenant with a distinct .localhost hostname, owner email, subscription and limits. Do not use demo.localhost or platform.localhost for a new tenant. The operator worker checks the registry every minute, provisions missing sites using bench and synchronizes host-controlled entitlements. Native invoices and manually confirmed Payment Entries handle development billing. No real payment gateway is enabled.
 
