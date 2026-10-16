@@ -54,7 +54,7 @@ def validate_invoice(doc, method=None):
         if key in seen:
             frappe.throw('An invoice cannot bill the same source twice')
         seen.add(key)
-        source = frappe.get_doc(*key)
+        source = frappe.get_doc(*key, for_update=True)
         source.check_permission('read')
         frappe.db.get_value('PP Contract Terms', source.contract_terms, 'name', for_update=True)
         if source.sales_invoice and source.sales_invoice != doc.name:

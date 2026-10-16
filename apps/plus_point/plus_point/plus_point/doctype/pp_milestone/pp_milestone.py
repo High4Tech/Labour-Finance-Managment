@@ -42,9 +42,9 @@ class PPMilestone(Document):
             if invoice.docstatus != 1 or invoice.project != terms.project or invoice.currency != terms.currency:
                 frappe.throw("Milestone invoice must be submitted and match the project and currency")
         if self.status in {"Approved", "Invoiced"}:
-            others = frappe.get_all("PP Milestone", filters={
-                "contract_terms": self.contract_terms, "status": ["in", ["Approved", "Invoiced"]],
-                "name": ["!=", self.name or ""]}, fields=["amount"], limit_page_length=0)
+            others = frappe.db.sql('''SELECT amount FROM `tabPP Milestone`
+                WHERE contract_terms=%s AND status IN ('Approved', 'Invoiced')
+                AND name!=%s FOR UPDATE''', (self.contract_terms, self.name or ''), as_dict=True)
             total = sum((money(m.amount) for m in others), Decimal(0)) + amount
             if total > money(terms.fixed_amount):
                 frappe.throw("Approved milestones exceed the agreed fixed contract value")

@@ -14,7 +14,7 @@ Executed against Docker Desktop Linux engine on this Windows machine. This super
 - **24 real MariaDB-backed business regressions passed**: daily/half-day rates, fixed milestones and cap, independent fixed wages, snapshot immutability, bulk register posting, duplicate/cross-site day limits, source reservations, invoice posting/cancellation and GL entries, client cash receipts vs invoice/earned revenue, wage settlements against native employee payments, outstanding balances, permissions, quotas and 25-row reporting. Fixtures rolled back.
 - **11 offline project/harness checks + 10 pure finance/register tests passed**. Synthetic HTTP harness tests are not counted as live ERPNext evidence.
 - Real Edge browser: authenticated tenant workspace, site/attendance/terms lists; separate High4Tech workspace and tenant/plan/subscription lists. Zero JavaScript page errors. Screenshots retained in ignored .local/qa.
-- Latest light authenticated list test: **60 requests, concurrency 5, 0 errors; median 69.7 ms, p95 86.8 ms, maximum 99.3 ms**. Small local dataset; no warm-up or throughput/capacity certification.
+- Latest light authenticated list test: **60 requests, concurrency 5, 0 errors; median 62.8 ms, p95 82.3 ms, maximum 96.1 ms**. Small local dataset; no warm-up or throughput/capacity certification.
 
 ## Defects found and fixed
 
@@ -46,3 +46,8 @@ Executed against Docker Desktop Linux engine on this Windows machine. This super
 ## Reproduce
 
 Use README.md and LOCAL_RUNBOOK.md. Business suite: plus_point.testing.run_operations. Live HTTP: scripts/verify-live.py --other-site qa.localhost. Subscription HTTP: scripts/verify-subscription.py. Browser: scripts/browser-smoke.cjs (Playwright/Chromium or installed Edge channel). Installer test: scripts/verify-installer.py inside the Bench virtualenv. Database/site contents and browser outputs are private ignored runtime artifacts.
+## Final concurrent-write refinement
+
+Verified MariaDB's actual isolation settings, reproduced error 1020 during concurrent writes, selected READ COMMITTED in Compose and tightened financial current-row locking reads. The 24 business tests pass again. Ten simultaneous HTTP attendance writes now give exactly one created draft and nine duplicate validation rejections; drafts are cleaned. Full mixed-write load/deadlock profiling remains unrun.
+
+GitHub static checks passed. The first fresh-runner integration installed the real stack and passed all 24 database tests, then exposed first-token authentication failure from a missing encryption key in cached web configuration. Bootstrap now initializes the native encryption key before web starts; the updated integration workflow reruns this fresh and includes the attendance write race. See the PR checks for final remote status.

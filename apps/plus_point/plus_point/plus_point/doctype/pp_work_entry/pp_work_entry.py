@@ -18,7 +18,7 @@ class PPWorkEntry(Document):
         self._copy_assignment_snapshot()
 
     def _copy_assignment_snapshot(self):
-        assignment = frappe.get_doc("PP Assignment", self.assignment)
+        assignment = frappe.get_doc("PP Assignment", self.assignment, for_update=True)
         self.employee = assignment.employee
         self.site = assignment.site
         self.project = assignment.project
@@ -54,7 +54,7 @@ class PPWorkEntry(Document):
         day = getdate(self.work_date)
         if day < getdate(assignment.start_date) or (assignment.end_date and day > getdate(assignment.end_date)):
             frappe.throw("Work date must be within the worker assignment period")
-        terms = frappe.get_doc("PP Contract Terms", self.contract_terms)
+        terms = frappe.get_doc("PP Contract Terms", self.contract_terms, for_update=True)
         if terms.status != "Active" or not frappe.db.get_value("PP Site", self.site, "is_active"):
             frappe.throw("Work requires active contract terms and an active site")
         if day < getdate(terms.effective_start) or (terms.effective_end and day > getdate(terms.effective_end)):
@@ -62,9 +62,9 @@ class PPWorkEntry(Document):
         if terms.billing_model == "Fixed" and Decimal(str(self.client_rate or 0)) != 0:
             frappe.throw("Fixed contracts cannot bill individual worker-days")
         units = day_units(self.units)
-        existing = frappe.get_all("PP Work Entry", filters={
-            "employee": self.employee, "work_date": self.work_date,
-            "name": ["!=", self.name or ""]}, fields=["site", "units"], limit_page_length=0)
+        existing = frappe.db.sql('''SELECT site, units FROM `tabPP Work Entry`
+            WHERE employee=%s AND work_date=%s AND name!=%s FOR UPDATE''',
+            (self.employee, self.work_date, self.name or ''), as_dict=True)
         if any(e.site == self.site for e in existing):
             frappe.throw("This worker already has a daily register entry for this site and date")
         if sum((day_units(e.units) for e in existing), Decimal(0)) + units > Decimal("1"):

@@ -1,6 +1,7 @@
 """Run from the host using any Python 3. No credentials printed or persisted."""
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date, timedelta
 from http.cookiejar import CookieJar
 import json
 import os
@@ -10,6 +11,7 @@ import statistics
 import subprocess
 import sys
 import time
+from threading import Barrier
 from urllib.request import Request, build_opener, HTTPCookieProcessor, urlopen
 from urllib.error import HTTPError
 from urllib.parse import quote
@@ -23,6 +25,7 @@ def main():
     parser.add_argument('--site', default='demo.localhost')
     parser.add_argument('--port', type=int, default=8000)
     parser.add_argument('--other-site', help='Optional second local test-enabled site for isolation checks')
+    parser.add_argument('--attendance-race', action='store_true', help='Race 10 draft attendance writes against local demo allocations')
     args = parser.parse_args()
     if not re.fullmatch(r'[a-z0-9][a-z0-9.-]*\.localhost', args.site):
         raise ValueError('Tests support local site hostnames only')
@@ -115,6 +118,38 @@ def main():
                 call('/api/resource/ToDo/' + quote(second), 'DELETE', token=other_token, site=args.other_site)
     assert b'<!doctype html>' in call('/login').lower()
     print('PASS actual login frontend HTML')
+    if args.attendance_race:
+        assignments = call('/api/resource/PP%20Assignment?limit_page_length=1', token=token)['data']
+        if not assignments:
+            raise RuntimeError('Attendance race requires the labelled local demo seed')
+        assignment = assignments[0]['name']
+        barrier = Barrier(10)
+        def post_attendance(_):
+            barrier.wait(timeout=30)
+            try:
+                result = call('/api/resource/PP%20Work%20Entry', 'POST', dict(assignment=assignment,
+                    work_date=str(date.today() + timedelta(days=1000)), units=1, status='Draft', remarks=marker), token)
+                return result['data']['name']
+            except HTTPError as error:
+                return {'status': error.code}
+            except Exception as error:
+                return {'error': type(error).__name__}
+        successes = []
+        rejections = []
+        try:
+            with ThreadPoolExecutor(max_workers=10) as pool:
+                for result in pool.map(post_attendance, range(10)):
+                    if isinstance(result, str):
+                        successes.append(result)
+                    else:
+                        rejections.append(result)
+            assert len(successes) == 1, f'Expected exactly one attendance winner, got {len(successes)}'
+            assert rejections == [{'status': 417}] * 9, f'Unexpected attendance errors: {rejections}'
+            print('PASS actual simultaneous attendance writes: 1 created, 9 duplicates rejected')
+        finally:
+            for name in successes:
+                call('/api/resource/PP%20Work%20Entry/' + quote(name), 'DELETE', token=token)
+            print('PASS temporary draft attendance cleaned')
     def latency(_):
         start = time.perf_counter()
         assert call('/api/resource/PP%20Site?limit_page_length=20', token=token)['data'] is not None

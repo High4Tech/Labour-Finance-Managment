@@ -17,6 +17,10 @@ def local_defaults():
     """Use ERPNext's own setup fixtures on a fresh local development site."""
     if not frappe.local.site.endswith('.localhost'):
         raise RuntimeError('Local defaults are limited to .localhost sites')
+    # Create this before web starts. Otherwise the first out-of-process API-key
+    # generation can race a web process whose cached config has no encryption key.
+    from frappe.utils.password import get_encryption_key
+    get_encryption_key()
     from erpnext.setup.setup_wizard.operations.install_fixtures import install, install_defaults
     from frappe.desk.page.setup_wizard.install_fixtures import update_genders
     if not frappe.db.exists('Gender', 'Male'):

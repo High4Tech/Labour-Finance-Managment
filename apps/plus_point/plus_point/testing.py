@@ -108,5 +108,9 @@ def cleanup_http_fixtures():
         if re.fullmatch(r'PLUS POINT HTTP QA [0-9a-f]{32}( updated| tenant B)?', row.description):
             frappe.delete_doc('ToDo', row.name)
             count += 1
+    for row in frappe.get_all('PP Work Entry', filters={'status': 'Draft', 'remarks': ['like', 'PLUS POINT HTTP QA %']}, fields=['name', 'remarks']):
+        if re.fullmatch(r'PLUS POINT HTTP QA [0-9a-f]{32}', row.remarks):
+            frappe.delete_doc('PP Work Entry', row.name)
+            count += 1
     frappe.db.commit()
     return dict(temporary_todos_removed=count)

@@ -80,3 +80,9 @@ Phase 1: healthy services, pinned installed apps, real DB/login/REST CRUD/fronte
 Do not mark whole phases complete because scaffolding, synthetic HTTP tests or offline arithmetic pass. Record evidence and gaps in VERIFICATION_STATUS.md. Preserve Git history; use a tested review branch with descriptive commits and no force push. Existing foundation files remain archived. Architecture choices favor maintained upstream software and a small extension surface.
 
 Client cash reporting separately sums submitted native Payment Entry allocations to company-currency project invoices, net of refunds; unallocated and FX receipts are explicitly excluded. The High4Tech workspace links the native tenant/subscription/plan/user/accounting screens. Local owner accounts reuse native roles and development credentials; production invitations remain a release gate.
+
+## Transaction isolation refinement
+
+The pinned MariaDB 11.8 image enables InnoDB snapshot isolation. Simultaneous worker-day writes exposed error 1020 under REPEATABLE READ. compose.yaml therefore explicitly selects READ COMMITTED, and financial duplicate/cap checks use current locking reads with employee/contract serialization. This setting is part of the tested deployment contract; preserve it in production. Ten simultaneous draft attendance requests produced one creation and nine validation rejections, with all temporary drafts deleted. Larger mixed-workload/deadlock testing remains required. Native site encryption keys are initialized before web startup to avoid stale configuration during first API-key generation.
+
+Reference: https://mariadb.com/docs/server/server-usage/storage-engines/innodb/innodb-system-variables#innodb_snapshot_isolation .

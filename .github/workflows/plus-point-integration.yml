@@ -32,8 +32,9 @@ jobs:
         run: docker compose exec -T frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site demo.localhost execute plus_point.testing.run_operations'
       - name: Real HTTP login CRUD permissions and light load
         run: |
+          docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site demo.localhost execute plus_point.testing.seed_demo
           docker compose exec -d frappe bash -lc 'cd /home/frappe/frappe-bench && bench start >> logs/bench-start.log 2>&1'
-          python scripts/verify-live.py
+          python scripts/verify-live.py --attendance-race
       - name: Optional full SaaS provisioning and HTTP isolation
         if: github.event_name == 'workflow_dispatch' && inputs.run_saas
         run: |

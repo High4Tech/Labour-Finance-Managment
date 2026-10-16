@@ -18,7 +18,8 @@ class PPContractTerms(Document):
         if old and any(normalized(self, k) != normalized(old, k) for k in
                        ("contract", "project", "billing_model", "fixed_amount", "currency", "effective_start", "effective_end")):
             if (frappe.db.exists("PP Work Entry", {"contract_terms": self.name}) or
-                frappe.db.exists("PP Milestone", {"contract_terms": self.name})):
+                frappe.db.exists("PP Milestone", {"contract_terms": self.name}) or
+                frappe.db.exists("PP Assignment", {"contract_terms": self.name})):
                 frappe.throw("Billing terms cannot change after work entries or milestones exist")
         if self.billing_model not in {"Daily", "Fixed"}:
             frappe.throw("Billing model must be Daily or Fixed")
@@ -36,8 +37,8 @@ class PPContractTerms(Document):
             frappe.throw("PLUS POINT terms require a customer contract")
         if project.customer and project.customer != contract.party_name:
             frappe.throw("Contract customer does not match project customer")
-        other = frappe.db.exists("PP Contract Terms", {
+        other = frappe.db.get_value("PP Contract Terms", {
             "contract": self.contract, "project": self.project, "name": ["!=", self.name or ""]
-        })
+        }, 'name', for_update=True)
         if other:
             frappe.throw("This ERPNext contract already has PLUS POINT terms for the project")
