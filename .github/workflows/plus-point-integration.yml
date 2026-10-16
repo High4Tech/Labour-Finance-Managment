@@ -1,0 +1,54 @@
+name: PLUS POINT real ERPNext HRMS integration
+on:
+  workflow_dispatch:
+    inputs:
+      run_saas:
+        description: Also provision a separate platform/tenant and test live SaaS isolation
+        type: boolean
+        default: false
+  pull_request:
+    paths: ['apps/**', 'scripts/bootstrap.py', 'scripts/verify-live.py', 'compose.yaml', 'upstream.lock.json', '.github/workflows/plus-point-integration.yml']
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate fresh ephemeral credentials
+        run: |
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          Path('.env').write_text('LOCAL_SITE=demo.localhost\nPP_ADMIN_PASSWORD='+secrets.token_urlsafe(32)+'\nPP_DB_PASSWORD='+secrets.token_urlsafe(32)+'\n')
+          PY
+      - name: Start pinned official services
+        run: |
+          docker compose up -d
+          docker compose exec -T --user root frappe chown frappe:frappe /home/frappe/frappe-bench
+          docker compose exec -T frappe python /workspace/scripts/bootstrap.py
+      - name: Real database business regressions
+        run: docker compose exec -T frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site demo.localhost execute plus_point.testing.run_operations'
+      - name: Real HTTP login CRUD permissions and light load
+        run: |
+          docker compose exec -d frappe bash -lc 'cd /home/frappe/frappe-bench && bench start >> logs/bench-start.log 2>&1'
+          python scripts/verify-live.py
+      - name: Optional full SaaS provisioning and HTTP isolation
+        if: github.event_name == 'workflow_dispatch' && inputs.run_saas
+        run: |
+          docker compose exec -T -e LOCAL_SITE=platform.localhost frappe python /workspace/scripts/bootstrap.py
+          docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site platform.localhost set-config pp_control_plane True --parse
+          docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site platform.localhost execute plus_point.testing.seed_platform_demo
+          docker compose exec -T frappe python /workspace/scripts/provision.py --tenant qa.localhost
+          docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site qa.localhost set-config allow_tests True --parse
+          python scripts/verify-live.py --other-site qa.localhost
+          python scripts/verify-subscription.py
+      - name: Diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose exec -T frappe tail -n 100 /home/frappe/frappe-bench/logs/bench-start.log || true
+      - name: Stop ephemeral services
+        if: always()
+        run: docker compose down

@@ -1,0 +1,72 @@
+name: ERPNext upstream API & DB integration (disposable)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-erpnext-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download upstream Frappe Docker disposable verification stack
+        run: |
+          mkdir -p .local/frappe_docker
+          curl --fail --location --retry 3 https://raw.githubusercontent.com/frappe/frappe_docker/main/pwd.yml \
+            -o .local/frappe_docker/pwd.yml
+          grep -Eq 'frappe/erpnext:v[0-9]+\.[0-9]+\.[0-9]+' .local/frappe_docker/pwd.yml
+          sed -E -i 's#frappe/erpnext:v[0-9]+\.[0-9]+\.[0-9]+#frappe/erpnext:v16.51.1#g' .local/frappe_docker/pwd.yml
+      - name: Start real ERPNext services
+        run: docker compose -p ppci -f .local/frappe_docker/pwd.yml up -d
+      - name: Wait for real web API and site initialization
+        run: |
+          for i in $(seq 1 100); do
+            if curl --max-time 6 -fsS http://localhost:8080/api/method/ping | python3 -c 'import sys,json; assert json.load(sys.stdin)["message"] == "pong"' 2>/dev/null; then
+              echo 'Actual ERPNext HTTP ping successful'; exit 0
+            fi
+            sleep 8
+          done
+          docker compose -p ppci -f .local/frappe_docker/pwd.yml logs --tail 150 create-site
+          exit 1
+      - name: Verify installed ERPNext and actual database access
+        run: |
+          docker compose -p ppci -f .local/frappe_docker/pwd.yml exec -T backend \
+            bench --site frontend list-apps | tee /tmp/pp-installed-apps.txt
+          grep -Eq '^[[:space:]]*frappe([[:space:]]|$)' /tmp/pp-installed-apps.txt
+          grep -Eq '^[[:space:]]*erpnext([[:space:]]|$)' /tmp/pp-installed-apps.txt
+          docker compose -p ppci -f .local/frappe_docker/pwd.yml exec -T backend \
+            bench --site frontend execute frappe.db.exists DocType ToDo | grep ToDo
+      - name: Generate disposable demo API token for actual CRUD
+        shell: bash
+        run: |
+          set -euo pipefail
+          result=$(docker compose -p ppci -f .local/frappe_docker/pwd.yml exec -T backend \
+            bench --site frontend execute frappe.core.doctype.user.user.generate_keys Administrator)
+          PP_GENERATED_KEYS="$result" python3 - <<'PY'
+          import ast,os,re
+          from pathlib import Path
+          raw=os.environ['PP_GENERATED_KEYS']
+          m=re.search(r"\{[^{}]*['\"]api_key['\"][^{}]*['\"]api_secret['\"][^{}]*\}", raw, re.S)
+          if not m: raise SystemExit('Could not parse generated API credentials from bench output')
+          data=ast.literal_eval(m.group())
+          for variable,key in [('PP_API_KEY','api_key'),('PP_API_SECRET','api_secret')]:
+              value=data[key]
+              print(f'::add-mask::{value}')
+              with open(os.environ['GITHUB_ENV'],'a') as out: out.write(f'{variable}={value}\n')
+          PY
+      - name: Test live API read/create/update/delete with cleanup
+        env:
+          PP_BASE_URL: http://localhost:8080
+        run: python3 scripts/api_smoke.py --crud
+      - name: Light HTTP concurrency baseline (not a scalability certification)
+        env:
+          PP_BASE_URL: http://localhost:8080
+        run: python3 scripts/load_test.py --requests 60 --concurrency 5
+      - name: Show Docker diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -p ppci -f .local/frappe_docker/pwd.yml ps || true
+          docker compose -p ppci -f .local/frappe_docker/pwd.yml logs --tail 100 || true
+      - name: Stop disposable environment
+        if: always()
+        run: docker compose -p ppci -f .local/frappe_docker/pwd.yml down -v --remove-orphans || true

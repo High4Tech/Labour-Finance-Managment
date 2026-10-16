@@ -1,0 +1,6 @@
+{
+  "frappe_docker": {"repository": "https://github.com/frappe/frappe_docker", "commit": "8242235e56dd80e15842cb4820b5b612805cf7fd"},
+  "frappe": {"repository": "https://github.com/frappe/frappe", "ref": "v16.51.1", "commit": "2871914b69b6e14a4b023d9b7cc52dc3e269cc1b"},
+  "erpnext": {"repository": "https://github.com/frappe/erpnext", "ref": "v16.51.1", "commit": "5af6561f5aa48104559692fb4fd82f2580e8d338"},
+  "hrms": {"repository": "https://github.com/frappe/hrms", "ref": "v16.51.0", "commit": "2478afc7a8f4959d500f6d17522853f0d244e38f"}
+}

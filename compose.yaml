@@ -1,0 +1,42 @@
+# Local development, adapted from the pinned official frappe_docker devcontainer.
+name: pluspoint-development
+services:
+  mariadb:
+    image: ${PP_MARIADB_IMAGE:-mariadb@sha256:6422478cb8e159f080fb1d8ccf65101e26fe51385787fde7d16c3b165a331f15}
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake]
+    environment:
+      MARIADB_ROOT_PASSWORD: ${PP_DB_PASSWORD:?Run scripts/start-local.ps1 first}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      retries: 30
+  redis-cache:
+    image: ${PP_REDIS_IMAGE:-redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499}
+  redis-queue:
+    image: ${PP_REDIS_IMAGE:-redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499}
+  frappe:
+    image: ${PP_BENCH_IMAGE:-frappe/bench@sha256:a60f0e8bcec8e2257f54360499bd5cd671f137e4c298a264275f7bc90bb49d5a}
+    command: sleep infinity
+    working_dir: /home/frappe
+    environment:
+      SHELL: /bin/bash
+      PP_ADMIN_PASSWORD: ${PP_ADMIN_PASSWORD:?Run scripts/start-local.ps1 first}
+      PP_DB_PASSWORD: ${PP_DB_PASSWORD:?Run scripts/start-local.ps1 first}
+      LOCAL_SITE: ${LOCAL_SITE:-demo.localhost}
+    volumes:
+      - bench-data:/home/frappe/frappe-bench
+      - ./apps/plus_point:/workspace/plus_point
+      - ./scripts:/workspace/scripts:ro
+      - ./upstream.lock.json:/workspace/upstream.lock.json:ro
+    ports:
+      - "127.0.0.1:${FRAPPE_PORT:-8000}:8000"
+      - "127.0.0.1:9000:9000"
+    depends_on:
+      mariadb: {condition: service_healthy}
+      redis-cache: {condition: service_started}
+      redis-queue: {condition: service_started}
+volumes:
+  bench-data:
+  mariadb-data:

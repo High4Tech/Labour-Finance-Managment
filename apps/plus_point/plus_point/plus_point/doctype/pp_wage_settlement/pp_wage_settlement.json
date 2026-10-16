@@ -1,0 +1,62 @@
+{
+  "fields": [
+    {
+      "options": "Employee",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "reqd": 1,
+      "label": "Worker",
+      "fieldname": "employee"
+    },
+    {
+      "label": "Project",
+      "fieldname": "project",
+      "reqd": 1,
+      "fieldtype": "Link",
+      "options": "Project"
+    },
+    {
+      "unique": 1,
+      "options": "Payment Entry",
+      "fieldtype": "Link",
+      "reqd": 1,
+      "label": "Submitted ERPNext Payment",
+      "fieldname": "payment_entry"
+    },
+    {
+      "read_only": 1,
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Paid Amount"
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "Remarks"
+    }
+  ],
+  "doctype": "DocType",
+  "autoname": "hash",
+  "field_order": [
+    "employee",
+    "project",
+    "payment_entry",
+    "amount",
+    "remarks"
+  ],
+  "track_changes": 1,
+  "permissions": [
+    {
+      "create": 1,
+      "cancel": 1,
+      "report": 1,
+      "read": 1,
+      "submit": 1,
+      "role": "System Manager",
+      "write": 1
+    }
+  ],
+  "is_submittable": 1,
+  "name": "PP Wage Settlement",
+  "module": "PLUS POINT"
+}

@@ -1,0 +1,79 @@
+{
+  "name": "PP Tenant",
+  "field_order": [
+    "organization_name",
+    "site_hostname",
+    "owner_email",
+    "subscription",
+    "suspended",
+    "worker_limit",
+    "user_limit",
+    "site_limit"
+  ],
+  "fields": [
+    {
+      "fieldname": "organization_name",
+      "reqd": 1,
+      "label": "Customer Organization",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "site_hostname",
+      "reqd": 1,
+      "unique": 1,
+      "label": "Tenant Hostname",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_email",
+      "reqd": 1,
+      "options": "Email",
+      "label": "Owner Email",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "subscription",
+      "reqd": 1,
+      "options": "Subscription",
+      "label": "ERPNext Subscription",
+      "fieldtype": "Link"
+    },
+    {
+      "fieldname": "suspended",
+      "label": "Suspended",
+      "default": "0",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "worker_limit",
+      "label": "Worker Limit (0 = unlimited)",
+      "default": "0",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "user_limit",
+      "label": "User Limit (0 = unlimited)",
+      "default": "0",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "site_limit",
+      "label": "Site Limit (0 = unlimited)",
+      "default": "0",
+      "fieldtype": "Int"
+    }
+  ],
+  "module": "PLUS POINT",
+  "track_changes": 1,
+  "autoname": "field:site_hostname",
+  "doctype": "DocType",
+  "permissions": [
+    {
+      "role": "High4Tech Platform Admin",
+      "write": 1,
+      "read": 1,
+      "report": 1,
+      "create": 1
+    }
+  ]
+}

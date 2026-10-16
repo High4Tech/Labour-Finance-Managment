@@ -1,0 +1,17 @@
+{
+  "doctype": "DocType",
+  "name": "PP Register Line",
+  "module": "PLUS POINT",
+  "custom": 0,
+  "istable": 1,
+  "engine": "InnoDB",
+  "field_order": ["assignment", "employee", "units", "remarks", "work_entry"],
+  "fields": [
+    {"fieldname": "assignment", "fieldtype": "Link", "label": "Active Assignment", "options": "PP Assignment", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "employee", "fieldtype": "Link", "label": "Employee", "options": "Employee", "read_only": 1, "in_list_view": 1},
+    {"fieldname": "units", "fieldtype": "Select", "label": "Attendance Units", "options": "0\n0.5\n1", "default": "1", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "remarks", "fieldtype": "Small Text", "label": "Remarks"},
+    {"fieldname": "work_entry", "fieldtype": "Link", "label": "Generated Work Entry", "options": "PP Work Entry", "read_only": 1}
+  ],
+  "permissions": []
+}

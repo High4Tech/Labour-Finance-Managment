@@ -1,0 +1,82 @@
+{
+  "doctype": "DocType",
+  "name": "PP Milestone",
+  "module": "PLUS POINT",
+  "custom": 0,
+  "autoname": "hash",
+  "title_field": "milestone_title",
+  "description": "Fixed price revenue recognition milestone",
+  "track_changes": 1,
+  "allow_import": 1,
+  "engine": "InnoDB",
+  "is_submittable": 0,
+  "field_order": [
+    "contract_terms",
+    "milestone_title",
+    "due_date",
+    "amount",
+    "status",
+    "sales_invoice"
+  ],
+  "fields": [
+    {
+      "fieldname": "contract_terms",
+      "fieldtype": "Link",
+      "label": "Billing Terms",
+      "options": "PP Contract Terms",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "milestone_title",
+      "fieldtype": "Data",
+      "label": "Milestone",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "due_date",
+      "fieldtype": "Date",
+      "label": "Due Date"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Milestone Amount",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Planned\nApproved\nInvoiced",
+      "default": "Planned",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "sales_invoice",
+      "fieldtype": "Link",
+      "label": "ERPNext Invoice",
+      "options": "Sales Invoice",
+      "description": "Managed by the Prepare client invoice action and native invoice submission/cancellation.",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 0,
+      "share": 0
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

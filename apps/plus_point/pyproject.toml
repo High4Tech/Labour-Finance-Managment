@@ -1,0 +1,18 @@
+[build-system]
+requires = ["flit_core>=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "plus_point"
+version = "0.4.0"
+description = "PLUS POINT labour management extension for ERPNext and HRMS"
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+authors = [{ name = "High4Tech" }]
+dependencies = []
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.50.0,<17.0.0"
+erpnext = ">=16.50.0,<17.0.0"
+hrms = ">=16.50.0,<17.0.0"

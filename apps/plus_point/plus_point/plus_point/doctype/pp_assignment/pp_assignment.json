@@ -1,0 +1,103 @@
+{
+  "doctype": "DocType",
+  "name": "PP Assignment",
+  "module": "PLUS POINT",
+  "custom": 0,
+  "autoname": "hash",
+  "title_field": "employee",
+  "description": "Historical deployment plus agreed rates",
+  "track_changes": 1,
+  "allow_import": 1,
+  "engine": "InnoDB",
+  "is_submittable": 0,
+  "field_order": [
+    "employee",
+    "contract_terms",
+    "project",
+    "site",
+    "start_date",
+    "end_date",
+    "wage_rate",
+    "client_rate",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee",
+      "fieldtype": "Link",
+      "label": "Worker",
+      "options": "Employee",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "contract_terms",
+      "fieldtype": "Link",
+      "label": "Billing Terms",
+      "options": "PP Contract Terms",
+      "reqd": 1
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "site",
+      "fieldtype": "Link",
+      "label": "Site",
+      "options": "PP Site",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date"
+    },
+    {
+      "fieldname": "wage_rate",
+      "fieldtype": "Currency",
+      "label": "Daily Worker Wage",
+      "reqd": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "client_rate",
+      "fieldtype": "Currency",
+      "label": "Client Rate per Worker-Day",
+      "default": "0"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 0,
+      "share": 0
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

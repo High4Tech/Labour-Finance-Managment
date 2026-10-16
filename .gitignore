@@ -1,0 +1,25 @@
+# Live development bench and all tenant data are NEVER committed.
+.local/
+.env
+.env.*
+!.env.example
+*.log
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.coverage
+build/
+dist/
+.DS_Store
+.vscode/
+*.sql
+*.sql.gz
+*.sqlite3
+*.db
+site_config.json
+common_site_config.json
+private/
+backups/

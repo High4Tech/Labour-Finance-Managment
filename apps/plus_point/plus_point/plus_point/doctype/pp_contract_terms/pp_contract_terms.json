@@ -1,0 +1,98 @@
+{
+  "doctype": "DocType",
+  "name": "PP Contract Terms",
+  "module": "PLUS POINT",
+  "custom": 0,
+  "autoname": "hash",
+  "title_field": "contract",
+  "description": "ERPNext contract + project billing policy (not a replacement contract)",
+  "track_changes": 1,
+  "allow_import": 1,
+  "engine": "InnoDB",
+  "is_submittable": 0,
+  "field_order": [
+    "contract",
+    "project",
+    "billing_model",
+    "currency",
+    "fixed_amount",
+    "status",
+    "effective_start",
+    "effective_end"
+  ],
+  "fields": [
+    {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "label": "ERPNext Contract",
+      "options": "Contract",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "ERPNext Project",
+      "options": "Project",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "billing_model",
+      "fieldtype": "Select",
+      "label": "Billing Model",
+      "options": "Daily\nFixed",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "currency",
+      "fieldtype": "Link",
+      "label": "Currency",
+      "options": "Currency",
+      "default": "PKR"
+    },
+    {
+      "fieldname": "fixed_amount",
+      "fieldtype": "Currency",
+      "label": "Agreed Fixed Amount",
+      "default": "0"
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Draft\nActive\nClosed",
+      "default": "Draft",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "effective_start",
+      "fieldtype": "Date",
+      "label": "Start Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "effective_end",
+      "fieldtype": "Date",
+      "label": "End Date"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 0,
+      "share": 0
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

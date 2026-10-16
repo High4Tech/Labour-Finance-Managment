@@ -1,0 +1,144 @@
+{
+  "doctype": "DocType",
+  "name": "PP Work Entry",
+  "module": "PLUS POINT",
+  "custom": 0,
+  "autoname": "hash",
+  "title_field": "employee",
+  "description": "Worker attendance and snapshotted daily wage/billing amount",
+  "track_changes": 1,
+  "allow_import": 1,
+  "engine": "InnoDB",
+  "is_submittable": 0,
+  "field_order": [
+    "assignment",
+    "work_date",
+    "units",
+    "status",
+    "employee",
+    "site",
+    "project",
+    "contract_terms",
+    "wage_rate",
+    "client_rate",
+    "wage_amount",
+    "billable_amount",
+    "remarks",
+    "sales_invoice"
+  ],
+  "fields": [
+    {
+      "fieldname": "assignment",
+      "fieldtype": "Link",
+      "label": "Assignment",
+      "options": "PP Assignment",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "work_date",
+      "fieldtype": "Date",
+      "label": "Work Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "units",
+      "fieldtype": "Float",
+      "label": "Worked Day Units (0, 0.5, 1)",
+      "default": "1",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Draft\nApproved",
+      "default": "Draft",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee",
+      "fieldtype": "Link",
+      "label": "Worker",
+      "options": "Employee",
+      "read_only": 1
+    },
+    {
+      "fieldname": "site",
+      "fieldtype": "Link",
+      "label": "Site",
+      "options": "PP Site",
+      "read_only": 1
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project",
+      "read_only": 1
+    },
+    {
+      "fieldname": "contract_terms",
+      "fieldtype": "Link",
+      "label": "Billing Terms",
+      "options": "PP Contract Terms",
+      "read_only": 1
+    },
+    {
+      "fieldname": "wage_rate",
+      "fieldtype": "Currency",
+      "label": "Locked Wage Rate",
+      "read_only": 1
+    },
+    {
+      "fieldname": "client_rate",
+      "fieldtype": "Currency",
+      "label": "Locked Client Rate",
+      "read_only": 1
+    },
+    {
+      "fieldname": "wage_amount",
+      "fieldtype": "Currency",
+      "label": "Wage Accrued",
+      "read_only": 1
+    },
+    {
+      "fieldname": "billable_amount",
+      "fieldtype": "Currency",
+      "label": "Daily Client Billable",
+      "read_only": 1
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "sales_invoice",
+      "fieldtype": "Link",
+      "label": "ERPNext Invoice",
+      "options": "Sales Invoice",
+      "read_only": 1,
+      "no_copy": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1,
+      "print": 1,
+      "email": 0,
+      "share": 0
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}
