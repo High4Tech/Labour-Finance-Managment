@@ -27,7 +27,8 @@
       "label": "ERPNext Contract",
       "options": "Contract",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "The existing client agreement. Keep the signed agreement here and define its billing policy below."
     },
     {
       "fieldname": "project",
@@ -35,7 +36,8 @@
       "label": "ERPNext Project",
       "options": "Project",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "The client job covered by these terms. Its customer must match the contract."
     },
     {
       "fieldname": "billing_model",
@@ -43,20 +45,23 @@
       "label": "Billing Model",
       "options": "Daily\nFixed",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Daily: approved worker-days times the client rate. Fixed: approved milestones against the agreed amount. Worker wages stay separate in both models."
     },
     {
       "fieldname": "currency",
       "fieldtype": "Link",
       "label": "Currency",
       "options": "Currency",
-      "default": "PKR"
+      "default": "PKR",
+      "description": "Use the project company currency. This version does not convert contractor rates between currencies."
     },
     {
       "fieldname": "fixed_amount",
       "fieldtype": "Currency",
       "label": "Agreed Fixed Amount",
-      "default": "0"
+      "default": "0",
+      "description": "Total agreed client contract value for Fixed billing. Approved milestones cannot exceed this value."
     },
     {
       "fieldname": "status",
@@ -65,7 +70,8 @@
       "options": "Draft\nActive\nClosed",
       "default": "Draft",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Use Draft while agreeing terms. Active terms can be used for allocations and preparing client invoices. Closed terms stop new invoicing."
     },
     {
       "fieldname": "effective_start",

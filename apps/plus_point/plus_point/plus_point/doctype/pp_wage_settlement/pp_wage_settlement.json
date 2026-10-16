@@ -6,14 +6,16 @@
       "in_list_view": 1,
       "reqd": 1,
       "label": "Worker",
-      "fieldname": "employee"
+      "fieldname": "employee",
+      "description": "The worker being paid. Approved unpaid earnings must exist for this worker and project."
     },
     {
       "label": "Project",
       "fieldname": "project",
       "reqd": 1,
       "fieldtype": "Link",
-      "options": "Project"
+      "options": "Project",
+      "description": "Allocate the payment against this job, so project wage balances remain accurate."
     },
     {
       "unique": 1,
@@ -21,13 +23,15 @@
       "fieldtype": "Link",
       "reqd": 1,
       "label": "Submitted ERPNext Payment",
-      "fieldname": "payment_entry"
+      "fieldname": "payment_entry",
+      "description": "Select a submitted employee Payment Entry for this worker and project. The full payment is allocated once; this record does not send money."
     },
     {
       "read_only": 1,
       "fieldname": "amount",
       "fieldtype": "Currency",
-      "label": "Paid Amount"
+      "label": "Paid Amount",
+      "description": "Copied from the submitted payment. Submit this settlement to record wages paid against approved earnings."
     },
     {
       "fieldname": "remarks",

@@ -31,6 +31,8 @@ This creates a PLUS POINT Demo company/customer/project/worker, one approved dai
 
 The seed also completes Frappe's native post-setup transition, so All apps opens the desktop rather than reloading the completed wizard. With Playwright and Chromium installed, run `node scripts/browser-navigation.cjs` to check the actual app switcher, HR, Home dashboard, Users and return to PLUS POINT. Set `PP_BROWSER_CHANNEL=msedge` to use installed Edge. Optional `PP_BROWSER_USER` and `PP_BROWSER_PASSWORD` select a local account instead of Administrator; credentials are never logged. Set `PP_BROWSER_EMPLOYEE_APP=1` to include HR employee self-service and browser Back. That check requires the login to be linked to an active Employee using its native User ID field. Screenshots stay in ignored `.local/qa`.
 
+`node scripts/browser-onboarding.cjs` checks the six-step tour, app explanations, collapse preference, keyboard/click field help, field tour, way back from Manufacturing and a 390px mobile layout. It uses the same browser credential variables. The tenant check needs seeded sample allocations; the platform check (`PP_BROWSER_SITE=platform.localhost`) needs a seeded tenant. It changes browser-local preferences only. Native field descriptions are synchronized with `bench --site <site> migrate`; Desk guidance assets are served directly from the app's public files. Refresh Desk after updating them. See USER_GUIDE.md for end-user instructions.
+
 ## Separate High4Tech platform
 
 ```powershell

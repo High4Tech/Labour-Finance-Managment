@@ -15,14 +15,16 @@
       "fieldname": "organization_name",
       "reqd": 1,
       "label": "Customer Organization",
-      "fieldtype": "Data"
+      "fieldtype": "Data",
+      "description": "The subscriber using PLUS POINT. Its workforce data lives in its own separate site database."
     },
     {
       "fieldname": "site_hostname",
       "reqd": 1,
       "unique": 1,
       "label": "Tenant Hostname",
-      "fieldtype": "Data"
+      "fieldtype": "Data",
+      "description": "The subscriber site address, not a work-site location. This address identifies its isolated tenant database."
     },
     {
       "fieldname": "owner_email",
@@ -36,31 +38,36 @@
       "reqd": 1,
       "options": "Subscription",
       "label": "ERPNext Subscription",
-      "fieldtype": "Link"
+      "fieldtype": "Link",
+      "description": "The native subscription that determines trial, paid period and expiry for this customer organization."
     },
     {
       "fieldname": "suspended",
       "label": "Suspended",
       "default": "0",
-      "fieldtype": "Check"
+      "fieldtype": "Check",
+      "description": "Stops document changes on the customer site after the operator worker synchronizes it, normally within one minute. Existing records remain readable."
     },
     {
       "fieldname": "worker_limit",
       "label": "Worker Limit (0 = unlimited)",
       "default": "0",
-      "fieldtype": "Int"
+      "fieldtype": "Int",
+      "description": "Maximum active workers in this tenant; zero means unlimited."
     },
     {
       "fieldname": "user_limit",
       "label": "User Limit (0 = unlimited)",
       "default": "0",
-      "fieldtype": "Int"
+      "fieldtype": "Int",
+      "description": "Maximum enabled system-user logins in this tenant; zero means unlimited. Workers without logins do not use a user seat."
     },
     {
       "fieldname": "site_limit",
       "label": "Site Limit (0 = unlimited)",
       "default": "0",
-      "fieldtype": "Int"
+      "fieldtype": "Int",
+      "description": "Maximum active work locations inside the tenant, not the number of tenant databases. Zero means unlimited."
     }
   ],
   "module": "PLUS POINT",

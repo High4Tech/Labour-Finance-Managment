@@ -11,6 +11,8 @@ jobs:
         run: for script in scripts/*.sh; do bash -n "$script"; done
       - name: Check Python syntax
         run: python -m compileall -q apps scripts tests
+      - name: Check Desk and browser-test JavaScript syntax
+        run: for script in scripts/*.cjs apps/plus_point/plus_point/public/js/*.js; do node --check "$script"; done
       - name: Run offline unit checks
         run: python -m unittest discover -s tests -v
       - name: Contractor finance rules

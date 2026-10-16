@@ -4,6 +4,8 @@ Labour contracting on **Frappe v16, ERPNext v16 and Frappe HRMS v16**. Existing 
 
 This is a **local development application**, not a production SaaS release. See [verification](VERIFICATION_STATUS.md) for actual evidence and gaps, and [architecture](MVP_ARCHITECTURE.md) for the source of truth.
 
+Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk workspace includes a six-step quick start, **How it works**, an optional **Show me around** tour, and field help. ERPNext's unrelated modules, such as Manufacturing, are optional; they are not part of the usual contractor workflow.
+
 ## Run on Windows
 
 With Docker Desktop running in Linux mode, run `START_PLUS_POINT_DEV.cmd`, or:
@@ -14,7 +16,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-local.ps1
 
 This starts persistent MariaDB/Redis, installs pinned upstream apps and the editable PLUS POINT extension, migrates schemas and starts Bench. Ubuntu integration is unnecessary. The first installation downloads several GB and builds assets. Re-running preserves data and refuses unexpected upstream source commits.
 
-Open [PLUS POINT](http://demo.localhost:8000/app/plus-point). Login as `Administrator`; the generated local password is in ignored `.env` (`PP_ADMIN_PASSWORD`). The launcher never prints credentials. For the separate High4Tech platform site, add `-WithPlatform` to the PowerShell command. See [runbook](LOCAL_RUNBOOK.md).
+Open [PLUS POINT](http://demo.localhost:8000/desk/plus-point). Login as `Administrator`; the generated local password is in ignored `.env` (`PP_ADMIN_PASSWORD`). The launcher never prints credentials. For the separate High4Tech platform site, add `-WithPlatform` to the PowerShell command. See [runbook](LOCAL_RUNBOOK.md).
 
 ## Common operations
 

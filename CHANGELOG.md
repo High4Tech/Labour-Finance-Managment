@@ -1,5 +1,9 @@
 # Development changelog
 
+## Product onboarding — 2026-10-16
+
+Added a workforce quick start, app-role guide, opt-in native tour, contextual home links, screen explanations and keyboard/click field tips. Added native help descriptions for 42 contractor/platform fields and clear guidance distinguishing dehadi, HR attendance, invoicing and payments. The separate platform app tile now opens High4Tech subscriber administration. Added USER_GUIDE.md and real tenant/platform onboarding browser regressions; navigation, attendance draft creation/cleanup and 11 offline checks pass. Upstream source and document access rules remain unchanged.
+
 ## Navigation correction — 2026-10-16
 
 Fixed the completed setup wizard reloading from All apps by running Frappe's native post-setup transition in local demo seeding. Updated PLUS POINT's app entry to the canonical Desk route. Included Purchase Manager in local tenant owner roles so the native Home purchase card can load. Corrected the requested local dummy accounts and linked the tenant login to the sample employee for native HR self-service. Added a real browser regression covering the app switcher, HR, Home, Users, return navigation and optional employee self-service; verified as the tenant dummy login with no browser/server errors. All 11 offline checks also pass.

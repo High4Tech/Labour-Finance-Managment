@@ -1,0 +1,47 @@
+/* Extend Desk's own theme and typography, including its dark mode. */
+.pp-context-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    background: var(--subtle-fg, #f8f9fa);
+    color: var(--text-muted, #626b75);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.pp-context-copy { max-width: 78ch; }
+.pp-context-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.pp-home-link, .pp-workflow-links a { color: var(--text-color, #171717); text-decoration: underline; text-underline-offset: 3px; }
+.pp-welcome { padding: 24px; border-bottom: 1px solid var(--border-color, #e5e7eb); }
+.pp-welcome-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.pp-welcome h2, .pp-guide-dialog h2 { font-size: 20px; line-height: 1.35; font-weight: 600; margin: 0 0 8px; }
+.pp-welcome-heading p { max-width: 76ch; color: var(--text-muted, #626b75); margin-bottom: 16px; }
+.pp-start-tour { flex-shrink: 0; }
+.pp-quick-start summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.pp-workflow { margin: 12px 0 0; padding-left: 26px; max-width: 90ch; }
+.pp-workflow-step { padding: 0 0 16px 10px; }
+.pp-workflow-step:last-child { padding-bottom: 0; }
+.pp-workflow-step::marker { font-weight: 600; color: var(--text-muted, #626b75); }
+.pp-workflow-step h3 { font-size: 15px; line-height: 1.4; font-weight: 600; margin: 0 0 4px; }
+.pp-workflow-step p { font-size: 14px; line-height: 1.6; color: var(--text-muted, #626b75); margin-bottom: 7px; }
+.pp-workflow-links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; }
+.pp-guide-note { border-left: 3px solid var(--border-color, #e5e7eb); padding-left: 12px; margin: 18px 0 0; color: var(--text-muted, #626b75); line-height: 1.6; max-width: 80ch; }
+.pp-app-map { margin: 0 0 24px; }
+.pp-app-map > div, .pp-form-explanation > div { margin-bottom: 12px; }
+.pp-app-map dt, .pp-form-explanation dt { font-weight: 600; margin-bottom: 3px; }
+.pp-app-map dd, .pp-form-explanation dd { color: var(--text-muted, #626b75); line-height: 1.6; margin: 0; }
+.pp-field-tip { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; margin: 0 5px; border: 1px solid var(--border-color, #ccd0d5); border-radius: 50%; background: var(--fg-color, #fff); color: var(--text-muted, #626b75); font-size: 12px; line-height: 1; vertical-align: middle; cursor: help; }
+.pp-tooltip .tooltip-inner { max-width: 320px; padding: 10px 12px; font-size: 13px; line-height: 1.5; text-align: left; }
+.pp-field-tip:focus-visible, .pp-quick-start summary:focus-visible, .pp-workflow-links a:focus-visible, .pp-home-link:focus-visible { outline: 2px solid var(--text-color, #171717); outline-offset: 3px; }
+.desktop-icon .pp-app-purpose { max-width: 26ch; margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted, #626b75); }
+.desktop-icon:has(.pp-app-purpose) { align-self: start; }
+@media (max-width: 767px) {
+    .pp-context-bar, .pp-welcome-heading { flex-direction: column; align-items: stretch; }
+    .pp-context-actions { flex-wrap: wrap; justify-content: space-between; }
+    .pp-welcome { padding: 18px 14px; }
+    .pp-start-tour { align-self: flex-start; margin-bottom: 12px; }
+    .pp-workflow { padding-left: 21px; }
+    .pp-field-tip { width: 28px; height: 28px; }
+}

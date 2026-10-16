@@ -10,6 +10,7 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 4. Real HTTP subscription: suspension, expiry, active seat limit, reactivation and cleanup through scripts/verify-subscription.py on the local QA site.
 5. Real browser: tenant/High4Tech workspaces and native list navigation using scripts/browser-smoke.cjs; app-switcher/HR/Home/Users round trip using scripts/browser-navigation.cjs, optionally as a named local account with linked employee self-service; screenshots in private .local/qa.
 6. Native installer: fresh disposable site/database/user through environment-only credentials, native cleanup limited to that generated test site.
+7. Onboarding browser: `scripts/browser-onboarding.cjs` checks the tenant workflow tour (Next/Back/Escape/Finish), app-role explanations, collapse preference after reload, field help by first click and keyboard, field tour, return from an optional module, app captions, mobile width/tour placement and platform-specific home/tile/field guidance. Guidance tests do not write business documents.
 
 ## Release gates still required
 

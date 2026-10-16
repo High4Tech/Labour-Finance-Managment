@@ -47,6 +47,8 @@ Native /api/resource/<DocType> supplies permission-checked CRUD. Authenticated c
 
 Initial tenant operations use native System Manager. Dedicated supervisor/finance roles, wage field privacy and site-scoped User Permission regression tests remain production requirements.
 
+Desk onboarding is an app-owned JavaScript/CSS extension loaded through native hooks, using Frappe's existing Dialog, Driver tour and Bootstrap tooltip facilities. It explains the app boundaries and the six-step contractor workflow, adds a context-aware route home, and reads native DocField descriptions for field tips. A small boot hook distinguishes the control-plane site from tenant sites. The quick-start preference is optional, browser-local and keyed by hostname plus logged-in user; it is not an authorization or business-state flag. Guidance makes no document writes and does not hide or grant access to other ERP modules. USER_GUIDE.md describes the user-facing workflow.
+
 ## Tenant isolation and permissions
 
 Native Frappe site per tenant with distinct MariaDB database/user. Validated Host selects the site; browser tenant IDs never select another database. The separate platform.localhost site requires pp_control_plane=true and High4Tech Platform Admin for registry mutations. A role on a tenant site grants no platform access or automatic cross-site support login. Development Administrator is a bootstrap identity; production needs named users and MFA.

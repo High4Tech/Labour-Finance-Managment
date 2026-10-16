@@ -24,7 +24,8 @@
       "fieldtype": "Data",
       "label": "Site Name",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Use a recognizable location name, such as DHA Phase 6 construction site."
     },
     {
       "fieldname": "project",
@@ -32,7 +33,8 @@
       "label": "Project",
       "options": "Project",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "The client job this location belongs to. A project can contain several work sites."
     },
     {
       "fieldname": "site_type",
@@ -47,7 +49,8 @@
       "fieldname": "parent_site",
       "fieldtype": "Link",
       "label": "Parent Site",
-      "options": "PP Site"
+      "options": "PP Site",
+      "description": "Optional: place a compound or warehouse under a main site from the same project."
     },
     {
       "fieldname": "address",
@@ -59,7 +62,8 @@
       "fieldtype": "Check",
       "label": "Active",
       "default": "1",
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Only active sites can be used to prepare daily attendance."
     }
   ],
   "permissions": [

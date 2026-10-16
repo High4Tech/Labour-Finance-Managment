@@ -5,13 +5,54 @@
   "custom": 0,
   "istable": 1,
   "engine": "InnoDB",
-  "field_order": ["assignment", "employee", "units", "remarks", "work_entry"],
+  "field_order": [
+    "assignment",
+    "employee",
+    "units",
+    "remarks",
+    "work_entry"
+  ],
   "fields": [
-    {"fieldname": "assignment", "fieldtype": "Link", "label": "Active Assignment", "options": "PP Assignment", "reqd": 1, "in_list_view": 1},
-    {"fieldname": "employee", "fieldtype": "Link", "label": "Employee", "options": "Employee", "read_only": 1, "in_list_view": 1},
-    {"fieldname": "units", "fieldtype": "Select", "label": "Attendance Units", "options": "0\n0.5\n1", "default": "1", "reqd": 1, "in_list_view": 1},
-    {"fieldname": "remarks", "fieldtype": "Small Text", "label": "Remarks"},
-    {"fieldname": "work_entry", "fieldtype": "Link", "label": "Generated Work Entry", "options": "PP Work Entry", "read_only": 1}
+    {
+      "fieldname": "assignment",
+      "fieldtype": "Link",
+      "label": "Active Assignment",
+      "options": "PP Assignment",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "The worker allocation that supplies the site, dates and agreed rates."
+    },
+    {
+      "fieldname": "employee",
+      "fieldtype": "Link",
+      "label": "Employee",
+      "options": "Employee",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "units",
+      "fieldtype": "Select",
+      "label": "Attendance Units",
+      "options": "0\n0.5\n1",
+      "default": "1",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "1 = full day, 0.5 = half day, 0 = absent. Wage and daily client amounts use this fraction."
+    },
+    {
+      "fieldname": "remarks",
+      "fieldtype": "Small Text",
+      "label": "Remarks"
+    },
+    {
+      "fieldname": "work_entry",
+      "fieldtype": "Link",
+      "label": "Generated Work Entry",
+      "options": "PP Work Entry",
+      "read_only": 1,
+      "description": "The approved worker earning record created when the daily register is submitted."
+    }
   ],
   "permissions": []
 }

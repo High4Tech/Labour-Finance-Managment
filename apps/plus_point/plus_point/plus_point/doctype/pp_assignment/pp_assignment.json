@@ -28,14 +28,16 @@
       "label": "Worker",
       "options": "Employee",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Choose the worker profile. A worker does not need a user login to earn dehadi."
     },
     {
       "fieldname": "contract_terms",
       "fieldtype": "Link",
       "label": "Billing Terms",
       "options": "PP Contract Terms",
-      "reqd": 1
+      "reqd": 1,
+      "description": "Select the billing agreement for this project. It decides whether client revenue is daily or fixed."
     },
     {
       "fieldname": "project",
@@ -51,32 +53,37 @@
       "label": "Site",
       "options": "PP Site",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "The work location for this allocation. It must belong to the selected project."
     },
     {
       "fieldname": "start_date",
       "fieldtype": "Date",
       "label": "Start Date",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "First date this allocation can be used for attendance. Create a new dated allocation when agreed rates change."
     },
     {
       "fieldname": "end_date",
       "fieldtype": "Date",
-      "label": "End Date"
+      "label": "End Date",
+      "description": "Optional last attendance date for this allocation; leave blank while it remains active."
     },
     {
       "fieldname": "wage_rate",
       "fieldtype": "Currency",
       "label": "Daily Worker Wage",
       "reqd": 1,
-      "default": "0"
+      "default": "0",
+      "description": "Amount the worker earns for one full day. A half-day earns half this amount. Earnings are separate from wages paid."
     },
     {
       "fieldname": "client_rate",
       "fieldtype": "Currency",
       "label": "Client Rate per Worker-Day",
-      "default": "0"
+      "default": "0",
+      "description": "Amount charged to the client for one full worker-day under Daily billing. Fixed contracts earn client revenue through milestones instead."
     },
     {
       "fieldname": "notes",

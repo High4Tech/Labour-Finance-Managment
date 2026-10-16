@@ -8,6 +8,9 @@ required_apps = ["frappe/erpnext", "frappe/hrms"]
 after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
+extend_bootinfo = "plus_point.onboarding.boot_context"
+app_include_js = "/assets/plus_point/js/onboarding.js"
+app_include_css = "/assets/plus_point/css/onboarding.css"
 
 doc_events = {
     "Payment Entry": {"before_cancel": "plus_point.plus_point.doctype.pp_wage_settlement.pp_wage_settlement.protect_payment"},

@@ -25,7 +25,8 @@
       "label": "Billing Terms",
       "options": "PP Contract Terms",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Choose Fixed billing terms. Milestones are not used for Daily billing."
     },
     {
       "fieldname": "milestone_title",
@@ -43,7 +44,8 @@
       "fieldname": "amount",
       "fieldtype": "Currency",
       "label": "Milestone Amount",
-      "reqd": 1
+      "reqd": 1,
+      "description": "Client revenue earned by this milestone. Approved and invoiced milestones together cannot exceed the agreed fixed value."
     },
     {
       "fieldname": "status",
@@ -52,7 +54,8 @@
       "options": "Planned\nApproved\nInvoiced",
       "default": "Planned",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "Planned is not yet earned revenue. Approve completed work before invoicing. Invoiced status is managed by native invoice submission."
     },
     {
       "fieldname": "sales_invoice",
