@@ -1,5 +1,11 @@
 # Development changelog
 
+## Simpler customer workspace — 2026-10-16
+
+Added a task-focused home with Mark attendance, workers/sites, client billing and worker payments. The attendance shortcut prepares a populated draft or reopens the saved site/date register; approval remains an explicit Submit action. Grouped the native tenant sidebar, moved less frequent records under More, simplified custom list labels and removed their internal ID column. Setup tools and the six-step guide start collapsed, with contextual help available on demand. Native title metadata improves linked record labels. Existing operator layouts, explicit home preferences and platform navigation are preserved.
+
+Real Edge checks cover desktop/390px mobile layouts, attendance creation/reopening and administrator fixture cleanup, tenant/platform onboarding and native navigation. Added UX_DESIGN.md with the principles applied and their limits. This change preserves the existing financial rules and native permissions; it does not claim customer usability research or complete accessibility acceptance.
+
 ## Product onboarding — 2026-10-16
 
 Added a workforce quick start, app-role guide, opt-in native tour, contextual home links, screen explanations and keyboard/click field tips. Added native help descriptions for 42 contractor/platform fields and clear guidance distinguishing dehadi, HR attendance, invoicing and payments. The separate platform app tile now opens High4Tech subscriber administration. Added USER_GUIDE.md and real tenant/platform onboarding browser regressions; navigation, attendance draft creation/cleanup and 11 offline checks pass. Upstream source and document access rules remain unchanged.

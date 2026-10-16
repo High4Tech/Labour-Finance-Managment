@@ -4,7 +4,7 @@ Labour contracting on **Frappe v16, ERPNext v16 and Frappe HRMS v16**. Existing 
 
 This is a **local development application**, not a production SaaS release. See [verification](VERIFICATION_STATUS.md) for actual evidence and gaps, and [architecture](MVP_ARCHITECTURE.md) for the source of truth.
 
-Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk workspace includes a six-step quick start, **How it works**, an optional **Show me around** tour, and field help. ERPNext's unrelated modules, such as Manufacturing, are optional; they are not part of the usual contractor workflow.
+Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk home groups daily work into attendance, workers/sites, client billing and worker payments. **Mark attendance** prepares or reopens a register for review. Setup tools and the six-step guide are available on demand, alongside **How it works**, **Show me around**, and field help. ERPNext's unrelated modules, such as Manufacturing, are optional; they are not part of the usual contractor workflow.
 
 ## Run on Windows
 
@@ -23,7 +23,7 @@ Open [PLUS POINT](http://demo.localhost:8000/desk/plus-point). Login as `Adminis
 1. Create native Company, Customer, Contract, Project and Employee records.
 2. Add `PP Contract Terms` to the contract/project: Daily or Fixed.
 3. Add `PP Site` and dated `PP Assignment` records with wage/client rates.
-4. Open a site and select **Prepare daily attendance**. Review units (0, 0.5, 1) and submit the native register.
+4. Choose **Mark attendance** on Workforce home, select a site/date and **Review attendance**. Review units (0, 0.5, 1) and submit the native register. The original site action remains available.
 5. Approve `PP Milestone` records for fixed terms; wages remain independent.
 6. From terms, select **Prepare client invoice** with a native non-stock service Item. Review and submit the ERPNext Sales Invoice. Use native Payment Entries for receipts.
 7. Link submitted employee Payment Entries with `PP Wage Settlement` to distinguish paid wages from earnings.

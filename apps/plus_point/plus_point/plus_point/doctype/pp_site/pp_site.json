@@ -81,5 +81,6 @@
     }
   ],
   "sort_field": "modified",
-  "sort_order": "DESC"
+  "sort_order": "DESC",
+  "show_title_field_in_link": 1
 }

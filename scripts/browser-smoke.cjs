@@ -22,12 +22,12 @@ let browser, page;
     data: { usr: 'Administrator', pwd: settings.PP_ADMIN_PASSWORD }
   });
   if (!login.ok() || (await login.json()).message !== 'Logged In') throw new Error('Browser session login failed');
-  await page.goto(base + (platform ? '/app/high4tech' : '/app/plus-point'), { waitUntil: 'domcontentloaded' });
+  await page.goto(base + (platform ? '/desk/high4tech' : '/desk/plus-point'), { waitUntil: 'domcontentloaded' });
   const out = path.join(root, '.local', 'qa');
   fs.mkdirSync(out, { recursive: true });
   await page.screenshot({ path: path.join(out, 'workspace-initial.png'), fullPage: true });
   try {
-    await page.getByText(platform ? 'Platform operations' : 'Workforce operations', { exact: true }).waitFor({ timeout: 60000 });
+    await page.getByText(platform ? 'Platform operations' : 'Workforce overview', { exact: true }).waitFor({ timeout: 60000 });
   } catch (error) {
     await page.screenshot({ path: path.join(out, 'workspace-failure.png'), fullPage: true });
     console.log('Page URL: ' + page.url());
@@ -37,11 +37,11 @@ let browser, page;
   }
   await page.screenshot({ path: path.join(out, platform ? 'platform.png' : 'workspace.png'), fullPage: true });
   const routes = platform ? [['pp-tenant', 'PP Tenant'], ['subscription-plan', 'Subscription Plan'], ['subscription', 'Subscription']] :
-    [['pp-site', 'PP Site'], ['pp-daily-register', 'PP Daily Register'], ['pp-contract-terms', 'PP Contract Terms']];
-  for (const [route, label] of routes) {
-    await page.goto(base + '/app/' + route, { waitUntil: 'domcontentloaded' });
+    [['pp-site', 'PP Site', 'Add work site'], ['pp-daily-register', 'PP Daily Register', 'Add attendance'], ['pp-contract-terms', 'PP Contract Terms', 'Add billing terms']];
+  for (const [route, label, action] of routes) {
+    await page.goto(base + '/desk/' + route, { waitUntil: 'domcontentloaded' });
     await page.locator('.layout-main-section').waitFor({ state: 'visible', timeout: 30000 });
-    await page.getByRole('button', { name: new RegExp('Add ' + label + '|New') }).first().waitFor({ timeout: 30000 });
+    await page.getByRole('button', { name: action ? action : new RegExp('Add ' + label + '|New') }).first().waitFor({ timeout: 30000 });
     console.log('PASS real Desk list: ' + label);
   }
   if (!platform) {
@@ -49,7 +49,7 @@ let browser, page;
       encodeURIComponent(JSON.stringify({site_name: 'PLUS POINT Demo'})));
     const sites = (await response.json()).data;
     if (sites && sites.length) {
-      await page.goto(base + '/app/pp-site/' + encodeURIComponent(sites[0].name));
+      await page.goto(base + '/desk/pp-site/' + encodeURIComponent(sites[0].name));
       await page.getByRole('button', {name: 'Prepare daily attendance', exact: true}).click();
       await page.waitForFunction(() => window.cur_dialog && cur_dialog.get_field('work_date'));
       await page.evaluate(() => cur_dialog.set_value('work_date', frappe.datetime.add_days(frappe.datetime.get_today(), 1)));

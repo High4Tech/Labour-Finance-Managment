@@ -33,6 +33,8 @@ The seed also completes Frappe's native post-setup transition, so All apps opens
 
 `node scripts/browser-onboarding.cjs` checks the six-step tour, app explanations, collapse preference, keyboard/click field help, field tour, way back from Manufacturing and a 390px mobile layout. It uses the same browser credential variables. The tenant check needs seeded sample allocations; the platform check (`PP_BROWSER_SITE=platform.localhost`) needs a seeded tenant. It changes browser-local preferences only. Native field descriptions are synchronized with `bench --site <site> migrate`; Desk guidance assets are served directly from the app's public files. Refresh Desk after updating them. See USER_GUIDE.md for end-user instructions.
 
+`node scripts/browser-customer-ux.cjs` verifies the simpler tenant home, grouped navigation, list labels, collapsed optional content and mobile layout. It uses the same credential variables and seeded demo site/allocations. The test requires a vacant demo attendance date (today plus two days), creates and reopens a reviewable draft, then deletes that temporary draft. It refuses to modify an existing register. Tenant migration adds the grouped native sidebar only if no site-level customization exists; per-user choices and an explicit starting app are preserved.
+
 ## Separate High4Tech platform
 
 ```powershell

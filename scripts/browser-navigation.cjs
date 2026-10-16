@@ -46,7 +46,7 @@ const { chromium } = require('playwright');
     assert.equal(await page.evaluate(() => frappe.boot.home_page), 'desktop');
     assert.equal(await page.evaluate(() => frappe.boot.apps_data.is_desk_apps), 1);
     await desktopIcon('PLUS POINT').click();
-    await page.getByText('Workforce operations', { exact: true }).waitFor();
+    await page.getByText('Workforce overview', { exact: true }).waitFor();
     await allApps();
     await desktopIcon('Frappe HR').click();
     await page.getByText('Department Wise Employee Count', { exact: true }).waitFor();
@@ -61,7 +61,7 @@ const { chromium } = require('playwright');
     await page.screenshot({ path: path.join(out, 'navigation-users.png'), fullPage: true });
     await allApps();
     await desktopIcon('PLUS POINT').click();
-    await page.getByText('Workforce operations', { exact: true }).waitFor();
+    await page.getByText('Workforce overview', { exact: true }).waitFor();
     await page.screenshot({ path: path.join(out, 'navigation-return.png'), fullPage: true });
     if (process.env.PP_BROWSER_EMPLOYEE_APP === '1') {
       await page.goto(base + '/hrms', { waitUntil: 'domcontentloaded' });
@@ -70,7 +70,7 @@ const { chromium } = require('playwright');
       await page.getByText('Attendance', { exact: true }).first().waitFor();
       await page.screenshot({ path: path.join(out, 'navigation-employee.png'), fullPage: true });
       await page.goBack({ waitUntil: 'domcontentloaded' });
-      await page.getByText('Workforce operations', { exact: true }).waitFor();
+      await page.getByText('Workforce overview', { exact: true }).waitFor();
       console.log('PASS linked employee self-service and browser Back to PLUS POINT');
     }
     assert.deepEqual(failures, [], 'App switching produced browser/server errors');

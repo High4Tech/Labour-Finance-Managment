@@ -75,3 +75,5 @@ def after_migrate():
                 dict(id='platform-operations', type='card', data=dict(card_name='Platform operations', col=12))]),
             links=[dict(type='Card Break', label='Platform operations')] +
                   [dict(type='Link', link_type='DocType', link_to=name, label=name) for name in names])).insert(ignore_permissions=True)
+    from plus_point.ux import configure_tenant_workspace
+    configure_tenant_workspace()

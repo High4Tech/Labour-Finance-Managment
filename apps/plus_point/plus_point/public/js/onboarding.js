@@ -1,4 +1,4 @@
-/* Guidance layered onto native Desk. No new authentication or business writes. */
+/* Task shortcuts and guidance layered onto native, permission-checked Desk. */
 (() => {
     const appHelp = {
         'PLUS POINT': 'Start here for work sites, worker assignments, dehadi and contractor billing.',
@@ -19,7 +19,7 @@
             links: [['PP Contract Terms', 'Billing terms'], ['PP Milestone', 'Fixed milestones']]},
         {title: 'Choose where each worker will work', text: 'Create work sites under a project. Add workers, then allocate them to a site with dates, a wage rate and the agreed client rate.',
             links: [['PP Site', 'Work sites'], ['Employee', 'Workers'], ['PP Assignment', 'Worker allocations']]},
-        {title: 'Record daily attendance and dehadi', text: 'Open a work site and choose Prepare daily attendance. Review each worker: 1 = full day, 0.5 = half day, 0 = absent. Submit the register to approve earnings.',
+        {title: 'Record daily attendance and dehadi', text: 'Choose Mark attendance on Workforce home, then select a work site and date. Review each worker: 1 = full day, 0.5 = half day, 0 = absent. Submit the register to approve earnings.',
             links: [['PP Daily Register', 'Daily attendance'], ['PP Work Entry', 'Worker earnings']]},
         {title: 'Invoice the client and record receipts', text: 'Open active Billing terms and choose Prepare client invoice. Review and submit the invoice, then record the client payment as a receipt.',
             links: [['PP Contract Terms', 'Prepare an invoice'], ['Sales Invoice', 'Client invoices'], ['Payment Entry', 'Receipts and payments']]},
@@ -55,13 +55,86 @@
         'Client invoices': screens['Sales Invoice'][1], 'Receipts and payments': screens['Payment Entry'][1],
         'Worker payments': screens['PP Wage Settlement'][1],
     };
+    const customerLists = {
+        'PP Site': ['Work sites', 'Add work site'],
+        'PP Assignment': ['Worker assignments', 'Assign worker'],
+        'PP Contract Terms': ['Client billing', 'Add billing terms'],
+        'PP Daily Register': ['Daily attendance', 'Add attendance'],
+        'PP Work Entry': ['Wages earned', 'Add work entry'],
+        'PP Milestone': ['Fixed contract milestones', 'Add milestone'],
+        'PP Wage Settlement': ['Worker payments', 'Record payment'],
+    };
+    const shortPurpose = {
+        'PP Site': 'Choose a work site to prepare daily attendance.',
+        'PP Assignment': 'Agree who works where, for which dates and rates.',
+        'PP Contract Terms': 'Choose daily or fixed client billing for a project.',
+        'PP Daily Register': 'Review each worker, then Submit to approve earnings.',
+        'PP Work Entry': 'Wages earned from approved work. Payments are recorded separately.',
+        'PP Milestone': 'Client earnings for fixed contracts. Worker wages remain separate.',
+        'PP Wage Settlement': 'Link a submitted employee payment to wages earned.',
+    };
     let started = false, queued = false, driver;
     const esc = value => frappe.utils.escape_html(String(value));
     const platform = () => !!frappe.boot.plus_point?.is_platform;
     const home = () => frappe.boot.plus_point?.home || '/desk/plus-point';
-    const link = ([doctype, label]) => `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>`;
-    const key = () => `pp-quick-start-v1:${location.host}:${frappe.session.user}`;
-    const expanded = () => { try { return localStorage.getItem(key()) !== 'collapsed'; } catch { return true; } };
+    const link = ([doctype, label]) => frappe.model.can_read(doctype)
+        ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
+    const key = () => `pp-quick-start-v2:${location.host}:${frappe.session.user}`;
+    const expanded = () => { try { return localStorage.getItem(key()) === 'expanded'; } catch { return false; } };
+
+    function attendancePicker() {
+        let opening = false;
+        const dialog = new frappe.ui.Dialog({title: __('Mark attendance'), fields: [
+            {fieldtype: 'HTML', fieldname: 'explanation', options: `<p>${esc(__('Choose a work site and date. You will review a draft before approving any earnings. A saved register will reopen.'))}</p>`},
+            {fieldtype: 'Link', fieldname: 'site', label: __('Work site'), options: 'PP Site', reqd: 1,
+                get_query: () => ({filters: {is_active: 1}})},
+            {fieldtype: 'Date', fieldname: 'work_date', label: __('Date'), reqd: 1, default: frappe.datetime.get_today()},
+        ], primary_action_label: __('Review attendance'), async primary_action(values) {
+            if (opening) return;
+            opening = true;
+            dialog.get_primary_btn().prop('disabled', true);
+            try {
+                const saved = await frappe.db.get_list('PP Daily Register', {filters: {site: values.site, work_date: values.work_date},
+                    fields: ['name', 'docstatus'], limit: 1});
+                let name = saved[0]?.name;
+                if (!name) {
+                    const result = await frappe.call({method: 'plus_point.api.prepare_daily_register', type: 'POST',
+                        args: values, freeze: true, freeze_message: __('Preparing an attendance draft…')});
+                    name = result.message.name;
+                }
+                dialog.hide();
+                await frappe.set_route('Form', 'PP Daily Register', name);
+                frappe.show_alert({message: __(saved.length ? 'Opened your saved attendance register.' : 'Draft ready. Review workers before Submit.'), indicator: 'blue'});
+            } catch {
+                // Native calls display permission/validation details. Keep selections for retry.
+                frappe.show_alert({message: __('Attendance was not opened. Review the message and try again.'), indicator: 'red'});
+            } finally {
+                opening = false;
+                dialog.get_primary_btn().prop('disabled', false);
+            }
+        }});
+        dialog.show();
+        frappe.db.get_list('PP Site', {filters: {is_active: 1}, fields: ['name'], limit: 2})
+            .then(sites => { if (sites.length === 1 && !dialog.get_value('site')) dialog.set_value('site', sites[0].name); })
+            .catch(() => { /* The native Link picker remains available. */ });
+    }
+
+    function taskHome() {
+        return `<div class="pp-task-home">
+            <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('What would you like to do?'))}</p></div>
+                <button type="button" class="btn btn-default pp-start-tour">${esc(__('Show me around'))}</button></div>
+            <div class="pp-daily-focus"><div><span class="pp-task-date">${esc(frappe.datetime.str_to_user(frappe.datetime.get_today()))}</span>
+                <h3>${esc(__('Start with attendance'))}</h3><p>${esc(__('Choose a site, review workers, and record a full day, half-day or absence.'))}</p></div>
+                <button type="button" class="btn btn-primary pp-mark-attendance" ${frappe.model.can_create('PP Daily Register') ? '' : 'disabled'}>${esc(__('Mark attendance'))}</button></div>
+            <div class="pp-task-rows">
+                <div class="pp-task-row"><div><h3>${esc(__('Workers and work sites'))}</h3><p>${esc(__('Add workers and assign them to the right site.'))}</p></div>
+                    <div class="pp-task-links">${link(['Employee', 'Workers'])}${link(['PP Site', 'Work sites'])}${link(['PP Assignment', 'Assign workers'])}</div></div>
+                <div class="pp-task-row"><div><h3>${esc(__('Client billing'))}</h3><p>${esc(__('Set the agreement, prepare an invoice and record client receipts.'))}</p></div>
+                    <div class="pp-task-links">${link(['PP Contract Terms', 'Billing terms'])}${link(['Sales Invoice', 'Invoices'])}</div></div>
+                <div class="pp-task-row"><div><h3>${esc(__('Worker payments'))}</h3><p>${esc(__('Keep wages earned separate from money actually paid.'))}</p></div>
+                    <div class="pp-task-links">${link(['PP Wage Settlement', 'Record payment'])}${link(['PP Work Entry', 'Wages earned'])}</div></div>
+            </div></div>`;
+    }
 
     function tip(element, text) {
         const $element = $(element);
@@ -158,6 +231,10 @@
             tip(button, __(field.df.description));
             button.on('click', event => { event.preventDefault(); event.stopPropagation(); button.tooltip('show'); });
             button.on('keydown', event => { if (event.key === 'Escape') button.tooltip('hide'); });
+            if (!platform()) {
+                field.$wrapper.find('.help-box').filter((_index, node) => node.textContent.trim() === field.df.description.trim())
+                    .addClass('pp-supplementary-help');
+            }
         });
     }
 
@@ -170,7 +247,7 @@
     function context(route) {
         if (platform()) return __('High4Tech · Manage subscriber organizations, subscriptions and access limits here.');
         if (route[0] === 'Form' || route[0] === 'List') {
-            return screens[route[1]] ? __(screens[route[1]][1]) : __('Additional ERP tools. Your contractor workflow starts in PLUS POINT.');
+            return shortPurpose[route[1]] ? __(shortPurpose[route[1]]) : screens[route[1]] ? __(screens[route[1]][1]) : __('Additional ERP tools. Your contractor workflow starts in PLUS POINT.');
         }
         if (route[0] === 'Workspaces' && route[1] === 'PLUS POINT') return __('Your workspace for labour contracts, daily attendance, wages and client billing.');
         if (route[0] === 'Workspaces' && route[1] === 'Manufacturing') return __('Manufacturing is an optional ERPNext module for production and factories. Use PLUS POINT for labour contracting.');
@@ -184,6 +261,16 @@
         if (!active || !$(active).is(':visible')) return;
         const main = active.querySelector('.layout-main-section');
         if (!main) return;
+        active.classList.toggle('pp-customer-screen', !platform());
+        if (!platform() && route[0] === 'List' && customerLists[route[1]]) {
+            const [title, action] = customerLists[route[1]];
+            const page = active.page;
+            if (page?.title !== __(title)) page?.set_title(__(title));
+            const listview = frappe.get_list_view(route[1]);
+            if (listview?.can_create && page?.btn_primary?.is(':visible') && page.btn_primary.attr('data-label') !== __(action)) {
+                page.set_primary_action({label: __(action), short_label: __('Add')}, () => listview.make_new_doc(), 'plus');
+            }
+        }
         let bar = main.querySelector(':scope > .pp-context-bar');
         if (!bar) {
             bar = document.createElement('aside'); bar.className = 'pp-context-bar';
@@ -198,21 +285,32 @@
             bar.querySelector('.pp-open-guide').addEventListener('click', showGuide);
         }
         const isHome = !platform() && route[0] === 'Workspaces' && route[1] === 'PLUS POINT';
+        bar.classList.toggle('pp-home-context', isHome);
         let welcome = main.querySelector(':scope > .pp-welcome');
         if (isHome && !welcome) {
             welcome = document.createElement('section'); welcome.className = 'pp-welcome';
             welcome.setAttribute('aria-label', __('Getting started with PLUS POINT'));
-            welcome.innerHTML = `<div class="pp-welcome-heading"><div><h2>${esc(__('Start here: your contractor workflow'))}</h2>
-                <p>${esc(__('Follow the job from client agreement to wages paid. Use the links below to open the existing records.'))}</p></div>
-                <button type="button" class="btn btn-default btn-sm pp-start-tour">${esc(__('Show me around'))}</button></div>
+            welcome.innerHTML = `${taskHome()}
                 <details class="pp-quick-start" ${expanded() ? 'open' : ''}><summary>${esc(__('Quick start: six steps from contract to payment'))}</summary>
                 ${workflow()}<p class="pp-guide-note">${esc(__('Use PLUS POINT for contractor attendance and dehadi. HR Attendance and payroll are separate workflows. Recording earnings does not record a payment.'))}</p></details>`;
             bar.after(welcome);
             welcome.querySelector('.pp-start-tour').addEventListener('click', () => homeTour(welcome));
+            welcome.querySelector('.pp-mark-attendance').addEventListener('click', attendancePicker);
             welcome.querySelector('details').addEventListener('toggle', event => {
                 try { localStorage.setItem(key(), event.target.open ? 'expanded' : 'collapsed'); } catch { /* Storage is optional. */ }
             });
         } else if (!isHome && welcome) welcome.remove();
+        // Keep native records available without making thirteen setup links the home screen.
+        let allRecords = main.querySelector('.pp-all-records');
+        const editor = main.querySelector('.editor-js-container');
+        if (isHome && editor && !allRecords) {
+            allRecords = document.createElement('details'); allRecords.className = 'pp-all-records';
+            allRecords.innerHTML = `<summary>${esc(__('More tools and setup'))}</summary>`;
+            editor.before(allRecords); allRecords.append(editor);
+        } else if (!isHome && allRecords) {
+            if (editor) allRecords.before(editor);
+            allRecords.remove();
+        }
         if (isHome) main.querySelectorAll('a').forEach(anchor => {
             const text = workspaceHelp[anchor.textContent.trim()];
             if (text) tip(anchor, __(text));
@@ -243,6 +341,10 @@
     function start() {
         if (started) return;
         started = true;
+        frappe.provide('frappe.listview_settings');
+        if (!platform()) Object.keys(customerLists).forEach(doctype => {
+            frappe.listview_settings[doctype] = {...frappe.listview_settings[doctype], hide_name_column: true, hide_name_filter: true};
+        });
         frappe.router.on('change', () => {
             if (driver) { driver.reset(); driver = null; }
             $('.pp-field-tip, [data-pp-tip]').tooltip('hide');

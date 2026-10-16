@@ -11,6 +11,7 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 5. Real browser: tenant/High4Tech workspaces and native list navigation using scripts/browser-smoke.cjs; app-switcher/HR/Home/Users round trip using scripts/browser-navigation.cjs, optionally as a named local account with linked employee self-service; screenshots in private .local/qa.
 6. Native installer: fresh disposable site/database/user through environment-only credentials, native cleanup limited to that generated test site.
 7. Onboarding browser: `scripts/browser-onboarding.cjs` checks the tenant workflow tour (Next/Back/Escape/Finish), app-role explanations, collapse preference after reload, field help by first click and keyboard, field tour, return from an optional module, app captions, mobile width/tour placement and platform-specific home/tile/field guidance. Guidance tests do not write business documents.
+8. Customer workspace browser: `scripts/browser-customer-ux.cjs` checks the default home, collapsed optional content, plain-language sidebar/list labels, comfortable primary target, hidden list ID column and 390px layout. It creates a populated attendance draft on a vacant demo date, reopens that same draft without duplicates or submission, and removes its temporary record. Run against a local tenant only; it refuses a date with an existing register.
 
 ## Release gates still required
 

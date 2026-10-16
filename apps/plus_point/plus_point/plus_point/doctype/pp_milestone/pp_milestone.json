@@ -60,7 +60,7 @@
     {
       "fieldname": "sales_invoice",
       "fieldtype": "Link",
-      "label": "ERPNext Invoice",
+      "label": "Client invoice",
       "options": "Sales Invoice",
       "description": "Managed by the Prepare client invoice action and native invoice submission/cancellation.",
       "read_only": 1
@@ -81,5 +81,6 @@
     }
   ],
   "sort_field": "modified",
-  "sort_order": "DESC"
+  "sort_order": "DESC",
+  "show_title_field_in_link": 1
 }

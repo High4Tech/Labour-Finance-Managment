@@ -37,6 +37,30 @@
 .pp-field-tip:focus-visible, .pp-quick-start summary:focus-visible, .pp-workflow-links a:focus-visible, .pp-home-link:focus-visible { outline: 2px solid var(--text-color, #171717); outline-offset: 3px; }
 .desktop-icon .pp-app-purpose { max-width: 26ch; margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted, #626b75); }
 .desktop-icon:has(.pp-app-purpose) { align-self: start; }
+.pp-home-context { justify-content: flex-end; background: transparent; }
+.pp-home-context .pp-context-copy, .pp-home-context .pp-home-link { display: none; }
+.pp-task-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.pp-task-heading p { margin: 0; color: var(--text-muted, #626b75); }
+.pp-task-home h3 { font-size: 16px; line-height: 1.4; font-weight: 600; margin: 0 0 6px; }
+.pp-task-home p { max-width: 66ch; line-height: 1.5; }
+.pp-task-home .btn, .pp-task-links a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.pp-daily-focus { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px; background: var(--subtle-fg, #f8f9fa); border: 1px solid var(--border-color, #e5e7eb); border-radius: var(--border-radius-md, 8px); }
+.pp-task-date { display: block; font-size: 12px; color: var(--text-muted, #626b75); margin-bottom: 8px; }
+.pp-daily-focus p { margin: 0; color: var(--text-muted, #626b75); font-size: 14px; }
+.pp-mark-attendance { flex-shrink: 0; padding: 10px 18px; }
+.pp-task-rows { margin: 8px 0 20px; }
+.pp-task-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--border-color, #e5e7eb); }
+.pp-task-row p { margin: 0; color: var(--text-muted, #626b75); font-size: 13px; }
+.pp-task-row h3 { font-size: 15px; margin-bottom: 4px; }
+.pp-task-links { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; justify-content: flex-end; flex-shrink: 0; }
+.pp-task-links a { color: var(--text-color, #171717); text-decoration: underline; text-underline-offset: 4px; padding: 0 3px; }
+.pp-all-records { padding: 0 24px 24px; }
+.pp-all-records > summary { cursor: pointer; padding: 16px 0; font-size: 14px; font-weight: 600; }
+.pp-customer-screen .pp-supplementary-help { display: none; }
+.pp-customer-screen .frappe-control:focus-within .pp-supplementary-help { display: block; }
+.pp-customer-screen .pp-context-bar:not(.pp-home-context) { font-size: 13px; }
+.pp-task-home a:focus-visible, .pp-task-home button:focus-visible, .pp-all-records summary:focus-visible { outline: 2px solid var(--text-color, #171717); outline-offset: 3px; }
+.pp-customer-screen .primary-action { min-height: 40px; }
 @media (max-width: 767px) {
     .pp-context-bar, .pp-welcome-heading { flex-direction: column; align-items: stretch; }
     .pp-context-actions { flex-wrap: wrap; justify-content: space-between; }
@@ -44,4 +68,12 @@
     .pp-start-tour { align-self: flex-start; margin-bottom: 12px; }
     .pp-workflow { padding-left: 21px; }
     .pp-field-tip { width: 28px; height: 28px; }
+    .pp-task-heading, .pp-daily-focus, .pp-task-row { flex-direction: column; align-items: stretch; }
+    .pp-task-heading { gap: 12px; }
+    .pp-task-heading .pp-start-tour { align-self: flex-start; margin: 0; }
+    .pp-task-row { gap: 8px; }
+    .pp-task-links { justify-content: flex-start; gap: 4px 18px; }
+    .pp-daily-focus { padding: 16px; gap: 16px; }
+    .pp-all-records { padding: 0 14px 18px; }
+    .pp-customer-screen .primary-action { min-height: 44px; }
 }

@@ -1,6 +1,12 @@
 # Using PLUS POINT
 
-Start at **PLUS POINT → Workforce home**. The workspace has **How it works**, a **Show me around** tour and a quick-start guide you can collapse. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. **Explain this screen** opens guidance for the current record.
+Start at **PLUS POINT → Workforce home**. Customer logins open this workspace by default unless an administrator has chosen another starting app. The overview groups everyday work into attendance, workers and work sites, client billing, and worker payments.
+
+Choose **Mark attendance**, select the work site and date, then **Review attendance**. This prepares a draft with assigned workers, or reopens the saved register for that site and date. Review the entries before **Submit** approves earnings. Opening attendance never approves it automatically.
+
+The sidebar groups **Daily work** and **Billing and payments**. Expand **More** for clients, contracts, projects and fixed contract milestones. Lists use labels such as **Add work site** and **Assign worker**, with internal record IDs removed from the main list display. Native permissions still determine which links and actions you can use.
+
+For help, use **How it works**, **Show me around**, or expand the six-step **Quick start**. Quick start and **More tools and setup** begin collapsed; the guide remembers your preference in this browser for your login and site. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
 
 ## Which app does what?
 
@@ -19,7 +25,7 @@ Manufacturing is an optional ERPNext module for factories and production. It is 
 1. **Set up the client and job.** Your **Company** is your own business. A **Client company** is the organization paying you. Create its Contract and Project.
 2. **Agree billing terms.** Link the contract and project, choose Daily or Fixed, and activate the terms when agreed.
 3. **Allocate workers.** Create the project's Work sites, add Workers, then create dated Worker allocations with agreed wage and client rates.
-4. **Record attendance.** Open a work site and choose **Prepare daily attendance**. Review 1 for a full day, 0.5 for a half-day, or 0 for absence. Save a draft for review; Submit creates approved worker earnings. A worker can total at most one full day across sites on a date.
+4. **Record attendance.** On Workforce home choose **Mark attendance**, select the site and date, then **Review attendance**. You can also use **Prepare daily attendance** on a work site. Review 1 for a full day, 0.5 for a half-day, or 0 for absence. Save a draft for review; Submit creates approved worker earnings. A worker can total at most one full day across sites on a date.
 5. **Invoice the client.** Open active Billing terms and choose **Prepare client invoice**. Review and submit the native invoice, then record client receipts with Payment Entries.
 6. **Pay workers and review figures.** Record a submitted employee Payment Entry and link it in Worker payments. Open Billing terms → **Project finances** to review earnings, receipts, wages and outstanding balances.
 
