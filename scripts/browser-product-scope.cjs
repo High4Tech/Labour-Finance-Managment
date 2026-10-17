@@ -23,7 +23,7 @@ const {chromium}=require('playwright');
   await page.goto(base+'/desk',{waitUntil:'domcontentloaded'});
   await page.locator('.pp-task-home').getByText(homeTitle,{exact:true}).waitFor();
   await page.locator('.pp-dashboard[data-ready="true"]').waitFor();
-  assert.equal(await page.locator('.pp-dashboard-metric').count(),4);
+  assert.equal(await page.locator('.pp-dashboard-metric').count(),platform?4:6);
   assert.equal(await page.locator('.pp-dashboard-panels > .pp-dashboard-panel').count(),2);
   for(const state of await page.locator('.pp-dashboard .pp-condition').all())
    assert(await state.locator('a,button').count(),'Every state must offer a next action');
@@ -43,6 +43,12 @@ const {chromium}=require('playwright');
   if(platform){
    for(const label of ['Customer accounts','Customer support','Pricing plans','Subscriptions','Software invoices','Financial results','Outstanding invoices'])assert(sidebar.includes(label),label);
    for(const label of ['Assign workers','Attendance','Wages earned','PP Assignment'])assert(!sidebar.includes(label),label);
+   await page.getByRole('link',{name:'Software sales',exact:true}).click();
+   await page.locator('.pp-section-home[data-section="Software sales"][data-ready=true]').waitFor();
+   assert.equal(await page.locator('.pp-section-home .pp-dashboard-metric').count(),4);
+   assert.equal(await page.locator('.pp-section-home .pp-heatmap').count(),0);
+   await page.getByRole('link',{name:'Overview',exact:true}).click();
+   await page.locator('.pp-dashboard[data-ready=true]').waitFor();
    await page.getByRole('link',{name:'Customers',exact:true}).click();
    await page.getByRole('button',{name:'Add customer',exact:true}).waitFor();
    const tenant=await page.evaluate(async()=>{const rows=await frappe.db.get_list('PP Tenant',{fields:['name'],limit:1});return rows[0].name;});

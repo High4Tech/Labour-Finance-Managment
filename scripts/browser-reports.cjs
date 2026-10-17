@@ -55,7 +55,7 @@ const {chromium} = require('playwright');
         console.log('PASS native project finances and deployment views; values match the tested financial API');
 
         const worker = await page.evaluate(async () => {
-            const rows=await frappe.db.get_list('Employee',{filters:{employee_name:'PLUS POINT Demo'},fields:['name'],limit:1});
+            const rows=await frappe.db.get_list('Employee',{filters:{name:'HR-EMP-00001'},fields:['name'],limit:1});
             return rows[0]?.name;
         });
         assert(worker,'Seed the local demo worker before report QA');

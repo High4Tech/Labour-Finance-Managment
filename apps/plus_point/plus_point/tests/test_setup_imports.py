@@ -18,6 +18,8 @@ class SetupImportTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         frappe.set_user('Administrator')
+        cls.original_override=frappe.flags.get('pp_test_entitlement')
+        frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
         frappe.db.savepoint('pp_import_suite')
         cls.f = fixture('PP Import QA ' + uuid.uuid4().hex[:8])
 
@@ -25,6 +27,7 @@ class SetupImportTests(unittest.TestCase):
     def tearDownClass(cls):
         frappe.set_user('Administrator')
         frappe.db.rollback(save_point='pp_import_suite')
+        frappe.flags.pp_test_entitlement=cls.original_override
 
     def setUp(self):
         frappe.set_user('Administrator')

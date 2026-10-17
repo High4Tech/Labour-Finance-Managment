@@ -2,6 +2,14 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Activity dashboards and personal navigation
+
+**57 MariaDB business regressions passed** after the latest activity and budget-aggregation changes. New checks cover approved half-days, future-work exclusion from the 91-day calendar, named daily details, company isolation and Guest denial, validated personal section order, native section counts and notification acknowledgement/change detection. Existing native purchase/claim tests also compare batched totals with individual ledger totals. Business fixtures roll back.
+
+Real Edge as the customer dummy login passed six stats before the action inbox, actual work/finance charts, range switching, day details, client/company front-page calendars, company-scoped native list links, section summaries without charts, saved/reloaded personal ordering, read acknowledgement with unresolved actions retained, and 390px layout. Original personal order/read state were restored. All 11 offline project/harness checks and Python/JavaScript syntax checks passed. Separate High4Tech section-summary/focused-navigation/support/accounting-report browser checks passed with four platform metrics and no workforce UI. Budget warning/stop, existing overrun ticket, approved-work success, injected load failure/retry and empty-company CTA checks passed; exact demo budget/draft fixtures were restored/removed. Screenshots are in ignored `.local/qa`.
+
+Native section Page migrations completed on demo, platform and QA. The local demo intentionally retains its labelled synthetic story (70 added approved work entries, realistic workers/clients and illustrative native invoice/receipt/wage records). The story performs no external transfers and its operator helper is not available over HTTP. Activity is aggregated in SQL before transfer; dashboard budgets use three ledger aggregates rather than three per project. These changes have no production load benchmark. Updates recalculate on open/refresh, with no background push or outgoing email. Calendars describe approved worker-days within 91 days, not verified presence or total lifetime engagement.
+
 ## Guided setup and historical imports
 
 Quieter overview follow-up: real Edge confirmed the established demo has no visible setup banner, home import button or tour CTA. Manual Help → Guided setup, skip and reload/resume, saved worker/site/assignment, list-based employee import, duplicate handling and mobile focus all passed. Exact fixtures and the original guide state were restored. Backend eligibility rules and posting behavior are unchanged; the 53-case database result below remains prior evidence.

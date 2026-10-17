@@ -17,7 +17,7 @@ const {chromium}=require('playwright');
   assert.equal(await page.evaluate(async credentials=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)})).json()).message,
    {usr:'Administrator',pwd:settings.PP_ADMIN_PASSWORD}),'Logged In');
   await home();
-  const site=(await call('frappe.client.get_list',{doctype:'PP Site',filters:{site_name:'PLUS POINT Demo'},fields:['name','project'],limit_page_length:1}))[0];
+  const site=(await call('frappe.client.get_list',{doctype:'PP Site',filters:{site_name:'DHA construction site (Demo)'},fields:['name','project'],limit_page_length:1}))[0];
   assert(site);project=site.project;
   original=await call('frappe.client.get',{doctype:'Project',name:project});
   assert(!original.pp_enforce_spending_budget,'Refusing to replace a user-enabled budget in the demo');

@@ -26,5 +26,5 @@ def boot_context(bootinfo):
     bootinfo.module_sidebars = {'PLUS POINT': sidebar}
     bootinfo.entity_module = {item['link_to']: 'PLUS POINT' for item in navigation['items'] if item.get('link_to')}
     bootinfo.home_shell = 'PLUS POINT'
-    for kind, names in [('DocType', navigation['doctypes']), ('Report', navigation['reports']), ('Workspace', [navigation['workspace']])]:
+    for kind, names in [('DocType', navigation['doctypes']), ('Report', navigation['reports']), ('Page',navigation['pages']), ('Workspace', [navigation['workspace']])]:
         bootinfo.setdefault('canonical_shell', {})[kind] = {name: 'PLUS POINT' for name in names}

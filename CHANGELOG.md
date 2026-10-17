@@ -1,5 +1,9 @@
 # Development changelog
 
+## Activity dashboard and personal navigation — 2026-10-17
+
+Added six customer summary tiles, an action inbox below stats, per-user read acknowledgements, selectable approved-work history and a revenue/cost comparison on the main overview. Added permission-scoped section landing pages and saved up/down sidebar ordering. Client/company front pages show keyboard-accessible 91-day activity calendars with named day details. Database-side activity aggregation and batched budget totals reduce repeated reads. Added an idempotent, local-only labelled demo story with realistic people/business names, work history and native illustrative invoice/receipt/wage records.
+
 ## Quieter established-business overview — 2026-10-17
 
 Removed the always-visible setup/import banner, home tour button and duplicate quick-start block for established businesses. Setup now renders only when the existing server response reports an unfinished business with no assignments. Skip and completion clear that prompt. Manual setup and workflow guidance remain in Help; employee/finance imports stay beside the relevant list Add buttons. The seeded demo opens directly to daily operations without onboarding prompts.

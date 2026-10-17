@@ -41,6 +41,8 @@ class OperationsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         frappe.set_user('Administrator')
+        cls.original_override=frappe.flags.get('pp_test_entitlement')
+        frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
         frappe.db.savepoint('pp_suite')
         cls.f = fixture()
 
@@ -48,17 +50,18 @@ class OperationsTests(unittest.TestCase):
     def tearDownClass(cls):
         frappe.set_user('Administrator')
         frappe.db.rollback(save_point='pp_suite')
+        frappe.flags.pp_test_entitlement=cls.original_override
 
     def setUp(self):
         frappe.set_user('Administrator')
         frappe.db.savepoint('pp_test')
         self.original_entitlement = frappe.conf.get('pp_entitlement')
-        frappe.flags.pp_test_entitlement = None
+        frappe.flags.pp_test_entitlement = {'valid_until':'2099-12-31'}
 
     def tearDown(self):
         frappe.set_user('Administrator')
         frappe.conf.pp_entitlement = self.original_entitlement
-        frappe.flags.pp_test_entitlement = None
+        frappe.flags.pp_test_entitlement = {'valid_until':'2099-12-31'}
         frappe.db.rollback(save_point='pp_test')
 
     def work(self, units=1, day=None, assignment=None):
@@ -459,7 +462,7 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(frappe.db.count('PP Work Entry',{'project':self.f.project.name}),0)
 
     def test_native_purchase_spending_is_checked_and_counted_once(self):
-        from plus_point.budget import status
+        from plus_point.budget import status, costs, costs_many
         self.set_spending_budget(1200)
         self.work('0.5')
         company=frappe.get_doc('Company',self.f.company.name)
@@ -473,11 +476,12 @@ class OperationsTests(unittest.TestCase):
         invoice.reload();invoice.items[0].rate=200;invoice.save();invoice.submit()
         self.assertEqual(status(self.f.project.name)['used'],'1200.00')
         self.assertEqual(project_summary(self.f.project.name)['other_project_costs'],'200.00')
+        self.assertEqual(costs_many([self.f.project.name])[self.f.project.name],costs(self.f.project.name))
         invoice.cancel()
         self.assertEqual(status(self.f.project.name)['used'],'1000.00')
 
     def test_native_expense_claim_spending_is_checked_and_counted_once(self):
-        from plus_point.budget import status
+        from plus_point.budget import status, costs, costs_many
         self.set_spending_budget(500)
         company=frappe.get_doc('Company',self.f.company.name)
         expense_type=insert('Expense Claim Type',expense_type='PP budget '+uuid.uuid4().hex[:8],
@@ -495,6 +499,7 @@ class OperationsTests(unittest.TestCase):
         claim.save();claim.submit()
         self.assertEqual(status(self.f.project.name)['used'],'500.00')
         self.assertEqual(project_summary(self.f.project.name)['other_project_costs'],'500.00')
+        self.assertEqual(costs_many([self.f.project.name])[self.f.project.name],costs(self.f.project.name))
         claim.cancel()
         self.assertEqual(status(self.f.project.name)['used'],'0.00')
 
@@ -518,5 +523,61 @@ class OperationsTests(unittest.TestCase):
         result=overview(self.f.company.name)
         self.assertTrue(any(row['title']=='Add a work site' and row['action']=='new:PP Site' for row in result['conditions']))
 
+
+    def test_client_activity_uses_approved_days_and_excludes_future_work(self):
+        from plus_point.activity import client_activity,day_detail
+        self.work('0.5')
+        self.work('1',day=add_days(today(),1))
+        data=client_activity(self.f.company.name)
+        self.assertEqual(data['client_count'],1)
+        client=data['clients'][0]
+        self.assertEqual(client['active_days'],1)
+        self.assertEqual(Decimal(client['units']),Decimal('0.5'))
+        self.assertEqual(client['longest_streak'],1)
+        self.assertEqual(len(client['days']),91)
+        detail=day_detail(self.f.company.name,self.f.customer.name,today())
+        self.assertEqual(Decimal(detail['worker_days']),Decimal('0.5'))
+        self.assertEqual(detail['rows'][0]['worker'],self.f.employee.employee_name)
+
+    def test_activity_isolates_other_companies_and_rejects_guest(self):
+        from plus_point.activity import client_activity,customer_summary,day_detail
+        self.work()
+        other=fixture('Other activity '+uuid.uuid4().hex[:6])
+        self.assertEqual(client_activity(other.company.name)['clients'][0]['active_days'],0)
+        with self.assertRaises(frappe.ValidationError):
+            day_detail(self.f.company.name,self.f.customer.name,add_days(today(),-91))
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):
+            customer_summary(self.f.customer.name,self.f.company.name)
+
+    def test_section_order_is_personal_validated_and_persists_in_navigation(self):
+        import json
+        from plus_point.navigation import CUSTOMER_GROUPS,save_section_order,product_navigation
+        original=frappe.defaults.get_user_default('pp_section_order_v1')
+        order=[name for name,_ in reversed(CUSTOMER_GROUPS)]
+        try:
+            save_section_order(order)
+            self.assertEqual(product_navigation(False)['groups'],order)
+            with self.assertRaises(frappe.ValidationError):
+                save_section_order([order[0]]*len(order))
+        finally:
+            frappe.defaults.set_user_default('pp_section_order_v1',original)
+
+    def test_section_dashboard_counts_and_notification_acknowledgement(self):
+        from plus_point.sections import overview as section
+        from plus_point.dashboard import overview,mark_updates_read
+        self.work()
+        data=section('Daily work',self.f.company.name)
+        self.assertEqual(next(r for r in data['links'] if r['doctype']=='Employee')['count'],1)
+        self.assertTrue(overview(self.f.company.name)['notifications'])
+        original=frappe.defaults.get_user_default('pp_read_updates_v1')
+        try:
+            mark_updates_read(self.f.company.name)
+            self.assertTrue(all(r['read'] for r in overview(self.f.company.name)['notifications']))
+            self.work(0.5,day=add_days(today(),1))
+            self.assertTrue(any(not r['read'] for r in overview(self.f.company.name)['notifications']))
+            self.assertTrue(overview(self.f.company.name)['conditions'])
+        finally:
+            frappe.defaults.set_user_default('pp_read_updates_v1',original)
 
 from plus_point.finance import money

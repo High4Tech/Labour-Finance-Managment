@@ -5,7 +5,7 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 ## Automated regression layers
 
 1. Offline: 11 project/harness tests and 10 arithmetic/register tests. These do not replace ERPNext integration.
-2. Real MariaDB: 53 business regressions with rollback, run by plus_point.testing.run_operations. Includes assignment closing/rate replacement, same-site overlaps, report company/date scope, deployment deduplication, fixed-worker revenue, opening/period/closing wage balances, spending limits, guided setup and historical imports.
+2. Real MariaDB: 57 business regressions with rollback, run by plus_point.testing.run_operations. Includes assignment closing/rate replacement, same-site overlaps, report company/date scope, deployment deduplication, fixed-worker revenue, opening/period/closing wage balances, spending limits, guided setup and historical imports.
 3. Real HTTP: native login/REST CRUD, anonymous denial, cross-site token/record isolation and 60 authenticated concurrent reads through scripts/verify-live.py.
 4. Real HTTP subscription: suspension, expiry, active seat limit, reactivation and cleanup through scripts/verify-subscription.py on the local QA site.
 5. Real browser: `browser-product-scope.cjs` checks both curated product homes/sidebars, native support buttons, search filtering, no app/module menu, unrelated-route return and desktop/390px layout. `browser-smoke.cjs` and `browser-navigation.cjs` delegate to it. Old cross-app/HR self-service checks no longer describe the requested interface.
@@ -35,3 +35,9 @@ The read-only `scripts/browser-list-imports.cjs` checks persistent header Import
 - Production image/security scanning, individual accounts/MFA, HTTPS, monitoring, encrypted backups and a demonstrated restore.
 
 CI: quality.yml checks source and pure rules. plus-point-integration.yml installs the real pinned stack and tests it; its optional run_saas dispatch input also provisions platform/QA sites and exercises isolation/subscription HTTP. Legacy upstream demo workflow remains only a separate framework smoke, not PLUS POINT acceptance.
+
+## Activity dashboards
+
+Run `scripts/browser-activity-overview.cjs` with the customer test password supplied in `PP_BROWSER_PASSWORD` and optional `PP_BROWSER_CHANNEL=msedge`. It snapshots/restores the dummy login's exact section order/read preferences through a non-HTTP operator helper. Check six stats before the inbox; range-based approved work; actual financial amounts; date details; front-page client/company calendars; section counts and company-scoped list navigation; save/reload ordering; read acknowledgement without resolving records; 390px width and browser errors. Review `activity-overview.png`, `activity-calendars.png`, `client-billing-hub.png` and `client-front-activity.png` in ignored `.local/qa`.
+
+Run database tests sequentially with browser mutation fixtures to avoid unrelated native cache-clearing races. `plus_point.testing.run_operations` now covers activity, scope, preferences and acknowledgements alongside all existing posting/import/budget rules. `browser-conditions.cjs` verifies budget and load/empty states; `browser-product-scope.cjs` verifies the separate platform UI.

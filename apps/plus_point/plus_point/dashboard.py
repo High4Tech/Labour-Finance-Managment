@@ -18,7 +18,7 @@ def overview(company=None):
     else:
         from plus_point.api import _manager_only
         _manager_only()
-    companies = frappe.get_list('Company', fields=['name', 'default_currency'], order_by='name', limit_page_length=0)
+    companies = frappe.get_list('Company', fields=['name', 'company_name', 'default_currency'], order_by='name', limit_page_length=0)
     names = {row.name for row in companies}
     if company and company not in names:
         frappe.throw('Choose a company you can access', frappe.PermissionError)
@@ -30,6 +30,7 @@ def overview(company=None):
         return result
     result['currency'] = next(row.default_currency for row in companies if row.name == company)
     result.update(_platform(company) if platform else _customer(company))
+    result['notifications'] = notifications(result.get('conditions',[]),company)
     return result
 
 
@@ -49,8 +50,11 @@ def _customer(company):
         attendance[str(row.work_date)] += Decimal(str(row.units))
     total = lambda key: str(money(sum((money(row[key]) for row in rows), Decimal(0))))
     ranked = sorted(rows, key=lambda row: money(row['wages_outstanding']), reverse=True)[:5]
-    from plus_point.budget import status as budget_status
-    budgets = [budget_status(name) for name in names]
+    from plus_point.budget import status as budget_status, costs_many
+    from plus_point.activity import client_activity
+    activity = client_activity(company)
+    cost_totals=costs_many(names)
+    budgets = [budget_status(name,totals=cost_totals[name]) for name in names]
     rank = {'error': 0, 'warning': 1, 'empty': 2, 'success': 3}
     budgets.sort(key=lambda row: (rank[row['level']], row['title']))
     conditions = []
@@ -94,17 +98,43 @@ def _customer(company):
             'Review project finances', '/desk/query-report/PLUS%20POINT%20Project%20Finances')
     if money(total('wages_outstanding')) > 0:
         condition('warning', 'Worker payments are outstanding', 'Review approved wages and link actual employee payments. Recording wages does not pay them.', 'Review worker payments', '/desk/pp-wage-settlement')
+        conditions[-1]['value']=total('wages_outstanding')
     elif rows:
         condition('success', 'No unpaid approved wages', 'All currently approved earnings are covered by linked wage payments, or no wages have been approved yet.', 'View worker statement', '/desk/query-report/PLUS%20POINT%20Worker%20Statement')
     return dict(workers=len(workers), active_sites=len(sites),
-        budgets=budgets, conditions=conditions,
+        budgets=budgets, conditions=conditions, activity=activity,
         open_projects=sum(1 for row in rows if projects[row['project']].status == 'Open' and projects[row['project']].is_active == 'Yes'),
         wages_unpaid=total('wages_outstanding'), client_balance=total('client_outstanding_gross'),
         earned_revenue=total('earned_revenue'), contribution=total('operational_profit'),
+        wages_earned=total('labour_cost'), wages_paid=total('wages_paid'), other_costs=total('other_project_costs'),
+        cash_received=total('cash_collected_gross'), invoiced_net=total('invoiced_net'),
         attendance=[dict(date=day, units=str(attendance[day])) for day in days],
         projects=[dict(name=row['project'], title=projects[row['project']].project_name,
             earned_revenue=row['earned_revenue'], wages_unpaid=row['wages_outstanding'],
             contribution=row['operational_profit']) for row in ranked])
+
+
+def notifications(conditions,company):
+    import hashlib
+    import json
+    read=set(json.loads(frappe.defaults.get_user_default('pp_read_updates_v1') or '[]'))
+    result=[]
+    for condition in conditions:
+        if condition['level'] not in ('error','warning'):
+            continue
+        key=hashlib.sha256(json.dumps([company,condition],sort_keys=True).encode()).hexdigest()
+        result.append(dict(condition,id=key,read=key in read))
+    return result
+
+
+@frappe.whitelist(methods=['POST'])
+def mark_updates_read(company):
+    import json
+    data=overview(company)
+    previous=json.loads(frappe.defaults.get_user_default('pp_read_updates_v1') or '[]')
+    ids=[row['id'] for row in data.get('notifications',[])]
+    frappe.defaults.set_user_default('pp_read_updates_v1',json.dumps(list(dict.fromkeys(previous+ids))[-100:]))
+    return dict(read=len(ids))
 
 
 def _platform(company):

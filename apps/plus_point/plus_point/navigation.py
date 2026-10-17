@@ -1,5 +1,6 @@
 """Product navigation only. Native document permissions remain the security boundary."""
 import frappe
+import json
 
 CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers'),
@@ -30,6 +31,10 @@ COMMON_DEPENDENCIES = ['Address', 'Contact', 'Currency', 'Country', 'Fiscal Year
 
 def product_navigation(platform):
     groups = PLATFORM_GROUPS if platform else CUSTOMER_GROUPS
+    saved = json.loads(frappe.defaults.get_user_default('pp_section_order_v1') or '[]')
+    ordered = [label for label in saved if label in dict(groups)]
+    ordered += [label for label,_ in groups if label not in ordered]
+    groups = [(label,dict(groups)[label]) for label in ordered]
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
     doctypes, reports = set(COMMON_DEPENDENCIES), set()
@@ -54,9 +59,24 @@ def product_navigation(platform):
         if visible:
             items.append(dict(type='Section Break', label=label, collapsible=1,
                               keep_closed=int(label in ('Business setup', 'Billing setup'))))
+            items.append(dict(type='Link',link_type='Page',link_to='pp-section',label=label+' overview',
+                route_options=json.dumps({'section':label}),child=1,is_default_module=1))
             items.extend(visible)
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
         doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record'])
-    return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home)
+    return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
+                pages=['pp-section'],groups=ordered)
+
+
+@frappe.whitelist(methods=['POST'])
+def save_section_order(order):
+    if frappe.session.user=='Guest':
+        frappe.throw('Sign in to arrange your sections',frappe.PermissionError)
+    values=frappe.parse_json(order)
+    allowed=[label for label,_ in (PLATFORM_GROUPS if frappe.conf.get('pp_control_plane') else CUSTOMER_GROUPS)]
+    if not isinstance(values,list) or len(values)!=len(allowed) or set(values)!=set(allowed):
+        frappe.throw('Include each available section once')
+    frappe.defaults.set_user_default('pp_section_order_v1',json.dumps(values))
+    return product_navigation(bool(frappe.conf.get('pp_control_plane')))

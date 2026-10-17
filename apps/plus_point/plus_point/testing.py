@@ -108,6 +108,30 @@ def seed_demo():
                 note='Clearly labelled local demonstration data; no production business records')
 
 
+def dashboard_browser_preferences(action,run_id):
+    import json,re
+    from pathlib import Path
+    if not frappe.conf.get('allow_tests') or frappe.local.site!='demo.localhost' or not re.fullmatch('[a-f0-9]{12}',run_id):
+        raise RuntimeError('Exact localhost dashboard test run required')
+    user='example@email.com'
+    frappe.get_doc('User',user)
+    keys=['pp_section_order_v1','pp_read_updates_v1']
+    path=Path(frappe.get_site_path('private','backups',f'pp-dashboard-browser-{run_id}.json'))
+    if action=='begin':
+        if path.exists():
+            raise RuntimeError('Restore the existing exact run before starting it again')
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps({key:frappe.defaults.get_user_default(key,user=user) for key in keys}),encoding='utf-8')
+        return dict(saved=True)
+    if action!='end' or not path.exists():
+        raise RuntimeError('Original preference snapshot not found')
+    original=json.loads(path.read_text(encoding='utf-8'))
+    for key in keys:
+        frappe.defaults.set_user_default(key,original[key],user=user)
+    frappe.db.commit();path.unlink()
+    return dict(restored=True)
+
+
 def seed_platform_demo():
     from plus_point.platform import require_platform, export_entitlement
     require_platform()

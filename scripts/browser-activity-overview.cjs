@@ -1,0 +1,73 @@
+/* Real activity, section landing pages, personal reorder and in-app updates. */
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const {execFileSync}=require('node:child_process'),{chromium}=require('playwright');
+(async()=>{
+ assert(process.env.PP_BROWSER_PASSWORD,'Set the local customer test password in PP_BROWSER_PASSWORD');
+ const root=path.resolve(__dirname,'..'),base='http://demo.localhost:8000',out=path.join(root,'.local','qa');fs.mkdirSync(out,{recursive:true});
+ const run=crypto.randomBytes(6).toString('hex');
+ const prefs=action=>JSON.parse(execFileSync('docker',['compose','exec','-T','-w','/home/frappe/frappe-bench','frappe','bench','--site','demo.localhost','execute','plus_point.testing.dashboard_browser_preferences','--kwargs',JSON.stringify({action,run_id:run})],{cwd:root,encoding:'utf8'}).trim());
+ prefs('begin');const browser=await chromium.launch({headless:true,...(process.env.PP_BROWSER_CHANNEL?{channel:process.env.PP_BROWSER_CHANNEL}:{})});
+ const page=await browser.newPage({viewport:{width:1440,height:1050}});page.setDefaultTimeout(25000);
+ const failures=[];page.on('pageerror',error=>failures.push(error.message));
+ page.on('response',response=>{if(response.status()>=400)failures.push(`HTTP ${response.status()}: ${response.url()}`);});
+ const home=async()=>{await page.goto(base+'/desk/plus-point',{waitUntil:'domcontentloaded'});await page.locator('.pp-dashboard[data-ready=true]').waitFor();};
+ const call=(method,args={})=>page.evaluate(async({method,args})=>(await frappe.call({method,args,type:'POST'})).message,{method,args});
+ try{
+  await page.goto(base+'/login',{waitUntil:'domcontentloaded'});
+  assert.equal(await page.evaluate(async credentials=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)})).json()).message,{usr:'example@email.com',pwd:process.env.PP_BROWSER_PASSWORD}),'Logged In');
+  await home();
+  assert.equal(await page.locator('.pp-dashboard-metric').count(),6);
+  assert(await page.locator('.pp-dashboard-metrics').evaluate(node=>node.getBoundingClientRect().top<document.querySelector('.pp-action-inbox').getBoundingClientRect().top));
+  const data=await call('plus_point.dashboard.overview');assert(data.activity.clients.length>=3);
+  assert.equal(await page.locator('.pp-client-activity').count(),data.activity.clients.length);
+  assert(await page.locator('.pp-day:not(.pp-heat-0)').count());
+  await page.getByRole('button',{name:'30d',exact:true}).click();
+  assert.equal(await page.locator('.pp-work-trend .pp-chart-column').count(),30);
+  await page.screenshot({path:path.join(out,'activity-overview.png')});
+  await page.locator('.pp-activity-panel').scrollIntoViewIfNeeded();
+  await page.screenshot({path:path.join(out,'activity-calendars.png')});
+  const client=data.activity.clients.find(row=>row.active_days>0),day=client.days.find(row=>Number(row.units)>0);
+  await page.locator(`.pp-heatmap[data-customer="${client.name}"] .pp-day[data-day="${day.date}"]`).click();
+  await page.getByRole('heading',{name:`Work on ${day.date}`,exact:true}).waitFor();
+  assert((await call('plus_point.activity.day_detail',{company:data.company,customer:client.name,day:day.date})).rows.length);
+  await page.locator('.modal:visible').last().locator('.btn-modal-close').count().then(async count=>{if(count)await page.locator('.modal:visible').last().locator('.btn-modal-close').click();else await page.locator('.modal:visible').last().getByRole('button',{name:'Close',exact:true}).click();});
+  await home();
+  await page.getByRole('button',{name:'Notifications',exact:true}).click();
+  const read=page.getByRole('button',{name:'Mark updates read',exact:true});
+  if(await read.count()){await read.click();await page.waitForFunction(()=>document.querySelector('.pp-open-updates .pp-count')?.textContent.trim()==='0');}
+  assert(await page.locator('.pp-ticket').count(),'Reading does not resolve the underlying actions');
+  await page.getByRole('link',{name:'Daily work',exact:true}).click();
+  await page.locator('.pp-section-home[data-ready=true]').waitFor();
+  assert.equal(await page.locator('.pp-dashboard-chart').count(),0);
+  assert(await page.getByRole('heading',{name:'Work lists',exact:true}).isVisible());
+  await page.getByRole('link',{name:'Clients and billing',exact:true}).click();
+  await page.locator('.pp-section-home[data-section="Clients and billing"][data-ready=true]').waitFor();
+  await page.locator('.pp-section-home[data-ready=true]').waitFor();
+  await page.screenshot({path:path.join(out,'client-billing-hub.png'),fullPage:true});
+  await page.locator('.pp-section-list').first().click();
+  await page.waitForFunction(()=>frappe.get_route()[0]==='List'&&frappe.get_route()[1]==='Customer'&&frappe.get_list_view('Customer')?.get_filter_value('name'));
+  const clientFilter=await page.evaluate(()=>frappe.get_list_view('Customer').get_filter_value('name'));
+  assert(Array.isArray(clientFilter));assert(clientFilter.includes(client.name));
+  await page.getByRole('link',{name:'Clients and billing',exact:true}).click();
+  await page.locator('.pp-section-home[data-ready=true]').waitFor();
+  await page.getByRole('button',{name:'Sidebar Menu',exact:true}).click();
+  await page.getByText('Arrange sections',{exact:true}).click();
+  await page.getByRole('button',{name:'Move Clients and billing up',exact:true}).click();
+  await page.getByRole('button',{name:'Save my order',exact:true}).click();
+  await page.waitForFunction(()=>frappe.boot.plus_point.navigation.groups[0]==='Clients and billing');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('.pp-section-home[data-ready=true]').waitFor();
+  assert.equal(await page.evaluate(()=>frappe.boot.plus_point.navigation.groups[0]),'Clients and billing');
+  await page.goto(base+'/desk/customer/'+encodeURIComponent(client.name),{waitUntil:'domcontentloaded'});
+  await page.locator('.pp-client-activity-section .pp-heatmap').waitFor();
+  await page.screenshot({path:path.join(out,'client-front-activity.png'),fullPage:true});
+  await page.goto(base+'/desk/company/'+encodeURIComponent(data.company),{waitUntil:'domcontentloaded'});
+  await page.locator('.pp-client-activity-section .pp-heatmap').first().waitFor();
+  await home();await page.setViewportSize({width:390,height:844});
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.screenshot({path:path.join(out,'activity-overview-mobile.png'),fullPage:true});
+  assert.deepEqual(failures,[]);
+  console.log('PASS stats before inbox, actual work/finance charts, day details, client front-page heatmap, section hubs, persisted reorder, notifications and 390px');
+ }catch(error){await page.screenshot({path:path.join(out,'activity-failure.png'),fullPage:true});throw error;}
+ finally{await browser.close();assert(prefs('end').restored);console.log('PASS original personal order and read-state restored');}
+})().catch(error=>{console.error(error.stack);process.exitCode=1;});

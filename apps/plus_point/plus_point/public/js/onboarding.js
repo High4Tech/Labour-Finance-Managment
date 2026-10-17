@@ -205,6 +205,7 @@
             (route[0] === 'Form' && route[1] === 'User' && route[2] === frappe.session.user);
         if (route[0] === 'query-report') return scope.reports.includes(route[1]);
         if (route[0] === 'Workspaces') return route[1] === scope.workspace;
+        if ((scope.pages||[]).includes(route[0])) return true;
         if (route[0] === 'print') return scope.doctypes.includes(route[1]);
         return false;
     }
@@ -367,6 +368,7 @@
         if (route[0] === 'Workspaces' && active.id !== 'page-Workspaces') return;
         const main = active.querySelector('.layout-main-section');
         if (!main) return;
+        plus_point.enhance_sections?.();
         active.classList.toggle('pp-customer-screen', !platform());
         const listConfig = (platform() ? platformLists : customerLists)[route[1]];
         if (route[0] === 'List' && listConfig) {
@@ -406,7 +408,7 @@
             bar.querySelector('.pp-open-guide').addEventListener('click', showGuide);
         }
         const isHome = route[0] === 'Workspaces' && route[1] === (platform() ? 'High4Tech' : 'PLUS POINT');
-        bar.classList.toggle('pp-home-context', isHome);
+        bar.classList.toggle('pp-home-context', isHome || route[0] === 'pp-section');
         let welcome = main.querySelector(':scope > .pp-welcome');
         if (isHome && !welcome) {
             welcome = document.createElement('section'); welcome.className = 'pp-welcome';
@@ -482,6 +484,7 @@
         // with the two actions relevant to this product workspace.
         if (frappe.ui.SidebarHeader) frappe.ui.SidebarHeader.prototype.menu_items = function () {
             return [{group:'',options:[{name:'product-home',label:__('Overview'),href:home()},
+                {name:'arrange-sections',label:__('Arrange sections'),onclick:()=>plus_point.arrange_sections()},
                 {name:'product-help',label:__('Help'),onclick:showGuide}]}];
         };
         frappe.provide('frappe.listview_settings');

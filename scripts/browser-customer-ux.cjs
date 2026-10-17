@@ -57,7 +57,7 @@ const {chromium} = require('playwright');
 
         await goHome();
         const date = await page.evaluate(() => frappe.datetime.add_days(frappe.datetime.get_today(), 2));
-        const sites = await browserGet(base + '/api/resource/PP%20Site?filters=' + encodeURIComponent(JSON.stringify({site_name:'PLUS POINT Demo'})));
+        const sites = await browserGet(base + '/api/resource/PP%20Site?filters=' + encodeURIComponent(JSON.stringify({site_name:'DHA construction site (Demo)'})));
         const records = (await sites.json()).data;
         assert(records?.length, 'Seed the demo site before running attendance UX QA');
         const filters = encodeURIComponent(JSON.stringify({site: records[0].name, work_date: date}));

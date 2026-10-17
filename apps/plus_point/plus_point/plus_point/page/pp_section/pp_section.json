@@ -1,0 +1,5 @@
+{
+ "doctype":"Page", "name":"pp-section", "page_name":"pp-section", "title":"Section overview",
+ "module":"PLUS POINT", "standard":"Yes", "system_page":0,
+ "roles":[{"role":"System Manager"},{"role":"High4Tech Platform Admin"}]
+}

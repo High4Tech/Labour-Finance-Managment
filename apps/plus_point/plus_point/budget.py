@@ -34,9 +34,33 @@ def costs(project, exclude_type=None, exclude_name=None):
     return dict(wages=wages, purchases=purchases, claims=claims, total=wages+purchases+claims)
 
 
-def status(project, proposed=None, exclude_type=None, exclude_name=None, locked=None):
+def costs_many(projects):
+    """One aggregate per ledger for a permission-checked dashboard project set."""
+    values={name:dict(wages=Decimal(0),purchases=Decimal(0),claims=Decimal(0),total=Decimal(0)) for name in projects}
+    if not values:
+        return values
+    queries={
+        'wages':"""select project,sum(wage_amount) amount from `tabPP Work Entry`
+            where status='Approved' and project in %(projects)s group by project""",
+        'purchases':"""select coalesce(nullif(i.project,''),p.project) project,sum(i.base_net_amount) amount
+            from `tabPurchase Invoice Item` i join `tabPurchase Invoice` p on p.name=i.parent
+            where p.docstatus=1 and coalesce(nullif(i.project,''),p.project) in %(projects)s group by project""",
+        'claims':"""select coalesce(nullif(i.project,''),p.project) project,sum(i.base_sanctioned_amount) amount
+            from `tabExpense Claim Detail` i join `tabExpense Claim` p on p.name=i.parent
+            where p.docstatus=1 and p.approval_status='Approved'
+            and coalesce(nullif(i.project,''),p.project) in %(projects)s group by project""",
+    }
+    for key,query in queries.items():
+        for row in frappe.db.sql(query,{'projects':list(values)},as_dict=True):
+            values[row.project][key]=as_decimal(row.amount or 0)
+    for row in values.values():
+        row['total']=row['wages']+row['purchases']+row['claims']
+    return values
+
+
+def status(project, proposed=None, exclude_type=None, exclude_name=None, locked=None, totals=None):
     doc = locked or frappe.get_doc('Project', project)
-    current = costs(project)
+    current = totals if totals is not None else costs(project)
     projected = money(costs(project, exclude_type, exclude_name)['total'] + as_decimal(proposed)
                       if proposed is not None else current['total'])
     limit = money(doc.estimated_costing or 0)
