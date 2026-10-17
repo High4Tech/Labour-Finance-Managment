@@ -94,12 +94,17 @@
     };
     plus_point.mount_setup=async root=>{
         if(!root || frappe.boot.plus_point?.is_platform || !frappe.user.has_role('System Manager'))return;
-        root.innerHTML=`<div><strong>${esc(__('Set up your business'))}</strong><p>${esc(__('One worker, one site, then your first assignment. Continue where you left off or explore on your own.'))}</p></div><div class="pp-setup-actions"><button class="btn btn-default pp-open-setup">${esc(__('Guided setup'))}</button><button class="btn btn-default pp-open-import">${esc(__('Import employees or finances'))}</button></div>`;
-        root.querySelector('.pp-open-setup').onclick=plus_point.open_setup;
-        root.querySelector('.pp-open-import').onclick=()=>plus_point.open_import();
-        plus_point.refresh_setup_banner=()=>{plus_point.mount_dashboard?.(root.parentElement.querySelector('.pp-dashboard'));};
-        if(autoChecked)return;autoChecked=true;
-        try {const info=await call('status');if(info.auto_start)show(info.state,info.companies);}
-        catch {root.querySelector('p').textContent=__('Setup could not load. Choose Guided setup to retry.');}
+        const update=async()=>{
+            root.replaceChildren();
+            try {
+                const info=await call('status');
+                if(!root.isConnected || !info.auto_start)return;
+                root.innerHTML=`<div><strong>${esc(__('Finish setting up your business'))}</strong><p>${esc(__('Add your first worker, work site and assignment. You can skip and explore anytime.'))}</p></div><button class="btn btn-default pp-open-setup">${esc(__('Continue setup'))}</button>`;
+                root.querySelector('.pp-open-setup').onclick=plus_point.open_setup;
+                if(!autoChecked){autoChecked=true;show(info.state,info.companies);}
+            }catch { /* Help remains available for a deliberate setup retry. */ }
+        };
+        plus_point.refresh_setup_banner=()=>{plus_point.mount_dashboard?.(root.parentElement.querySelector('.pp-dashboard'));return update();};
+        await update();
     };
 })();

@@ -94,8 +94,6 @@
     const home = () => frappe.boot.plus_point?.home || '/desk/plus-point';
     const link = ([doctype, label]) => frappe.model.can_read(doctype)
         ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
-    const key = () => `pp-quick-start-v2:${location.host}:${frappe.session.user}`;
-    const expanded = () => { try { return localStorage.getItem(key()) === 'expanded'; } catch { return false; } };
 
     function attendancePicker() {
         let opening = false;
@@ -136,8 +134,7 @@
 
     function taskHome() {
         return `<div class="pp-task-home">
-            <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('Attendance, your team and project finances in one view.'))}</p></div>
-                <button type="button" class="btn btn-default pp-start-tour">${esc(__('Show me around'))}</button></div>
+            <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('Attendance, your team and project finances in one view.'))}</p></div></div>
             <section class="pp-setup-banner" aria-label="${esc(__('Business setup and imports'))}"></section>
             <section class="pp-dashboard" aria-label="${esc(__('Business dashboard'))}"></section>
             <h3 class="pp-tools-heading">${esc(__('Work tools'))}</h3>
@@ -244,12 +241,16 @@
         const dialog = new frappe.ui.Dialog({title: __(platform() ? 'How High4Tech admin works' : 'How PLUS POINT works'), size: 'large',
             fields: [{fieldname: 'guide', fieldtype: 'HTML', options: `<div class="pp-guide-dialog">
                 <h2>${esc(__('Two sides of PLUS POINT'))}</h2>${appMap()}
-                ${platform() ? platformGuide : `<h2>${esc(__('Follow a job from contract to payment'))}</h2>${workflow()}`}
+                ${platform() ? platformGuide : `${frappe.user.has_role('System Manager')?`<p><button type="button" class="btn btn-default pp-help-setup">${esc(__('Guided setup'))}</button></p>`:''}<h2>${esc(__('Follow a job from contract to payment'))}</h2>${workflow()}`}
                 <p class="pp-guide-note">${esc(__(platform()
                     ? 'Use this site to run the service. Customer businesses manage their labour operations inside their own PLUS POINT workspace.'
                     : 'ERPNext and HRMS power the shared accounting and employee tools inside PLUS POINT. You do not need to switch between separate apps. Contractor dehadi and standard HR payroll remain separate workflows.'))}</p>
             </div>`}], primary_action_label: __('Got it'), primary_action() { dialog.hide(); }});
         dialog.$wrapper.on('click', '.pp-guide-link', () => dialog.hide());
+        dialog.$wrapper.on('click', '.pp-help-setup', () => {
+            dialog.$wrapper.one('hidden.bs.modal',()=>plus_point.open_setup());
+            dialog.hide();
+        });
         dialog.show();
     }
 
@@ -278,13 +279,6 @@
         // finished bubbling, otherwise allowClose immediately dismisses the tour.
         const pending = driver;
         setTimeout(() => { if (driver === pending) pending.start(); }, 0);
-    }
-
-    function homeTour(root) {
-        const details = root.querySelector('.pp-quick-start');
-        details.open = true;
-        tour(steps.map((step, index) => ({element: root.querySelector(`[data-pp-step="${index}"]`),
-            popover: {title: __(step.title), description: __(step.text), position: 'bottom'}})));
     }
 
     function formGuide(frm) {
@@ -408,7 +402,7 @@
             bar.dataset.route = routeKey;
             bar.innerHTML = `<span class="pp-context-copy">${esc(context(route))}</span>
                 <div class="pp-context-actions"><a class="pp-home-link" href="${home()}">${esc(__(platform() ? 'Platform home' : 'Workforce home'))}</a>
-                <button type="button" class="btn btn-default btn-sm pp-open-guide">${esc(__('How it works'))}</button></div>`;
+                <button type="button" class="btn btn-default btn-sm pp-open-guide">${esc(__('Help'))}</button></div>`;
             bar.querySelector('.pp-open-guide').addEventListener('click', showGuide);
         }
         const isHome = route[0] === 'Workspaces' && route[1] === (platform() ? 'High4Tech' : 'PLUS POINT');
@@ -417,17 +411,11 @@
         if (isHome && !welcome) {
             welcome = document.createElement('section'); welcome.className = 'pp-welcome';
             welcome.setAttribute('aria-label', __('Getting started with PLUS POINT'));
-            welcome.innerHTML = platform() ? platformHome() : `${taskHome()}
-                <details class="pp-quick-start" ${expanded() ? 'open' : ''}><summary>${esc(__('Quick start: six steps from contract to payment'))}</summary>
-                ${workflow()}<p class="pp-guide-note">${esc(__('Recording earnings does not record a payment.'))}</p></details>`;
+            welcome.innerHTML = platform() ? platformHome() : taskHome();
             bar.after(welcome);
             plus_point.mount_dashboard(welcome.querySelector('.pp-dashboard'));
             plus_point.mount_setup?.(welcome.querySelector('.pp-setup-banner'));
-            welcome.querySelector('.pp-start-tour')?.addEventListener('click', () => homeTour(welcome));
             welcome.querySelector('.pp-mark-attendance')?.addEventListener('click', attendancePicker);
-            welcome.querySelector('details')?.addEventListener('toggle', event => {
-                try { localStorage.setItem(key(), event.target.open ? 'expanded' : 'collapsed'); } catch { /* Storage is optional. */ }
-            });
         } else if (!isHome && welcome) welcome.remove();
         // Keep native records available without making thirteen setup links the home screen.
         const editor = main.querySelector('.editor-js-container');
@@ -494,7 +482,7 @@
         // with the two actions relevant to this product workspace.
         if (frappe.ui.SidebarHeader) frappe.ui.SidebarHeader.prototype.menu_items = function () {
             return [{group:'',options:[{name:'product-home',label:__('Overview'),href:home()},
-                {name:'product-help',label:__('How it works'),onclick:showGuide}]}];
+                {name:'product-help',label:__('Help'),onclick:showGuide}]}];
         };
         frappe.provide('frappe.listview_settings');
         Object.keys(platform() ? platformLists : customerLists).forEach(doctype => {

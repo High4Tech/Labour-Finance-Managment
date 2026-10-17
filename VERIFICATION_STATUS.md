@@ -4,6 +4,8 @@ Executed against Docker Desktop Linux engine on this Windows machine. This super
 
 ## Guided setup and historical imports
 
+Quieter overview follow-up: real Edge confirmed the established demo has no visible setup banner, home import button or tour CTA. Manual Help → Guided setup, skip and reload/resume, saved worker/site/assignment, list-based employee import, duplicate handling and mobile focus all passed. Exact fixtures and the original guide state were restored. Backend eligibility rules and posting behavior are unchanged; the 53-case database result below remains prior evidence.
+
 Follow-up frontend check: real Edge as the customer dummy login verified a populated Workers list and all seven supported employee/finance list headers, Import beside Add, matching default import types, actual CSV template downloads, list reload persistence and 390px layout. Screenshots were reviewed in `.local/qa`. No business records were written. JavaScript syntax and whitespace checks passed; the unchanged backend retains the 53-case evidence below.
 
 **53 actual MariaDB regressions passed**, including the existing 40 plus 13 setup/import cases. Actual native records verify employee creation/update/replay, explicit same-company profile updates, CSV row errors, XLSX formula refusal, approved wage imports, submitted employee payment/settlement GL, source-linked client invoices and partial receipts, project expense costs, fixed milestones/caps, stale spending stops, subscription suspension and whole-file rollback. Setup tests save real worker/site/assignment and new project/agreement records, preserve skip/resume and create no attendance. All business fixtures roll back.

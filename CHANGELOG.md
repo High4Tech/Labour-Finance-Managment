@@ -1,5 +1,9 @@
 # Development changelog
 
+## Quieter established-business overview — 2026-10-17
+
+Removed the always-visible setup/import banner, home tour button and duplicate quick-start block for established businesses. Setup now renders only when the existing server response reports an unfinished business with no assignments. Skip and completion clear that prompt. Manual setup and workflow guidance remain in Help; employee/finance imports stay beside the relevant list Add buttons. The seeded demo opens directly to daily operations without onboarding prompts.
+
 ## Visible list imports — 2026-10-17
 
 Added a persistent Import action beside the native top Add action on supported customer employee/finance lists, including populated lists. Each opens the corresponding import type. Moved Download template above collapsible template instructions and the file chooser. Preserved existing native Add behavior, permissions and the preview/posting workflow.
