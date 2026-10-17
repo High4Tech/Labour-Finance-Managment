@@ -1,6 +1,6 @@
 # PLUS POINT — source-of-truth architecture
 
-Updated 2026-10-16. Local development scope; production acceptance is separate. Actual test evidence is in VERIFICATION_STATUS.md. The original blueprint is preserved under docs/archive.
+Updated 2026-10-17. Local development scope; production acceptance is separate. Actual test evidence is in VERIFICATION_STATUS.md. The original blueprint is preserved under docs/archive. RESEARCH_ALIGNMENT.md maps the owner's October 17 research handoff to the implementation and remaining gaps.
 
 ## Scope and non-goals
 
@@ -29,7 +29,7 @@ PP Work Entry records contractor economics; it does not recreate Employee/payrol
 
 Tenant site/database -> native Customers/Contracts/Projects/Employees. Project links Company and Customer. PP Contract Terms links one Contract/Project pair. PP Site belongs to Project with optional same-project parent. PP Assignment links Employee, site/project/terms, dates and rates. PP Work Entry snapshots those references and rates. Submitted registers create approved work entries in one transaction. PP Milestone links fixed terms. Native Sales Invoice Item custom fields reference work/milestone sources. PP Wage Settlement links Employee, Project and a unique submitted native Payment Entry.
 
-Historical rate snapshots are immutable; used assignments and economic contract terms cannot be rewritten. Employee row locks serialize attendance and settlement limits; terms locks serialize milestone caps and invoice reservations. No commits inside posting hooks. Queries used for totals disable default pagination. Native Version records retain changes. Production requires realistic large-volume profiling and audited attendance correction/reversal workflows.
+Historical rate snapshots are immutable; used assignment identities/rates/start dates and economic contract terms cannot be rewritten. A used assignment may close earlier only if all saved work remains within its dates; it cannot reopen or extend. Same-worker/same-site assignments cannot overlap (inclusive dates). Assignment then employee locks follow work insertion's order; the employee lock serializes overlap checks under the tested READ COMMITTED deployment. Different-site assignments can overlap for split days; work-entry validation enforces the aggregate day cap. Employee row locks also serialize settlement limits; terms locks serialize milestone caps and invoice reservations. No commits inside posting hooks. Queries used for totals disable default pagination. Native Version records retain changes. Production requires realistic large-volume profiling and audited attendance correction/reversal workflows.
 
 ## Daily wage and contract billing rules
 
@@ -44,6 +44,8 @@ Invoice creation creates a native Draft for review and reserves sources. Draft d
 ## Backend API architecture and UI
 
 Native /api/resource/<DocType> supplies permission-checked CRUD. Authenticated custom methods: plus_point.api.prepare_daily_register (POST), worker_statement, project_summary; plus_point.billing.create_invoice (POST); plus_point.tenancy.account_status. The native Desk workspace links reused modules; site and terms forms add attendance/invoice/finance actions. No separate backend or frontend.
+
+Two standard native Script Reports expose contractor results without a new reporting UI. PLUS POINT Project Finances reuses project_summary and offers lifetime financial or deployment views by legal company/client/project/status, including completed projects. PLUS POINT Worker Statement reads approved work, dated submitted native employee payments and their settlements for running opening/period/closing balances, plus an assignment-history view. Both require System Manager and normal document permissions, reject control-plane execution, and keep one company/currency per report. Native report permissions, table controls, printing and export are reused. Project/site/date profitability is not fabricated where native cost and milestone data cannot support that attribution.
 
 Initial tenant operations use native System Manager. Dedicated supervisor/finance roles, wage field privacy and site-scoped User Permission regression tests remain production requirements.
 

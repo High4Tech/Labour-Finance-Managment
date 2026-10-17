@@ -6,9 +6,14 @@ from plus_point.finance import as_decimal
 
 class PPAssignment(Document):
     def validate(self):
-        old = self.get_doc_before_save()
+        # Work posting locks the assignment before its employee. Keep the same
+        # order while closing an assignment or checking concurrent allocations.
+        old = frappe.db.get_value('PP Assignment', self.name,
+            ['employee', 'site', 'project', 'contract_terms', 'start_date', 'end_date', 'wage_rate', 'client_rate'],
+            as_dict=True, for_update=True) if not self.is_new() else None
+        frappe.db.get_value('Employee', self.employee, 'name', for_update=True)
         if old and frappe.db.exists("PP Work Entry", {"assignment": self.name}):
-            for field in ("employee", "site", "project", "contract_terms", "start_date", "end_date", "wage_rate", "client_rate"):
+            for field in ("employee", "site", "project", "contract_terms", "start_date", "wage_rate", "client_rate"):
                 current, previous = self.get(field), old.get(field)
                 if field in ('wage_rate', 'client_rate'):
                     current, previous = as_decimal(current), as_decimal(previous)
@@ -17,6 +22,13 @@ class PPAssignment(Document):
                     previous = getdate(previous) if previous else None
                 if current != previous:
                     frappe.throw("Used assignments are immutable; create a new dated assignment for rate or deployment changes")
+            previous_end = getdate(old.end_date) if old.end_date else None
+            new_end = getdate(self.end_date) if self.end_date else None
+            if new_end != previous_end:
+                if not new_end or (previous_end and new_end > previous_end):
+                    frappe.throw('A used assignment can be closed earlier, but cannot be reopened or extended')
+                if frappe.db.exists('PP Work Entry', {'assignment': self.name, 'work_date': ['>', new_end]}):
+                    frappe.throw('End date cannot exclude an existing work entry, including a draft')
         site = frappe.get_doc("PP Site", self.site)
         terms = frappe.get_doc("PP Contract Terms", self.contract_terms)
         employee = frappe.get_doc("Employee", self.employee)
@@ -39,3 +51,10 @@ class PPAssignment(Document):
             frappe.throw("Daily-billing assignments require a client rate")
         if terms.billing_model == "Fixed" and as_decimal(self.client_rate or 0) != 0:
             frappe.throw("Fixed contracts must use zero worker-day client rates")
+        overlaps = frappe.db.sql('''SELECT name FROM `tabPP Assignment`
+            WHERE employee=%s AND site=%s AND name!=%s
+              AND start_date<=%s AND (end_date IS NULL OR end_date>=%s)
+            LIMIT 1''', (self.employee, self.site, self.name or '',
+                                    self.end_date or '9999-12-31', self.start_date))
+        if overlaps:
+            frappe.throw('This worker already has an overlapping assignment at this site. Close it before adding a new dated rate or assignment.')

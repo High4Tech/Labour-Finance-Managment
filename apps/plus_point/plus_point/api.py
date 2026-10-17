@@ -152,7 +152,7 @@ def worker_statement(employee, from_date=None, to_date=None, project=None):
         "wages_earned": str(money(wages)),
         "wages_paid_all_dates": str(money(paid)),
         "direct_client_billable": str(money(billables)),
-        "note": "Fixed-contract worker revenue is not directly billable; payments are not calculated here.",
+        "note": "Fixed-contract worker revenue is not directly billable. Wages paid are submitted wage settlements across all dates, not a balance for the selected earnings period.",
         "entries": [{
             "name": row.name, "work_date": str(row.work_date),
             "project": row.project, "site": row.site,

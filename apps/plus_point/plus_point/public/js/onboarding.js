@@ -133,6 +133,9 @@
                     <div class="pp-task-links">${link(['PP Contract Terms', 'Billing terms'])}${link(['Sales Invoice', 'Invoices'])}</div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Worker payments'))}</h3><p>${esc(__('Keep wages earned separate from money actually paid.'))}</p></div>
                     <div class="pp-task-links">${link(['PP Wage Settlement', 'Record payment'])}${link(['PP Work Entry', 'Wages earned'])}</div></div>
+                ${frappe.user.has_role('System Manager') ? `<div class="pp-task-row"><div><h3>${esc(__('Business reports'))}</h3><p>${esc(__('Review project results, deployment and each worker’s history.'))}</p></div>
+                    <div class="pp-task-links"><a href="/desk/query-report/PLUS%20POINT%20Project%20Finances">${esc(__('Project finances'))}</a>
+                    <a href="/desk/query-report/PLUS%20POINT%20Worker%20Statement">${esc(__('Worker statement'))}</a></div></div>` : ''}
             </div></div>`;
     }
 
@@ -241,11 +244,21 @@
     function formRefreshed(frm) {
         if (!screens[frm.doctype]) return;
         frm.add_custom_button(__('Explain this screen'), () => formGuide(frm));
+        if (!platform() && !frm.is_new() && frappe.user.has_role('System Manager')) {
+            if (frm.doctype === 'Employee') frm.add_custom_button(__('Worker statement'), () =>
+                frappe.set_route('query-report', 'PLUS POINT Worker Statement', {employee: frm.doc.name, company: frm.doc.company}));
+            if (frm.doctype === 'Project') frm.add_custom_button(__('Project finances'), () =>
+                frappe.set_route('query-report', 'PLUS POINT Project Finances', {project: frm.doc.name, company: frm.doc.company}));
+        }
         schedule();
     }
 
     function context(route) {
         if (platform()) return __('High4Tech · Manage subscriber organizations, subscriptions and access limits here.');
+        if (route[0] === 'query-report' && route[1] === 'PLUS POINT Project Finances')
+            return __('Project results and workforce deployment. Choose a client or project to narrow the report.');
+        if (route[0] === 'query-report' && route[1] === 'PLUS POINT Worker Statement')
+            return __('Worker earnings, payments and assignment history. Dates filter this statement’s activity.');
         if (route[0] === 'Form' || route[0] === 'List') {
             return shortPurpose[route[1]] ? __(shortPurpose[route[1]]) : screens[route[1]] ? __(screens[route[1]][1]) : __('Additional ERP tools. Your contractor workflow starts in PLUS POINT.');
         }

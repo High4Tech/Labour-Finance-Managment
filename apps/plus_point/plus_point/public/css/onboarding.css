@@ -61,6 +61,10 @@
 .pp-customer-screen .pp-context-bar:not(.pp-home-context) { font-size: 13px; }
 .pp-task-home a:focus-visible, .pp-task-home button:focus-visible, .pp-all-records summary:focus-visible { outline: 2px solid var(--text-color, #171717); outline-offset: 3px; }
 .pp-customer-screen .primary-action { min-height: 40px; }
+.pp-report-notes { margin-bottom: 12px; max-width: 90ch; }
+.pp-report-notes > summary { cursor: pointer; padding: 8px 0; }
+.pp-report-notes > p { margin-top: 8px; line-height: 1.6; }
+.pp-report-notes > summary:focus-visible { outline: 2px solid var(--text-color, #171717); outline-offset: 3px; }
 @media (max-width: 767px) {
     .pp-context-bar, .pp-welcome-heading { flex-direction: column; align-items: stretch; }
     .pp-context-actions { flex-wrap: wrap; justify-content: space-between; }

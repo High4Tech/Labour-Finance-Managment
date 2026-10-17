@@ -6,6 +6,8 @@ This is a **local development application**, not a production SaaS release. See 
 
 Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk home groups daily work into attendance, workers/sites, client billing and worker payments. **Mark attendance** prepares or reopens a register for review. Setup tools and the six-step guide are available on demand, alongside **How it works**, **Show me around**, and field help. ERPNext's unrelated modules, such as Manufacturing, are optional; they are not part of the usual contractor workflow.
 
+**Business reports** opens native project financial/deployment views and worker statements with assignment history, dated wages/payments and opening/closing balances. See [research alignment](RESEARCH_ALIGNMENT.md) for the October 17 business-context review, corrections and remaining MVP gaps.
+
 ## Run on Windows
 
 With Docker Desktop running in Linux mode, run `START_PLUS_POINT_DEV.cmd`, or:
@@ -28,7 +30,7 @@ Open [PLUS POINT](http://demo.localhost:8000/desk/plus-point). Login as `Adminis
 6. From terms, select **Prepare client invoice** with a native non-stock service Item. Review and submit the ERPNext Sales Invoice. Use native Payment Entries for receipts.
 7. Link submitted employee Payment Entries with `PP Wage Settlement` to distinguish paid wages from earnings.
 
-Approved work and used allocations are immutable. Use a new dated assignment for new rates. Audited attendance correction workflows remain a production release requirement.
+Approved work and historical allocation identities/rates stay locked. Close the old assignment without excluding any saved work, then use a new dated assignment for changed rates or deployment. Same-site dates cannot overlap. Audited attendance correction workflows remain a production release requirement.
 
 ## Verification
 

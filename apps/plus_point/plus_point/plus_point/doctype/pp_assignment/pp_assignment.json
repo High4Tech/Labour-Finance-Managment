@@ -68,7 +68,7 @@
       "fieldname": "end_date",
       "fieldtype": "Date",
       "label": "End Date",
-      "description": "Optional last attendance date for this allocation; leave blank while it remains active."
+      "description": "Last attendance date, inclusive. You may close a used allocation if no saved work falls after this date. Start the replacement on the following day; historical rates stay locked."
     },
     {
       "fieldname": "wage_rate",

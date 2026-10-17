@@ -12,7 +12,7 @@ jobs:
       - name: Check Python syntax
         run: python -m compileall -q apps scripts tests
       - name: Check Desk and browser-test JavaScript syntax
-        run: for script in scripts/*.cjs apps/plus_point/plus_point/public/js/*.js; do node --check "$script"; done
+        run: for script in scripts/*.cjs apps/plus_point/plus_point/public/js/*.js apps/plus_point/plus_point/plus_point/report/*/*.js apps/plus_point/plus_point/plus_point/doctype/*/*.js; do node --check "$script"; done
       - name: Run offline unit checks
         run: python -m unittest discover -s tests -v
       - name: Contractor finance rules

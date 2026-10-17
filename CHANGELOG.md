@@ -1,5 +1,11 @@
 # Development changelog
 
+## Research-context alignment — 2026-10-17
+
+Reviewed the owner's complete research handoff against the actual implementation and recorded RESEARCH_ALIGNMENT.md. Added native Project Finances with financial/deployment views and Worker Statement with dated work/payments, opening/closing wage balances and assignment history. Added home, Employee, Project and billing-terms shortcuts, calculation notes and native export support. Project totals remain lifetime scoped; fixed milestone revenue is not allocated to workers. Replaced the raw financial popup with a filterable report.
+
+Fixed the deployment/rate-change dead end: used assignments can close only while retaining all saved work, and cannot reopen or extend. Historical identities and rates stay locked. Serialized same-worker/same-site overlap checks prevent duplicate allocations while retaining different-site split days and the existing attendance day cap. Expanded the real database suite to 31 regressions; the existing 21 offline/pure-rule tests also pass. See VERIFICATION_STATUS.md for browser/export evidence and explicit remaining MVP/production requirements.
+
 ## Simpler customer workspace — 2026-10-16
 
 Added a task-focused home with Mark attendance, workers/sites, client billing and worker payments. The attendance shortcut prepares a populated draft or reopens the saved site/date register; approval remains an explicit Submit action. Grouped the native tenant sidebar, moved less frequent records under More, simplified custom list labels and removed their internal ID column. Setup tools and the six-step guide start collapsed, with contextual help available on demand. Native title metadata improves linked record labels. Existing operator layouts, explicit home preferences and platform navigation are preserved.

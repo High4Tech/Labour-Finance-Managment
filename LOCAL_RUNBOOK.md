@@ -35,6 +35,8 @@ The seed also completes Frappe's native post-setup transition, so All apps opens
 
 `node scripts/browser-customer-ux.cjs` verifies the simpler tenant home, grouped navigation, list labels, collapsed optional content and mobile layout. It uses the same credential variables and seeded demo site/allocations. The test requires a vacant demo attendance date (today plus two days), creates and reopens a reviewable draft, then deletes that temporary draft. It refuses to modify an existing register. Tenant migration adds the grouped native sidebar only if no site-level customization exists; per-user choices and an explicit starting app are preserved.
 
+`node scripts/browser-reports.cjs` verifies native project financial/deployment views, the worker statement and assignment-history view, home/form shortcuts, calculation notes, actual XLSX export and 390px report width. It uses the same credential variables, browser-native login and the labelled demo worker/company. Migrate the tenant after pulling these report definitions; no new frontend build or reporting service is needed. The report company is your legal business; Client company narrows its customer projects. Reports use native permissions and are unavailable on the control-plane site.
+
 ## Separate High4Tech platform
 
 ```powershell

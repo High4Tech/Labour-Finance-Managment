@@ -1,11 +1,9 @@
 frappe.ui.form.on('PP Contract Terms', {
     refresh(frm) {
         if (frm.is_new()) return;
-        frm.add_custom_button(__('Project finances'), () => {
-            frappe.call({method: 'plus_point.api.project_summary', args: {project: frm.doc.project},
-                callback: r => frappe.msgprint({title: __('Project finances'),
-                    message: Object.entries(r.message).filter(([k, v]) => k !== 'contracts' && typeof v !== 'object')
-                        .map(([k, v]) => `<p><b>${frappe.utils.escape_html(frappe.unscrub(k))}:</b> ${frappe.utils.escape_html(String(v))}</p>`).join('')})});
+        frm.add_custom_button(__('Project finances'), async () => {
+            const result = await frappe.db.get_value('Project', frm.doc.project, 'company');
+            frappe.set_route('query-report', 'PLUS POINT Project Finances', {project: frm.doc.project, company: result.message.company});
         });
         if (frm.doc.status === 'Active') frm.add_custom_button(__('Prepare client invoice'), () => {
             frappe.prompt([

@@ -1,4 +1,4 @@
-# Verification status — 2026-10-16
+# Verification status — 2026-10-17
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
@@ -79,3 +79,17 @@ The actual All apps → PLUS POINT → HR → Framework → Home → Users → P
 Database inspection confirmed the workspace setup is idempotent on the demo site, retains the existing sidebar, uses native link-title metadata and does not create a tenant sidebar on the control-plane site. All 11 offline project/harness checks and Python/JavaScript syntax checks passed again. Existing financial/database results above are prior evidence; this UI increment did not rerun the broad business suite or production role/privacy acceptance. Customer usability sessions and comprehensive accessibility acceptance remain unrun.
 
 During resumption Docker Desktop failed on a stale Windows runtime socket. Its two runtime directories were renamed and retained, then recreated; the existing persistent app/database volumes were reused. After the development watcher rebuilt styles, stale process-local asset references caused CSS failures. Refreshing the shared asset manifest and triggering the native web reload restored current assets; the successful final browser checks ran after this recovery. No upstream source contents or stored customer records were changed for recovery. Screenshots remain in ignored `.local/qa`.
+
+## Research-context alignment — October 17
+
+Compared the supplied full research handoff with the repository, running sites and business rules. RESEARCH_ALIGNMENT.md records the requirements mapping, corrections and remaining gaps. The historical handoff's claims of unverified installation/Git state are superseded by the actual runtime and commit evidence above.
+
+Added two standard native Script Reports: Project Finances (lifetime financial results and deployment overview) and Worker Statement (dated approved work/settled payments with opening/closing balances, plus assignment history). Home, Employee, Project and billing terms expose shortcuts; financial calculation detail is collapsed on demand. Reports reuse native permissions, tables and export; they require one selected legal company and do not invent worker-level fixed revenue, period project profit or site allocation of cumulative costs. Both providers reject the actual control-plane site's configuration. Native reports were synchronized successfully on demo.localhost and platform.localhost; the platform's separate navigation remains intact.
+
+Corrected used assignments so a safe end date permits a subsequent rate/assignment without changing historical snapshots. Saved work, including drafts, cannot fall beyond the new end date; used allocations cannot reopen or extend. Same-worker/same-site overlap is rejected under employee serialization, while split-site days remain possible under the existing aggregate day limit.
+
+**31 actual MariaDB business regressions passed**, including seven new cases for safe closure/new rates, draft preservation, overlap rejection, dated opening/period/closing balances, deployment deduplication, company/date scope and report guest/control-plane denial. Existing tests additionally exercise reporting beyond 20 rows, fixed-worker zero revenue and native receipt/invoice distinction. Fixtures rolled back. **11 offline project/harness checks and 10 pure finance/register checks passed** (52 automated cases combined). Python/JavaScript syntax and whitespace checks pass.
+
+Actual Edge checks as the tenant dummy account passed home → financial/deployment report, values compared with the existing financial API, collapsed calculation notes and their disclosure, Employee → Worker Statement, work/assignment view switching, a real native **XLSX export** (200 response with ZIP workbook bytes), billing terms → filtered Project Finances, and a 390px report layout. The final run observed zero JavaScript/HTTP errors and wrote no business records. One intermediate run encountered a transient Socket.IO polling 400; the unchanged error assertions passed on the subsequent run. Screenshots remain in ignored `.local/qa`.
+
+Native print controls are reused; final PDF rendering and pagination were not exercised. New report performance at commercial scale, concurrent assignment-write stress, full role/field privacy acceptance and dedicated contract/site/closure report formats remain unrun or incomplete. Earlier broad SaaS isolation and subscription results remain prior evidence; this increment did not rerun every upstream or production acceptance check.

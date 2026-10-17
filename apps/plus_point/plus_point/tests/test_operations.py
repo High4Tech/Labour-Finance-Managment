@@ -8,6 +8,7 @@ from frappe.utils import today, add_days
 from plus_point.api import project_summary, prepare_daily_register, worker_statement
 from plus_point.billing import create_invoice
 from plus_point.tenancy import enforce_write
+from plus_point.reporting import project_finances, worker_statement_report
 
 
 def insert(doctype, **values):
@@ -144,6 +145,9 @@ class OperationsTests(unittest.TestCase):
         for n in range(25):
             self.work(day=add_days(today(), n))
         self.assertEqual(project_summary(self.f.project.name)['earned_revenue'], '75000.00')
+        statement = worker_statement_report(dict(company=self.f.company.name, employee=self.f.employee.name))
+        self.assertEqual(len(statement[1]), 25)
+        self.assertEqual(statement[4][-1]['value'], Decimal('50000.00'))
 
     def test_fixed_milestone_cap(self):
         terms = self.fixed_terms()
@@ -154,11 +158,111 @@ class OperationsTests(unittest.TestCase):
 
     def test_fixed_worker_days_do_not_create_daily_revenue(self):
         terms = self.fixed_terms()
+        self.f.assignment.delete()
         assignment = insert('PP Assignment', employee=self.f.employee.name, site=self.f.site.name,
             project=self.f.project.name, contract_terms=terms.name, start_date=today(), wage_rate=2000, client_rate=0)
         work = self.work(assignment=assignment)
         self.assertEqual(work.billable_amount, 0)
         self.assertEqual(project_summary(self.f.project.name)['earned_revenue'], '0.00')
+        report = worker_statement_report(dict(company=self.f.company.name, employee=self.f.employee.name))
+        self.assertEqual(report[1][0]['direct_client_earnings'], Decimal('0.00'))
+        finances = project_finances(dict(company=self.f.company.name))
+        self.assertEqual(finances[1][0]['fixed_contract_value'], '10000.00')
+        self.assertEqual(finances[1][0]['earned_revenue'], '0.00')
+
+    def test_used_assignment_can_close_and_new_rate_preserves_history(self):
+        work = self.work()
+        assignment = frappe.get_doc('PP Assignment', self.f.assignment.name)
+        assignment.end_date = today()
+        assignment.save()
+        replacement = insert('PP Assignment', employee=assignment.employee, site=assignment.site,
+            project=assignment.project, contract_terms=assignment.contract_terms,
+            start_date=add_days(today(), 1), wage_rate=2500, client_rate=3500)
+        next_work = self.work(day=add_days(today(), 1), assignment=replacement)
+        work.reload()
+        self.assertEqual(money(work.wage_amount), Decimal('2000.00'))
+        self.assertEqual(money(next_work.wage_amount), Decimal('2500.00'))
+        prepared = prepare_daily_register(self.f.site.name, add_days(today(), 2))
+        self.assertEqual(frappe.get_doc('PP Daily Register', prepared['name']).entries[0].assignment, replacement.name)
+        with self.assertRaises(frappe.ValidationError):
+            assignment.end_date = None
+            assignment.save()
+
+    def test_assignment_close_cannot_exclude_existing_draft(self):
+        insert('PP Work Entry', assignment=self.f.assignment.name, work_date=add_days(today(), 2), units=1)
+        assignment = frappe.get_doc('PP Assignment', self.f.assignment.name)
+        assignment.end_date = today()
+        with self.assertRaises(frappe.ValidationError):
+            assignment.save()
+
+    def test_same_site_assignment_overlap_is_rejected(self):
+        with self.assertRaises(frappe.ValidationError):
+            insert('PP Assignment', employee=self.f.employee.name, site=self.f.site.name,
+                project=self.f.project.name, contract_terms=self.f.terms.name,
+                start_date=add_days(today(), 1), wage_rate=2500, client_rate=3500)
+
+    def test_worker_statement_opening_and_period_payments(self):
+        self.work()
+        self.work('0.5', day=add_days(today(), 1))
+        company = self.f.company
+        payment = insert('Payment Entry', payment_type='Pay', company=company.name,
+            party_type='Employee', party=self.f.employee.name, project=self.f.project.name,
+            posting_date=add_days(today(), 1), paid_from=company.default_cash_account,
+            paid_to=company.default_payable_account, paid_amount=500, received_amount=500,
+            source_exchange_rate=1, target_exchange_rate=1, reference_no='PP statement QA', reference_date=today())
+        payment.submit()
+        insert('PP Wage Settlement', employee=self.f.employee.name, project=self.f.project.name,
+            payment_entry=payment.name).submit()
+        filters = dict(company=company.name, employee=self.f.employee.name,
+                       from_date=add_days(today(), 1), to_date=add_days(today(), 1))
+        report = worker_statement_report(filters)
+        self.assertEqual([row['kind'] for row in report[1]], ['Work', 'Payment'])
+        self.assertEqual([row['value'] for row in report[4]],
+            [Decimal('2000.00'), Decimal('0.5'), Decimal('1000.00'), Decimal('500.00'), Decimal('2500.00')])
+        self.assertEqual(report[1][-1]['payment_entry'], payment.name)
+        prior = worker_statement_report(dict(filters, from_date=today(), to_date=today()))
+        self.assertEqual(prior[4][-1]['value'], Decimal('2000.00'))
+        self.assertEqual(len(prior[1]), 1)
+
+    def test_deployment_report_deduplicates_workers_without_claiming_attendance(self):
+        site = insert('PP Site', site_name='Second statement QA site', project=self.f.project.name)
+        insert('PP Assignment', employee=self.f.employee.name, site=site.name, project=self.f.project.name,
+            contract_terms=self.f.terms.name, start_date=today(), wage_rate=2000, client_rate=3000)
+        report = project_finances(dict(company=self.f.company.name, view='Deployment overview'))
+        self.assertEqual(len(report[1]), 1)
+        self.assertEqual(report[1][0]['active_sites'], 2)
+        self.assertEqual(report[1][0]['deployed_today'], 1)
+        self.assertEqual(report[1][0]['worked_days'], Decimal(0))
+        self.assertIn('not confirmed attendance', report[2])
+        history = worker_statement_report(dict(company=self.f.company.name, employee=self.f.employee.name,
+                                               view='Assignment history'))
+        self.assertEqual(len(history[1]), 2)
+
+    def test_reports_validate_company_and_date_scope(self):
+        other = fixture()
+        with self.assertRaises(frappe.ValidationError):
+            project_finances(dict(company=other.company.name, project=self.f.project.name))
+        with self.assertRaises(frappe.ValidationError):
+            worker_statement_report(dict(company=self.f.company.name, employee=self.f.employee.name,
+                from_date=add_days(today(), 1), to_date=today()))
+        self.assertEqual(project_finances(dict(company=other.company.name, customer=self.f.customer.name))[1], [])
+        self.work()
+        self.assertEqual(worker_statement_report(dict(company=other.company.name, employee=self.f.employee.name))[1], [])
+
+    def test_reports_reject_guests_and_control_plane(self):
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):
+            project_finances(dict(company=self.f.company.name))
+        with self.assertRaises(frappe.PermissionError):
+            worker_statement_report(dict(company=self.f.company.name, employee=self.f.employee.name))
+        frappe.set_user('Administrator')
+        original = frappe.conf.get('pp_control_plane')
+        try:
+            frappe.conf.pp_control_plane = True
+            with self.assertRaises(frappe.PermissionError):
+                project_finances(dict(company=self.f.company.name))
+        finally:
+            frappe.conf.pp_control_plane = original
 
     def test_native_invoice_reserves_sources_and_releases_deleted_draft(self):
         work = self.work()
@@ -265,6 +369,10 @@ class OperationsTests(unittest.TestCase):
         self.assertEqual(summary['cash_collected_gross'], '3000.00')
         self.assertEqual(summary['client_outstanding_gross'], '0.00')
         self.assertEqual(summary['earned_revenue'], '3000.00')
+        report = project_finances(dict(company=self.f.company.name))
+        self.assertEqual(report[1][0]['cash_collected_gross'], '3000.00')
+        self.assertEqual(report[1][0]['invoiced_gross'], '3000.00')
+        self.assertEqual(report[1][0]['earned_revenue'], '3000.00')
 
     def test_expired_subscription_blocks_upstream_and_custom_writes(self):
         frappe.flags.pp_test_entitlement = {'valid_until': '2000-01-01'}
