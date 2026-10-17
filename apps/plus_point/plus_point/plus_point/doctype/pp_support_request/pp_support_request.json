@@ -1,0 +1,20 @@
+{
+  "doctype": "DocType", "name": "PP Support Request", "module": "PLUS POINT", "autoname": "hash",
+  "track_changes": 1, "title_field": "tenant", "engine": "InnoDB",
+  "field_order": ["tenant", "operation", "new_username", "target_site", "target_email", "requested_by", "status", "status_message", "completed_on", "expires_on", "result_secret"],
+  "fields": [
+    {"fieldname":"tenant","label":"PLUS POINT customer","fieldtype":"Link","options":"PP Tenant","reqd":1,"in_list_view":1,"description":"The registered software customer whose owner needs sign-in help."},
+    {"fieldname":"operation","label":"Support action","fieldtype":"Select","options":"Reset password\nChange login ID","reqd":1,"in_list_view":1,"description":"Create a native one-time reset link, or change the login ID while keeping the email address."},
+    {"fieldname":"new_username","label":"New login ID","fieldtype":"Data","depends_on":"eval:doc.operation==='Change login ID'","description":"Use 3–64 letters, numbers, dots, underscores or hyphens. The ID must be unused."},
+    {"fieldname":"target_site","label":"Customer site","fieldtype":"Data","read_only":1},
+    {"fieldname":"target_email","label":"Customer login email","fieldtype":"Data","read_only":1},
+    {"fieldname":"requested_by","label":"Requested by","fieldtype":"Link","options":"User","read_only":1},
+    {"fieldname":"status","label":"Status","fieldtype":"Select","options":"Queued\nProcessing\nCompleted\nFailed","default":"Queued","read_only":1,"in_list_view":1,"description":"The native background worker processes this request. Use View support result to check progress."},
+    {"fieldname":"status_message","label":"Result","fieldtype":"Small Text","read_only":1},
+    {"fieldname":"completed_on","label":"Completed on","fieldtype":"Datetime","read_only":1},
+    {"fieldname":"expires_on","label":"Link available until","fieldtype":"Datetime","read_only":1},
+    {"fieldname":"result_secret","label":"Protected support result","fieldtype":"Password","hidden":1,"read_only":1,"no_copy":1}
+  ],
+  "permissions": [{"role":"High4Tech Platform Admin","read":1,"create":1,"report":1}],
+  "sort_field":"creation", "sort_order":"DESC"
+}

@@ -22,6 +22,7 @@ Exact repositories, release refs and commits are in upstream.lock.json. Frappe v
 | Billing policies and fixed earned revenue | PP Contract Terms, PP Milestone |
 | Allocation of real employee payments to earned wages | PP Wage Settlement |
 | Hosting directory and operational entitlements | PP Tenant and trusted local worker |
+| Audited customer account assistance | PP Support Request, native RQ and native User security |
 
 PP Work Entry records contractor economics; it does not recreate Employee/payroll. It does not automatically synchronize HRMS Attendance or override native leave/shift rules.
 
@@ -94,3 +95,14 @@ Client cash reporting separately sums submitted native Payment Entry allocations
 The pinned MariaDB 11.8 image enables InnoDB snapshot isolation. Simultaneous worker-day writes exposed error 1020 under REPEATABLE READ. compose.yaml therefore explicitly selects READ COMMITTED, and financial duplicate/cap checks use current locking reads with employee/contract serialization. This setting is part of the tested deployment contract; preserve it in production. Ten simultaneous draft attendance requests produced one creation and nine validation rejections, with all temporary drafts deleted. Larger mixed-workload/deadlock testing remains required. Native site encryption keys are initialized before web startup to avoid stale configuration during first API-key generation.
 
 Reference: https://mariadb.com/docs/server/server-usage/storage-engines/innodb/innodb-system-variables#innodb_snapshot_isolation .
+
+
+## Focused products and account support — October 17
+
+Boot context supplies one curated native module sidebar per site. PLUS POINT contains contractor operations and related setup. High4Tech contains software customers, pricing/subscriptions, support and software-business accounting. Native command suggestions are filtered; unrelated Desk routes return to the product home. Presentation does not replace native permissions. Broad development manager roles remain a production review item.
+
+PP Support Request requires a control-plane site and High4Tech Platform Admin. Creation binds target site/email from PP Tenant rather than request-supplied identities. Requests are immutable after creation. Native RQ processes an isolated customer-site Bench subprocess after rechecking the registry. The child helper is not whitelisted and refuses web/control-plane execution and built-in accounts. Login-ID changes use native User validation and its unique index for an identity-only update; suspended business writes remain blocked. Reset uses native User generation and session invalidation, with no email. Completion uses the unchanged native password-reset endpoint, including strength, expiry, hashing and single-use checks. Reactivate suspended subscriptions before completing the native reset form.
+
+Reset URLs are encrypted in native __Auth, masked in DocType REST data and retrieved only by authorized platform admins for 20 minutes. Hourly cleanup removes expired encrypted results. Child stdout stays in memory and errors are redacted before logging. No plaintext old passwords, keys in process arguments, new credential store or independent authentication implementation is introduced. This local same-host bridge supports registered .localhost customer owners. Remote-host support, verified support identity procedures and email delivery remain production work.
+
+Native software Subscription Plan → Subscription → Sales Invoice → Payment Entry → GL is tested with rollback. Native profit/loss and receivable reports expose High4Tech finances. Local external HTTP tests cover independent databases and the support bridge; public SaaS, email and payment-provider connections are not claimed.

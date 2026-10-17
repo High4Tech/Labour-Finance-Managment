@@ -6,7 +6,7 @@ The owner supplied the “PLUS POINT — Complete Project Context & Development 
 
 PLUS POINT serves labour contractors and workforce suppliers. The core chain is **client → contract → project → work site → dated worker assignment → attendance → wages earned → client billing → costs → project results**. High4Tech manages a separate chain: **tenant → users → monthly subscription → billing → access/limits → renewal or suspension**. A paying tenant and its client companies remain different records in different contexts.
 
-Frappe Desk, authentication, roles, APIs, migrations and reports are reused. ERPNext owns Customer, Contract, Project, invoices, Payment Entries, accounting, expenses and subscriptions. HRMS/Employee supplies worker profiles and optional standard HR workflows. PLUS POINT adds the contractor-specific data and calculations. Broader native modules such as Manufacturing are optional upstream tools, not new PLUS POINT scope. No native modules or existing customer records were deleted during this review.
+Frappe Desk, authentication, roles, APIs, migrations and reports are reused. ERPNext owns Customer, Contract, Project, invoices, Payment Entries, accounting, expenses and subscriptions. HRMS/Employee supplies worker profiles. PLUS POINT adds the contractor-specific data and calculations. Broader native modules such as Manufacturing are hidden dependencies outside the product interface. No native modules or existing customer records were deleted during this review.
 
 ## Findings and corrections
 
@@ -35,3 +35,8 @@ Press remains an evaluated option for future hosting operations. Live payment-pr
 ## Verification
 
 See VERIFICATION_STATUS.md for executed database/browser/export checks and limitations. TEST_PLAN.md and LOCAL_RUNBOOK.md describe reproduction. No customer data was rewritten to fit the research brief.
+
+
+## Owner's focused two-side clarification
+
+High4Tech is limited to PLUS POINT software customers, pricing/subscriptions, owner sign-in support and software-business finances. PLUS POINT remains the customer's main contractor-management MVP. Unrelated app/module menus, sidebar workspaces and search suggestions were removed; native data/auth/accounting dependencies remain installed. The local demo is registered as a trial customer without inventing actual revenue. Backend evidence includes native software invoice/receipt posting and local HTTP support/isolation flows; production email/payment integrations remain unconnected.

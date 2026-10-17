@@ -68,6 +68,12 @@
         'PP Milestone': ['Fixed contract milestones', 'Add milestone'],
         'PP Wage Settlement': ['Worker payments', 'Record payment'],
     };
+    const platformLists = {
+        'PP Tenant':['PLUS POINT customers','Add customer'], 'PP Support Request':['Customer support','New support request'],
+        'Subscription Plan':['Pricing plans','Add pricing plan'], 'Subscription':['Subscriptions','Add subscription'],
+        'Sales Invoice':['Software invoices','Create invoice'], 'Payment Entry':['Receipts and payments','Record payment'],
+        'Purchase Invoice':['Business expenses','Record expense'], 'Customer':['Billing contacts','Add billing contact'],
+    };
     const shortPurpose = {
         'PP Site': 'Choose a work site to prepare daily attendance.',
         'PP Assignment': 'Agree who works where, for which dates and rates.',
@@ -85,7 +91,6 @@
         ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
     const key = () => `pp-quick-start-v2:${location.host}:${frappe.session.user}`;
     const expanded = () => { try { return localStorage.getItem(key()) === 'expanded'; } catch { return false; } };
-    const hrRoute = () => frappe.boot.app_data?.find(app => app.app_name === 'hrms')?.app_route;
 
     function attendancePicker() {
         let opening = false;
@@ -144,6 +149,59 @@
             </div></div>`;
     }
 
+    function platformHome() {
+        return `<div class="pp-task-home"><div class="pp-task-heading"><div><h2>${esc(__('PLUS POINT customers'))}</h2>
+            <p>${esc(__('Run your software business: customers, pricing, support and sales finances.'))}</p></div></div>
+            <div class="pp-task-rows">
+            ${[
+                ['Customer accounts', 'Businesses that bought PLUS POINT, their subscriptions and owner logins.', [['PP Tenant', 'Customers'], ['PP Support Request', 'Customer support']]],
+                ['Pricing and subscriptions', 'Set monthly prices, trials and customer access.', [['Subscription Plan', 'Pricing plans'], ['Subscription', 'Subscriptions']]],
+                ['Software sales', 'Invoice customers for the software and record payments received.', [['Sales Invoice', 'Software invoices'], ['Payment Entry', 'Receipts and payments']]],
+                ['Your business finances', 'Record your expenses and review software-business results.', [['Purchase Invoice', 'Business expenses'], ['Company', 'High4Tech company']]],
+            ].map(([title, text, links]) => `<div class="pp-task-row"><div><h3>${esc(__(title))}</h3><p>${esc(__(text))}</p></div>
+                <div class="pp-task-links">${links.map(link).join('')}</div></div>`).join('')}
+            </div><div class="pp-task-links"><a class="pp-guide-link" href="/desk/query-report/Profit%20and%20Loss%20Statement">${esc(__('Financial results'))}</a>
+            <a class="pp-guide-link" href="/desk/query-report/Accounts%20Receivable">${esc(__('Outstanding invoices'))}</a></div></div>`;
+    }
+
+    function supportRequest(frm, operation) {
+        const create = async values => {
+            const result = await frappe.call({method:'plus_point.support.request_account_help', type:'POST',
+                args:{tenant:frm.doc.name, operation, new_username:values?.new_username || ''}, freeze:true,
+                freeze_message:__('Queuing customer support…')});
+            frappe.show_alert({message:__('Support request queued.'),indicator:'blue'});
+            frappe.set_route('Form','PP Support Request',result.message.name);
+        };
+        if (operation === 'Change login ID') frappe.prompt([{fieldname:'new_username',fieldtype:'Data',
+            label:__('New customer login ID'), reqd:1, description:__('The customer email address stays the same.')}], create, __('Change customer login ID'));
+        else frappe.confirm(__('Create a password-reset link for {0}? Existing customer login sessions will be signed out. No email is sent automatically.',[frm.doc.owner_email]), () => create());
+    }
+
+    function showSupportResult(frm) {
+        frappe.call({method:'plus_point.support.account_help_result', args:{request_name:frm.doc.name}, callback:r => {
+            const result=r.message;
+            const linkUrl=result.reset_link;
+            if (linkUrl) {
+                const parsed=new URL(linkUrl);
+                if (!['http:','https:'].includes(parsed.protocol)) return;
+            }
+            frappe.msgprint({title:__('Customer support'), message:`<p>${esc(__(result.message || result.status))}</p>
+                ${linkUrl ? `<p><a href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer">${esc(__('Open customer password reset'))}</a></p>
+                <p>${esc(__('One-time reset link. Native password-reset expiry applies. It is displayed here for up to 20 minutes; no email was sent.'))}</p>` : ''}`});
+        }});
+    }
+
+    function inProductScope(route) {
+        const scope=frappe.boot.plus_point?.navigation;
+        if (!scope) return true;
+        if (['Form','List','Tree'].includes(route[0])) return scope.doctypes.includes(route[1]) ||
+            (route[0] === 'Form' && route[1] === 'User' && route[2] === frappe.session.user);
+        if (route[0] === 'query-report') return scope.reports.includes(route[1]);
+        if (route[0] === 'Workspaces') return route[1] === scope.workspace;
+        if (route[0] === 'print') return scope.doctypes.includes(route[1]);
+        return false;
+    }
+
     function tip(element, text) {
         const $element = $(element);
         if ($element.attr('data-pp-tip') === text) return;
@@ -171,6 +229,7 @@
             <li class="pp-workflow-step"><h3>${esc(__('Add a customer business'))}</h3><p>${esc(__('Create its customer organization and owner account. Each business gets its own separate site and workforce records.'))}</p></li>
             <li class="pp-workflow-step"><h3>${esc(__('Choose its subscription'))}</h3><p>${esc(__('Select a monthly plan or trial, set the period and agree worker, user and work-site limits.'))}</p></li>
             <li class="pp-workflow-step"><h3>${esc(__('Manage billing and access'))}</h3><p>${esc(__('Review subscription invoices and received payments. Renew, suspend or reactivate the customer organization as needed. Access updates normally apply within one minute.'))}</p></li>
+            <li class="pp-workflow-step"><h3>${esc(__('Help a customer sign in'))}</h3><p>${esc(__('Open the customer account to change its login ID or create a one-time password-reset link. Old passwords are never displayed. Reactivate a suspended subscription before the customer completes the native password-reset form. No email is sent automatically.'))}</p></li>
         </ol>`;
         const dialog = new frappe.ui.Dialog({title: __(platform() ? 'How High4Tech admin works' : 'How PLUS POINT works'), size: 'large',
             fields: [{fieldname: 'guide', fieldtype: 'HTML', options: `<div class="pp-guide-dialog">
@@ -254,6 +313,13 @@
     }
 
     function formRefreshed(frm) {
+        if (platform() && !frm.is_new()) {
+            if (frm.doctype === 'PP Tenant') {
+                frm.add_custom_button(__('Reset customer password'), () => supportRequest(frm,'Reset password'));
+                frm.add_custom_button(__('Change customer login ID'), () => supportRequest(frm,'Change login ID'));
+            }
+            if (frm.doctype === 'PP Support Request') frm.add_custom_button(__('View support result'), () => showSupportResult(frm));
+        }
         if (!screens[frm.doctype]) return;
         frm.add_custom_button(__('Explain this screen'), () => formGuide(frm));
         if (!platform() && !frm.is_new() && frappe.user.has_role('System Manager')) {
@@ -266,7 +332,7 @@
     }
 
     function context(route) {
-        if (platform()) return __('High4Tech · Manage subscriber organizations, subscriptions and access limits here.');
+        if (platform()) return __('High4Tech · PLUS POINT customers, pricing, account support and software-business finances.');
         if (route[0] === 'desktop') return __('Open PLUS POINT to manage your business. High4Tech administration is on a separate site.');
         if (route[0] === 'query-report' && route[1] === 'PLUS POINT Project Finances')
             return __('Project results and workforce deployment. Choose a client or project to narrow the report.');
@@ -276,20 +342,29 @@
             return shortPurpose[route[1]] ? __(shortPurpose[route[1]]) : screens[route[1]] ? __(screens[route[1]][1]) : __('Additional ERP tools. Your contractor workflow starts in PLUS POINT.');
         }
         if (route[0] === 'Workspaces' && route[1] === 'PLUS POINT') return __('Your workspace for labour contracts, daily attendance, wages and client billing.');
-        if (route[0] === 'Workspaces' && route[1] === 'Manufacturing') return __('Manufacturing is an optional ERPNext module for production and factories. Use PLUS POINT for labour contracting.');
-        if (route[0] === 'Workspaces' && /hr|employee|payroll|leave/i.test(route[1] || '')) return __('HR manages employee records, leave and payroll. Record contractor dehadi and client billing in PLUS POINT.');
         return __('Your business tools are part of PLUS POINT. Use Workforce home to return to daily work.');
     }
 
     function render() {
         const route = frappe.get_route();
+        if (!Array.isArray(route) || !route.length) return;
+        if (!inProductScope(route)) {
+            // Wait for the native departing route to settle before redirecting.
+            // An immediate redirect can let Desktop's async show hide the home.
+            window.location.replace(home());
+            return;
+        }
         const active = frappe.container?.page;
         if (!active || !$(active).is(':visible')) return;
+        // A route changes before the next native page finishes loading. Do not
+        // inject the home into the departing Desktop or form during that gap.
+        if (route[0] === 'Workspaces' && active.id !== 'page-Workspaces') return;
         const main = active.querySelector('.layout-main-section');
         if (!main) return;
         active.classList.toggle('pp-customer-screen', !platform());
-        if (!platform() && route[0] === 'List' && customerLists[route[1]]) {
-            const [title, action] = customerLists[route[1]];
+        const listConfig = (platform() ? platformLists : customerLists)[route[1]];
+        if (route[0] === 'List' && listConfig) {
+            const [title, action] = listConfig;
             const page = active.page;
             if (page?.title !== __(title)) page?.set_title(__(title));
             const listview = frappe.get_list_view(route[1]);
@@ -310,35 +385,25 @@
                 <button type="button" class="btn btn-default btn-sm pp-open-guide">${esc(__('How it works'))}</button></div>`;
             bar.querySelector('.pp-open-guide').addEventListener('click', showGuide);
         }
-        const isHome = !platform() && route[0] === 'Workspaces' && route[1] === 'PLUS POINT';
+        const isHome = route[0] === 'Workspaces' && route[1] === (platform() ? 'High4Tech' : 'PLUS POINT');
         bar.classList.toggle('pp-home-context', isHome);
         let welcome = main.querySelector(':scope > .pp-welcome');
         if (isHome && !welcome) {
             welcome = document.createElement('section'); welcome.className = 'pp-welcome';
             welcome.setAttribute('aria-label', __('Getting started with PLUS POINT'));
-            welcome.innerHTML = `${taskHome()}
+            welcome.innerHTML = platform() ? platformHome() : `${taskHome()}
                 <details class="pp-quick-start" ${expanded() ? 'open' : ''}><summary>${esc(__('Quick start: six steps from contract to payment'))}</summary>
-                ${workflow()}<p class="pp-guide-note">${esc(__('Use PLUS POINT for contractor attendance and dehadi. HR Attendance and payroll are separate workflows. Recording earnings does not record a payment.'))}</p></details>`;
+                ${workflow()}<p class="pp-guide-note">${esc(__('Recording earnings does not record a payment.'))}</p></details>`;
             bar.after(welcome);
-            welcome.querySelector('.pp-start-tour').addEventListener('click', () => homeTour(welcome));
-            welcome.querySelector('.pp-mark-attendance').addEventListener('click', attendancePicker);
-            welcome.querySelector('details').addEventListener('toggle', event => {
+            welcome.querySelector('.pp-start-tour')?.addEventListener('click', () => homeTour(welcome));
+            welcome.querySelector('.pp-mark-attendance')?.addEventListener('click', attendancePicker);
+            welcome.querySelector('details')?.addEventListener('toggle', event => {
                 try { localStorage.setItem(key(), event.target.open ? 'expanded' : 'collapsed'); } catch { /* Storage is optional. */ }
             });
         } else if (!isHome && welcome) welcome.remove();
         // Keep native records available without making thirteen setup links the home screen.
-        let allRecords = main.querySelector('.pp-all-records');
         const editor = main.querySelector('.editor-js-container');
-        if (isHome && editor && !allRecords) {
-            allRecords = document.createElement('details'); allRecords.className = 'pp-all-records';
-            allRecords.innerHTML = `<summary>${esc(__('More tools and setup'))}</summary>
-                <div class="pp-workflow-links">${link(['User', 'Staff accounts'])}${link(['Account', 'Accounts'])}
-                ${hrRoute()?.startsWith('/desk/') ? `<a class="pp-guide-link" href="${esc(hrRoute())}">${esc(__('HR tools'))}</a>` : ''}</div>`;
-            editor.before(allRecords); allRecords.append(editor);
-        } else if (!isHome && allRecords) {
-            if (editor) allRecords.before(editor);
-            allRecords.remove();
-        }
+        if (editor) editor.hidden = isHome;
         if (isHome) main.querySelectorAll('a').forEach(anchor => {
             const text = workspaceHelp[anchor.textContent.trim()];
             if (text) tip(anchor, __(text));
@@ -369,8 +434,42 @@
     function start() {
         if (started) return;
         started = true;
+        if (platform()) Object.assign(screens, {
+            'Sales Invoice':['Software invoices','Bill a PLUS POINT customer for their software subscription. Record the receipt separately when paid.',[]],
+            'Payment Entry':['Receipts and payments','Record software-customer receipts and High4Tech business payments. Submit to update your accounts.',[]],
+            'Purchase Invoice':['Business expenses','Record the costs of running and selling PLUS POINT, using your High4Tech company accounts.',[]],
+            'Customer':['Billing contacts','A business subscribing to PLUS POINT. Link its subscription and application address under Customer accounts.',[]],
+            'Company':['High4Tech company','Your software-selling business and its accounting records.',[]],
+            'User':['Your admin profile','Your High4Tech login. To help a customer sign in, open their Customer account instead.',[]],
+            'PP Support Request':['Customer support','The background worker updates the registered customer owner login. View support result after completion. Password-reset links are available here for 20 minutes; native expiry also applies.', ['tenant','operation','new_username','status']],
+        });
+        // Filter native command/search suggestions without changing backend roles
+        // or the registries that native route resolution and forms depend on.
+        const search = frappe.search?.utils;
+        if (search) {
+            for (const name of ['get_creatables','get_search_in_list','get_doctypes','get_reports',
+                'get_pages','get_dashboards','get_recent_pages','get_frequent_links']) {
+                const original = search[name];
+                if (original) search[name] = function (...args) {
+                    return original.apply(this,args).filter(option => option.route
+                        ? inProductScope(option.route)
+                        : option.type === 'New' && frappe.boot.plus_point.navigation.doctypes.includes(option.match));
+                };
+            }
+            const workspaces = search.get_workspaces;
+            if (workspaces) search.get_workspaces = function (...args) {
+                const own = __('Open {0} Workspace',[__(frappe.boot.plus_point.navigation.workspace)]);
+                return workspaces.apply(this,args).filter(option => option.value === own);
+            };
+        }
+        // Keep the native dropdown component; replace its cross-app/editor menu
+        // with the two actions relevant to this product workspace.
+        if (frappe.ui.SidebarHeader) frappe.ui.SidebarHeader.prototype.menu_items = function () {
+            return [{group:'',options:[{name:'product-home',label:__('Overview'),href:home()},
+                {name:'product-help',label:__('How it works'),onclick:showGuide}]}];
+        };
         frappe.provide('frappe.listview_settings');
-        if (!platform()) Object.keys(customerLists).forEach(doctype => {
+        Object.keys(platform() ? platformLists : customerLists).forEach(doctype => {
             frappe.listview_settings[doctype] = {...frappe.listview_settings[doctype], hide_name_column: true, hide_name_filter: true};
         });
         frappe.router.on('change', () => {

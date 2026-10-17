@@ -4,9 +4,9 @@ The customer workspace prioritizes frequent tasks while keeping native ERPNext r
 
 | Principle | Applied change |
 | --- | --- |
-| Reduce competing choices ([Hick's law](https://lawsofux.com/hicks-law/)) | Attendance is the prominent home action; three grouped rows cover workers/sites, client billing and worker payments. Setup records sit under More. |
-| Reveal detail when needed ([progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/)) | The six-step guide and native setup workspace begin collapsed. Screen explanations and field tips remain available; longer field text appears on focus. |
-| Group related controls ([proximity](https://lawsofux.com/law-of-proximity/)) | The sidebar separates Daily work from Billing and payments. Each home task keeps its explanation and links together. |
+| Reduce competing choices ([Hick's law](https://lawsofux.com/hicks-law/)) | Attendance is the prominent home action; three grouped rows cover workers/sites, client billing and worker payments. Setup records sit in collapsed Business setup. |
+| Reveal detail when needed ([progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/)) | The six-step guide and Business setup sidebar group begin collapsed. Screen explanations and field tips remain available; longer field text appears on focus. |
+| Group related controls ([proximity](https://lawsofux.com/law-of-proximity/)) | The sidebar separates Daily work, Clients and billing, Payments and costs, and reports. Each home task keeps its explanation and links together. |
 | Prefer recognition ([recognition rather than recall](https://www.nngroup.com/articles/recognition-and-recall/)) | Plain-language list titles/actions, named link titles and shorter purpose text reduce the need to remember internal DocType names or IDs. |
 | Make targets easier to reach ([Fitts's law](https://lawsofux.com/fittss-law/)) | Home buttons and task links have a minimum 44px height, visible keyboard focus and a stacked mobile layout. This is not a whole-app accessibility certification. |
 | Feedback, consistency and error prevention ([usability heuristics](https://www.nngroup.com/articles/ten-usability-heuristics/)) | Existing Desk dialogs, lists and validation remain familiar. Attendance shows progress, keeps selections after errors, reopens saved registers, and requires explicit review/submission before approving earnings. |
@@ -14,3 +14,5 @@ The customer workspace prioritizes frequent tasks while keeping native ERPNext r
 Financial distinctions remain explicit: earnings, invoices and payments are different events. Simplifying navigation does not change rate snapshots, billing rules, document permissions or approval behavior. Broad upstream HR/accounting screens retain their native complexity; dedicated supervisor roles and field privacy remain separate release work.
 
 Verification uses real browser interactions at desktop and 390px mobile widths, including attendance creation/reopening and temporary-record cleanup. Screenshots and detailed results are recorded in VERIFICATION_STATUS.md. Customer usability sessions, assistive-technology acceptance and large-scale performance testing remain unrun.
+
+High4Tech has its own task home for software customers, pricing, support and finances. App/module switching and unrelated workspaces are hidden, including command suggestions. Related native accounting/employee records remain available; backend permissions still apply.

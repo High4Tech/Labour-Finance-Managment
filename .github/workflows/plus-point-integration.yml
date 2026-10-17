@@ -45,6 +45,8 @@ jobs:
           docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site qa.localhost set-config allow_tests True --parse
           python scripts/verify-live.py --other-site qa.localhost
           python scripts/verify-subscription.py
+          docker compose exec -T -w /home/frappe/frappe-bench frappe bench --site platform.localhost execute plus_point.testing.run_platform_finance
+          python scripts/verify-platform-flow.py
       - name: Diagnostics
         if: failure()
         run: |

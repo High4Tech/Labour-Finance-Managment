@@ -1,0 +1,62 @@
+"""Product navigation only. Native document permissions remain the security boundary."""
+import frappe
+
+CUSTOMER_GROUPS = [
+    ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers'),
+                    ('PP Site', 'Work sites'), ('PP Assignment', 'Assign workers')]),
+    ('Clients and billing', [('Customer', 'Clients'), ('Contract', 'Client contracts'), ('Project', 'Projects'),
+                            ('PP Contract Terms', 'Client billing'), ('PP Milestone', 'Fixed milestones'), ('Sales Invoice', 'Client invoices')]),
+    ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
+                           ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
+    ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
+                          ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
+    ('Business setup', [('User', 'Staff accounts'), ('Company', 'Your company'), ('Item', 'Billing items'),
+                        ('Supplier', 'Suppliers'), ('Account', 'Accounts'), ('PP Work Entry', 'Wages earned')]),
+]
+PLATFORM_GROUPS = [
+    ('PLUS POINT customers', [('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
+    ('Pricing and access', [('Subscription Plan', 'Pricing plans'), ('Subscription', 'Subscriptions')]),
+    ('Software sales', [('Sales Invoice', 'Software invoices'), ('Payment Entry', 'Receipts and payments')]),
+    ('Business finances', [('Purchase Invoice', 'Business expenses'), ('Report:Profit and Loss Statement', 'Financial results'),
+                          ('Report:Accounts Receivable', 'Outstanding invoices')]),
+    ('Billing setup', [('Customer', 'Billing contacts'), ('Company', 'High4Tech company'), ('Item', 'Software items'),
+                       ('Supplier', 'Service providers'), ('Account', 'Accounts')]),
+]
+COMMON_DEPENDENCIES = ['Address', 'Contact', 'Currency', 'Country', 'Fiscal Year', 'Cost Center',
+    'Mode of Payment', 'Payment Terms Template', 'Sales Taxes and Charges Template', 'Tax Category',
+    'Purchase Taxes and Charges Template', 'UOM', 'Item Group', 'Customer Group', 'Territory', 'Payment Term',
+    'Bank Account', 'Bank', 'Journal Entry']
+
+
+def product_navigation(platform):
+    groups = PLATFORM_GROUPS if platform else CUSTOMER_GROUPS
+    home = 'High4Tech' if platform else 'PLUS POINT'
+    items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
+    doctypes, reports = set(COMMON_DEPENDENCIES), set()
+    for label, entries in groups:
+        visible = []
+        for name, title in entries:
+            is_report = name.startswith('Report:')
+            target = name.removeprefix('Report:')
+            if is_report:
+                reports.add(target)
+                allowed = frappe.db.exists('Report', target) and frappe.get_doc('Report', target).is_permitted()
+            else:
+                doctypes.add(target)
+                allowed = frappe.has_permission(target, 'read')
+            if allowed:
+                item=dict(type='Link', link_type='Report' if is_report else 'DocType',
+                    link_to=target, label=title, child=1, is_default_module=1)
+                if is_report:
+                    report=frappe.get_doc('Report',target)
+                    item['report']=dict(report_type=report.report_type,ref_doctype=report.ref_doctype)
+                visible.append(item)
+        if visible:
+            items.append(dict(type='Section Break', label=label, collapsible=1,
+                              keep_closed=int(label in ('Business setup', 'Billing setup'))))
+            items.extend(visible)
+    # Native forms open these related records; they are not extra sidebar modules.
+    if not platform:
+        doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
+                         'Branch', 'Employee Grade', 'Holiday List'])
+    return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home)

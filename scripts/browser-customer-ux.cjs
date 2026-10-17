@@ -28,26 +28,26 @@ const {chromium} = require('playwright');
         else await page.goto(base + '/desk/plus-point', {waitUntil: 'domcontentloaded'});
         await page.locator('.pp-task-home').waitFor();
     };
+    const browserGet=async url=>{
+        const data=await page.evaluate(async url=>(await(await fetch(url)).json()),url);
+        return {json:async()=>data};
+    };
     try {
-        const login = await page.request.post(base + '/api/method/login', {data: {
-            usr: process.env.PP_BROWSER_USER || 'Administrator',
-            pwd: process.env.PP_BROWSER_PASSWORD || settings.PP_ADMIN_PASSWORD,
-        }});
-        const result = await login.json();
-        assert(login.ok() && result.message === 'Logged In', 'Local login failed');
-        assert.equal(result.home_page, '/desk/plus-point', 'Tenant login should open the workforce workspace');
+        await page.goto(base+'/login',{waitUntil:'domcontentloaded'});
+        const result=await page.evaluate(async credentials=>(await(await fetch('/api/method/login',{
+            method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)})).json()),
+            {usr:process.env.PP_BROWSER_USER||'Administrator',pwd:process.env.PP_BROWSER_PASSWORD||settings.PP_ADMIN_PASSWORD});
+        assert.equal(result.message,'Logged In');
+        assert.equal(result.home_page,'/desk/plus-point');
         await goHome();
         assert.equal(await page.locator('.pp-quick-start').evaluate(node => node.open), false);
-        assert.equal(await page.locator('.pp-all-records').evaluate(node => node.open), false);
+        assert.equal(await page.locator('.pp-all-records').count(), 0);
         assert(!(await page.locator('.body-sidebar').innerText()).includes('PP Assignment'));
         await page.locator('.body-sidebar').getByText('Assign workers', {exact: true}).waitFor();
         const primary = await page.getByRole('button', {name: 'Mark attendance', exact: true}).boundingBox();
         assert(primary.height >= 44, 'Attendance action must have a comfortable target');
         await page.screenshot({path: path.join(out, 'customer-home.png'), fullPage: true});
 
-        await page.locator('.pp-all-records > summary').click();
-        await page.getByText('Workforce operations', {exact: true}).waitFor();
-        await page.locator('.pp-all-records > summary').click();
         await page.goto(base + '/desk/plus-point/pp-milestone', {waitUntil: 'domcontentloaded'});
         await page.getByRole('button', {name: 'Add milestone', exact: true}).waitFor();
         await page.getByText('Fixed contract milestones', {exact: true}).first().waitFor();
@@ -57,11 +57,11 @@ const {chromium} = require('playwright');
 
         await goHome();
         const date = await page.evaluate(() => frappe.datetime.add_days(frappe.datetime.get_today(), 2));
-        const sites = await page.request.get(base + '/api/resource/PP%20Site?filters=' + encodeURIComponent(JSON.stringify({site_name:'PLUS POINT Demo'})));
+        const sites = await browserGet(base + '/api/resource/PP%20Site?filters=' + encodeURIComponent(JSON.stringify({site_name:'PLUS POINT Demo'})));
         const records = (await sites.json()).data;
         assert(records?.length, 'Seed the demo site before running attendance UX QA');
         const filters = encodeURIComponent(JSON.stringify({site: records[0].name, work_date: date}));
-        const existing = await page.request.get(base + '/api/resource/PP%20Daily%20Register?filters=' + filters);
+        const existing = await browserGet(base + '/api/resource/PP%20Daily%20Register?filters=' + filters);
         assert.equal((await existing.json()).data.length, 0, 'Refusing to modify existing attendance on the test date');
         const openAttendance = async () => {
             await page.getByRole('button', {name:'Mark attendance', exact:true}).click();
@@ -94,7 +94,7 @@ const {chromium} = require('playwright');
         const second = await openAttendance();
         assert.equal(second.name, first.name, 'Opening saved attendance must reuse the draft');
         assert.equal(second.state, 0, 'The shortcut must never approve work automatically');
-        const count = await page.request.get(base + '/api/resource/PP%20Daily%20Register?filters=' + filters);
+        const count = await browserGet(base + '/api/resource/PP%20Daily%20Register?filters=' + filters);
         assert.equal((await count.json()).data.length, 1);
         console.log('PASS attendance shortcut creates a populated draft and reopens it without a duplicate or approval');
 
@@ -120,16 +120,16 @@ const {chromium} = require('playwright');
                 // Cleanup uses the existing local bootstrap administrator separately.
                 const context = await browser.newContext();
                 try {
-                    const login = await context.request.post(base+'/api/method/login',
-                        {data:{usr:'Administrator',pwd:settings.PP_ADMIN_PASSWORD}});
-                    assert(login.ok() && (await login.json()).message === 'Logged In', 'Cleanup login failed');
-                    const cleanupPage = await context.newPage();
-                    await cleanupPage.goto(base+'/desk/plus-point', {waitUntil:'domcontentloaded'});
-                    await cleanupPage.waitForFunction(() => window.frappe?.csrf_token);
-                    const csrf = await cleanupPage.evaluate(() => frappe.csrf_token);
-                    const response = await context.request.delete(base+'/api/resource/PP%20Daily%20Register/'+encodeURIComponent(cleanupName),
-                        {headers:{'X-Frappe-CSRF-Token':csrf}});
-                    assert(response.ok(), 'Temporary attendance draft cleanup failed: '+response.status());
+                    const cleanupPage=await context.newPage();
+                    await cleanupPage.goto(base+'/login',{waitUntil:'domcontentloaded'});
+                    assert.equal(await cleanupPage.evaluate(async credentials=>(await(await fetch('/api/method/login',{
+                        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)})).json()).message,
+                        {usr:'Administrator',pwd:settings.PP_ADMIN_PASSWORD}),'Logged In');
+                    await cleanupPage.goto(base+'/desk/plus-point',{waitUntil:'domcontentloaded'});
+                    await cleanupPage.waitForFunction(()=>window.frappe?.csrf_token);
+                    const status=await cleanupPage.evaluate(async name=>(await fetch('/api/resource/PP%20Daily%20Register/'+encodeURIComponent(name),{
+                        method:'DELETE',headers:{'X-Frappe-CSRF-Token':frappe.csrf_token}})).status,cleanupName);
+                    assert.equal(status,202,'Temporary attendance draft cleanup failed');
                     console.log('PASS temporary attendance draft removed by local administrator');
                 } finally { await context.close(); }
             }

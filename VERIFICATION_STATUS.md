@@ -2,6 +2,19 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Focused products and support — current increment
+
+- Real Edge browser checks passed as each named dummy account at desktop/390px widths: customer and High4Tech each have one curated native sidebar/home. No extra Apps/Modules menu, HR tools or unrelated workspace navigation. Native command suggestions are filtered; unrelated Desk routes return home. Native accounting/HR dependencies and backend permissions remain installed.
+- Registered the existing PLUS POINT demo as a platform trial customer, keeping its actual owner login and business database. No real software purchase or receipt was fabricated.
+- Real local HTTP from outside Frappe: pricing-plan create/update/read; Guest and customer-site platform-support denial; queued registered-owner login-ID change while suspended; reactivation; native one-time password completion; new login and old-password rejection; reset result encrypted/masked; two-way cross-site token rejection and no customer User in the platform database. Original QA owner/settings restored and temporary users/requests/plans removed.
+- Real native software accounting: a monthly price of 1,250 generated a posted subscription invoice and receivable GL; a posted native receipt created GL and reduced the invoice balance to zero. All financial fixtures rolled back.
+- All **31 actual MariaDB business regressions**, **11 offline project/harness checks** and **10 pure finance/register checks** passed. Native customer/onboarding/report browser checks passed, including review-only draft creation/reopening, fixture deletion, project/deployment and worker history views, actual XLSX export and 390px width.
+- Live customer HTTP CRUD/anonymous rejection, database/token isolation and 60 reads at concurrency 5 passed with zero errors (p95 98 ms). Ten simultaneous attendance attempts produced one draft and nine rejected duplicates; the draft was removed.
+
+Support is local same-host/.localhost only. Native reset completion needs an active subscription; retrieval of the protected link lasts up to 20 minutes and native expiry also applies. No email is automatically sent. Payment providers, public Internet integrations, production hosting and a full role/privacy audit are not certified by these checks. Current scripts and commands are in LOCAL_RUNBOOK.md and TEST_PLAN.md. Earlier UI navigation evidence below records the historical interface and is superseded by the focused-product checks.
+
+## Earlier runtime evidence
+
 ## Passing actual runtime checks
 
 - Official Bench image, MariaDB 11.8 and two Redis services running; MariaDB health check passes. Web/socket ports bind only to 127.0.0.1. Persistent bench/database volumes survive restart.

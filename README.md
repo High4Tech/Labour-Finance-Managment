@@ -4,9 +4,11 @@ Labour contracting on **Frappe v16, ERPNext v16 and Frappe HRMS v16**. Existing 
 
 This is a **local development application**, not a production SaaS release. See [verification](VERIFICATION_STATUS.md) for actual evidence and gaps, and [architecture](MVP_ARCHITECTURE.md) for the source of truth.
 
-Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk home groups daily work into attendance, workers/sites, client billing and worker payments. **Mark attendance** prepares or reopens a register for review. Setup tools and the six-step guide are available on demand, alongside **How it works**, **Show me around**, and field help. ERPNext's unrelated modules, such as Manufacturing, are optional; they are not part of the usual contractor workflow.
+Start with [the user guide](USER_GUIDE.md) for which app to use and the contractor workflow. PLUS POINT's Desk home groups daily work into attendance, workers/sites, client billing and worker payments. **Mark attendance** prepares or reopens a register for review. Business setup is a collapsed sidebar group. The six-step guide is available on demand, alongside **How it works**, **Show me around**, and field help. Only the product workflow appears in navigation and search. Unrelated ERP/HR workspaces and app-switching menus are hidden.
 
 **Business reports** opens native project financial/deployment views and worker statements with assignment history, dated wages/payments and opening/closing balances. See [research alignment](RESEARCH_ALIGNMENT.md) for the October 17 business-context review, corrections and remaining MVP gaps.
+
+High4Tech has its own focused customer, pricing, subscription, account-support and software-finance home. Customer accounts can request native one-time password recovery or a login-ID change through an audited background worker. It does not expose contractor workforce tools. See [support and billing](USER_GUIDE.md#high4tech-customer-support-and-software-finances).
 
 ## Run on Windows
 

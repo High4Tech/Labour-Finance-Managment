@@ -22,7 +22,7 @@
       "fieldname": "site_hostname",
       "reqd": 1,
       "unique": 1,
-      "label": "Tenant Hostname",
+      "label": "Customer app address",
       "fieldtype": "Data",
       "description": "The subscriber site address, not a work-site location. This address identifies its isolated tenant database."
     },
@@ -30,14 +30,14 @@
       "fieldname": "owner_email",
       "reqd": 1,
       "options": "Email",
-      "label": "Owner Email",
+      "label": "Customer login email",
       "fieldtype": "Data"
     },
     {
       "fieldname": "subscription",
       "reqd": 1,
       "options": "Subscription",
-      "label": "ERPNext Subscription",
+      "label": "Subscription",
       "fieldtype": "Link",
       "description": "The native subscription that determines trial, paid period and expiry for this customer organization."
     },

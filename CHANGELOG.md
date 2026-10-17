@@ -1,5 +1,11 @@
 # Development changelog
 
+## Focused products and native customer support — 2026-10-17
+
+Added one curated native sidebar and overview per site, filtered command suggestions and returned unrelated routes to the product home. High4Tech contains software customers, pricing, subscriptions, owner support, invoices/receipts, expenses, financial results and receivables. Contractor operations and reports remain inside PLUS POINT.
+
+Added immutable PP Support Request records, native RQ across registered local customer sites, login-ID validation, session invalidation, native one-time recovery, encrypted/masked temporary results and redacted errors. Native authentication is unchanged. Registered the existing MVP demo as a trial customer without fake sales. See VERIFICATION_STATUS.md and USER_GUIDE.md for tested flows and limits.
+
 ## Two product sides, one entry per site — 2026-10-17
 
 Simplified the native launcher to one PLUS POINT entry on customer sites and one High4Tech admin entry on the separate platform site. Engine apps retain their native route/dock metadata and permissions, while staff accounts, accounting and HR tools are accessible inside the customer workspace. Rewrote guidance around the two business sides, with a separate platform workflow instead of contractor instructions for High4Tech. Updated real browser navigation/onboarding checks to verify the single launcher entry and continued access to native tools.

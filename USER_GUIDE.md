@@ -4,9 +4,9 @@ Start at **PLUS POINT → Workforce home**. Customer logins open this workspace 
 
 Choose **Mark attendance**, select the work site and date, then **Review attendance**. This prepares a draft with assigned workers, or reopens the saved register for that site and date. Review the entries before **Submit** approves earnings. Opening attendance never approves it automatically.
 
-The sidebar groups **Daily work** and **Billing and payments**. Expand **More** for clients, contracts, projects and fixed contract milestones. Lists use labels such as **Add work site** and **Assign worker**, with internal record IDs removed from the main list display. Native permissions still determine which links and actions you can use.
+The sidebar groups **Daily work**, **Clients and billing**, **Payments and costs** and **Business reports**. Expand **Business setup** for staff accounts, company, items, suppliers and accounts. Lists use labels such as **Add work site** and **Assign worker**. Native permissions determine the links and actions available to your login.
 
-For help, use **How it works**, **Show me around**, or expand the six-step **Quick start**. Quick start and **More tools and setup** begin collapsed; the guide remembers your preference in this browser for your login and site. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
+For help, use **How it works**, **Show me around**, or expand the six-step **Quick start**. Quick start and **Business setup** begin collapsed; the guide remembers your preference in this browser for your login and site. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
 
 ## Two sides of PLUS POINT
 
@@ -15,11 +15,19 @@ For help, use **How it works**, **Show me around**, or expand the six-step **Qui
 | PLUS POINT | Each subscribed customer business manages its own clients, workers, work sites, attendance, wages, invoices and project results. Local customer workspace: `demo.localhost:8000/desk/plus-point`. |
 | High4Tech admin | High4Tech manages subscribed businesses, subscription plans, trials, billing, renewals, limits and suspension on its separate platform site. Local owner workspace: `platform.localhost:8000/desk/high4tech`. |
 
-Each site's app launcher shows only its product entry. ERPNext, Frappe HRMS and Frappe Framework are the underlying software, not additional product sides customers must switch between. Their native routes and permissions remain available. On customer home, expand **More tools and setup** for **Staff accounts**, **Accounts** and **HR tools**, as permitted for your login. Core worker, invoice and payment records already open directly from the main workflow.
+Each site opens its own focused workspace. The sidebar and search suggestions contain the relevant product records. App/module switching menus, HR tools, Manufacturing and other unrelated workspaces are removed from the interface. Opening an unrelated Desk route returns to this site's overview. Native ERPNext/HRMS dependencies remain installed to power invoices, accounts and workers; this navigation change does not replace backend permissions.
 
-The platform's **How it works** explains subscriber setup, subscription selection, billing and access. The customer's guide explains labour operations. A customer business can have its own administrator and staff; those accounts do not become High4Tech platform administrators.
+The platform guide explains software customer setup, pricing, support, billing and access. A customer business can have its own administrator and staff; those accounts do not become High4Tech platform administrators.
 
-Manufacturing is an optional ERPNext module for factories and production. It is outside the PLUS POINT labour-contracting workflow. You can return from other Desk modules using **Workforce home**. These broader modules remain available to authorized users; onboarding does not remove or change permissions.
+## High4Tech customer support and software finances
+
+Open **Customers**, choose the PLUS POINT business, and use **Change customer login ID** or **Reset customer password**. A support request is queued for the native worker. Open **View support result** to check completion; reload the request if its displayed status is old. Login-ID changes keep the customer's email address and sign out existing sessions. Reset produces a native one-time link; the old password is never shown. No email is sent automatically. Share the link only with the verified account owner through your established support process. The protected result is displayed to platform administrators for up to 20 minutes, and native reset expiry also applies. A suspended subscription must be reactivated before the customer completes the native reset form.
+
+**Pricing plans** sets recurring software prices; **Subscriptions** links a billing customer, plan and period. **Customer accounts** links that subscription to the customer's independent application and owner email. Access changes normally reach the customer within one minute while the local synchronization worker is running. Changing a plan is not proof that money was received: review the native subscription/invoice before billing.
+
+Use **Software invoices** for software sales, **Receipts and payments** for money actually received or paid, **Business expenses** for your operating costs, **Financial results** for the native profit/loss report and **Outstanding invoices** for unpaid bills. These are High4Tech's accounts, separate from each customer's clients, wages and project finances. Billing setup contains the supporting company, service items, billing contacts, suppliers and accounts.
+
+The local PLUS POINT Demo is registered as a trial software customer; no real purchase or receipt was fabricated. QA is an isolated test customer. Live payment collection and outgoing email are not connected in this development setup.
 
 ## Follow one job
 

@@ -4,9 +4,12 @@ import frappe
 
 def boot_context(bootinfo):
     platform = bool(frappe.conf.get('pp_control_plane'))
+    from plus_point.navigation import product_navigation
+    navigation = product_navigation(platform)
     bootinfo.plus_point = {
         'is_platform': platform,
         'home': '/desk/high4tech' if platform else '/desk/plus-point',
+        'navigation': navigation,
     }
     # One product entry per site. Retain every engine's route/dock metadata for
     # native forms and workspaces; only their separate launcher entries change.
@@ -16,3 +19,12 @@ def boot_context(bootinfo):
                 app.update(app_title='High4Tech admin', app_route='/desk/high4tech')
         else:
             app['on_apps_screen'] = False
+            app['dock'] = []
+    sidebar = dict((bootinfo.get('module_sidebars') or {}).get('PLUS POINT') or {})
+    sidebar.update(label='High4Tech admin' if platform else 'PLUS POINT', app='plus_point',
+                   module='PLUS POINT', items=navigation['items'])
+    bootinfo.module_sidebars = {'PLUS POINT': sidebar}
+    bootinfo.entity_module = {item['link_to']: 'PLUS POINT' for item in navigation['items'] if item.get('link_to')}
+    bootinfo.home_shell = 'PLUS POINT'
+    for kind, names in [('DocType', navigation['doctypes']), ('Report', navigation['reports']), ('Workspace', [navigation['workspace']])]:
+        bootinfo.setdefault('canonical_shell', {})[kind] = {name: 'PLUS POINT' for name in names}
