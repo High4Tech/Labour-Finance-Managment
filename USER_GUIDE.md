@@ -2,6 +2,10 @@
 
 Start at **PLUS POINT → Workforce home**. Customer logins open this workspace by default unless an administrator has chosen another starting app. The overview groups everyday work into attendance, workers and work sites, client billing, and worker payments.
 
+The overview starts with a dashboard. Choose your **Company** and use **Refresh figures** for the latest saved records. PLUS POINT shows active workers/sites, unpaid wages, the client invoice balance, approved attendance over seven days and a project snapshot. Financial totals are lifetime figures for projects with PLUS POINT billing terms; the attendance chart counts approved worker-days. Draft attendance is excluded. All existing work links remain under **Work tools**.
+
+High4Tech's dashboard shows registered software customers, trial/access status, invoices and customer receipts this month, outstanding invoices, six months of billed/received figures and customer access needing attention. Financial figures belong to the selected High4Tech company. Trials are not sales; cash receipts and invoice totals are separate. Amounts include posted invoice taxes, receipts are net of refunds, and future-dated postings are excluded from the monthly chart. Existing links remain under **Your tools**. Zero and empty states use actual saved data, without sample revenue.
+
 Choose **Mark attendance**, select the work site and date, then **Review attendance**. This prepares a draft with assigned workers, or reopens the saved register for that site and date. Review the entries before **Submit** approves earnings. Opening attendance never approves it automatically.
 
 The sidebar groups **Daily work**, **Clients and billing**, **Payments and costs** and **Business reports**. Expand **Business setup** for staff accounts, company, items, suppliers and accounts. Lists use labels such as **Add work site** and **Assign worker**. Native permissions determine the links and actions available to your login.

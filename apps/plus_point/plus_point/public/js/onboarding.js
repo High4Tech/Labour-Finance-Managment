@@ -131,8 +131,10 @@
 
     function taskHome() {
         return `<div class="pp-task-home">
-            <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('What would you like to do?'))}</p></div>
+            <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('Attendance, your team and project finances in one view.'))}</p></div>
                 <button type="button" class="btn btn-default pp-start-tour">${esc(__('Show me around'))}</button></div>
+            <section class="pp-dashboard" aria-label="${esc(__('Business dashboard'))}"></section>
+            <h3 class="pp-tools-heading">${esc(__('Work tools'))}</h3>
             <div class="pp-daily-focus"><div><span class="pp-task-date">${esc(frappe.datetime.str_to_user(frappe.datetime.get_today()))}</span>
                 <h3>${esc(__('Start with attendance'))}</h3><p>${esc(__('Choose a site, review workers, and record a full day, half-day or absence.'))}</p></div>
                 <button type="button" class="btn btn-primary pp-mark-attendance" ${frappe.model.can_create('PP Daily Register') ? '' : 'disabled'}>${esc(__('Mark attendance'))}</button></div>
@@ -152,6 +154,8 @@
     function platformHome() {
         return `<div class="pp-task-home"><div class="pp-task-heading"><div><h2>${esc(__('PLUS POINT customers'))}</h2>
             <p>${esc(__('Run your software business: customers, pricing, support and sales finances.'))}</p></div></div>
+            <section class="pp-dashboard" aria-label="${esc(__('Software business dashboard'))}"></section>
+            <h3 class="pp-tools-heading">${esc(__('Your tools'))}</h3>
             <div class="pp-task-rows">
             ${[
                 ['Customer accounts', 'Businesses that bought PLUS POINT, their subscriptions and owner logins.', [['PP Tenant', 'Customers'], ['PP Support Request', 'Customer support']]],
@@ -395,6 +399,7 @@
                 <details class="pp-quick-start" ${expanded() ? 'open' : ''}><summary>${esc(__('Quick start: six steps from contract to payment'))}</summary>
                 ${workflow()}<p class="pp-guide-note">${esc(__('Recording earnings does not record a payment.'))}</p></details>`;
             bar.after(welcome);
+            plus_point.mount_dashboard(welcome.querySelector('.pp-dashboard'));
             welcome.querySelector('.pp-start-tour')?.addEventListener('click', () => homeTour(welcome));
             welcome.querySelector('.pp-mark-attendance')?.addEventListener('click', attendancePicker);
             welcome.querySelector('details')?.addEventListener('toggle', event => {

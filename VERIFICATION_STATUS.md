@@ -2,6 +2,10 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Dashboard increment
+
+Real company dashboards now sit above the existing tools on both overviews. **33 MariaDB regressions passed**, including approved half-day totals, draft exclusion, company scope and unauthorized access rejection. Native platform accounting fixtures verify outstanding balances before/after payment, current-month invoice/receipt totals, chart totals and exclusion of future postings; all fixtures roll back. Real Edge checks passed on both sites for dashboard loading, four summary metrics, two detail panels, refresh, preserved tool navigation and 390px width. Screenshots were visually reviewed in ignored `.local/qa`. Dashboards read saved records on opening/refresh; they do not claim automatic live streaming, forecast revenue or production capacity certification.
+
 ## Focused products and support — current increment
 
 - Real Edge browser checks passed as each named dummy account at desktop/390px widths: customer and High4Tech each have one curated native sidebar/home. No extra Apps/Modules menu, HR tools or unrelated workspace navigation. Native command suggestions are filtered; unrelated Desk routes return home. Native accounting/HR dependencies and backend permissions remain installed.

@@ -392,5 +392,32 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaises(frappe.PermissionError):
             require_platform()
 
+    def test_dashboard_company_totals_match_approved_work(self):
+        from plus_point.dashboard import overview
+        self.work('0.5')
+        result = overview(self.f.company.name)
+        self.assertEqual(result['company'], self.f.company.name)
+        self.assertEqual(result['workers'], 1)
+        self.assertEqual(result['active_sites'], 1)
+        self.assertEqual(result['open_projects'], 1)
+        self.assertEqual(result['wages_unpaid'], '1000.00')
+        self.assertEqual(result['earned_revenue'], '1500.00')
+        self.assertEqual(result['contribution'], '500.00')
+        self.assertEqual(result['client_balance'], '0.00')
+        self.assertEqual(result['attendance'][-1]['units'], '0.5')
+        self.assertEqual([row['name'] for row in result['projects']], [self.f.project.name])
+
+    def test_dashboard_excludes_drafts_and_rejects_unauthorized_scope(self):
+        from plus_point.dashboard import overview
+        insert('PP Work Entry', assignment=self.f.assignment.name, work_date=today(), units=1, status='Draft')
+        result = overview(self.f.company.name)
+        self.assertEqual(result['wages_unpaid'], '0.00')
+        self.assertEqual(result['attendance'][-1]['units'], '0')
+        with self.assertRaises(frappe.PermissionError):
+            overview('missing-dashboard-company')
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):
+            overview(self.f.company.name)
+
 
 from plus_point.finance import money

@@ -1,5 +1,9 @@
 # Development changelog
 
+## Dashboards above the overview tools — 2026-10-17
+
+Added real company-scoped dashboards to both product homes, preserving every existing work link below them. PLUS POINT shows workers/sites, approved seven-day attendance, unpaid wages, invoice balances and project contribution. High4Tech shows software customers, access/trials, monthly invoices/receipts, outstanding invoices and six-month sales/cash history. Reused native permissions, posted accounting records and existing contractor report calculations. Added company selection, refresh, loading/error/empty states and responsive chart/table layouts.
+
 ## Focused products and native customer support — 2026-10-17
 
 Added one curated native sidebar and overview per site, filtered command suggestions and returned unrelated routes to the product home. High4Tech contains software customers, pricing, subscriptions, owner support, invoices/receipts, expenses, financial results and receivables. Contractor operations and reports remain inside PLUS POINT.

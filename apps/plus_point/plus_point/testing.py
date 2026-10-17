@@ -139,6 +139,8 @@ def run_platform_finance():
         subscription_name=frappe.db.get_value('PP Tenant',{},'subscription')
         company_name=frappe.db.get_value('Subscription',subscription_name,'company')
         company=frappe.get_doc('Company',company_name)
+        from plus_point.dashboard import overview
+        dashboard_before=overview(company.name)
         customer=insert('Customer',customer_name=marker,customer_type='Company',customer_group='Commercial',territory='All Territories')
         item=insert('Item',item_code=marker,item_name=marker,item_group='Services',stock_uom='Nos',is_stock_item=0)
         plan=insert('Subscription Plan',plan_name=marker,currency=company.default_currency,item=item.name,
@@ -156,6 +158,9 @@ def run_platform_finance():
             f'rows={[(row.rate,row.qty,row.amount) for row in invoice.items]}, '
             f'period={subscription.current_invoice_start}..{subscription.current_invoice_end}')
         assert frappe.db.exists('GL Entry',{'voucher_type':'Sales Invoice','voucher_no':invoice.name,'is_cancelled':0})
+        dashboard_invoice=overview(company.name)
+        assert Decimal(dashboard_invoice['client_balance']) == Decimal(dashboard_before['client_balance']) + Decimal('1250.00')
+        assert dashboard_invoice['invoiced_month'] == dashboard_before['invoiced_month'], 'Future invoices must not inflate current sales'
         payment=get_payment_entry('Sales Invoice',invoice.name,bank_account=company.default_cash_account)
         payment.posting_date=start
         payment.reference_no='PLUS POINT software finance QA'
@@ -163,7 +168,26 @@ def run_platform_finance():
         payment.insert();payment.submit();invoice.reload()
         assert Decimal(str(invoice.outstanding_amount))==0
         assert frappe.db.exists('GL Entry',{'voucher_type':'Payment Entry','voucher_no':payment.name,'is_cancelled':0})
-        return dict(monthly_plan=True,subscription_invoice_posted=True,price='1250.00',receipt_posted=True,client_balance='0.00',fixtures='rolled back')
+        dashboard_paid=overview(company.name)
+        assert dashboard_paid['client_balance'] == dashboard_before['client_balance']
+        assert dashboard_paid['receipts_month'] == dashboard_before['receipts_month'], 'Future receipts must not inflate current cash'
+        current_invoice=frappe.copy_doc(invoice)
+        current_invoice.subscription=None
+        current_invoice.posting_date=today()
+        current_invoice.due_date=today()
+        current_invoice.set_posting_time=1
+        current_invoice.insert();current_invoice.submit()
+        current_payment=get_payment_entry('Sales Invoice',current_invoice.name,bank_account=company.default_cash_account)
+        current_payment.posting_date=today()
+        current_payment.reference_no='PLUS POINT current dashboard QA'
+        current_payment.reference_date=today()
+        current_payment.insert();current_payment.submit()
+        current_dashboard=overview(company.name)
+        assert Decimal(current_dashboard['invoiced_month']) == Decimal(dashboard_before['invoiced_month']) + Decimal('1250.00')
+        assert Decimal(current_dashboard['receipts_month']) == Decimal(dashboard_before['receipts_month']) + Decimal('1250.00')
+        assert current_dashboard['sales'][-1]['invoiced'] == current_dashboard['invoiced_month']
+        assert current_dashboard['sales'][-1]['receipts'] == current_dashboard['receipts_month']
+        return dict(monthly_plan=True,subscription_invoice_posted=True,price='1250.00',receipt_posted=True,client_balance='0.00',dashboard_balances=True,fixtures='rolled back')
     finally:
         frappe.db.rollback()
         frappe.flags.mute_emails=original_mute

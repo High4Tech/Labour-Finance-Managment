@@ -106,3 +106,12 @@ PP Support Request requires a control-plane site and High4Tech Platform Admin. C
 Reset URLs are encrypted in native __Auth, masked in DocType REST data and retrieved only by authorized platform admins for 20 minutes. Hourly cleanup removes expired encrypted results. Child stdout stays in memory and errors are redacted before logging. No plaintext old passwords, keys in process arguments, new credential store or independent authentication implementation is introduced. This local same-host bridge supports registered .localhost customer owners. Remote-host support, verified support identity procedures and email delivery remain production work.
 
 Native software Subscription Plan → Subscription → Sales Invoice → Payment Entry → GL is tested with rollback. Native profit/loss and receivable reports expose High4Tech finances. Local external HTTP tests cover independent databases and the support bridge; public SaaS, email and payment-provider connections are not claimed.
+
+
+## Company dashboards
+
+`plus_point.dashboard.overview` is a read-only native RPC. Customer access requires System Manager; platform access requires the control-plane flag and High4Tech Platform Admin. Companies and all source records use native permission-checked lists. Unknown/inaccessible company selection is rejected. Customer figures reuse the existing project financial report, not a second accounting formula. Counts/attendance cover the selected company and its contractor projects. The last seven days include approved work only, with fractional worker-days preserved.
+
+Platform figures use native posted Sales Invoices and customer Payment Entries in company currency. Monthly invoicing includes taxes and credit notes, cash includes unallocated receipts net of refunds, and future posting dates are excluded from the current-month/six-month series. Outstanding invoices are positive base-currency outstanding balances across posted invoices. Customer access status follows the same subscription period/suspension calculation as provisioning. No MRR, profit or paid-customer status is inferred from trials. Company access is authoritative, not browser-supplied currency or role values.
+
+The existing home tools remain below summary metrics, a native-theme chart and a project/customer table. The company selector and Refresh figures read saved data; revisiting home reloads it. Loading, permission/error/retry and empty-company states keep the existing tools usable. No new dependencies, background polling or business writes are introduced.
