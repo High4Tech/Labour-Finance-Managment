@@ -22,6 +22,8 @@ After selecting or creating your own company, add or choose one **worker**, add 
 
 Choose **Import employees or finances** above the dashboard or in the last setup step. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.
 
+You can also choose **Import** beside the top **Add** button on Workers, Wages earned, Fixed milestones, Project expenses, Client invoices, Receipts and payments, or Worker payments. This remains available on populated lists and after refresh. The window selects the corresponding import type and shows **Download template** above the instructions and file chooser. Expand **How to fill this template** when needed. You can add more rows later or update employee profiles using their existing IDs.
+
 Fill the template in Excel or Google Sheets. Keep its headers and use one worksheet, stable source IDs, YYYY-MM-DD dates and company-currency amounts without currency symbols or thousands separators. Format IDs and phone numbers as text. Replace formulas with values. From Google Sheets choose **File → Download → CSV** or **Microsoft Excel**. Upload UTF-8 CSV or XLSX, at most 200 rows and 2 MB per file. This is an uploaded snapshot, not a live Google Sheets connection.
 
 | Template | What the system saves |

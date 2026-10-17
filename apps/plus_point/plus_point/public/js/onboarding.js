@@ -74,6 +74,11 @@
         'Sales Invoice':['Software invoices','Create invoice'], 'Payment Entry':['Receipts and payments','Record payment'],
         'Purchase Invoice':['Business expenses','Record expense'], 'Customer':['Billing contacts','Add billing contact'],
     };
+    const listImports = {
+        Employee:'employees', 'PP Work Entry':'work', 'PP Milestone':'milestones',
+        'Purchase Invoice':'expenses', 'Sales Invoice':'invoices',
+        'Payment Entry':'receipts', 'PP Wage Settlement':'worker_payments',
+    };
     const shortPurpose = {
         'PP Site': 'Choose a work site to prepare daily attendance.',
         'PP Assignment': 'Agree who works where, for which dates and rates.',
@@ -377,6 +382,20 @@
             const listview = frappe.get_list_view(route[1]);
             if (listview?.can_create && page?.btn_primary?.is(':visible') && page.btn_primary.attr('data-label') !== __(action)) {
                 page.set_primary_action({label: __(action), short_label: __('Add')}, () => listview.make_new_doc(), 'plus');
+            }
+        }
+        if (route[0] === 'List' && !platform() && listImports[route[1]] && frappe.user.has_role('System Manager')) {
+            const listview = frappe.get_list_view(route[1]);
+            const page = active.page;
+            // Include populated/filtered lists, including native Employee, which
+            // does not use the custom list-title configuration above.
+            if (listview?.doctype === route[1] && listview.can_create && page === listview.page && page?.btn_secondary &&
+                (!page.btn_secondary.hasClass('pp-list-import') || page.btn_secondary.hasClass('hide') || page.btn_secondary.attr('data-label')!==__('Import'))) {
+                page.set_secondary_action({label:__('Import'),short_label:__('Import')},()=>{
+                    const company = listview.get_filter_value?.('company');
+                    return plus_point.open_import(typeof company==='string'?company:undefined,()=>listview.refresh(),listImports[listview.doctype]);
+                },'upload');
+                page.btn_secondary.addClass('pp-list-import');
             }
         }
         let bar = main.querySelector(':scope > .pp-context-bar');

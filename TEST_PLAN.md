@@ -24,6 +24,8 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 
 15. Setup/import acceptance: real database checks cover resume/skip, new job/agreement creation, real worker/site assignments without attendance, employee create/update/explicit same-company IDs, CSV errors, XLSX values/formula refusal, actual work and employee payment GL, linked native invoice/partial receipt, fixed milestones/caps, expenses/budgets, stale limits, suspension, replay/conflict rules, wrong-user/guest/platform denial and atomic whole-file rollback. `scripts/browser-setup-imports.cjs` walks through the real setup, tests background focus blocking and release, reload/resume, template/reference downloads, no-write preview, real employee import, duplicate skip, row error download action and 390px layouts. Its exact temporary workers/sites/assignments/import receipt and original guide state are cleaned up in finally. Run it sequentially with database fixtures; native user creation clears global cache and may invalidate pending previews.
 
+The read-only `scripts/browser-list-imports.cjs` checks persistent header Import actions beside Add on all seven supported customer lists, including a populated Employee list, matching template downloads and mobile/reload behavior. Set `PP_BROWSER_PASSWORD` (and optionally `PP_BROWSER_USER`) for the local customer account; credentials are not stored in the script.
+
 ## Release gates still required
 
 - Realistic 20/100/1000-worker bulk posting, concurrent write races, deadlocks, latency/CPU/memory/disk profiling.

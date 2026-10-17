@@ -22,20 +22,21 @@
         const url=URL.createObjectURL(new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8'}));
         const anchor=document.createElement('a');anchor.href=url;anchor.download='plus-point-import-errors.csv';anchor.click();URL.revokeObjectURL(url);
     }
-    plus_point.open_import=async(defaultCompany,onClose)=>{
+    plus_point.open_import=async(defaultCompany,onClose,defaultKind='employees')=>{
         let preview=null,file=null,busy=false,finished=false,dialog;
         const reset=()=>{if(busy || !dialog)return;preview=null;dialog.set_value('confirmed',0);dialog.set_df_property('confirmed','hidden',1);dialog.fields_dict.preview.$wrapper.empty();dialog.set_primary_action(__('Review file'),review);};
         const helpText=()=>{
             if(!dialog)return;
             reset();const kind=dialog.get_value('kind');
-            dialog.fields_dict.instructions.$wrapper.html(`<p>${esc(__(help[kind]))}</p><p>${esc(__('Keep external_id stable when re-uploading. Identical financial rows are skipped; changed posted rows require a reviewed correction. Employee profiles can be updated.'))}</p>`);
+            dialog.fields_dict.instructions.$wrapper.html(`<details><summary>${esc(__('How to fill this template'))}</summary><p>${esc(__(help[kind]))}</p><p>${esc(__('Keep external_id stable when re-uploading. Identical financial rows are skipped; changed posted rows require a reviewed correction. Employee profiles can be updated.'))}</p></details>`);
         };
         dialog=new frappe.ui.Dialog({title:__('Import employees or finances'),static:true,size:'extra-large',fields:[
             {fieldtype:'HTML',fieldname:'intro',options:`<p>${esc(__('Download a template, fill it in Excel or Google Sheets, then upload CSV or XLSX. Review every row before saving. Up to 200 rows and 2 MB per file.'))}</p>`},
             {fieldtype:'Link',fieldname:'company',label:__('Your company'),options:'Company',reqd:1,default:defaultCompany,onchange:reset},
-            {fieldtype:'Select',fieldname:'kind',label:__('What are you importing?'),options:Object.entries(kinds).map(([value,label])=>({value,label:__(label)})),default:'employees',reqd:1,onchange:helpText},
+            {fieldtype:'Select',fieldname:'kind',label:__('What are you importing?'),options:Object.entries(kinds).map(([value,label])=>({value,label:__(label)})),default:defaultKind,reqd:1,onchange:helpText},
+            {fieldtype:'HTML',fieldname:'template_actions',options:`<div class="pp-import-tools"><button class="btn btn-primary pp-download-template" type="button">${esc(__('Download template'))}</button><button class="btn btn-default pp-download-ids" type="button">${esc(__('Download reference IDs'))}</button></div>`},
             {fieldtype:'HTML',fieldname:'instructions'},
-            {fieldtype:'HTML',fieldname:'upload',options:`<div class="pp-import-tools"><button class="btn btn-default pp-download-template" type="button">${esc(__('Download template'))}</button><button class="btn btn-default pp-download-ids" type="button">${esc(__('Download reference IDs'))}</button></div><label class="pp-import-file">${esc(__('Choose CSV or Excel file'))}<input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}"></label><p class="text-muted">${esc(__('Google Sheets: File → Download → CSV or Microsoft Excel. Use one sheet, keep the headers, and replace formulas with values. Use company-currency amounts without separators or symbols.'))}</p>`},
+            {fieldtype:'HTML',fieldname:'upload',options:`<label class="pp-import-file">${esc(__('Choose CSV or Excel file'))}<input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}"></label><p class="text-muted">${esc(__('Google Sheets: File → Download → CSV or Microsoft Excel. Use one sheet, keep the headers, and replace formulas with values. Use company-currency amounts without separators or symbols.'))}</p>`},
             {fieldtype:'HTML',fieldname:'preview'},
             {fieldtype:'Check',fieldname:'confirmed',label:__('I reviewed these records and want to save the employee changes or post these historical finances.'),hidden:1},
         ],primary_action_label:__('Review file'),primary_action:()=>review(),secondary_action_label:__('Close'),secondary_action:()=>{if(!busy)dialog.hide();}});
@@ -84,8 +85,8 @@
         dialog.show();helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
         upload.find('input').on('change',event=>{file=event.target.files[0];reset();});
-        upload.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else frappe.msgprint(__('Choose your company first.'));});
-        upload.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else frappe.msgprint(__('Choose your company first.'));});
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else frappe.msgprint(__('Choose your company first.'));});
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else frappe.msgprint(__('Choose your company first.'));});
         if(!defaultCompany){const info=(await frappe.call({method:'plus_point.setup_flow.status'})).message;if(info.companies.length===1)dialog.set_value('company',info.companies[0].name);}
     };
 })();

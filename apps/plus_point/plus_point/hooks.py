@@ -9,12 +9,12 @@ after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
-app_include_js = ["/assets/plus_point/js/dashboard.js?v=20261017-setup-1",
-                  "/assets/plus_point/js/conditions.js?v=20261017-setup-1",
-                  "/assets/plus_point/js/imports.js?v=20261017-setup-1",
-                  "/assets/plus_point/js/setup_flow.js?v=20261017-setup-1",
-                  "/assets/plus_point/js/onboarding.js?v=20261017-setup-1"]
-app_include_css = "/assets/plus_point/css/onboarding.css?v=20261017-setup-1"
+app_include_js = ["/assets/plus_point/js/dashboard.js?v=20261017-import-cta-1",
+                  "/assets/plus_point/js/conditions.js?v=20261017-import-cta-1",
+                  "/assets/plus_point/js/imports.js?v=20261017-import-cta-1",
+                  "/assets/plus_point/js/setup_flow.js?v=20261017-import-cta-1",
+                  "/assets/plus_point/js/onboarding.js?v=20261017-import-cta-1"]
+app_include_css = "/assets/plus_point/css/onboarding.css?v=20261017-import-cta-1"
 scheduler_events = {"hourly": ["plus_point.support.purge_results"]}
 
 doc_events = {

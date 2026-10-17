@@ -1,5 +1,9 @@
 # Development changelog
 
+## Visible list imports — 2026-10-17
+
+Added a persistent Import action beside the native top Add action on supported customer employee/finance lists, including populated lists. Each opens the corresponding import type. Moved Download template above collapsible template instructions and the file chooser. Preserved existing native Add behavior, permissions and the preview/posting workflow.
+
 ## Guided setup and historical imports — 2026-10-17
 
 Added a resumable customer setup guide: company prerequisite, worker, site/project/client, billing agreement, worker assignment and optional imports. The focused dialog blurs and removes background focus; Skip setup and explore preserves saved steps and restores normal navigation. Existing businesses are not interrupted on rollout.
