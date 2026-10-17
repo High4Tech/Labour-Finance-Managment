@@ -24,23 +24,30 @@ const { chromium } = require('playwright');
     const go = route => page.goto(base + route, {waitUntil: 'domcontentloaded'});
     const popover = page.locator('#driver-popover-item');
     try {
-        const login = await page.request.post(base + '/api/method/login', {data: {
+        await go('/login');
+        const login = await page.evaluate(async credentials => {
+            const response=await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(credentials)});
+            return (await response.json()).message;
+        }, {
             usr: process.env.PP_BROWSER_USER || 'Administrator',
             pwd: process.env.PP_BROWSER_PASSWORD || settings.PP_ADMIN_PASSWORD,
-        }});
-        assert(login.ok() && (await login.json()).message === 'Logged In', 'Login failed');
+        });
+        assert.equal(login, 'Logged In', 'Login failed');
         if (site === 'platform.localhost') {
             await go('/desk');
+            await page.locator('.desktop-container .icon-title').getByText('High4Tech admin', {exact:true}).waitFor();
+            assert.equal(await page.locator('.desktop-container .desktop-icon').count(),1);
             await page.locator('.desktop-container .icon-title').getByText('High4Tech admin', {exact: true}).click();
             await page.locator('.pp-context-bar:visible').getByText(/Manage subscriber organizations/).waitFor();
             assert.equal(await page.getByRole('link', {name: 'Platform home', exact: true}).getAttribute('href'), '/desk/high4tech');
             assert.equal(await page.locator('.pp-welcome').count(), 0);
             await page.getByRole('button', {name: 'How it works', exact: true}).click();
             await page.getByRole('dialog').getByText('High4Tech admin', {exact: true}).waitFor();
+            await page.getByRole('dialog').getByText('Manage the PLUS POINT service', {exact:true}).waitFor();
+            assert.equal(await page.getByRole('dialog').getByText('Follow a job from contract to payment', {exact:true}).count(),0);
             await page.getByRole('button', {name: 'Got it', exact: true}).click();
             await page.screenshot({path: path.join(out, 'onboarding-platform.png')});
-            const tenants = await page.request.get(base + '/api/resource/PP%20Tenant?limit_page_length=1');
-            const records = (await tenants.json()).data;
+            const records = await page.evaluate(async () => (await (await fetch('/api/resource/PP%20Tenant?limit_page_length=1')).json()).data);
             assert(records?.length, 'Seed a local platform tenant before running field-help QA');
             await go('/desk/pp-tenant/' + encodeURIComponent(records[0].name));
             await page.getByRole('button', {name: 'Help: Customer Organization', exact: true}).click();
@@ -63,7 +70,7 @@ const { chromium } = require('playwright');
             await popover.waitFor({state: 'hidden'});
             await page.getByRole('button', {name: 'How it works', exact: true}).click();
             const dialog = page.getByRole('dialog');
-            await dialog.getByText('Which app should I use?', {exact: true}).waitFor();
+            await dialog.getByText('Two sides of PLUS POINT', {exact: true}).waitFor();
             await dialog.getByText('High4Tech admin', {exact: true}).waitFor();
             await page.screenshot({path: path.join(out, 'onboarding-app-guide.png')});
             await dialog.getByRole('button', {name: 'Got it', exact: true}).click();
@@ -80,8 +87,7 @@ const { chromium } = require('playwright');
             await popover.waitFor({state: 'hidden'});
             console.log('PASS six-step tour, Next/Back/Escape/Finish, app explanations and remembered quick-start preference');
 
-            const assignments = await page.request.get(base + '/api/resource/PP%20Assignment?limit_page_length=1');
-            const records = (await assignments.json()).data;
+            const records = await page.evaluate(async () => (await (await fetch('/api/resource/PP%20Assignment?limit_page_length=1')).json()).data);
             assert(records?.length, 'Seed a local demo allocation before running field-help QA');
             await go('/desk/pp-assignment/' + encodeURIComponent(records[0].name));
             const wageHelp = page.getByRole('button', {name: 'Help: Daily Worker Wage', exact: true});
@@ -112,7 +118,8 @@ const { chromium } = require('playwright');
             await page.locator('.pp-welcome').waitFor();
             await go('/desk');
             await page.locator('.desktop-icon .pp-app-purpose').first().waitFor();
-            assert.equal(await page.locator('.pp-app-purpose').count(), 4);
+            assert.equal(await page.locator('.pp-app-purpose').count(), 1);
+            assert.equal(await page.locator('.desktop-container .desktop-icon').count(), 1);
             await page.screenshot({path: path.join(out, 'onboarding-apps.png'), fullPage: true});
             await page.setViewportSize({width: 390, height: 844});
             await go('/desk/plus-point');
@@ -125,7 +132,7 @@ const { chromium } = require('playwright');
             assert(box.x >= 0 && box.x + box.width <= 391, 'Mobile tour popover overflows the viewport');
             await page.keyboard.press('Escape');
             await popover.waitFor({state: 'hidden'});
-            console.log('PASS optional-module way back, four app descriptions and 390px mobile layout');
+            console.log('PASS optional-module way back, one product entry and 390px mobile layout');
         }
         assert.deepEqual(failures, [], 'Onboarding produced browser/server errors');
         console.log('PASS onboarding: zero JavaScript or HTTP errors; no business records changed');

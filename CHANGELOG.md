@@ -1,5 +1,9 @@
 # Development changelog
 
+## Two product sides, one entry per site — 2026-10-17
+
+Simplified the native launcher to one PLUS POINT entry on customer sites and one High4Tech admin entry on the separate platform site. Engine apps retain their native route/dock metadata and permissions, while staff accounts, accounting and HR tools are accessible inside the customer workspace. Rewrote guidance around the two business sides, with a separate platform workflow instead of contractor instructions for High4Tech. Updated real browser navigation/onboarding checks to verify the single launcher entry and continued access to native tools.
+
 ## Research-context alignment — 2026-10-17
 
 Reviewed the owner's complete research handoff against the actual implementation and recorded RESEARCH_ALIGNMENT.md. Added native Project Finances with financial/deployment views and Worker Statement with dated work/payments, opening/closing wage balances and assignment history. Added home, Employee, Project and billing-terms shortcuts, calculation notes and native export support. Project totals remain lifetime scoped; fixed milestone revenue is not allocated to workers. Replaced the raw financial popup with a filterable report.

@@ -53,6 +53,8 @@ Desk onboarding is an app-owned JavaScript/CSS extension loaded through native h
 
 Tenant migration installs a native site-level Custom Sidebar only when no operator layout exists, preserves per-user sidebar choices, and supplies default link-title Property Setters for Employee/Project only if none exist. An empty site default_app becomes plus_point; explicit preferences are preserved. Tenant custom lists show familiar labels and omit the internal name column/filter, while backend names and references remain intact. The native sidebar still filters entries by document permissions. Platform navigation is excluded from these tenant changes. USER_GUIDE.md describes the workflow; UX_DESIGN.md records the design reasoning and limits.
 
+The boot extension sets native `on_apps_screen=False` on engine app entries, leaving their route/dock metadata intact. Customer sites show one PLUS POINT product entry; the control-plane site shows one High4Tech admin entry. This is presentation, not access control. Shared HR/account/user tools remain native and are linked within the customer workspace, subject to existing permissions. Guides distinguish the two product sides and present platform-specific steps on the control plane.
+
 ## Tenant isolation and permissions
 
 Native Frappe site per tenant with distinct MariaDB database/user. Validated Host selects the site; browser tenant IDs never select another database. The separate platform.localhost site requires pp_control_plane=true and High4Tech Platform Admin for registry mutations. A role on a tenant site grants no platform access or automatic cross-site support login. Development Administrator is a bootstrap identity; production needs named users and MFA.

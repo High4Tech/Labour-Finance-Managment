@@ -8,9 +8,11 @@ def boot_context(bootinfo):
         'is_platform': platform,
         'home': '/desk/high4tech' if platform else '/desk/plus-point',
     }
-    if platform:
-        # The same extension serves two separate sites. Its platform tile should
-        # open subscriber administration rather than the contractor workspace.
-        for app in bootinfo.get('app_data', []):
-            if app.get('app_name') == 'plus_point':
+    # One product entry per site. Retain every engine's route/dock metadata for
+    # native forms and workspaces; only their separate launcher entries change.
+    for app in bootinfo.get('app_data', []):
+        if app.get('app_name') == 'plus_point':
+            if platform:
                 app.update(app_title='High4Tech admin', app_route='/desk/high4tech')
+        else:
+            app['on_apps_screen'] = False

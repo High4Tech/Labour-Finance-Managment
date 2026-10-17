@@ -1,4 +1,4 @@
-/* Native app switching regression. Run against a local tenant, optionally with
+/* Single-product navigation and shared native tools. Run against a local tenant, optionally with
  * PP_BROWSER_USER / PP_BROWSER_PASSWORD for a non-Administrator account.
  * PP_BROWSER_EMPLOYEE_APP=1 additionally checks linked employee self-service.
  */
@@ -36,23 +36,39 @@ const { chromium } = require('playwright');
     assert(!page.url().includes('setup-wizard'), 'All apps returned to the setup wizard');
   };
   try {
-    const login = await page.request.post(base + '/api/method/login', { data: {
+    await page.goto(base+'/login', {waitUntil:'domcontentloaded'});
+    const login = await page.evaluate(async credentials => {
+      const response = await fetch('/api/method/login', {method:'POST',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(credentials)});
+      return (await response.json()).message;
+    }, {
       usr: process.env.PP_BROWSER_USER || 'Administrator',
       pwd: process.env.PP_BROWSER_PASSWORD || settings.PP_ADMIN_PASSWORD,
-    } });
-    assert(login.ok() && (await login.json()).message === 'Logged In', 'Local login failed');
+    });
+    assert.equal(login, 'Logged In', 'Local login failed');
     await page.goto(base + '/desk', { waitUntil: 'domcontentloaded' });
     await desktopIcon('PLUS POINT').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('.desktop-container .desktop-icon').count(), 1);
     assert.equal(await page.evaluate(() => frappe.boot.home_page), 'desktop');
     assert.equal(await page.evaluate(() => frappe.boot.apps_data.is_desk_apps), 1);
     await desktopIcon('PLUS POINT').click();
     await page.getByText('Workforce overview', { exact: true }).waitFor();
     await allApps();
-    await desktopIcon('Frappe HR').click();
+    assert.equal(await page.locator('.desktop-container .desktop-icon').count(), 1);
+    await desktopIcon('PLUS POINT').click();
+    await page.getByText('Workforce overview', {exact:true}).waitFor();
+    const openTools = async () => {
+      if (!await page.locator('.pp-all-records').evaluate(node=>node.open))
+        await page.locator('.pp-all-records > summary').click();
+    };
+    await openTools();
+    await page.getByRole('link', {name:'HR tools',exact:true}).click();
     await page.getByText('Department Wise Employee Count', { exact: true }).waitFor();
-    await allApps();
-    await desktopIcon('Framework').click();
-    await page.locator('.header-title').getByText('Build', { exact: true }).waitFor();
+    await page.getByRole('link', {name:'Workforce home',exact:true}).click();
+    await page.getByText('Workforce overview', {exact:true}).waitFor();
+    await openTools();
+    await page.getByRole('link', {name:'Staff accounts',exact:true}).click();
+    await page.getByRole('button', {name:'Add User',exact:true}).waitFor();
     await page.goto(base + '/desk/setup/home', { waitUntil: 'domcontentloaded' });
     await page.getByText('Annual Purchase', { exact: true }).waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes('Loading...'));
@@ -74,7 +90,7 @@ const { chromium } = require('playwright');
       console.log('PASS linked employee self-service and browser Back to PLUS POINT');
     }
     assert.deepEqual(failures, [], 'App switching produced browser/server errors');
-    console.log('PASS All apps → PLUS POINT → HR → Framework → Home dashboard → Users → PLUS POINT; zero browser/server errors');
+    console.log('PASS one PLUS POINT entry; internal HR tools, staff accounts, native Home and employee self-service remain available; zero browser/server errors');
   } catch (error) {
     await page.screenshot({ path: path.join(out, 'navigation-failure.png'), fullPage: true });
     console.error('Navigation failures:', failures);

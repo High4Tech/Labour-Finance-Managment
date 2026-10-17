@@ -12,6 +12,10 @@
         'Frappe HR': 'Employee HR and payroll', 'Framework': 'Users and settings',
         'High4Tech admin': 'Subscribers and billing',
     };
+    const productSides = {
+        'PLUS POINT': 'For each customer business: manage its own clients, contracts, workers, attendance, wages, invoices and project results.',
+        'High4Tech admin': 'For High4Tech: manage customer businesses, subscription plans, trials, billing and access. This is a separate site, not an extra app for the customer to use.',
+    };
     const steps = [
         {title: 'Set up the client and job', text: 'Your Company is your own business. A Client company is the customer paying you. Link its agreement and project before assigning workers.',
             links: [['Company', 'Your company'], ['Customer', 'Client companies'], ['Contract', 'Client contracts'], ['Project', 'Projects']]},
@@ -81,6 +85,7 @@
         ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
     const key = () => `pp-quick-start-v2:${location.host}:${frappe.session.user}`;
     const expanded = () => { try { return localStorage.getItem(key()) === 'expanded'; } catch { return false; } };
+    const hrRoute = () => frappe.boot.app_data?.find(app => app.app_name === 'hrms')?.app_route;
 
     function attendancePicker() {
         let opening = false;
@@ -157,16 +162,23 @@
     }
 
     function appMap() {
-        return `<dl class="pp-app-map">${Object.entries(appHelp).map(([name, text]) =>
+        return `<dl class="pp-app-map">${Object.entries(productSides).map(([name, text]) =>
             `<div><dt>${esc(__(name))}</dt><dd>${esc(__(text))}</dd></div>`).join('')}</dl>`;
     }
 
     function showGuide() {
-        const dialog = new frappe.ui.Dialog({title: __('How PLUS POINT works'), size: 'large',
+        const platformGuide = `<h2>${esc(__('Manage the PLUS POINT service'))}</h2><ol class="pp-workflow">
+            <li class="pp-workflow-step"><h3>${esc(__('Add a customer business'))}</h3><p>${esc(__('Create its customer organization and owner account. Each business gets its own separate site and workforce records.'))}</p></li>
+            <li class="pp-workflow-step"><h3>${esc(__('Choose its subscription'))}</h3><p>${esc(__('Select a monthly plan or trial, set the period and agree worker, user and work-site limits.'))}</p></li>
+            <li class="pp-workflow-step"><h3>${esc(__('Manage billing and access'))}</h3><p>${esc(__('Review subscription invoices and received payments. Renew, suspend or reactivate the customer organization as needed. Access updates normally apply within one minute.'))}</p></li>
+        </ol>`;
+        const dialog = new frappe.ui.Dialog({title: __(platform() ? 'How High4Tech admin works' : 'How PLUS POINT works'), size: 'large',
             fields: [{fieldname: 'guide', fieldtype: 'HTML', options: `<div class="pp-guide-dialog">
-                <h2>${esc(__('Which app should I use?'))}</h2>${appMap()}
-                <h2>${esc(__('Follow a job from contract to payment'))}</h2>${workflow()}
-                <p class="pp-guide-note">${esc(__('PLUS POINT daily registers calculate contractor wages and billing. They do not automatically create HR Attendance or run HR payroll. Earned, invoiced and paid amounts are tracked separately.'))}</p>
+                <h2>${esc(__('Two sides of PLUS POINT'))}</h2>${appMap()}
+                ${platform() ? platformGuide : `<h2>${esc(__('Follow a job from contract to payment'))}</h2>${workflow()}`}
+                <p class="pp-guide-note">${esc(__(platform()
+                    ? 'Use this site to run the service. Customer businesses manage their labour operations inside their own PLUS POINT workspace.'
+                    : 'ERPNext and HRMS power the shared accounting and employee tools inside PLUS POINT. You do not need to switch between separate apps. Contractor dehadi and standard HR payroll remain separate workflows.'))}</p>
             </div>`}], primary_action_label: __('Got it'), primary_action() { dialog.hide(); }});
         dialog.$wrapper.on('click', '.pp-guide-link', () => dialog.hide());
         dialog.show();
@@ -255,6 +267,7 @@
 
     function context(route) {
         if (platform()) return __('High4Tech · Manage subscriber organizations, subscriptions and access limits here.');
+        if (route[0] === 'desktop') return __('Open PLUS POINT to manage your business. High4Tech administration is on a separate site.');
         if (route[0] === 'query-report' && route[1] === 'PLUS POINT Project Finances')
             return __('Project results and workforce deployment. Choose a client or project to narrow the report.');
         if (route[0] === 'query-report' && route[1] === 'PLUS POINT Worker Statement')
@@ -265,7 +278,7 @@
         if (route[0] === 'Workspaces' && route[1] === 'PLUS POINT') return __('Your workspace for labour contracts, daily attendance, wages and client billing.');
         if (route[0] === 'Workspaces' && route[1] === 'Manufacturing') return __('Manufacturing is an optional ERPNext module for production and factories. Use PLUS POINT for labour contracting.');
         if (route[0] === 'Workspaces' && /hr|employee|payroll|leave/i.test(route[1] || '')) return __('HR manages employee records, leave and payroll. Record contractor dehadi and client billing in PLUS POINT.');
-        return __('ERPNext and HR provide shared business tools. Start in PLUS POINT for the contractor workflow.');
+        return __('Your business tools are part of PLUS POINT. Use Workforce home to return to daily work.');
     }
 
     function render() {
@@ -318,7 +331,9 @@
         const editor = main.querySelector('.editor-js-container');
         if (isHome && editor && !allRecords) {
             allRecords = document.createElement('details'); allRecords.className = 'pp-all-records';
-            allRecords.innerHTML = `<summary>${esc(__('More tools and setup'))}</summary>`;
+            allRecords.innerHTML = `<summary>${esc(__('More tools and setup'))}</summary>
+                <div class="pp-workflow-links">${link(['User', 'Staff accounts'])}${link(['Account', 'Accounts'])}
+                ${hrRoute()?.startsWith('/desk/') ? `<a class="pp-guide-link" href="${esc(hrRoute())}">${esc(__('HR tools'))}</a>` : ''}</div>`;
             editor.before(allRecords); allRecords.append(editor);
         } else if (!isHome && allRecords) {
             if (editor) allRecords.before(editor);

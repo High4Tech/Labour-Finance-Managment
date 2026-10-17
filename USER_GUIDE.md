@@ -8,15 +8,16 @@ The sidebar groups **Daily work** and **Billing and payments**. Expand **More** 
 
 For help, use **How it works**, **Show me around**, or expand the six-step **Quick start**. Quick start and **More tools and setup** begin collapsed; the guide remembers your preference in this browser for your login and site. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
 
-## Which app does what?
+## Two sides of PLUS POINT
 
-| App or area | Use it for |
+| Side | Who uses it and why |
 | --- | --- |
-| PLUS POINT | Your contractor workflow: sites, worker allocations, dehadi, daily and fixed billing, wage settlements and project figures. This is the usual starting point. |
-| ERPNext | Shared client, contract, project, invoice, payment and accounting records. PLUS POINT opens these records when needed; you do not need to maintain a second copy. |
-| Frappe HR | Employee profiles, leave, shifts and standard payroll. Employee self-service requires a login linked to an active Employee. |
-| Framework | Login accounts, roles, permissions and system settings, mainly for administrators. |
-| High4Tech admin | The separate platform site for subscriber organizations, subscription plans, trials, renewals, access limits and suspension. Customer workforce records remain in their own site database. |
+| PLUS POINT | Each subscribed customer business manages its own clients, workers, work sites, attendance, wages, invoices and project results. Local customer workspace: `demo.localhost:8000/desk/plus-point`. |
+| High4Tech admin | High4Tech manages subscribed businesses, subscription plans, trials, billing, renewals, limits and suspension on its separate platform site. Local owner workspace: `platform.localhost:8000/desk/high4tech`. |
+
+Each site's app launcher shows only its product entry. ERPNext, Frappe HRMS and Frappe Framework are the underlying software, not additional product sides customers must switch between. Their native routes and permissions remain available. On customer home, expand **More tools and setup** for **Staff accounts**, **Accounts** and **HR tools**, as permitted for your login. Core worker, invoice and payment records already open directly from the main workflow.
+
+The platform's **How it works** explains subscriber setup, subscription selection, billing and access. The customer's guide explains labour operations. A customer business can have its own administrator and staff; those accounts do not become High4Tech platform administrators.
 
 Manufacturing is an optional ERPNext module for factories and production. It is outside the PLUS POINT labour-contracting workflow. You can return from other Desk modules using **Workforce home**. These broader modules remain available to authorized users; onboarding does not remove or change permissions.
 
