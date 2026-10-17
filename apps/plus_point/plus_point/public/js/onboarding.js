@@ -133,6 +133,7 @@
         return `<div class="pp-task-home">
             <div class="pp-task-heading"><div><h2>${esc(__('Workforce overview'))}</h2><p>${esc(__('Attendance, your team and project finances in one view.'))}</p></div>
                 <button type="button" class="btn btn-default pp-start-tour">${esc(__('Show me around'))}</button></div>
+            <section class="pp-setup-banner" aria-label="${esc(__('Business setup and imports'))}"></section>
             <section class="pp-dashboard" aria-label="${esc(__('Business dashboard'))}"></section>
             <h3 class="pp-tools-heading">${esc(__('Work tools'))}</h3>
             <div class="pp-daily-focus"><div><span class="pp-task-date">${esc(frappe.datetime.str_to_user(frappe.datetime.get_today()))}</span>
@@ -402,6 +403,7 @@
                 ${workflow()}<p class="pp-guide-note">${esc(__('Recording earnings does not record a payment.'))}</p></details>`;
             bar.after(welcome);
             plus_point.mount_dashboard(welcome.querySelector('.pp-dashboard'));
+            plus_point.mount_setup?.(welcome.querySelector('.pp-setup-banner'));
             welcome.querySelector('.pp-start-tour')?.addEventListener('click', () => homeTour(welcome));
             welcome.querySelector('.pp-mark-attendance')?.addEventListener('click', attendancePicker);
             welcome.querySelector('details')?.addEventListener('toggle', event => {

@@ -58,5 +58,5 @@ def product_navigation(platform):
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
         doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
-                         'Branch', 'Employee Grade', 'Holiday List'])
+                         'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home)

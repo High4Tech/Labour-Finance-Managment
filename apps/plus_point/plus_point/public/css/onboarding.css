@@ -109,6 +109,28 @@
 .pp-dashboard-total strong { font-variant-numeric: tabular-nums; }
 .pp-dashboard-empty { padding: 24px 0; }
 .pp-dashboard-updated { margin-top: 14px; }
+.pp-setup-banner { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; margin-bottom:16px; border-top:1px solid var(--border-color,#e5e7eb); border-bottom:1px solid var(--border-color,#e5e7eb); }
+.pp-setup-banner:empty { display:none; }
+.pp-setup-banner p { font-size:12px; line-height:1.5; color:var(--text-muted,#626b75); margin:5px 0 0; max-width:60ch; }
+.pp-setup-actions, .pp-import-tools { display:flex; flex-wrap:wrap; gap:8px; }
+.pp-setup-actions .btn { white-space:normal; }
+.pp-setup-active #body, .pp-setup-active .body-sidebar { filter:blur(3px); pointer-events:none; }
+.pp-setup-dialog .modal-body { max-height:calc(100dvh - 200px); overflow:auto; }
+.pp-setup-dialog .modal-footer { display:flex; flex-wrap:wrap; gap:12px; }
+.pp-setup-progress { margin-bottom:18px; display:flex; align-items:center; gap:18px; }
+.pp-setup-progress span { font-size:12px; white-space:nowrap; }
+.pp-setup-progress progress { flex:1; width:100%; height:6px; accent-color:var(--primary,#171717); }
+.pp-import-tools { margin:12px 0 20px; }
+.pp-import-file { display:block; font-weight:500; }
+.pp-import-file input { display:block; max-width:100%; padding:12px 0; font-weight:400; }
+.pp-import-preview h3 { font-size:18px; }
+.pp-import-table { overflow:auto; max-height:340px; border:1px solid var(--border-color,#e5e7eb); margin:16px 0; }
+.pp-import-table table { border-collapse:collapse; width:100%; font-size:12px; }
+.pp-import-table caption { padding:10px; text-align:left; }
+.pp-import-table th, .pp-import-table td { padding:10px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--border-color,#e5e7eb); min-width:60px; max-width:260px; overflow-wrap:anywhere; }
+.pp-import-table th { position:sticky; top:0; background:var(--fg-color,#fff); }
+.pp-import-error td:last-child { color:var(--red-600,#b42318); }
+.pp-setup-banner button:focus-visible, .pp-import-tools button:focus-visible { outline:2px solid var(--text-color,#171717); outline-offset:3px; }
 .pp-tools-heading { padding-top: 18px; border-top: 1px solid var(--border-color, #e5e7eb); }
 .pp-condition { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px; margin:12px 0; border:1px solid var(--border-color,#e5e7eb); border-left:4px solid var(--text-muted,#626b75); background:var(--fg-color,#fff); border-radius:6px; }
 .pp-condition h4 { font-size:14px; font-weight:600; margin:0 0 5px; }
@@ -137,6 +159,10 @@
     .pp-dashboard-metric dd { font-size: 24px; }
 }
 @media (max-width: 767px) {
+    .pp-setup-banner { flex-direction:column; align-items:stretch; gap:12px; }
+    .pp-setup-actions .btn { flex:1; min-height:44px; }
+    .pp-setup-dialog .modal-footer .standard-actions .es-button,
+    .pp-import-dialog .modal-footer .standard-actions .es-button { min-height:44px; white-space:normal; }
     .pp-condition, .pp-budget-row { flex-direction:column; align-items:stretch; gap:12px; }
     .pp-condition .btn { max-width:none; }
     .pp-budget-figures { text-align:left; }

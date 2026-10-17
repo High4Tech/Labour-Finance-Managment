@@ -2,6 +2,14 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Guided setup and historical imports
+
+**53 actual MariaDB regressions passed**, including the existing 40 plus 13 setup/import cases. Actual native records verify employee creation/update/replay, explicit same-company profile updates, CSV row errors, XLSX formula refusal, approved wage imports, submitted employee payment/settlement GL, source-linked client invoices and partial receipts, project expense costs, fixed milestones/caps, stale spending stops, subscription suspension and whole-file rollback. Setup tests save real worker/site/assignment and new project/agreement records, preserve skip/resume and create no attendance. All business fixtures roll back.
+
+Real Edge browser checks passed setup skip, background inert/focus release, reload/resume, worker → site → agreement → assignment, saved completion and 390px guide layout. Template and reference-ID downloads, read-only employee preview, confirmed employee creation, duplicate skipping, row errors/download CTA and mobile import layout passed. Exact browser fixture records were removed and original setup progress restored; screenshots were visually reviewed in ignored `.local/qa`. An early test run overlapped cache-clearing database fixtures; the final browser pass ran sequentially and its cleanup uses a local saved progress snapshot. No test wages or financial postings remain.
+
+Native target permissions and spending/subscription hooks remain in effect. Imports are bounded snapshots in company currency; no live Sheets connector, bank transfer, complete tax/stock/foreign-currency migration, large-scale batch stress or production role/privacy acceptance is claimed.
+
 ## Spending control and state increment
 
 - **40 actual MariaDB regressions passed**. New checks cover the 80% warning boundary, exact-limit approval, rejected over-limit wages, whole-register refusal before any work is created, separation from fixed client milestones, visible existing overruns, zero-cost records and native purchase/expense-claim submission/cancellation. Posted purchases and sanctioned claims are counted once and appear in project financial summaries. Guest/invalid preview calls are rejected. Business fixtures roll back.

@@ -4,6 +4,10 @@ The supported setup is Windows PowerShell + Docker Desktop Linux engine, compose
 
 ## Start and stop
 
+The customer home includes Guided setup and Import employees or finances. Both are customer System Manager flows; High4Tech is excluded. Run a normal site migration to install PP Import Record before using imports. Templates and reference-ID files download from the signed-in customer site; uploads are CSV/XLSX snapshots without external Sheets credentials. See USER_GUIDE.md for field formats, supported record types and posting order.
+
+Run `scripts/browser-setup-imports.cjs` with the same bundled Node/Playwright/Edge environment as the other browser checks. It uses local test-enabled demo records, restores the original setup progress, and removes only its generated worker/site/assignment/import receipt. Its operator-only helper is not whitelisted. Do not run it alongside the database suite or other guide/import mutations. An interrupted run retains its original progress snapshot in the site's private backups directory; use `plus_point.testing.setup_browser_fixture` with the exact logged run ID and action `end` to finish cleanup. Never delete or reset site volumes to clean up tests.
+
 Run START_PLUS_POINT_DEV.cmd. The launcher generates missing strong local credentials in ignored .env, creates persistent named volumes, installs pinned releases, migrates schemas and starts Bench. Initial setup needs network access to official GitHub repositories, PyPI, npm and Docker Hub. Re-running preserves existing databases and refuses source commit drift. Use docker compose stop to stop; run the launcher to resume. Do not delete volumes as a troubleshooting step.
 
 Local app: http://demo.localhost:8000/desk/plus-point . Login Administrator with PP_ADMIN_PASSWORD in .env. Never paste or print credentials in issue reports. Local ports bind only to 127.0.0.1. Other devices cannot access this developer setup.

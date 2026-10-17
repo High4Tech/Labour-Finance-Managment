@@ -4,6 +4,10 @@ Updated 2026-10-17. Local development scope; production acceptance is separate. 
 
 ## Scope and non-goals
 
+Customer setup is a small native Dialog flow with per-user server-stored progress (`pp_guided_setup_v1` user default). It creates normal Company/Employee/Project/Customer/Contract/PP Site/PP Contract Terms/PP Assignment records with native insert permissions and validations. Skip persists progress and only releases UI focus; it never changes staff permissions. The High4Tech site cannot call these endpoints.
+
+`imports.py` supports bounded UTF-8 CSV and single-sheet XLSX snapshots, with schema-specific templates and reference-ID downloads. Parsing rejects formulas and oversized files/workbooks. A read-only row preview is cached for 20 minutes under a random token bound to its authenticated user, company and import type. Applying a preview rechecks permissions, data, ordered project locks and native posting rules inside one transaction. An internal immutable PP Import Record stores the company/type/source-ID hash and saved record reference. Company serialization plus its deterministic primary key prevents concurrent import replay. Repeated financial rows skip; changed posted rows reject; employees use explicit IDs and a restricted profile field set. Standard target document permissions, budget/tenancy hooks and GL submission are preserved. No bank API, external Sheets OAuth or invented opening balances are introduced. Cross-type concurrency stress and production role/privacy acceptance remain separate release work.
+
 PLUS POINT supports labour contractors: client contracts, projects/sites, worker allocations, contractor attendance/dehadi, daily and fixed price billing, wages paid and operational profitability. High4Tech operates SaaS accounts. Reuse ERPNext/HRMS rather than rebuilding an ERP, payroll, authentication server, REST framework or payment gateway. Native mobile apps, biometrics and statutory payroll customization are outside this increment.
 
 ## Selected upstreams and versions

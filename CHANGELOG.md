@@ -1,5 +1,11 @@
 # Development changelog
 
+## Guided setup and historical imports — 2026-10-17
+
+Added a resumable customer setup guide: company prerequisite, worker, site/project/client, billing agreement, worker assignment and optional imports. The focused dialog blurs and removes background focus; Skip setup and explore preserves saved steps and restores normal navigation. Existing businesses are not interrupted on rollout.
+
+Added employee and historical finance CSV templates, company reference-ID downloads, bounded CSV/XLSX upload, row previews, error downloads and explicit posting confirmation. Employee profiles can be created or updated. Financial imports create native approved work/milestones, supplier/client invoices, client receipts and employee payments/settlements. Immutable source receipts prevent replay duplicates; changed posted rows are refused. Final checks preserve budgets, native accounting validation, permissions and atomic file rollback. Google Sheets is supported through CSV/XLSX export.
+
 ## Spending stops and actionable states — 2026-10-17
 
 Added a separately enabled project spending budget using the native estimated-cost field. Warn at 80%, require pre-submit acknowledgement within the limit and stop cost-increasing approvals/submissions above 100% on both client and server. Covers approved contractor wages, whole attendance registers, net posted purchases and sanctioned claims. Reused posted expense rows for consistent project costs, including claim conversion and cancellation. Client billing, milestone values and existing owed wages remain separate.

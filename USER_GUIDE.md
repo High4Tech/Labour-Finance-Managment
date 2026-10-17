@@ -12,6 +12,36 @@ The sidebar groups **Daily work**, **Clients and billing**, **Payments and costs
 
 For help, use **How it works**, **Show me around**, or expand the six-step **Quick start**. Quick start and **Business setup** begin collapsed; the guide remembers your preference in this browser for your login and site. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
 
+## Guided setup
+
+Choose **Guided setup** above the dashboard. A new business with no assignments opens this guide automatically. It focuses on one step while the rest of the workspace is blurred and unavailable to clicks or keyboard focus. **Skip setup and explore** releases the workspace immediately. Your saved step follows your login across reloads; choose Guided setup to resume. This focus mode does not change anybody’s account permissions or block another staff member.
+
+After selecting or creating your own company, add or choose one **worker**, add or choose a **work site** under its client project, select or record the **client billing agreement**, then **assign the worker** with dates, a daily wage and the client rate. A new project and client can be entered within the site step. Fixed-price billing uses a zero worker-day client rate. The guide saves real records one step at a time. Skipping retains those saved records. Completing setup does not approve attendance, send payments or create employee logins.
+
+## Import employees and existing finances
+
+Choose **Import employees or finances** above the dashboard or in the last setup step. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.
+
+Fill the template in Excel or Google Sheets. Keep its headers and use one worksheet, stable source IDs, YYYY-MM-DD dates and company-currency amounts without currency symbols or thousands separators. Format IDs and phone numbers as text. Replace formulas with values. From Google Sheets choose **File → Download → CSV** or **Microsoft Excel**. Upload UTF-8 CSV or XLSX, at most 200 rows and 2 MB per file. This is an uploaded snapshot, not a live Google Sheets connection.
+
+| Template | What the system saves |
+| --- | --- |
+| Employees | Native employee profiles. A new stable `external_id` with blank `employee` creates a profile. An explicit existing Employee ID updates that company’s profile. Reusing an imported ID updates the same profile; optional blank last name/phone clear those fields. No user account is created. |
+| Approved daily work | Dated work under existing assignments; units 1, 0.5 or 0. Wages and daily client earnings use the agreed historical assignment rates. |
+| Fixed-price milestones | Approved milestone earnings under active Fixed billing terms, within the fixed contract cap. |
+| Project expenses | Posted, unpaid supplier invoices for net project service expenses. These update project costs and spending budgets. |
+| Client invoices | Posted client invoices and receivables. Link approved work/milestones using both `source_type` and `source_name` to reserve their earnings against rebilling. Blank source fields record a legacy invoice only; they do not invent operational earned revenue. |
+| Client receipts | Posted historical money received, allocated to a submitted client invoice. Partial receipts reduce its outstanding balance. |
+| Worker payments | Posted historical employee payments and wage settlements, limited to approved outstanding wages. |
+
+Import employees and assignments before their daily work, then import work/milestones before related invoices or worker payments, then client receipts. A reference such as `import:invoice-001` can identify an invoice from an earlier invoice import; the same syntax works for invoice work/milestone sources and employee references in worker payments. Imports never contact a bank or send money.
+
+**Review file** shows row actions, amounts, errors and projected spending. Nothing is saved at this point. Fix invalid rows or download the error list; select the confirmation only after reviewing the valid preview, then choose **Import employees** or **Import and post records**. Final native posting and permission checks run again. If any row fails, the entire file is rolled back, with a row-specific reason. A preview expires after 20 minutes and belongs to the signed-in user.
+
+Repeated identical financial rows with the same company, import type and `external_id` are skipped. Changed posted rows are rejected rather than overwritten: review/cancel/correct the original record and use a new source ID for its reviewed replacement. Keep the original IDs when splitting files or retrying; changing an ID represents a new source record. Employee profiles remain editable through the employee import. Saved-record links and the refreshed dashboard help review the result.
+
+The finance templates support net service invoices in company currency. Tax breakdowns, stock, foreign currencies, supplier payments, expense claims and general opening journals use their native accounting forms. Project spending uses its existing defined cost scope. Importing an invoice or a receipt does not substitute for the underlying work/milestone earnings. Existing native accounting periods, spending stops, contract caps and subscription limits still apply.
+
 ## Two sides of PLUS POINT
 
 | Side | Who uses it and why |

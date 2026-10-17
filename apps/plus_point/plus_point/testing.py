@@ -26,11 +26,61 @@ def run_operations():
         raise RuntimeError('Tests are disabled')
     import unittest
     from plus_point.tests.test_operations import OperationsTests
+    from plus_point.tests.test_setup_imports import SetupImportTests
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(OperationsTests)
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(SetupImportTests))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     if not result.wasSuccessful():
         raise RuntimeError('PLUS POINT database regression suite failed')
     return dict(tests=result.testsRun, failures=len(result.failures), errors=len(result.errors))
+
+
+def setup_browser_fixture(action, run_id, restore_state=None):
+    """Local operator-only setup UI fixture; never available over HTTP."""
+    import re
+    import json
+    from pathlib import Path
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost') or not re.fullmatch('[a-f0-9]{12}',run_id):
+        raise RuntimeError('Test-enabled localhost and an exact run ID are required')
+    from plus_point import setup_flow
+    frappe.set_user('Administrator')
+    key='pp-setup-browser:'+run_id
+    prefix='PP Flow QA '+run_id
+    backup=Path(frappe.get_site_path('private','backups',f'pp-setup-browser-{run_id}.json'))
+    if action=='begin':
+        if backup.exists() or frappe.cache.get_value(key):
+            raise RuntimeError('Fixture already exists; clean up that run first')
+        company='PLUS POINT Demo'
+        frappe.get_doc('Company',company)
+        frappe.cache.set_value(key,setup_flow.state(),expires_in_sec=86400)
+        backup.parent.mkdir(parents=True,exist_ok=True)
+        backup.write_text(json.dumps(setup_flow.state()),encoding='utf-8')
+        setup_flow.save_state(dict(step='company',skipped=False))
+        frappe.db.commit()
+        project=frappe.db.get_value('Project',{'company':company},'name')
+        terms=frappe.db.get_value('PP Contract Terms',{'project':project,'status':'Active','billing_model':'Daily'},'name')
+        return dict(company=company,project=project,terms=terms,prefix=prefix)
+    original=(json.loads(backup.read_text(encoding='utf-8')) if backup.exists() else frappe.cache.get_value(key)) or restore_state
+    if action!='end' or not original:
+        raise RuntimeError('No matching fixture state to restore')
+    employees=frappe.get_all('Employee',filters={'first_name':['like',prefix+'%']},pluck='name')
+    sites=frappe.get_all('PP Site',filters={'site_name':prefix},pluck='name')
+    for employee in employees:
+        if frappe.db.exists('PP Work Entry',{'employee':employee}):
+            raise RuntimeError('Refusing cleanup: test worker now has recorded work')
+        for assignment in frappe.get_all('PP Assignment',filters={'employee':employee},pluck='name'):
+            frappe.delete_doc('PP Assignment',assignment)
+        for receipt in frappe.get_all('PP Import Record',filters={'external_id':'flow-'+run_id,'document_type':'Employee','document_name':employee},pluck='name'):
+            frappe.db.delete('PP Import Record',{'name':receipt})
+        frappe.delete_doc('Employee',employee)
+    for site in sites:
+        frappe.delete_doc('PP Site',site)
+    setup_flow.save_state(original)
+    frappe.cache.delete_value(key)
+    frappe.db.commit()
+    if backup.exists():
+        backup.unlink()
+    return dict(cleaned=True,employees=len(employees),sites=len(sites),original_setup_restored=True)
 
 
 def seed_demo():
