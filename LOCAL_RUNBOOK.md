@@ -63,6 +63,12 @@ Run `python scripts/verify-platform-flow.py` for real local HTTP pricing changes
 
 Run `bench --site platform.localhost execute plus_point.testing.run_platform_finance` from the container bench directory for native plan/subscription billing, posted invoice and receipt GL, and zero outstanding balance. All its financial fixtures roll back. This does not charge a bank/card or deliver email. Public payment webhooks, remote-host provisioning and outgoing email are unconfigured.
 
+## Spending controls and state UX
+
+Migrate customer/platform/QA sites after pulling this change to add the Project spending-stop Custom Field. Project.estimated_costing remains the native field and is labelled Spending budget on customer sites. Existing projects stay unenforced until an administrator chooses a positive limit and enables Stop spending above budget. Never assign artificial budgets merely to make the dashboard show a state.
+
+Run the actual operations suite for budget guards, purchases/claims and rollback. Run `node scripts/browser-conditions.cjs` on the seeded local demo for red overruns, native pre-submit stop/warning/cancel, success CTA, retry/recovery and empty/mobile presentation. It uses the local bootstrap credential in memory, creates a vacant-date draft, temporarily sets a demo budget, then restores/deletes its own fixtures. It refuses an already enabled demo budget. Do not run alongside manual budget edits or attendance tests using the same date. State examples saved in ignored `.local/qa` are test evidence, not persistent business budgets.
+
 ## Diagnose safely
 
 ```powershell

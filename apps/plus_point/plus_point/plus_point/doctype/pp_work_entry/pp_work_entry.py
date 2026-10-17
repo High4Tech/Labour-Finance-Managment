@@ -18,7 +18,12 @@ class PPWorkEntry(Document):
         self._copy_assignment_snapshot()
 
     def _copy_assignment_snapshot(self):
+        from plus_point.budget import lock_project
+        preview_project = frappe.db.get_value('PP Assignment', self.assignment, 'project')
+        lock_project(preview_project)
         assignment = frappe.get_doc("PP Assignment", self.assignment, for_update=True)
+        if assignment.project != preview_project:
+            frappe.throw('The assignment changed while opening attendance. Reload and try again.')
         self.employee = assignment.employee
         self.site = assignment.site
         self.project = assignment.project
@@ -28,6 +33,8 @@ class PPWorkEntry(Document):
         self.client_rate = assignment.client_rate if terms.billing_model == "Daily" else 0
 
     def validate(self):
+        from plus_point.budget import lock_project, enforce
+        lock_project(self.project)
         # Serialize all postings for an employee, including postings on different sites.
         # A query-only duplicate check races under concurrent HTTP submissions.
         frappe.db.get_value("Employee", self.employee, "name", for_update=True)
@@ -70,3 +77,4 @@ class PPWorkEntry(Document):
         if sum((day_units(e.units) for e in existing), Decimal(0)) + units > Decimal("1"):
             frappe.throw("Worker cannot have more than one total working day across sites")
         self.wage_amount, self.billable_amount = map(float, daily_amounts(self.wage_rate, self.client_rate, units))
+        enforce(self)

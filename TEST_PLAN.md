@@ -5,7 +5,7 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 ## Automated regression layers
 
 1. Offline: 11 project/harness tests and 10 arithmetic/register tests. These do not replace ERPNext integration.
-2. Real MariaDB: 33 business regressions with rollback, run by plus_point.testing.run_operations. Includes assignment closing/rate replacement, same-site overlaps, report company/date scope, deployment deduplication, fixed-worker revenue, opening/period/closing wage balances, and guest/control-plane rejection.
+2. Real MariaDB: 40 business regressions with rollback, run by plus_point.testing.run_operations. Includes assignment closing/rate replacement, same-site overlaps, report company/date scope, deployment deduplication, fixed-worker revenue, opening/period/closing wage balances, and guest/control-plane rejection.
 3. Real HTTP: native login/REST CRUD, anonymous denial, cross-site token/record isolation and 60 authenticated concurrent reads through scripts/verify-live.py.
 4. Real HTTP subscription: suspension, expiry, active seat limit, reactivation and cleanup through scripts/verify-subscription.py on the local QA site.
 5. Real browser: `browser-product-scope.cjs` checks both curated product homes/sidebars, native support buttons, search filtering, no app/module menu, unrelated-route return and desktop/390px layout. `browser-smoke.cjs` and `browser-navigation.cjs` delegate to it. Old cross-app/HR self-service checks no longer describe the requested interface.
@@ -18,6 +18,9 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 11. Software accounting: `plus_point.testing.run_platform_finance` creates a native monthly plan/subscription, submits its invoice and payment, verifies GL and zero outstanding, and rolls back all fixtures.
 
 12. Dashboard checks: customer database fixtures verify company scope, approved half-days, exclusion of drafts and guest/inaccessible-company rejection. Native platform finance fixtures verify dashboard invoice balance before/after payment, current-month posted sales/receipts and exclusion of future postings. The focused browser check verifies four metrics, two panels, refresh, dashboard-before-tools ordering and 390px width on both sites.
+
+13. Spending rules: real database tests cover 80% and exact/over-limit boundaries, no wage creation for blocked registers, separate client billing, lowered-budget overruns, zero-cost entries, native purchases and expense claims with cancellation, and preview permissions.
+14. `browser-conditions.cjs` temporarily changes only the local demo budget, verifies actual overrun figures and native pre-submit blocked/warning/cancel states, observes existing approved-work success, injects an error/empty response for presentation coverage, and restores the original budget plus removes its draft. It refuses to replace an already enabled demo budget.
 
 ## Release gates still required
 

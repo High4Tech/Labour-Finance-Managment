@@ -83,7 +83,7 @@
         'PP Milestone': 'Client earnings for fixed contracts. Worker wages remain separate.',
         'PP Wage Settlement': 'Link a submitted employee payment to wages earned.',
     };
-    let started = false, queued = false, driver;
+    let started = false, queued = false, redirecting = false, driver;
     const esc = value => frappe.utils.escape_html(String(value));
     const platform = () => !!frappe.boot.plus_point?.is_platform;
     const home = () => frappe.boot.plus_point?.home || '/desk/plus-point';
@@ -350,11 +350,13 @@
     }
 
     function render() {
+        if (redirecting) return;
         const route = frappe.get_route();
         if (!Array.isArray(route) || !route.length) return;
         if (!inProductScope(route)) {
             // Wait for the native departing route to settle before redirecting.
             // An immediate redirect can let Desktop's async show hide the home.
+            redirecting = true;
             window.location.replace(home());
             return;
         }

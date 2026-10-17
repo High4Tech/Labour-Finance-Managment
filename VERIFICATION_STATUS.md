@@ -2,6 +2,15 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Spending control and state increment
+
+- **40 actual MariaDB regressions passed**. New checks cover the 80% warning boundary, exact-limit approval, rejected over-limit wages, whole-register refusal before any work is created, separation from fixed client milestones, visible existing overruns, zero-cost records and native purchase/expense-claim submission/cancellation. Posted purchases and sanctioned claims are counted once and appear in project financial summaries. Guest/invalid preview calls are rejected. Business fixtures roll back.
+- Real browser state checks passed: a temporary demo budget produced red overrun figures and a review CTA; native pre-submit events stopped the proposed register, warning cancellation left it in draft, and an existing approved work record offered the next payment action. No new wages were posted. Original budget settings were restored and the temporary register deleted.
+- Browser error injection verified retry/recovery with normal work tools retained. A presentation-only no-company fixture verified the empty-state CTA and 390px width; an actual no-company API response was separately observed on QA. These UI fixtures are not counted as backend validation evidence.
+- Focused customer/platform dashboard/navigation checks passed, with a next action for each displayed condition. An existing repeated-redirect race was prevented by allowing only one product redirect per document.
+
+Enforcement is disabled until an administrator sets a positive project budget and enables the stop. Scope is approved wages plus net posted purchases and sanctioned expense lines; it excludes taxes, overhead, stock consumption, timesheets, manual journals and unallocated costs. No concurrent cross-type spending race/stress benchmark or production role audit is claimed by this increment.
+
 ## Dashboard increment
 
 Real company dashboards now sit above the existing tools on both overviews. **33 MariaDB regressions passed**, including approved half-day totals, draft exclusion, company scope and unauthorized access rejection. Native platform accounting fixtures verify outstanding balances before/after payment, current-month invoice/receipt totals, chart totals and exclusion of future postings; all fixtures roll back. Real Edge checks passed on both sites for dashboard loading, four summary metrics, two detail panels, refresh, preserved tool navigation and 390px width. Screenshots were visually reviewed in ignored `.local/qa`. Dashboards read saved records on opening/refresh; they do not claim automatic live streaming, forecast revenue or production capacity certification.

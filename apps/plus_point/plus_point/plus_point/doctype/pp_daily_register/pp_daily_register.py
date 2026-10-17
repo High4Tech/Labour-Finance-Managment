@@ -44,6 +44,8 @@ class PPDailyRegister(Document):
 
         Frappe rolls back all inserts if any row fails; never commit inside hooks.
         """
+        from plus_point.budget import enforce
+        enforce(self)
         # Consistent order avoids deadlocks when registers contain shared workers.
         for line in sorted(self.entries, key=lambda row: row.employee):
             if line.work_entry:

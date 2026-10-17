@@ -51,7 +51,9 @@ def project_summary(project):
         fields=['parent', 'allocated_amount'], limit_page_length=0) if payment_sign and invoice_names else []
     cash = sum((money(row.allocated_amount) * payment_sign[row.parent] for row in references), Decimal(0))
     # Native project purchase and expense-claim totals exclude this operational wage ledger.
-    other_costs = money(project_doc.total_purchase_cost or 0) + money(project_doc.total_expense_claim or 0)
+    from plus_point.budget import costs
+    tracked_costs = costs(project)
+    other_costs = tracked_costs['purchases'] + tracked_costs['claims']
     result.update(
         currency=frappe.db.get_value('Company', project_doc.company, 'default_currency'),
         fixed_contract_value=str(money(sum((money(t.fixed_amount) for t in terms), Decimal(0)))),
@@ -64,7 +66,7 @@ def project_summary(project):
         wages_paid=str(money(paid)), wages_outstanding=str(money(total_wages - paid)),
         other_project_costs=str(money(other_costs)),
         operational_profit=str(money(total_revenue - total_wages - other_costs)),
-        cost_scope='ERPNext project purchase costs and expense claims; excludes taxes, overhead and unallocated costs',
+        cost_scope='Posted net project purchase items and sanctioned expense lines; excludes taxes, overhead and unallocated costs',
     )
     return result
 

@@ -34,6 +34,8 @@ Open [PLUS POINT](http://demo.localhost:8000/desk/plus-point). Login as `Adminis
 
 Approved work and historical allocation identities/rates stay locked. Close the old assignment without excluding any saved work, then use a new dated assignment for changed rates or deployment. Same-site dates cannot overlap. Audited attendance correction workflows remain a production release requirement.
 
+A separate project **Spending budget** can warn at 80% and stop new approved wages or posted project expenses above 100%. Enable **Stop spending above budget** on the Project to activate it. Existing projects are not assigned guessed limits. Dashboards/forms provide warning, blocked, success, error/retry and empty/setup states with next actions. See [spending guidance](USER_GUIDE.md#spending-limits-and-next-actions).
+
 ## Verification
 
 ```powershell

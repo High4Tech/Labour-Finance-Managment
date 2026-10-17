@@ -24,7 +24,9 @@ const {chromium}=require('playwright');
   await page.locator('.pp-task-home').getByText(homeTitle,{exact:true}).waitFor();
   await page.locator('.pp-dashboard[data-ready="true"]').waitFor();
   assert.equal(await page.locator('.pp-dashboard-metric').count(),4);
-  assert.equal(await page.locator('.pp-dashboard-panel').count(),2);
+  assert.equal(await page.locator('.pp-dashboard-panels > .pp-dashboard-panel').count(),2);
+  for(const state of await page.locator('.pp-dashboard .pp-condition').all())
+   assert(await state.locator('a,button').count(),'Every state must offer a next action');
   assert(await page.locator('.pp-dashboard').evaluate(node=>node.getBoundingClientRect().top < document.querySelector('.pp-task-rows').getBoundingClientRect().top));
   await page.locator('.pp-dashboard').getByRole('button',{name:'Refresh figures',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('.pp-dashboard')?.getAttribute('aria-busy')==='false');

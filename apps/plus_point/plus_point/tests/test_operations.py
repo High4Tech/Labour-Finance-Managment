@@ -419,5 +419,104 @@ class OperationsTests(unittest.TestCase):
         with self.assertRaises(frappe.PermissionError):
             overview(self.f.company.name)
 
+    def set_spending_budget(self, amount):
+        project=frappe.get_doc('Project',self.f.project.name)
+        project.estimated_costing=amount
+        project.pp_enforce_spending_budget=1
+        project.save()
+
+    def test_spending_limit_warns_at_eighty_percent_and_blocks_approval(self):
+        from plus_point.budget import status
+        self.set_spending_budget(1250)
+        self.work('0.5')
+        self.assertEqual(status(self.f.project.name)['level'],'warning')
+        self.assertEqual(status(self.f.project.name)['used'],'1000.00')
+        with self.assertRaises(frappe.ValidationError):
+            self.work('0.5',day=add_days(today(),1))
+        self.assertEqual(frappe.db.count('PP Work Entry',{'project':self.f.project.name,'status':'Approved'}),1)
+        self.assertEqual(status(self.f.project.name)['used'],'1000.00')
+
+    def test_budget_is_separate_from_fixed_revenue_and_existing_overrun_is_visible(self):
+        from plus_point.budget import status
+        self.set_spending_budget(2000)
+        fixed=self.fixed_terms()
+        insert('PP Milestone',contract_terms=fixed.name,milestone_title='QA separate client price',amount=9000,status='Approved')
+        self.work()
+        self.assertEqual(status(self.f.project.name)['remaining'],'0.00')
+        self.set_spending_budget(1500)
+        self.assertEqual(status(self.f.project.name)['level'],'error')
+        self.assertEqual(status(self.f.project.name)['remaining'],'-500.00')
+        self.work(0,day=add_days(today(),1))  # zero-cost records still work during an overrun
+        self.assertEqual(status(self.f.project.name)['used'],'2000.00')
+
+    def test_over_budget_register_stops_before_creating_any_wages(self):
+        self.set_spending_budget(1000)
+        result=prepare_daily_register(self.f.site.name,today())
+        register=frappe.get_doc('PP Daily Register',result['name'])
+        with self.assertRaises(frappe.ValidationError):
+            register.submit()
+        self.assertEqual(frappe.db.get_value('PP Daily Register',register.name,'docstatus'),0)
+        self.assertEqual(frappe.db.count('PP Work Entry',{'project':self.f.project.name}),0)
+
+    def test_native_purchase_spending_is_checked_and_counted_once(self):
+        from plus_point.budget import status
+        self.set_spending_budget(1200)
+        self.work('0.5')
+        company=frappe.get_doc('Company',self.f.company.name)
+        supplier=insert('Supplier',supplier_name='PP budget '+uuid.uuid4().hex[:8],supplier_group='All Supplier Groups',supplier_type='Company')
+        invoice=insert('Purchase Invoice',company=company.name,supplier=supplier.name,project=self.f.project.name,
+            items=[dict(item_code=self.f.item.name,qty=1,rate=300,project=self.f.project.name,
+                        expense_account=company.default_expense_account,cost_center=company.cost_center)])
+        with self.assertRaises(frappe.ValidationError):
+            invoice.submit()
+        self.assertEqual(frappe.db.get_value('Purchase Invoice',invoice.name,'docstatus'),0)
+        invoice.reload();invoice.items[0].rate=200;invoice.save();invoice.submit()
+        self.assertEqual(status(self.f.project.name)['used'],'1200.00')
+        self.assertEqual(project_summary(self.f.project.name)['other_project_costs'],'200.00')
+        invoice.cancel()
+        self.assertEqual(status(self.f.project.name)['used'],'1000.00')
+
+    def test_native_expense_claim_spending_is_checked_and_counted_once(self):
+        from plus_point.budget import status
+        self.set_spending_budget(500)
+        company=frappe.get_doc('Company',self.f.company.name)
+        expense_type=insert('Expense Claim Type',expense_type='PP budget '+uuid.uuid4().hex[:8],
+            accounts=[dict(company=company.name,default_account=company.default_expense_account)])
+        claim=insert('Expense Claim',company=company.name,employee=self.f.employee.name,
+            expense_approver='Administrator',approval_status='Approved',project=self.f.project.name,
+            payable_account=company.default_payable_account,cost_center=company.cost_center,
+            currency=company.default_currency,exchange_rate=1,
+            expenses=[dict(expense_date=today(),expense_type=expense_type.name,description='Temporary budget QA',
+                amount=600,sanctioned_amount=600,project=self.f.project.name,cost_center=company.cost_center)])
+        with self.assertRaises(frappe.ValidationError):
+            claim.submit()
+        self.assertEqual(frappe.db.get_value('Expense Claim',claim.name,'docstatus'),0)
+        claim.reload();claim.expenses[0].amount=500;claim.expenses[0].sanctioned_amount=500
+        claim.save();claim.submit()
+        self.assertEqual(status(self.f.project.name)['used'],'500.00')
+        self.assertEqual(project_summary(self.f.project.name)['other_project_costs'],'500.00')
+        claim.cancel()
+        self.assertEqual(status(self.f.project.name)['used'],'0.00')
+
+    def test_budget_preview_rejects_guests_and_invalid_documents(self):
+        from plus_point.budget import preview
+        with self.assertRaises(frappe.ValidationError):
+            preview(dict(doctype='User'))
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):
+            preview(dict(doctype='PP Work Entry',assignment=self.f.assignment.name,units=1))
+
+    def test_dashboard_conditions_have_actions_and_track_setup_progress(self):
+        from plus_point.dashboard import overview
+        result=overview(self.f.company.name)
+        self.assertTrue(any(row['title']=='Set a spending limit' for row in result['conditions']))
+        self.assertTrue(all(row['label'] and row['path'].startswith('/desk/') for row in result['conditions']))
+        self.set_spending_budget(500)
+        self.assertEqual(overview(self.f.company.name)['budgets'][0]['level'],'success')
+        self.work(0)
+        frappe.db.set_value('PP Site',self.f.site.name,'is_active',0)
+        result=overview(self.f.company.name)
+        self.assertTrue(any(row['title']=='Add a work site' and row['action']=='new:PP Site' for row in result['conditions']))
+
 
 from plus_point.finance import money

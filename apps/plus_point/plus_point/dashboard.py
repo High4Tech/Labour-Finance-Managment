@@ -1,6 +1,7 @@
 """Read-only product dashboards. Native permissions and company scope apply."""
 from collections import defaultdict
 from decimal import Decimal
+from urllib.parse import quote
 
 import frappe
 from frappe.utils import add_days, add_months, getdate, today
@@ -48,7 +49,55 @@ def _customer(company):
         attendance[str(row.work_date)] += Decimal(str(row.units))
     total = lambda key: str(money(sum((money(row[key]) for row in rows), Decimal(0))))
     ranked = sorted(rows, key=lambda row: money(row['wages_outstanding']), reverse=True)[:5]
+    from plus_point.budget import status as budget_status
+    budgets = [budget_status(name) for name in names]
+    rank = {'error': 0, 'warning': 1, 'empty': 2, 'success': 3}
+    budgets.sort(key=lambda row: (rank[row['level']], row['title']))
+    conditions = []
+    def condition(level, title, message, label, path, action=None):
+        if path.startswith('/desk/query-report/'):
+            path += '?company='+quote(company,safe='')
+        conditions.append(dict(level=level, title=title, message=message, label=label, path=path, action=action))
+    if not rows:
+        if projects:
+            condition('empty', 'Add billing terms to a project', 'Your projects need PLUS POINT billing terms before contractor work and results can appear here.', 'Set up billing terms', '/desk/pp-contract-terms', 'new:PP Contract Terms')
+        else:
+            condition('empty', 'Start your first project', 'Set up a project and its billing terms to see work and financial results.', 'Create project', '/desk/project', 'new:Project')
+    for budget in budgets:
+        if budget['level'] in ('error', 'warning'):
+            condition(budget['level'], 'Spending budget exceeded' if budget['level']=='error' else 'Spending budget needs attention',
+                f"{budget['title']}. "
+                'New spending above the limit is stopped; review the budget before approving more costs.',
+                'Review spending budget', '/desk/project/'+quote(budget['project'],safe=''))
+            conditions[-1].update(amount=budget['used'], budget_limit=budget['limit'], currency=budget['currency'])
+    if budgets and any(not row['enabled'] for row in budgets):
+        first = next(row for row in budgets if not row['enabled'])
+        condition('empty', 'Set a spending limit', 'One or more projects have no spending stop enabled. Add a separate budget to protect future approvals.',
+            'Set spending budget', '/desk/project/'+quote(first['project'],safe=''))
+    if not workers:
+        condition('empty', 'No active workers yet', 'Add your workers before assigning them to a work site.', 'Add worker', '/desk/employee', 'new:Employee')
+    elif rows and not sites:
+        condition('empty', 'Add a work site', 'Create a work location under the project before assigning workers or recording attendance.', 'Add work site', '/desk/pp-site', 'new:PP Site')
+    elif sites and not attendance[days[-1]]:
+        assignments = frappe.get_list('PP Assignment', filters={'site':['in',sites], 'start_date':['<=',today()]},
+            fields=['employee','end_date'],limit_page_length=0)
+        assigned = any(row.employee in workers and (not row.end_date or getdate(row.end_date)>=getdate(today())) for row in assignments)
+        if not assigned:
+            condition('empty','No workers assigned for today','Add a dated worker assignment before preparing today’s attendance.','Assign workers','/desk/pp-assignment','new:PP Assignment')
+        else:
+            condition('warning', 'No approved attendance today', 'Review today’s register if work took place. Saved drafts do not count as approved work.',
+                'Review attendance', '/desk/pp-daily-register?work_date='+today())
+    elif attendance[days[-1]]:
+        condition('success', 'Attendance recorded today', 'Approved worker-days are included in the chart and wage totals.', 'View attendance', '/desk/pp-daily-register')
+    if money(total('operational_profit')) < 0:
+        condition('warning', 'Project costs exceed earned revenue', 'Review project costs and billing milestones. This does not change the amount owed to workers.',
+            'Review project finances', '/desk/query-report/PLUS%20POINT%20Project%20Finances')
+    if money(total('wages_outstanding')) > 0:
+        condition('warning', 'Worker payments are outstanding', 'Review approved wages and link actual employee payments. Recording wages does not pay them.', 'Review worker payments', '/desk/pp-wage-settlement')
+    elif rows:
+        condition('success', 'No unpaid approved wages', 'All currently approved earnings are covered by linked wage payments, or no wages have been approved yet.', 'View worker statement', '/desk/query-report/PLUS%20POINT%20Worker%20Statement')
     return dict(workers=len(workers), active_sites=len(sites),
+        budgets=budgets, conditions=conditions,
         open_projects=sum(1 for row in rows if projects[row['project']].status == 'Open' and projects[row['project']].is_active == 'Yes'),
         wages_unpaid=total('wages_outstanding'), client_balance=total('client_outstanding_gross'),
         earned_revenue=total('earned_revenue'), contribution=total('operational_profit'),
@@ -97,7 +146,29 @@ def _platform(company):
     customers.sort(key=lambda row: (priority[row['status']], row['valid_until'] or '', row['title']))
     pending = frappe.get_list('PP Support Request', filters={'tenant': ['in', [row['name'] for row in customers]],
         'status': ['in', ['Queued', 'Processing', 'Failed']]}, fields=['status'], limit_page_length=0) if customers else []
+    conditions=[]
+    def condition(level,title,message,label,path,action=None):
+        if path.startswith('/desk/query-report/'):
+            path += '?company='+quote(company,safe='')
+        conditions.append(dict(level=level,title=title,message=message,label=label,path=path,action=action))
+    if not customers:
+        condition('empty','Add your first software customer','Register a customer and link its subscription.','Add customer','/desk/pp-tenant','new:PP Tenant')
+    if counts['Suspended']+counts['Expired']:
+        condition('error','Customer access needs attention','Expired or suspended accounts cannot accept business changes. Review the account and subscription.','Review customer access','/desk/pp-tenant')
+    if any(row.status == 'Failed' for row in pending):
+        condition('error','Customer support needs attention','A support action failed. Open the request result and verify the registered owner before trying again.','Review support requests','/desk/pp-support-request')
+    elif pending:
+        condition('warning','Account support is in progress','Queued requests need the background worker. View the result before creating another request.','Check support result','/desk/pp-support-request')
+    if any(row['status']=='Trial' and row['valid_until'] and getdate(row['valid_until']) <= getdate(add_days(today(),7)) for row in customers):
+        condition('warning','A customer trial ends soon','Review trials ending within seven days and agree the next subscription period.','Review subscriptions','/desk/subscription')
+    if balance > 0:
+        condition('warning','Software invoices remain unpaid','An issued invoice is not a payment. Check outstanding bills and record confirmed receipts.','Review unpaid invoices','/desk/query-report/Accounts%20Receivable')
+    elif invoices:
+        condition('success','No outstanding posted invoices','There is no positive outstanding balance on currently posted software invoices.','View financial results','/desk/query-report/Profit%20and%20Loss%20Statement')
+    if not any(billed[month] or cash[month] for month in months):
+        condition('empty','No posted software sales yet','Trial customers do not count as revenue. Create an invoice when the customer is ready to be billed.','Create software invoice','/desk/sales-invoice','new:Sales Invoice')
     return dict(customers=len(customers), active=counts['Active'], trials=counts['Trial'],
+        conditions=conditions,
         restricted=counts['Suspended']+counts['Expired'], pending_support=len(pending),
         invoiced_month=str(money(billed[months[-1]])), receipts_month=str(money(cash[months[-1]])),
         client_balance=str(money(balance)), customers_preview=customers[:5],

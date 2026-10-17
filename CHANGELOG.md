@@ -1,5 +1,11 @@
 # Development changelog
 
+## Spending stops and actionable states — 2026-10-17
+
+Added a separately enabled project spending budget using the native estimated-cost field. Warn at 80%, require pre-submit acknowledgement within the limit and stop cost-increasing approvals/submissions above 100% on both client and server. Covers approved contractor wages, whole attendance registers, net posted purchases and sanctioned claims. Reused posted expense rows for consistent project costs, including claim conversion and cancellation. Client billing, milestone values and existing owed wages remain separate.
+
+Added red overruns, amber warnings, success feedback, retry errors and empty/setup guidance with next-action controls on both dashboards and relevant native forms. Added real budget/posting regressions and browser checks for blocked/warning paths, success actions, error recovery and mobile empty states.
+
 ## Dashboards above the overview tools — 2026-10-17
 
 Added real company-scoped dashboards to both product homes, preserving every existing work link below them. PLUS POINT shows workers/sites, approved seven-day attendance, unpaid wages, invoice balances and project contribution. High4Tech shows software customers, access/trials, monthly invoices/receipts, outstanding invoices and six-month sales/cash history. Reused native permissions, posted accounting records and existing contractor report calculations. Added company selection, refresh, loading/error/empty states and responsive chart/table layouts.

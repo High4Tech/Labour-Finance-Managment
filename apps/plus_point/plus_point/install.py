@@ -46,6 +46,8 @@ def after_migrate():
     ]:
         frappe.db.add_index(doctype, columns, name)
     create_custom_fields({
+        'Project': [dict(fieldname='pp_enforce_spending_budget', label='Stop spending above budget', fieldtype='Check',
+            insert_after='estimated_costing', default='0', description='Warn at 80%; block new approved wages and submitted project purchases/claims above the spending budget. Client billing is separate.')],
         'Sales Invoice Item': [
             dict(fieldname='pp_source_type', label='PLUS POINT Source Type', fieldtype='Select',
                  options='\nPP Work Entry\nPP Milestone', read_only=1, no_copy=1),
@@ -53,6 +55,11 @@ def after_migrate():
                  options='pp_source_type', read_only=1, no_copy=1),
         ],
     })
+    if not frappe.conf.get('pp_control_plane'):
+        from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+        make_property_setter('Project', 'estimated_costing', 'label', 'Spending budget', 'Data')
+        make_property_setter('Project', 'estimated_costing', 'description',
+            'Optional company-currency limit for approved PLUS POINT wages, posted net purchase items and sanctioned expense lines. Excludes taxes, overhead and unallocated costs. Enable the spending stop below to enforce it.', 'Text')
     if not frappe.db.exists('Workspace', 'PLUS POINT'):
         links = [dict(type='Link', link_type='DocType', link_to=name, label=label)
                  for name, label in [('Customer', 'Client companies'), ('Contract', 'Client contracts'),

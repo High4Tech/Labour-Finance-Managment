@@ -42,6 +42,24 @@ The local PLUS POINT Demo is registered as a trial software customer; no real pu
 5. **Invoice the client.** Open active Billing terms and choose **Prepare client invoice**. Review and submit the native invoice, then record client receipts with Payment Entries.
 6. **Pay workers and review figures.** Record a submitted employee Payment Entry and link it in Worker payments. Open Billing terms → **Project finances** to review earnings, receipts, wages and outstanding balances.
 
+## Spending limits and next actions
+
+A spending budget is separate from what you charge the client. Open **Projects**, choose the project, enter **Spending budget**, enable **Stop spending above budget**, then save. This uses the native Project estimated-cost field; a business administrator must approve budget changes. Existing projects keep enforcement off until you choose a limit.
+
+Tracked spending is approved PLUS POINT wages, posted net project purchase items and sanctioned expense-claim lines in company currency. It excludes taxes, overhead, timesheets, stock consumption, manual journals and costs without a project. Do not enter the same worker wages again as purchases or claims. Client invoices, fixed milestones and wage payments do not consume this spending budget again.
+
+| State | What happens and the next action |
+| --- | --- |
+| Below 80% | The spending check shows **Within budget**; use **Review spending budget** to inspect it. |
+| 80% through 100% | Amber warning. Before approving wages/submitting a register or expense, choose **Confirm within budget** or **Review costs**. |
+| A proposed cost exceeds 100% | Approval/submission stops before posting. Review cost entries or ask your administrator to revise the budget. Drafts stay available. The server also blocks direct API submissions. |
+| Recorded costs already exceed a revised budget | Red spent/remaining figures and **Review spending budget**. Recorded wages/expenses remain intact. Cost-reducing reversals and zero-cost records remain possible. |
+| No budget or no company/projects/workers | A setup state links to the next relevant record. Existing work tools remain available. |
+| Attendance/wages submitted | A green success state links to worker payments or project finances; approval does not send money. |
+| Dashboard/check failed | An error message offers retry; normal work links remain accessible and server budget checks still apply. |
+
+The dashboards also flag missing approved attendance, unpaid wages/invoices, negative operational contribution, expiring trials, restricted customer access and failed/in-progress support. Each state has a next-action button. Expand **More next actions** for additional conditions. These indicators use words and next steps as well as colour.
+
 ## The two billing models
 
 - **Daily:** client earned revenue is approved day units × the worker's agreed client rate. Worker earnings are the same units × the worker wage rate.

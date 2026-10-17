@@ -99,7 +99,7 @@ def project_finances(filters=None):
                 'Includes completed projects unless filtered. Fixed contract value is not earned revenue. '
                 'Fixed revenue comes from approved milestones; it is not attributed to individual workers. '
                 'Cash includes allocated company-currency customer Payment Entries, net of refunds; excludes unallocated and FX receipts. '
-                'Other costs use native project purchase costs and expense claims, excluding taxes, overhead and unallocated costs. '
+                'Other costs use submitted net purchase items and sanctioned expense lines assigned to the project, excluding taxes, overhead and unallocated costs. '
                 'Do not enter the same worker wages again as project expenses. Operational contribution is not statutory net profit. '
                 'Use Deployment overview for site and workforce counts; dated worker activity is in Worker Statement.')
     return columns, rows, message, None, summary

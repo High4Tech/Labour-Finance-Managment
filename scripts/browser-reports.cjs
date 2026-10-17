@@ -33,7 +33,7 @@ const {chromium} = require('playwright');
         assert.equal(login,'Logged In');
         await page.goto(base+'/desk/plus-point',{waitUntil:'domcontentloaded'});
         await page.locator('.pp-task-home').waitFor();
-        await page.getByRole('link',{name:'Project finances',exact:true}).click();
+        await page.locator('.pp-task-home').getByRole('link',{name:'Project finances',exact:true}).click();
         await page.waitForFunction(() => frappe.query_report?.report_name === 'PLUS POINT Project Finances' && frappe.query_report.data?.length);
         const project = await page.evaluate(() => frappe.query_report.data[0].project);
         const company = await page.evaluate(() => frappe.query_report.get_filter_value('company'));
