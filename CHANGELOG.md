@@ -1,5 +1,9 @@
 # Development changelog
 
+## Aligned activity calendars — 2026-10-18
+
+Added Monday–Sunday row labels, month headings and year labels to the existing 91-day client calendars. Dates use explicit week/day grid positions. Cells stay square and inside responsive cards; client names wrap without pushing totals outside the header. Month headings follow actual dates and preserve space at range boundaries. Existing day details and keyboard navigation remain available.
+
 ## Activity dashboard and personal navigation — 2026-10-17
 
 Added six customer summary tiles, an action inbox below stats, per-user read acknowledgements, selectable approved-work history and a revenue/cost comparison on the main overview. Added permission-scoped section landing pages and saved up/down sidebar ordering. Client/company front pages show keyboard-accessible 91-day activity calendars with named day details. Database-side activity aggregation and batched budget totals reduce repeated reads. Added an idempotent, local-only labelled demo story with realistic people/business names, work history and native illustrative invoice/receipt/wage records.

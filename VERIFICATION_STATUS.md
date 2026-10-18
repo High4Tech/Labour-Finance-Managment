@@ -1,6 +1,10 @@
-# Verification status — 2026-10-17
+# Verification status — 2026-10-18
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
+
+## Activity calendar alignment follow-up
+
+Real in-app browser checks verified all seven weekday labels, actual month/year headings, square day cells, weekday/date alignment and no calendar children outside any of the three demo client cards. Checks passed at desktop, 390px and 320px widths; the 320px page has no horizontal overflow. Arrow navigation moved exactly one week and an approved date opened its named work details. The native client front-page calendar also passed geometry/label checks. This is a frontend-only change; financial calculations, record approval and the existing 91-day scope are unchanged. JavaScript syntax and whitespace checks passed; database evidence below remains prior evidence for unchanged backend code.
 
 ## Activity dashboards and personal navigation
 
