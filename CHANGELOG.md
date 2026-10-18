@@ -1,5 +1,9 @@
 # Development changelog
 
+## Reference-inspired dashboard presentation — 2026-10-18
+
+Adapted the Ferrule reference into the customer overview: matte dark card surfaces, citrus accents, asymmetric work/finance panels, staggered card entrances, growing real-data bars and sequential project-row reveals. Added an explanatory attendance → approved work → earnings/billing graphic with moving connector signals, plus a readable compact mobile version. Motion pauses outside the graphic viewport and respects reduced-motion preferences. APIs, figures, warnings, approvals, billing, payments, notifications and native navigation are unchanged. High4Tech and native record forms keep their existing presentation.
+
 ## Aligned activity calendars — 2026-10-18
 
 Added Monday–Sunday row labels, month headings and year labels to the existing 91-day client calendars. Dates use explicit week/day grid positions. Cells stay square and inside responsive cards; client names wrap without pushing totals outside the header. Month headings follow actual dates and preserve space at range boundaries. Existing day details and keyboard navigation remain available.

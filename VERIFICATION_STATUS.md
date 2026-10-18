@@ -2,6 +2,12 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Dashboard presentation follow-up
+
+The customer activity browser flow passed after restyling: six stats before the inbox, chart ranges, actual client/day details, notifications/read acknowledgement, scoped work lists, persisted personal order, native client/company calendars and 390px layout. Original personal preferences were restored. The state browser flow passed existing overrun/red-budget review, pre-submit stop, warning cancellation, approved-work success, load error/retry and empty-company CTA; exact budget/draft fixtures were restored/removed. High4Tech focused navigation, customer-support buttons, accounting reports and mobile checks passed after dismissing its unrelated native update notice; the harness now handles that notice explicitly.
+
+Dedicated read-only browser checks observed moving connector signals, the 91-day control, identical metric text under reduced motion, no running decorative animations with reduced motion, no page overflow at 1100/768/390/320px, and contained date cells. Screenshot review covers desktop and narrow mobile. Financial/backend calculations and workflow endpoints are unchanged; previous 57-case database evidence below is retained, not represented as a new database run for this presentation increment.
+
 ## Activity calendar alignment follow-up
 
 Real in-app browser checks verified all seven weekday labels, actual month/year headings, square day cells, weekday/date alignment and no calendar children outside any of the three demo client cards. Checks passed at desktop, 390px and 320px widths; the 320px page has no horizontal overflow. Arrow navigation moved exactly one week and an approved date opened its named work details. The native client front-page calendar also passed geometry/label checks. This is a frontend-only change; financial calculations, record approval and the existing 91-day scope are unchanged. JavaScript syntax and whitespace checks passed; database evidence below remains prior evidence for unchanged backend code.

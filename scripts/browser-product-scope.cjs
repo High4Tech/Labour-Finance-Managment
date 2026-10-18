@@ -10,6 +10,7 @@ const {chromium}=require('playwright');
  const base=`http://${site}:${settings.FRAPPE_PORT||8000}`;
  const browser=await chromium.launch({headless:true,...(process.env.PP_BROWSER_CHANNEL?{channel:process.env.PP_BROWSER_CHANNEL}:{})});
  const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(30000);
+ await page.addLocatorHandler(page.locator('.modal:visible').filter({hasText:'New updates are available'}),async()=>{await page.keyboard.press('Escape');});
  const failures=[];page.on('pageerror',e=>failures.push(e.stack || e.message));
  page.on('response',r=>{if(r.status()>=400)failures.push(`HTTP ${r.status()}: ${r.url()}`);});
  const out=path.join(root,'.local','qa');fs.mkdirSync(out,{recursive:true});

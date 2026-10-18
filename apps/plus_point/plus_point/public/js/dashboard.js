@@ -37,8 +37,9 @@
                 <p class="pp-dashboard-caption"><strong>${esc(number(days.reduce((n,row)=>n+Number(row.units),0)))}</strong> ${esc(__('worker-days in this period'))}</p></section>
             <section class="pp-dashboard-panel pp-finance-chart"><h3>${esc(__('Revenue and project costs'))}</h3><p>${esc(__('Lifetime amounts in'))} ${esc(data.currency)}. ${esc(__('Earnings and cash received are separate.'))}</p>
                 <div class="pp-finance-bars">${financial.map(([label,value,key])=>`<div class="pp-finance-bar ${Number(value)<0?'pp-value-error':''}"><span>${esc(__(label))}</span><strong>${esc(number(value))}</strong><div><i class="pp-finance-${key}" style="width:${Math.abs(Number(value)||0)/maximum*100}%"></i></div></div>`).join('')}</div><p class="pp-dashboard-caption">${esc(__('Client cash received'))}: <strong>${esc(number(data.cash_received))} ${esc(data.currency)}</strong>. ${esc(__('Contribution excludes taxes, overhead and unallocated costs.'))}</p></section></div>
+            ${plus_point.dashboard_workflow?.()||''}
             <section class="pp-activity-panel"><header class="pp-panel-heading"><div><h3>${esc(__('Client company activity'))}</h3><p>${esc(__('Last 91 days. See when and how much work was approved for each client.'))}</p></div><a href="/desk/customer">${esc(__('All clients'))}</a></header>${plus_point.activity_markup(data.activity,data.company)}</section>
-            <section class="pp-dashboard-panel"><h3>${esc(__('Project snapshot'))}</h3><p>${esc(__('Lifetime figures. Projects with unpaid wages appear first.'))}</p>
+            <section class="pp-dashboard-panel pp-dashboard-projects"><h3>${esc(__('Project snapshot'))}</h3><p>${esc(__('Lifetime figures. Projects with unpaid wages appear first.'))}</p>
                 ${data.projects.length ? `<div class="pp-dashboard-table-wrap"><table class="pp-dashboard-table"><caption class="sr-only">${esc(__('Project financial snapshot'))}</caption>
                     <thead><tr><th>${esc(__('Project'))}</th><th>${esc(__('Earned'))}</th><th>${esc(__('Wages unpaid'))}</th></tr></thead>
                     <tbody>${data.projects.map(row => `<tr><th scope="row"><a href="/desk/project/${encodeURIComponent(row.name)}">${esc(row.title)}</a></th>
@@ -110,6 +111,7 @@
                 const response = await frappe.call({method:'plus_point.dashboard.overview',args:{company:company || undefined},silent:true});
                 if (!root.isConnected || current !== request) return;
                 const data=response.message;plus_point.dashboard_company=data.company;
+                root.classList.toggle('pp-motion-dashboard',!data.is_platform);
                 const draw=()=>{
                 root.innerHTML=`<div class="pp-dashboard-toolbar"><div><h3>${esc(__('At a glance'))}</h3>
                     <p>${esc(frappe.datetime.str_to_user(data.date))}${data.currency ? ` · ${esc(__('Amounts in'))} ${esc(data.currency)}` : ''}</p></div>
@@ -125,6 +127,7 @@
                 root.querySelector('.pp-mark-updates')?.addEventListener('click',async event=>{event.target.disabled=true;try{await frappe.call({method:'plus_point.dashboard.mark_updates_read',type:'POST',args:{company:data.company}});data.notifications.forEach(row=>row.read=true);draw();}finally{event.target.disabled=false;}});
                 root.querySelectorAll('[data-range]').forEach(button=>button.addEventListener('click',()=>{root.dataset.range=button.dataset.range;draw();}));
                 plus_point.bind_activity(root);
+                plus_point.present_dashboard?.(root);
                 root.querySelectorAll('[data-pp-action]').forEach(button=>button.addEventListener('click',event=>{
                     const action=button.dataset.ppAction;
                     if (action.startsWith('new:')) {event.preventDefault();frappe.new_doc(action.slice(4));}
