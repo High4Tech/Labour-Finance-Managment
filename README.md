@@ -8,6 +8,8 @@ Start with [the user guide](USER_GUIDE.md) for which app to use and the contract
 
 **Arrange sections** in the sidebar menu saves your preferred section order for your login. Section headings open live summaries and work-list counts; charts stay on the main overview. Client and company forms show approved work calendars on their front page.
 
+**Display currency** converts overview money figures at the latest published daily exchange rate and shows its source/update time. The app keeps company books and approval limits in their original currency. The overview inherits the existing Desk theme and keeps the animated card/chart presentation.
+
 **Business reports** opens native project financial/deployment views and worker statements with assignment history, dated wages/payments and opening/closing balances. See [research alignment](RESEARCH_ALIGNMENT.md) for the October 17 business-context review, corrections and remaining MVP gaps.
 
 **Help → Guided setup** collects one saved step at a time: worker, site/job, billing agreement and assignment after the company prerequisite. It starts automatically only for an unfinished business without assignments; skip and resume are available. **Import** beside Add on supported lists downloads templates/reference IDs and previews CSV/XLSX files before creating/updating employee profiles or posting native historical financial records. Google Sheets files work through CSV/XLSX export. See [setup](USER_GUIDE.md#guided-setup) and [imports](USER_GUIDE.md#import-employees-and-existing-finances).

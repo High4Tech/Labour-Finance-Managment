@@ -3,6 +3,15 @@
     frappe.provide('plus_point');
     const esc = value => frappe.utils.escape_html(String(value ?? ''));
     const number = value => new Intl.NumberFormat(undefined, {maximumFractionDigits: 2}).format(Number(value) || 0);
+    const sign=(data,key)=>data.source_signs?.[key]??Math.sign(Number(data[key])||0);
+    function exchangeNote(data){
+        const fx=data.fx;
+        if(fx?.status==='unavailable')return `<div class="pp-fx-note pp-fx-error" role="status"><p>${esc(__('{0} conversion is unavailable. Showing original {1} amounts.',[fx.requested,data.currency]))}</p><button type="button" class="btn btn-default btn-sm pp-retry-fx">${esc(__('Retry conversion'))}</button></div>`;
+        if(fx?.status!=='converted')return '';
+        const quote=new Intl.NumberFormat(undefined,{maximumFractionDigits:6}).format(Number(fx.source_per_target));
+        const updated=new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:'UTC'}).format(new Date(fx.as_of));
+        return `<div class="pp-fx-note" role="status"><p><strong>1 ${esc(fx.target)} = ${esc(quote)} ${esc(fx.source)}</strong> · ${esc(__('Rate updated'))} ${esc(updated)} UTC<br>${esc(__('Latest daily rate. Books remain in {0}.',[fx.source]))} <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">${esc(__('Rates by ExchangeRate-API'))}</a></p></div>`;
+    }
     const metric = (label, value, note, unit = '', level = '') => `<div class="pp-dashboard-metric pp-value-${level}"><dt>${esc(__(label))}</dt>
         <dd>${esc(number(value))}${unit ? `<small>${esc(unit)}</small>` : ''}</dd><p>${esc(__(note))}</p></div>`;
     const chart = (rows, series) => {
@@ -21,22 +30,22 @@
     };
     function customer(data,range=14) {
         const days=(data.activity?.daily || data.attendance).slice(-range);
-        const financial=[['Revenue earned',data.earned_revenue,'revenue'],['Wages earned',data.wages_earned,'wages'],['Other project costs',data.other_costs,'costs'],['Operational contribution',data.contribution,'contribution']];
+        const financial=[['Revenue earned',data.earned_revenue,'revenue','earned_revenue'],['Wages earned',data.wages_earned,'wages','wages_earned'],['Other project costs',data.other_costs,'costs','other_costs'],['Operational contribution',data.contribution,'contribution','contribution']];
         const maximum=Math.max(1,...financial.map(([,value])=>Math.abs(Number(value)||0)));
         return `<dl class="pp-dashboard-metrics pp-workforce-metrics">
             ${metric('Worker-days today',data.attendance.at(-1).units,'Approved work only')}
             ${metric('Active workers',data.workers,'In your selected company')}
             ${metric('Active work sites',data.active_sites,__('Open projects: {0}',[data.open_projects]))}
             ${metric('Revenue earned',data.earned_revenue,'Lifetime approved work and milestones',data.currency)}
-            ${metric('Wages unpaid',data.wages_unpaid,'Lifetime approved wages less linked payments',data.currency,Number(data.wages_unpaid)>0?'warning':'success')}
-            ${metric('Client invoice balance',data.client_balance,'Outstanding on posted project invoices',data.currency,Number(data.client_balance)>0?'warning':'success')}</dl>
+            ${metric('Wages unpaid',data.wages_unpaid,'Lifetime approved wages less linked payments',data.currency,sign(data,'wages_unpaid')>0?'warning':'success')}
+            ${metric('Client invoice balance',data.client_balance,'Outstanding on posted project invoices',data.currency,sign(data,'client_balance')>0?'warning':'success')}</dl>
             ${conditions(data)}
             <div class="pp-dashboard-panels"><section class="pp-dashboard-panel pp-work-trend"><header class="pp-panel-heading"><h3>${esc(__('Work delivered'))}</h3><div class="pp-chart-range" aria-label="${esc(__('Activity period'))}">${[7,14,30,91].map(n=>`<button type="button" data-range="${n}" aria-pressed="${n===range}">${n}${esc(__('d'))}</button>`).join('')}</div></header>
                 <p>${esc(__('Approved worker-days. Two half-days count as one; drafts are excluded.'))}</p>
                 ${chart(days,[['units','Worker-days']])}
                 <p class="pp-dashboard-caption"><strong>${esc(number(days.reduce((n,row)=>n+Number(row.units),0)))}</strong> ${esc(__('worker-days in this period'))}</p></section>
             <section class="pp-dashboard-panel pp-finance-chart"><h3>${esc(__('Revenue and project costs'))}</h3><p>${esc(__('Lifetime amounts in'))} ${esc(data.currency)}. ${esc(__('Earnings and cash received are separate.'))}</p>
-                <div class="pp-finance-bars">${financial.map(([label,value,key])=>`<div class="pp-finance-bar ${Number(value)<0?'pp-value-error':''}"><span>${esc(__(label))}</span><strong>${esc(number(value))}</strong><div><i class="pp-finance-${key}" style="width:${Math.abs(Number(value)||0)/maximum*100}%"></i></div></div>`).join('')}</div><p class="pp-dashboard-caption">${esc(__('Client cash received'))}: <strong>${esc(number(data.cash_received))} ${esc(data.currency)}</strong>. ${esc(__('Contribution excludes taxes, overhead and unallocated costs.'))}</p></section></div>
+                <div class="pp-finance-bars">${financial.map(([label,value,key,field])=>`<div class="pp-finance-bar ${sign(data,field)<0?'pp-value-error':''}"><span>${esc(__(label))}</span><strong>${esc(number(value))}</strong><div><i class="pp-finance-${key}" style="width:${Math.abs(Number(value)||0)/maximum*100}%"></i></div></div>`).join('')}</div><p class="pp-dashboard-caption">${esc(__('Client cash received'))}: <strong>${esc(number(data.cash_received))} ${esc(data.currency)}</strong>. ${esc(__('Contribution excludes taxes, overhead and unallocated costs.'))}</p></section></div>
             ${plus_point.dashboard_workflow?.()||''}
             <section class="pp-activity-panel"><header class="pp-panel-heading"><div><h3>${esc(__('Client company activity'))}</h3><p>${esc(__('Last 91 days. See when and how much work was approved for each client.'))}</p></div><a href="/desk/customer">${esc(__('All clients'))}</a></header>${plus_point.activity_markup(data.activity,data.company)}</section>
             <section class="pp-dashboard-panel pp-dashboard-projects"><h3>${esc(__('Project snapshot'))}</h3><p>${esc(__('Lifetime figures. Projects with unpaid wages appear first.'))}</p>
@@ -45,7 +54,7 @@
                     <tbody>${data.projects.map(row => `<tr><th scope="row"><a href="/desk/project/${encodeURIComponent(row.name)}">${esc(row.title)}</a></th>
                         <td>${esc(number(row.earned_revenue))}</td><td>${esc(number(row.wages_unpaid))}</td></tr>`).join('')}</tbody></table></div>`
                     : `<p class="pp-dashboard-empty">${esc(__('No billing projects yet. Start with a client, project and billing terms below.'))} <a href="/desk/pp-contract-terms">${esc(__('Set up billing terms'))}</a></p>`}
-                <div class="pp-dashboard-total ${Number(data.contribution)<0?'pp-value-error':''}"><span>${esc(__('Operational contribution'))}</span><strong>${esc(number(data.contribution))} ${esc(data.currency)}</strong></div>
+                <div class="pp-dashboard-total ${sign(data,'contribution')<0?'pp-value-error':''}"><span>${esc(__('Operational contribution'))}</span><strong>${esc(number(data.contribution))} ${esc(data.currency)}</strong></div>
                 <p class="pp-dashboard-caption">${esc(__('Earned revenue less wages and recorded project costs. Excludes taxes, overhead and unallocated costs.'))}</p>
             </section><details class="pp-budget-disclosure"><summary>${esc(__('Spending budgets'))}</summary>${budgets(data)}</details>`;
     }
@@ -78,7 +87,7 @@
             ${metric('Software customers',data.customers,`${data.active} active · ${data.trials} on trial`)}
             ${metric('Invoiced this month',data.invoiced_month,'Posted software invoices, including tax',data.currency)}
             ${metric('Received this month',data.receipts_month,'Customer receipts, net of refunds',data.currency)}
-            ${metric('Unpaid invoices',data.client_balance,'Outstanding across posted invoices',data.currency,Number(data.client_balance)>0?'warning':'success')}</dl>
+            ${metric('Unpaid invoices',data.client_balance,'Outstanding across posted invoices',data.currency,sign(data,'client_balance')>0?'warning':'success')}</dl>
             ${conditions(data)}
             <div class="pp-dashboard-panels"><section class="pp-dashboard-panel"><h3>${esc(__('Software sales and receipts'))}</h3>
                 <p>${esc(__('Last 6 months through today. A bill and a payment are separate events.'))}</p>
@@ -103,26 +112,33 @@
             root.remove(); return;
         }
         let request = 0;
-        async function load(company) {
+        async function load(company,displayCurrency=plus_point.dashboard_currency) {
             const current = ++request;
             root.setAttribute('aria-busy','true');
             root.querySelector('.pp-dashboard-refresh')?.setAttribute('disabled','');
+            const updating=root.querySelector('.pp-dashboard-updated');
+            if(updating)updating.textContent=__('Updating figures and exchange rate…');
             try {
-                const response = await frappe.call({method:'plus_point.dashboard.overview',args:{company:company || undefined},silent:true});
+                const response = await frappe.call({method:'plus_point.dashboard.overview',args:{company:company || undefined,display_currency:displayCurrency || undefined},silent:true});
                 if (!root.isConnected || current !== request) return;
                 const data=response.message;plus_point.dashboard_company=data.company;
+                plus_point.dashboard_currency=data.currency;
                 root.classList.toggle('pp-motion-dashboard',!data.is_platform);
                 const draw=()=>{
                 root.innerHTML=`<div class="pp-dashboard-toolbar"><div><h3>${esc(__('At a glance'))}</h3>
                     <p>${esc(frappe.datetime.str_to_user(data.date))}${data.currency ? ` · ${esc(__('Amounts in'))} ${esc(data.currency)}` : ''}</p></div>
                     <div class="pp-dashboard-controls"><label>${esc(__('Company'))}<select class="form-control pp-dashboard-company" aria-label="${esc(__('Dashboard company'))}">
                     ${data.companies.map(row=>`<option value="${esc(row.name)}" ${row.name===data.company?'selected':''}>${esc(row.company_name||row.name)}</option>`).join('')}</select></label>
+                    <label>${esc(__('Display currency'))}<select class="form-control pp-dashboard-currency" aria-label="${esc(__('Display currency'))}" ${!data.company?'disabled':''}>${(data.currency_options||[data.currency].filter(Boolean)).map(code=>`<option value="${esc(code)}" ${code===data.currency?'selected':''}>${esc(code)}</option>`).join('')}</select></label>
                     <button class="btn btn-default btn-sm pp-open-updates" type="button" aria-label="${esc(__('Notifications'))}">${esc(__('Updates'))} <span class="pp-count">${(data.notifications||[]).filter(row=>!row.read).length}</span></button>
                     <button class="btn btn-default btn-sm pp-dashboard-refresh" type="button">${esc(__('Refresh figures'))}</button></div></div>
+                    ${exchangeNote(data)}
                     ${data.company ? (data.is_platform ? platform(data) : customer(data,Number(root.dataset.range)||14)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/company" data-pp-action="new:Company">${esc(__('Create company'))}</a></div>`}
                     <p class="pp-dashboard-updated" role="status">${esc(__('Updated just now. Refresh to see the latest records.'))}</p>`;
-                root.querySelector('select').addEventListener('change',event=>load(event.target.value));
-                root.querySelector('.pp-dashboard-refresh').addEventListener('click',()=>load(root.querySelector('select').value));
+                root.querySelector('.pp-dashboard-company').addEventListener('change',event=>load(event.target.value));
+                root.querySelector('.pp-dashboard-currency').addEventListener('change',event=>load(data.company,event.target.value));
+                root.querySelector('.pp-dashboard-refresh').addEventListener('click',()=>load(root.querySelector('.pp-dashboard-company').value));
+                root.querySelector('.pp-retry-fx')?.addEventListener('click',()=>load(data.company,data.fx.requested));
                 root.querySelector('.pp-open-updates').addEventListener('click',()=>{const inbox=root.querySelector('.pp-action-inbox');inbox?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});inbox?.focus({preventScroll:true});});
                 root.querySelector('.pp-mark-updates')?.addEventListener('click',async event=>{event.target.disabled=true;try{await frappe.call({method:'plus_point.dashboard.mark_updates_read',type:'POST',args:{company:data.company}});data.notifications.forEach(row=>row.read=true);draw();}finally{event.target.disabled=false;}});
                 root.querySelectorAll('[data-range]').forEach(button=>button.addEventListener('click',()=>{root.dataset.range=button.dataset.range;draw();}));
@@ -139,7 +155,7 @@
                 delete root.dataset.ready;
                 root.innerHTML=`<div class="pp-condition pp-condition-error" role="alert"><div><h4>${esc(__('Dashboard could not load'))}</h4><p>${esc(__('Check your connection and permissions, then try again. Your work tools are still available below.'))}</p></div>
                     <button type="button" class="btn btn-default pp-dashboard-retry">${esc(__('Try again'))}</button></div>`;
-                root.querySelector('button').addEventListener('click',()=>load(company));
+                root.querySelector('button').addEventListener('click',()=>load(company,displayCurrency));
             } finally {
                 if (current === request) root.setAttribute('aria-busy','false');
             }

@@ -580,4 +580,69 @@ class OperationsTests(unittest.TestCase):
         finally:
             frappe.defaults.set_user_default('pp_read_updates_v1',original)
 
+    def test_display_currency_converts_money_without_changing_work_or_books(self):
+        from copy import deepcopy
+        from unittest.mock import patch
+        from plus_point.dashboard import overview
+        from plus_point.exchange import present
+        self.set_spending_budget(2800)
+        self.work('0.5')
+        original=overview(self.f.company.name)
+        before=deepcopy(original)
+        with patch('plus_point.exchange._snapshot',return_value=dict(updated=1700000000,rates={'USD':'1','PKR':'280'})):
+            converted=present(original,'USD')
+            tiny=present(dict(currency='PKR',wages_unpaid='0.01',contribution='-0.01'),'USD')
+        self.assertEqual(tiny['wages_unpaid'],'0.00')
+        self.assertEqual(tiny['source_signs']['wages_unpaid'],1)
+        self.assertEqual(tiny['source_signs']['contribution'],-1)
+        self.assertEqual(converted['currency'],'USD')
+        self.assertEqual(converted['earned_revenue'],'5.36')
+        self.assertEqual(converted['wages_unpaid'],'3.57')
+        self.assertEqual(converted['budgets'][0]['limit'],'10.00')
+        self.assertEqual(converted['budgets'][0]['currency'],'USD')
+        self.assertEqual(converted['workers'],original['workers'])
+        self.assertEqual(converted['activity']['clients'],original['activity']['clients'])
+        self.assertEqual(converted['budgets'][0]['level'],original['budgets'][0]['level'])
+        self.assertEqual([r['id'] for r in converted['notifications']],[r['id'] for r in original['notifications']])
+        self.assertEqual(original,before)
+        self.assertEqual(project_summary(self.f.project.name)['labour_cost'],'1000.00')
+
+    def test_currency_rate_failure_keeps_original_amounts_and_currency(self):
+        from unittest.mock import patch
+        from plus_point.dashboard import overview
+        from plus_point.exchange import RateUnavailable
+        self.work()
+        original=overview(self.f.company.name)
+        with patch('plus_point.exchange._snapshot',side_effect=RateUnavailable('Offline')):
+            result=overview(self.f.company.name,display_currency='USD')
+        self.assertEqual(result['currency'],'PKR')
+        self.assertEqual(result['earned_revenue'],original['earned_revenue'])
+        self.assertEqual(result['fx']['status'],'unavailable')
+        self.assertEqual(result['fx']['requested'],'USD')
+
+    def test_currency_selection_validates_before_request_and_rejects_guest(self):
+        from unittest.mock import patch
+        from plus_point.dashboard import overview
+        with patch('plus_point.exchange._snapshot') as fetch:
+            self.assertEqual(overview(self.f.company.name,display_currency='PKR')['fx']['status'],'base')
+            with self.assertRaises(frappe.ValidationError):
+                overview(self.f.company.name,display_currency='XXX')
+            frappe.set_user('Guest')
+            with self.assertRaises(frappe.PermissionError):
+                overview(self.f.company.name,display_currency='USD')
+            fetch.assert_not_called()
+
+    def test_currency_snapshot_rejects_stale_future_and_invalid_rates(self):
+        from copy import deepcopy
+        from plus_point.exchange import _validate,RateUnavailable,MAX_AGE
+        payload=dict(result='success',base_code='USD',time_last_update_unix=1000000,rates={'USD':1,'PKR':280})
+        self.assertEqual(_validate(payload,1000001)['rates']['PKR'],'280')
+        for age in (-1,MAX_AGE+1):
+            with self.assertRaises(RateUnavailable):
+                _validate(payload,1000000+age)
+        for invalid in (0,-1,'NaN','Infinity'):
+            row=deepcopy(payload);row['rates']['PKR']=invalid
+            with self.assertRaises(RateUnavailable):
+                _validate(row,1000001)
+
 from plus_point.finance import money

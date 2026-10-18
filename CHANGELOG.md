@@ -1,5 +1,9 @@
 # Development changelog
 
+## Native theme and current-rate display currencies — 2026-10-18
+
+Removed the forced dark/citrus palette while retaining card layout and accessible motion. Dashboard surfaces now inherit the existing Desk theme and teal emphasis; financial figures are bold. Added PKR, USD, EUR, GBP, AED, SAR, CAD and AUD display currencies. Permission-checked overview data is converted with Decimal arithmetic at the latest published daily cross rate, including charts, project rows, budgets and monetary notices. Worker/day counts and source books remain unchanged. The rate, update time, source attribution and book currency are visible; unavailable rates retain original amounts with a retry action.
+
 ## Reference-inspired dashboard presentation — 2026-10-18
 
 Adapted the Ferrule reference into the customer overview: matte dark card surfaces, citrus accents, asymmetric work/finance panels, staggered card entrances, growing real-data bars and sequential project-row reveals. Added an explanatory attendance → approved work → earnings/billing graphic with moving connector signals, plus a readable compact mobile version. Motion pauses outside the graphic viewport and respects reduced-motion preferences. APIs, figures, warnings, approvals, billing, payments, notifications and native navigation are unchanged. High4Tech and native record forms keep their existing presentation.

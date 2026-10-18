@@ -10,7 +10,7 @@ from plus_point.finance import money
 
 
 @frappe.whitelist()
-def overview(company=None):
+def overview(company=None, display_currency=None):
     platform = bool(frappe.conf.get('pp_control_plane'))
     if platform:
         from plus_point.platform import require_platform
@@ -31,7 +31,8 @@ def overview(company=None):
     result['currency'] = next(row.default_currency for row in companies if row.name == company)
     result.update(_platform(company) if platform else _customer(company))
     result['notifications'] = notifications(result.get('conditions',[]),company)
-    return result
+    from plus_point.exchange import present
+    return present(result, display_currency)
 
 
 def _customer(company):

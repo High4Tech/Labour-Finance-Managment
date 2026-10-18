@@ -2,6 +2,14 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Native-theme currency display follow-up
+
+**61 MariaDB regressions passed** with zero failures/errors. Four new currency cases cover Decimal projections and unchanged source accounting, counts/calendar quantities/notification IDs/budget states and warning signs through sub-cent rounding, unavailable-rate fallback, same-currency/invalid/Guest paths without fetching, and stale/future/invalid-rate refusal. Business fixtures roll back; provider snapshots in these tests are controlled examples, not live-rate evidence.
+
+The live provider was reached successfully from the app environment and supplied current PKR rates. The actual browser currency check passed USD/EUR conversion of existing demo figures, disclosure of the real rate/as-of/source, return to original PKR values, app Refresh persistence, read-only failure/retry UI fixture, bold native-theme rendering, unchanged work data/books, reduced motion and 1100/768/390/320px layout. Rates are daily indicative values with a one-hour cache, not streaming or bank settlement rates. Only public quotes leave the app request boundary; no business amount is sent to the provider.
+
+Final currency assets passed the same browser check again. Customer activity/navigation/calendar/notification/personal-order regressions passed with original preferences restored; budget stop/warning/success/retry/empty states passed with the exact demo budget restored and temporary draft removed. High4Tech focused navigation/support/mobile checks passed using its dummy admin account. The retained preview shows USD amounts in the existing native light theme; all final browser flows reported zero application errors. An earlier activity navigation timeout and a harness login attempt with the wrong default username were corrected before these final passes.
+
 ## Dashboard presentation follow-up
 
 The customer activity browser flow passed after restyling: six stats before the inbox, chart ranges, actual client/day details, notifications/read acknowledgement, scoped work lists, persisted personal order, native client/company calendars and 390px layout. Original personal preferences were restored. The state browser flow passed existing overrun/red-budget review, pre-submit stop, warning cancellation, approved-work success, load error/retry and empty-company CTA; exact budget/draft fixtures were restored/removed. High4Tech focused navigation, customer-support buttons, accounting reports and mobile checks passed after dismissing its unrelated native update notice; the harness now handles that notice explicitly.
