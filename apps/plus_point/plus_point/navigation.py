@@ -4,14 +4,16 @@ import json
 
 CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers'),
-                    ('PP Site', 'Work sites'), ('PP Assignment', 'Assign workers')]),
-    ('Clients and billing', [('Customer', 'Clients'), ('Contract', 'Client contracts'), ('Project', 'Projects'),
+                    ('PP Site', 'Event sites'), ('PP Assignment', 'Assign workers')]),
+    ('Inventory and transport', [('Page:pp-inventory','Warehouse availability'),('Item','Inventory items'),('Warehouse','Warehouses'),
+        ('Vehicle','Vehicles'),('PP Vehicle Booking','Vehicle assignments'),('PP Equipment Booking','Event equipment'),('Stock Reconciliation','Warehouse balances')]),
+    ('Clients and billing', [('Customer', 'Clients'), ('Contract', 'Client agreements'), ('PP Event Plan','Event plans'),('Project', 'Event projects'),
                             ('PP Contract Terms', 'Client billing'), ('PP Milestone', 'Fixed milestones'), ('Sales Invoice', 'Client invoices')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
                            ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
     ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
                           ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
-    ('Business setup', [('User', 'Staff accounts'), ('Company', 'Your company'), ('Item', 'Billing items'),
+    ('Business setup', [('Company', 'Your company'), ('Item', 'Billing items'),
                         ('Supplier', 'Suppliers'), ('Account', 'Accounts'), ('PP Work Entry', 'Wages earned')]),
 ]
 PLATFORM_GROUPS = [
@@ -41,6 +43,8 @@ def product_navigation(platform):
     for label, entries in groups:
         visible = []
         for name, title in entries:
+            if name.startswith('Page:'):
+                visible.append(dict(type='Link',link_type='Page',link_to=name[5:],label=title,child=1,is_default_module=1));continue
             is_report = name.startswith('Report:')
             target = name.removeprefix('Report:')
             if is_report:
@@ -55,6 +59,7 @@ def product_navigation(platform):
                 if is_report:
                     report=frappe.get_doc('Report',target)
                     item['report']=dict(report_type=report.report_type,ref_doctype=report.ref_doctype)
+                if name=='Item' and not platform:item['route_options']=json.dumps({'is_stock_item':int(title=='Inventory items')})
                 visible.append(item)
         if visible:
             items.append(dict(type='Section Break', label=label, collapsible=1,
@@ -67,7 +72,7 @@ def product_navigation(platform):
         doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
-                pages=['pp-section'],groups=ordered)
+                pages=['pp-section']+([] if platform else ['pp-inventory']),groups=ordered)
 
 
 @frappe.whitelist(methods=['POST'])

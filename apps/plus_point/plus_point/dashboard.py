@@ -102,7 +102,8 @@ def _customer(company):
         conditions[-1]['value']=total('wages_outstanding')
     elif rows:
         condition('success', 'No unpaid approved wages', 'All currently approved earnings are covered by linked wage payments, or no wages have been approved yet.', 'View worker statement', '/desk/query-report/PLUS%20POINT%20Worker%20Statement')
-    return dict(workers=len(workers), active_sites=len(sites),
+    from plus_point.events import summary as event_summary
+    return dict(workers=len(workers), active_sites=len(sites),event_plans=event_summary(company),
         budgets=budgets, conditions=conditions, activity=activity,
         open_projects=sum(1 for row in rows if projects[row['project']].status == 'Open' and projects[row['project']].is_active == 'Yes'),
         wages_unpaid=total('wages_outstanding'), client_balance=total('client_outstanding_gross'),

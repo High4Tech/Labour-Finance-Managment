@@ -1,0 +1,116 @@
+{
+  "doctype": "DocType",
+  "name": "PP Event Plan",
+  "module": "PLUS POINT",
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": [
+    "event_name",
+    "project",
+    "company",
+    "contract_terms",
+    "start_date",
+    "end_date",
+    "wage_rate",
+    "client_rate",
+    "staffing",
+    "crew_allocated",
+    "timeline",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "event_name",
+      "label": "Event name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Event project",
+      "fieldtype": "Link",
+      "options": "Project",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Your company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "contract_terms",
+      "label": "Client billing agreement",
+      "fieldtype": "Link",
+      "options": "PP Contract Terms",
+      "reqd": 1
+    },
+    {
+      "fieldname": "start_date",
+      "label": "From date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "Through date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "wage_rate",
+      "label": "Daily crew wage",
+      "fieldtype": "Currency",
+      "reqd": 1
+    },
+    {
+      "fieldname": "client_rate",
+      "label": "Client rate per worker-day",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "staffing",
+      "label": "Site staffing requirements",
+      "fieldtype": "Table",
+      "options": "PP Event Staffing",
+      "reqd": 1
+    },
+    {
+      "fieldname": "crew_allocated",
+      "label": "Crew allocated",
+      "fieldtype": "Check",
+      "read_only": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "timeline",
+      "label": "Event timeline",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Planning notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "title_field": "event_name",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    }
+  ],
+  "show_title_field_in_link": 1
+}

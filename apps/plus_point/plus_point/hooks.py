@@ -1,7 +1,7 @@
 app_name = "plus_point"
 app_title = "PLUS POINT"
 app_publisher = "High4Tech"
-app_description = "Labour contracting extension for ERPNext and Frappe HRMS"
+app_description = "Event operations, crew and finance extension for ERPNext and Frappe HRMS"
 app_email = "support@high4tech.com"
 app_license = "MIT"
 required_apps = ["frappe/erpnext", "frappe/hrms"]
@@ -9,21 +9,27 @@ after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
-web_include_js = ["/assets/plus_point/js/website.js?v=20261018-signup-3"]
+web_include_js = ["/assets/plus_point/js/website.js?v=20261018-events-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/dashboard_motion.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/dashboard.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/activity.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/sections.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/conditions.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/imports.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/setup_flow.js?v=20261018-signup-3",
-                  "/assets/plus_point/js/onboarding.js?v=20261018-signup-3"]
-app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261018-signup-3",
-                   "/assets/plus_point/css/dashboard_motion.css?v=20261018-signup-3"]
+app_include_js = ["/assets/plus_point/js/dashboard_motion.js?v=20261018-events-4",
+                  "/assets/plus_point/js/dashboard.js?v=20261018-events-4",
+                  "/assets/plus_point/js/activity.js?v=20261018-events-4",
+                  "/assets/plus_point/js/events.js?v=20261018-events-4",
+                  "/assets/plus_point/js/sections.js?v=20261018-events-4",
+                  "/assets/plus_point/js/conditions.js?v=20261018-events-4",
+                  "/assets/plus_point/js/imports.js?v=20261018-events-4",
+                  "/assets/plus_point/js/setup_flow.js?v=20261018-events-4",
+                  "/assets/plus_point/js/event_setup.js?v=20261018-events-4",
+                  "/assets/plus_point/js/onboarding.js?v=20261018-events-4"]
+app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261018-events-4",
+                   "/assets/plus_point/css/events.css?v=20261018-events-4",
+                   "/assets/plus_point/css/dashboard_motion.css?v=20261018-events-4"]
 scheduler_events = {"hourly": ["plus_point.support.purge_results"]}
 
 doc_events = {
+    "Vehicle": {"validate":"plus_point.events.validate_vehicle"},
+    "Stock Reconciliation": {"before_submit":"plus_point.events.protect_stock_snapshot"},
+    "Stock Entry": {"before_submit":"plus_point.events.protect_stock_issue"},
     "Project": {"validate": "plus_point.budget.validate_project"},
     "Purchase Invoice": {"before_submit": "plus_point.budget.enforce", "before_update_after_submit": "plus_point.budget.enforce"},
     "Expense Claim": {"before_submit": "plus_point.budget.enforce", "before_update_after_submit": "plus_point.budget.enforce"},

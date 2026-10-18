@@ -1,0 +1,115 @@
+{
+  "doctype": "DocType",
+  "name": "PP Equipment Booking",
+  "module": "PLUS POINT",
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": [
+    "item",
+    "warehouse",
+    "project",
+    "site",
+    "company",
+    "start_date",
+    "end_date",
+    "quantity",
+    "stock_uom",
+    "status",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "item",
+      "label": "Inventory item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "warehouse",
+      "label": "Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Event project",
+      "fieldtype": "Link",
+      "options": "Project",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "site",
+      "label": "Event site",
+      "fieldtype": "Link",
+      "options": "PP Site",
+      "reqd": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Your company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "start_date",
+      "label": "From date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "Through date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity reserved",
+      "fieldtype": "Float",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "stock_uom",
+      "label": "Stock unit",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Planned\nCancelled",
+      "default": "Planned",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Equipment notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "title_field": "item",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    }
+  ],
+  "show_title_field_in_link": 1
+}

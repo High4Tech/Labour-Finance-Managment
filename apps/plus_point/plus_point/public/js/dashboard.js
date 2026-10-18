@@ -40,6 +40,7 @@
             ${metric('Wages unpaid',data.wages_unpaid,'Lifetime approved wages less linked payments',data.currency,sign(data,'wages_unpaid')>0?'warning':'success')}
             ${metric('Client invoice balance',data.client_balance,'Outstanding on posted project invoices',data.currency,sign(data,'client_balance')>0?'warning':'success')}</dl>
             ${conditions(data)}
+            ${plus_point.event_summary_markup?.(data.event_plans)||''}
             <div class="pp-dashboard-panels"><section class="pp-dashboard-panel pp-work-trend"><header class="pp-panel-heading"><h3>${esc(__('Work delivered'))}</h3><div class="pp-chart-range" aria-label="${esc(__('Activity period'))}">${[7,14,30,91].map(n=>`<button type="button" data-range="${n}" aria-pressed="${n===range}">${n}${esc(__('d'))}</button>`).join('')}</div></header>
                 <p>${esc(__('Approved worker-days. Two half-days count as one; drafts are excluded.'))}</p>
                 ${chart(days,[['units','Worker-days']])}
@@ -143,6 +144,7 @@
                 root.querySelector('.pp-mark-updates')?.addEventListener('click',async event=>{event.target.disabled=true;try{await frappe.call({method:'plus_point.dashboard.mark_updates_read',type:'POST',args:{company:data.company}});data.notifications.forEach(row=>row.read=true);draw();}finally{event.target.disabled=false;}});
                 root.querySelectorAll('[data-range]').forEach(button=>button.addEventListener('click',()=>{root.dataset.range=button.dataset.range;draw();}));
                 plus_point.bind_activity(root);
+                root.querySelector('.pp-new-event')?.addEventListener('click',()=>plus_point.open_event_wizard());
                 plus_point.present_dashboard?.(root);
                 root.querySelectorAll('[data-pp-action]').forEach(button=>button.addEventListener('click',event=>{
                     const action=button.dataset.ppAction;

@@ -1,0 +1,123 @@
+{
+  "doctype": "DocType",
+  "name": "PP Vehicle Booking",
+  "module": "PLUS POINT",
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": [
+    "vehicle",
+    "project",
+    "site",
+    "company",
+    "purpose",
+    "start_date",
+    "end_date",
+    "crew_count",
+    "cargo_load",
+    "cargo_uom",
+    "status",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "vehicle",
+      "label": "Vehicle",
+      "fieldtype": "Link",
+      "options": "Vehicle",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Event project",
+      "fieldtype": "Link",
+      "options": "Project",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "site",
+      "label": "Event site",
+      "fieldtype": "Link",
+      "options": "PP Site",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Your company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "purpose",
+      "label": "Transport purpose",
+      "fieldtype": "Select",
+      "options": "Crew\nInventory",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "start_date",
+      "label": "From date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "Through date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "crew_count",
+      "label": "Crew passengers (driver excluded)",
+      "fieldtype": "Int",
+      "depends_on": "eval:doc.purpose===\"Crew\""
+    },
+    {
+      "fieldname": "cargo_load",
+      "label": "Planned inventory load",
+      "fieldtype": "Float",
+      "depends_on": "eval:doc.purpose===\"Inventory\""
+    },
+    {
+      "fieldname": "cargo_uom",
+      "label": "Load unit",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "depends_on": "eval:doc.purpose===\"Inventory\""
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Planned\nCancelled",
+      "default": "Planned",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Transport notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "title_field": "vehicle",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "print": 1
+    }
+  ],
+  "show_title_field_in_link": 1
+}

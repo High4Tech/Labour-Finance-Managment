@@ -1,6 +1,18 @@
-# Verification status — 2026-10-18
+# Verification status — 2026-10-19
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
+
+## Event organizer operations
+
+The current increment specializes the customer workspace for events: Company-owned identity and first-event onboarding, venue-phase staffing plans and exact-date calendars, crew/cargo vehicles, native equipment/warehouse availability and reservations, and seven additional template types. Public signup, pricing, simulated payment and approval remain a demo as explicitly requested; no customer workspace is activated by approval.
+
+Final real MariaDB checks: **14 event cases**, **61 existing operations/finance/import cases**, and **6 demo-signup cases**, all with zero failures/errors. Event fixtures verify cross-year inclusive dates, shortage/atomic creation, crew replay/release/recorded-history and status-tamper protection, existing complete-phase crew without duplicate allocations, company boundaries, vehicle capacity/purpose/date conflicts, native stock/Bin/GL and peak reservations, count/issue refusals, stale import/replay behavior, current owner catalog permissions, optional/full transport-and-equipment setup and Guest/platform denial. All business test fixtures roll back. The 11 offline/harness checks plus 6 finance and 4 register unit checks passed; the HTTP harness needed approved loopback access after the default sandbox blocked its two socket tests. Python/JavaScript syntax and whitespace checks passed.
+
+The final Edge event browser flow passed the established-company home without forced onboarding, company identity, top Help without a separate row, actual warehouse balances, seven new header Import/template downloads (including the native Warehouse tree), inventory-specific section figures, the company menu, weekday labels and bounded event cells at 390/320px. The isolated QA company journey passed all nine steps, dimmed/inert background, reload/resume, native vehicle creation, explicit no-equipment path, crew allocation without work/earnings, completion unlock, and the next-event wizard Forward/Back/atomic save with venue rows retained. Exact QA business fixtures, original selected company defaults and entitlement were restored. An additional guide pass succeeded after availability retry and Back failure handling were tightened. Screenshots remain in ignored `.local/qa`.
+
+The labelled demo now uses event projects/venues and named client organizations, with three equipment types, a demo equipment warehouse/counts, separate crew/cargo vehicles and event reservations. Existing work/wage/invoice/payment history was preserved. Stock counts are labelled synthetic demo book-value entries, with no cash transfer. Planning creates no earned work. Crew planning matches complete date phases, without skill/travel/partial-day optimization. Other native stock movement/cancellation paths, concurrency stress and real-customer usability remain production acceptance work. Live Sheets synchronization, real payment/account activation and online contract signing are not delivered by this increment. See [Event operations](EVENT_OPERATIONS.md).
+
+Earlier transient browser navigation timeouts, QA's uncompleted native Desk wizard, missing catalog owner permissions, the Warehouse tree's separate toolbar, a stock-test rollback fixture, venue-table restoration and native list action replacement were corrected or handled before the final successful checks. The in-app preview control retained a stale older page and aborted direct navigation; the fresh Edge evidence above is the verified UI. Opening the app panel was queued by the desktop tool.
 
 ## Demo signup and direct section dragging
 

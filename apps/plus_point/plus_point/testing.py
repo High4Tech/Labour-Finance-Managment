@@ -47,6 +47,16 @@ def run_signup():
     return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
 
 
+def run_events():
+    if not frappe.conf.get('allow_tests') or frappe.conf.get('pp_control_plane') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled customer site required')
+    import unittest
+    from plus_point.tests.test_events import EventTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(EventTests))
+    if not result.wasSuccessful():raise RuntimeError('Event integration suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
+
+
 def setup_browser_fixture(action, run_id, restore_state=None):
     """Local operator-only setup UI fixture; never available over HTTP."""
     import re

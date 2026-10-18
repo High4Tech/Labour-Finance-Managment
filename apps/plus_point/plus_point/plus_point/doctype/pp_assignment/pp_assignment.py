@@ -6,6 +6,15 @@ from plus_point.finance import as_decimal
 
 class PPAssignment(Document):
     def validate(self):
+        if self.get('pp_event_plan'):
+            plan=frappe.get_doc('PP Event Plan',self.pp_event_plan)
+            plan.check_permission('read')
+            if plan.project!=self.project or plan.contract_terms!=self.contract_terms:
+                frappe.throw('Generated crew must match its event plan project and billing terms')
+            if getdate(self.start_date)<getdate(plan.start_date) or not self.end_date or getdate(self.end_date)>getdate(plan.end_date):
+                frappe.throw('Generated crew dates must remain inside the event plan')
+        if not self.is_new() and frappe.db.get_value('PP Assignment',self.name,'pp_event_plan')!=self.get('pp_event_plan'):
+            frappe.throw('An assignment’s source event plan cannot change')
         # Work posting locks the assignment before its employee. Keep the same
         # order while closing an assignment or checking concurrent allocations.
         old = frappe.db.get_value('PP Assignment', self.name,

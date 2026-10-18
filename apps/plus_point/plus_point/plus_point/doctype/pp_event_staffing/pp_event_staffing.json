@@ -1,0 +1,55 @@
+{
+  "doctype": "DocType",
+  "name": "PP Event Staffing",
+  "module": "PLUS POINT",
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": [
+    "site",
+    "phase",
+    "start_date",
+    "end_date",
+    "workers_required"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "Event site",
+      "fieldtype": "Link",
+      "options": "PP Site",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "phase",
+      "label": "Phase",
+      "fieldtype": "Select",
+      "options": "Setup\nEvent\nPack-down\nOther",
+      "default": "Event",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "start_date",
+      "label": "From date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "Through date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "workers_required",
+      "label": "Workers per day",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "in_list_view": 1
+    }
+  ],
+  "istable": 1,
+  "editable_grid": 1
+}

@@ -43,9 +43,19 @@ def after_migrate():
         ('PP Work Entry', ['contract_terms', 'status'], 'pp_terms_status'),
         ('PP Assignment', ['site', 'start_date'], 'pp_site_start'),
         ('PP Milestone', ['contract_terms', 'status'], 'pp_milestone_terms_status'),
+        ('PP Vehicle Booking',['vehicle','status','start_date'],'pp_vehicle_dates'),
+        ('PP Equipment Booking',['item','warehouse','status','start_date'],'pp_equipment_dates'),
     ]:
         frappe.db.add_index(doctype, columns, name)
     create_custom_fields({
+        'Vehicle': [
+            dict(fieldname='pp_event_enabled',label='Available for events',fieldtype='Check',default='1',insert_after='company'),
+            dict(fieldname='pp_crew_seats',label='Crew passenger seats (driver excluded)',fieldtype='Int',default='0',insert_after='pp_event_enabled'),
+            dict(fieldname='pp_cargo_capacity',label='Inventory load capacity',fieldtype='Float',default='0',insert_after='pp_crew_seats'),
+            dict(fieldname='pp_cargo_uom',label='Inventory load unit',fieldtype='Select',options='units\nkg\nm³',default='units',insert_after='pp_cargo_capacity'),
+        ],
+        'PP Assignment': [dict(fieldname='pp_event_plan',label='Event plan',fieldtype='Link',options='PP Event Plan',read_only=1,insert_after='project')],
+        'Company': [dict(fieldname='pp_event_setup_state',label='Event setup progress',fieldtype='Long Text',hidden=1,read_only=1)],
         'Subscription Plan': [
             dict(fieldname='pp_public_plan',label='Show on demo signup pricing',fieldtype='Check',default='0',insert_after='plan_name',
                  description='Publishes this fixed-rate plan on the local demo signup page. No payments are collected.'),
@@ -61,6 +71,14 @@ def after_migrate():
         ],
     })
     if not frappe.conf.get('pp_control_plane'):
+        from frappe.permissions import add_permission,update_permission_property
+        for target in ('Vehicle','Customer','Item','Item Group','Warehouse'):
+            # The current product has one company owner. Preserve all native
+            # roles and any explicit operator-defined System Manager rule.
+            if not any(p.role=='System Manager' and p.permlevel==0 for p in frappe.get_meta(target).permissions):
+                add_permission(target,'System Manager')
+                for permission in ('read','write','create','delete','report','export','print'):
+                    update_permission_property(target,'System Manager',0,permission,1)
         from frappe.custom.doctype.property_setter.property_setter import make_property_setter
         make_property_setter('Project', 'estimated_costing', 'label', 'Spending budget', 'Data')
         make_property_setter('Project', 'estimated_costing', 'description',

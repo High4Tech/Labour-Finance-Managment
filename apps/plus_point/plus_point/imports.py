@@ -29,6 +29,9 @@ TARGETS = dict(employees='Employee', work='PP Work Entry', milestones='PP Milest
     expenses='Purchase Invoice', invoices='Sales Invoice', receipts='Payment Entry', worker_payments='PP Wage Settlement')
 MAX_ROWS = 200
 MAX_BYTES = 2 * 1024 * 1024
+from plus_point.event_imports import SCHEMAS as EVENT_SCHEMAS, TARGETS as EVENT_TARGETS, PROFILES as EVENT_PROFILES
+SCHEMAS.update(EVENT_SCHEMAS)
+TARGETS.update(EVENT_TARGETS)
 
 
 def digest(value):
@@ -45,8 +48,9 @@ def guard(kind, company):
         frappe.throw('Choose a supported import template')
     doc = linked('Company', company)
     frappe.has_permission(TARGETS[kind], 'create', throw=True)
-    if kind != 'employees' and kind != 'work' and kind != 'milestones':
+    if kind not in ('employees','work','milestones') and kind not in EVENT_SCHEMAS:
         frappe.has_permission('Payment Entry' if kind in ('receipts', 'worker_payments') else TARGETS[kind], 'submit', throw=True)
+    if kind=='stock_balances':frappe.has_permission('Stock Reconciliation','submit',throw=True)
     return doc
 
 
@@ -145,6 +149,9 @@ def validate_row(kind, company, row):
     for key, value in row.items():
         if value[:1] in ('=', '@', '+') and not (key == 'cell_number' and re.fullmatch(r'\+\d[\d ()-]*', value)):
             frappe.throw(f'{key}: replace formulas with plain values')
+    if kind in EVENT_SCHEMAS:
+        from plus_point.event_imports import validate
+        return validate(kind,company,row)
     if kind == 'employees':
         required(row, 'first_name')
         linked('Gender', required(row, 'gender'))
@@ -234,7 +241,15 @@ def prepare(kind, company, rows):
                 target = linked(previous.document_type, previous.document_name)
                 if target.docstatus == 2 or (kind == 'work' and target.status != 'Approved'):
                     frappe.throw('The earlier financial record was cancelled or changed. Use a new external ID for its reviewed replacement.')
-                if kind == 'employees':
+                if kind in EVENT_PROFILES:
+                    from plus_point.event_imports import target as catalog_target
+                    current=catalog_target(kind,row)
+                    if current and current!=previous.document_name:frappe.throw('external_id is already linked to a different catalog record')
+                    target.check_permission('write')
+                    if kind=='vehicles' and target.company!=company:frappe.throw('Vehicle must belong to the selected company')
+                    if kind=='event_sites':linked('Project',target.project,company)
+                    result['action']='Update' if previous.content_hash!=digest(row) else 'Skip'
+                elif kind == 'employees':
                     if row['employee'] and row['employee'] != previous.document_name:
                         frappe.throw('external_id is already linked to a different employee')
                     linked('Employee', previous.document_name, company).check_permission('write')
@@ -246,6 +261,10 @@ def prepare(kind, company, rows):
                 result['document'] = previous.document_name
             elif kind == 'employees' and row['employee']:
                 result.update(action='Update', document=row['employee'])
+            elif kind in EVENT_PROFILES:
+                from plus_point.event_imports import target as catalog_target
+                current=catalog_target(kind,row)
+                if current and frappe.db.exists(TARGETS[kind],current):result.update(action='Update',document=current)
             # A posted source may now be reserved by its imported invoice. An
             # identical financial replay reads the existing receipt, not the
             # create-only source rules. Permissions/company remain checked.
@@ -254,6 +273,11 @@ def prepare(kind, company, rows):
                 results.append(result)
                 continue
             details = validate_row(kind, company, row)
+            if kind in EVENT_PROFILES or kind=='stock_balances':
+                from plus_point.event_imports import target as catalog_target
+                target_key=(kind,catalog_target(kind,row) or row.get('customer_name')) if kind!='stock_balances' else (kind,row['item_code'],row['warehouse'])
+                if target_key in targets:frappe.throw('The same catalog record or warehouse/item balance is targeted twice in this file')
+                targets.add(target_key)
             if kind == 'employees' and result.get('document'):
                 if result['document'] in targets:
                     frappe.throw('The same employee is targeted twice in this file')
@@ -292,6 +316,10 @@ def references(company):
     add('Customer',['name','customer_name'])
     add('Supplier',['name','supplier_name'])
     add('Item',['name','item_name'],{'is_stock_item':0,'disabled':0})
+    add('Item',['name','item_name'],{'is_stock_item':1,'disabled':0})
+    add('Warehouse',['name','warehouse_name'],{'company':company,'is_group':0,'disabled':0})
+    add('Vehicle',['name','model'],{'company':company})
+    if names:add('PP Site',['name','site_name'],{'project':['in',names]})
     add('Account',['name','account_type'],{'company':company,'is_group':0,'account_type':['in',['Bank','Cash']]})
     add('Sales Invoice',['name','customer'],{'company':company,'docstatus':1,'outstanding_amount':['>',0]})
     output = io.StringIO(newline='')
@@ -400,7 +428,10 @@ def apply(token):
         for row, result in zip(rows, results):
             if result['action'] == 'Skip':
                 continue
-            if kind == 'employees':
+            if kind in EVENT_SCHEMAS:
+                from plus_point.event_imports import save as save_catalog
+                doc=save_catalog(kind,company_name,row,result.get('document'))
+            elif kind == 'employees':
                 doc = linked('Employee', result['document'], company_name) if result.get('document') else frappe.new_doc('Employee')
                 doc.update({key: row[key] for key in SCHEMAS[kind] if key not in ('external_id', 'employee')})
                 doc.company = company_name

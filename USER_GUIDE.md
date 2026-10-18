@@ -1,6 +1,6 @@
 # Using PLUS POINT
 
-Start at **PLUS POINT → Workforce home**. Customer logins open this workspace by default unless an administrator has chosen another starting app. The overview groups everyday work into attendance, workers and work sites, client billing, and worker payments.
+Start at **PLUS POINT → Event operations**. Customer logins open this workspace by default unless an administrator has chosen another starting app. The overview groups everyday work into attendance, workers and work sites, client billing, and worker payments.
 
 The overview starts with a dashboard. Choose your **Company** and use **Refresh figures** for the latest saved records. PLUS POINT shows approved worker-days today, active workers/sites, earned revenue, unpaid wages and the client invoice balance. The work chart switches between 7, 14, 30 and 91 days; the finance chart compares earned revenue, wages, other costs and operational contribution. Financial totals are lifetime figures for projects with PLUS POINT billing terms; the attendance chart counts approved worker-days. Draft attendance is excluded. All existing work links remain under **Work tools**. The overview cards use visual animations only; the workflow illustration does not approve work, issue invoices or send payments. Reduced-motion system preferences show the same information without animation.
 
@@ -10,7 +10,7 @@ The overview starts with a dashboard. Choose your **Company** and use **Refresh 
 
 Choose a sidebar section heading or its **overview** link to see its summary and work-list counts before opening a list. **Sidebar Menu → Arrange sections** lets you move whole sections up/down and save the order for your login. Company-specific links retain the same company/project scope as their counts. Charts stay on the main overview; activity calendars also appear on client/company front pages.
 
-The local demo has people such as Ahmed Raza, Hassan Ali, Sara Khan and Bilal Ahmed, and clients Crescent Builders, Cedar Infrastructure and Pak Logistics. Records are labelled **Demo**. Its 70 added synthetic approved work entries and illustrative invoice/partial receipt/wage payment are examples, with no real sale or bank transfer. Stable internal IDs may still contain the original demo label.
+The local demo has people such as Ahmed Raza, Hassan Ali, Sara Khan and Bilal Ahmed, and clients Lumen Celebrations, Cedar Events and Orion Exhibitions. Records are labelled **Demo**. Its 70 added synthetic approved work entries and illustrative invoice/partial receipt/wage payment are examples, with no real sale or bank transfer. Stable internal IDs may still contain the original demo label.
 
 **Display currency** converts the overview's money figures together, including earned revenue, wages, client balances, project costs, budgets and project rows. Choose PKR, USD, EUR, GBP, AED, SAR, CAD or AUD; the company's own currency is also available. Worker counts, attendance and calendar quantities stay the same. Refresh figures retains your selected currency during the current app visit.
 
@@ -20,19 +20,21 @@ High4Tech's dashboard shows registered software customers, trial/access status, 
 
 Choose **Mark attendance**, select the work site and date, then **Review attendance**. This prepares a draft with assigned workers, or reopens the saved register for that site and date. Review the entries before **Submit** approves earnings. Opening attendance never approves it automatically.
 
-The sidebar groups **Daily work**, **Clients and billing**, **Payments and costs** and **Business reports**. Expand **Business setup** for staff accounts, company, items, suppliers and accounts. Lists use labels such as **Add work site** and **Assign worker**. Native permissions determine the links and actions available to your login.
+The sidebar groups **Daily work**, **Clients and billing**, **Payments and costs** and **Business reports**. Expand **Inventory and transport** for warehouse availability, items, warehouses, vehicles and reservations. **Business setup** contains company, billing items, suppliers and accounts. Staff login management is deferred. Lists use labels such as **Add event site** and **Assign worker**. Native permissions determine the links and actions available to your login.
 
-For help, choose **Help**. It contains the contractor workflow and optional **Guided setup**. Fields with a **?** explain what to enter; hover, focus with the keyboard, or tap the button. Longer field guidance appears when you focus the field. **Explain this screen** opens guidance for the current record.
+For help, choose **Help** in the top action bar. Fields with a **?** explain what to enter. The company menu at the bottom of the sidebar opens **Guided company setup**.
 
 ## Guided setup
 
-New, unfinished businesses with no assignments open guided setup automatically. An established business, including the seeded demo, has no setup banner or repeated onboarding prompts on its overview. To deliberately open or resume the guide, choose **Help → Guided setup**. It focuses on one step while the rest of the workspace is blurred and unavailable to clicks or keyboard focus. **Skip setup and explore** releases the workspace immediately and removes the setup prompt. Your saved step follows your login across reloads. This focus mode does not change anybody’s account permissions or block another staff member.
+Fresh companies open a saved, company-owned journey automatically: company → client → event/venue → agreement → workers → daily staffing → vehicle → equipment → crew allocation. Each step saves real native records, dims the background and blocks background clicks/keyboard focus. Reload resumes the saved step. Existing businesses with assignments, including the demo, are not forced into onboarding. A voluntarily opened guide can close. Events may explicitly need no transport or no equipment. Completing the guide creates no attendance, wages, invoice or payment.
 
-After selecting or creating your own company, add or choose one **worker**, add or choose a **work site** under its client project, select or record the **client billing agreement**, then **assign the worker** with dates, a daily wage and the client rate. A new project and client can be entered within the site step. Fixed-price billing uses a zero worker-day client rate. The guide saves real records one step at a time. Skipping retains those saved records. Completing setup does not approve attendance, send payments or create employee logins.
+See [Event operations](EVENT_OPERATIONS.md) for the full guide, exact event-date calendars, multiple venues/phases, crew shortages and native equipment/vehicle reservations. A company account owns the workspace; named employees are workers, not staff software accounts. Signup/pricing/approval remain a demo.
 
 ## Import employees and existing finances
 
-Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import employees or finances** in the last guided setup step. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.
+Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import workers from a template** in guided setup. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. It also includes warehouses, stock items, vehicles and event sites. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.
+
+Clients, Event sites, Event plans/projects, Vehicles, Inventory items, Warehouses and Warehouse balances use the same template/review flow; see [event templates](EVENT_OPERATIONS.md#import-templates). Warehouse balances are absolute native stock/value counts, not cash received.
 
 You can also choose **Import** beside the top **Add** button on Workers, Wages earned, Fixed milestones, Project expenses, Client invoices, Receipts and payments, or Worker payments. This remains available on populated lists and after refresh. The window selects the corresponding import type and shows **Download template** above the instructions and file chooser. Expand **How to fill this template** when needed. You can add more rows later or update employee profiles using their existing IDs.
 

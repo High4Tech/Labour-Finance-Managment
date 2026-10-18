@@ -1,5 +1,15 @@
 # Development changelog
 
+## 2026-10-18 — Event organizer operations
+
+- Add saved event plans, venue phases/daily crew requirements, availability previews, atomic crew allocation and exact-date accessible calendars.
+- Add native warehouse availability, equipment reservation peaks, counted stock imports and crew/cargo vehicle capacities/bookings.
+- Extend top-of-list Import/template/review to clients, venues, vehicles, items, warehouses, balances and basic events.
+- Add company-owned, resumable first-event onboarding with dimmed/inert background; existing businesses remain quiet.
+- Display company account identity, remove customer staff-login management, move Help to the top action bar and adapt labelled dummy projects to events.
+- Retain the explicitly requested demo-only plan/signup/approval flow and existing earned-work/billing rules.
+
+
 ## Demo signup and header drag ordering — 2026-10-18
 
 Added a central local pricing/signup page linked from login, published native fixed-rate plans, a business/contact request, explicit simulated payment and High4Tech-only approval/rejection. Requests use private hashed status tokens and preserve price snapshots. Pending approvals appear in the platform dashboard. No money, password, user/tenant provisioning or email is created by this demo. Added actual section-header dragging with automatic per-user save, failed-save restoration and the existing keyboard arrangement controls. Documented local source/data storage, admin login and the invoice/document/signing feature boundaries.

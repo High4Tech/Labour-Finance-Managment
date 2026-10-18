@@ -4,7 +4,7 @@ The owner supplied the “PLUS POINT — Complete Project Context & Development 
 
 ## Product boundary
 
-PLUS POINT serves labour contractors and workforce suppliers. The core chain is **client → contract → project → work site → dated worker assignment → attendance → wages earned → client billing → costs → project results**. High4Tech manages a separate chain: **tenant → users → monthly subscription → billing → access/limits → renewal or suspension**. A paying tenant and its client companies remain different records in different contexts.
+The owner’s latest direction specializes PLUS POINT for event organizers and their workforce. Earlier contractor finance requirements remain the foundation. The core chain is **client → contract → project → work site → dated worker assignment → attendance → wages earned → client billing → costs → project results**. Event planning adds venue phases, required crew per day, warehouse equipment reservations and crew/cargo vehicles. High4Tech manages a separate chain: **tenant → users → monthly subscription → billing → access/limits → renewal or suspension**. A paying tenant and its client companies remain different records in different contexts.
 
 Frappe Desk, authentication, roles, APIs, migrations and reports are reused. ERPNext owns Customer, Contract, Project, invoices, Payment Entries, accounting, expenses and subscriptions. HRMS/Employee supplies worker profiles. PLUS POINT adds the contractor-specific data and calculations. Broader native modules such as Manufacturing are hidden dependencies outside the product interface. No native modules or existing customer records were deleted during this review.
 
@@ -40,3 +40,7 @@ See VERIFICATION_STATUS.md for executed database/browser/export checks and limit
 ## Owner's focused two-side clarification
 
 High4Tech is limited to PLUS POINT software customers, pricing/subscriptions, owner sign-in support and software-business finances. PLUS POINT remains the customer's main contractor-management MVP. Unrelated app/module menus, sidebar workspaces and search suggestions were removed; native data/auth/accounting dependencies remain installed. The local demo is registered as a trial customer without inventing actual revenue. Backend evidence includes native software invoice/receipt posting and local HTTP support/isolation flows; production email/payment integrations remain unconnected.
+
+## Event-organizer clarification — October 18
+
+The latest owner request takes precedence over earlier generic contracting examples. The customer interface now uses event/venue language, company account identity, a stepwise company-owned onboarding journey, staffing plans and date-bounded calendars, native inventory and purpose-specific vehicles. Staff-account management has been removed from customer navigation. Signup, plan selection, simulated payment and approval remain a demo as explicitly chosen; they do not provision or activate a new company. [Event operations](EVENT_OPERATIONS.md) records the delivered flow and current limits. Historical wages/billing and separate High4Tech software finances remain intact.
