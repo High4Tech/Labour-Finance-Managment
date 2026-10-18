@@ -2,6 +2,7 @@
 name: pluspoint-development
 services:
   mariadb:
+    restart: unless-stopped
     image: ${PP_MARIADB_IMAGE:-mariadb@sha256:6422478cb8e159f080fb1d8ccf65101e26fe51385787fde7d16c3b165a331f15}
     command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake, --transaction-isolation=READ-COMMITTED]
     environment:
@@ -13,12 +14,16 @@ services:
       interval: 5s
       retries: 30
   redis-cache:
+    restart: unless-stopped
     image: ${PP_REDIS_IMAGE:-redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499}
   redis-queue:
+    restart: unless-stopped
     image: ${PP_REDIS_IMAGE:-redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499}
   frappe:
     image: ${PP_BENCH_IMAGE:-frappe/bench@sha256:a60f0e8bcec8e2257f54360499bd5cd671f137e4c298a264275f7bc90bb49d5a}
-    command: sleep infinity
+    command: [python, /workspace/scripts/run-local.py]
+    init: true
+    restart: unless-stopped
     working_dir: /home/frappe
     environment:
       SHELL: /bin/bash
@@ -37,6 +42,12 @@ services:
       mariadb: {condition: service_healthy}
       redis-cache: {condition: service_started}
       redis-queue: {condition: service_started}
+    healthcheck:
+      test: [CMD, python, /workspace/scripts/run-local.py, --healthcheck]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 4
 volumes:
   bench-data:
   mariadb-data:

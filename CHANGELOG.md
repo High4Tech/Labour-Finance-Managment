@@ -1,5 +1,9 @@
 # Development changelog
 
+## Local startup recovery — 2026-10-18
+
+The local app and platform worker now start with their Docker container, recover after process failure, and expose HTTP health status. Initial setup still uses the launcher; ordinary restarts preserve installed sites and skip bootstrap. Deliberately stopped services require Start/Up or the launcher to resume.
+
 ## Native theme and current-rate display currencies — 2026-10-18
 
 Removed the forced dark/citrus palette while retaining card layout and accessible motion. Dashboard surfaces now inherit the existing Desk theme and teal emphasis; financial figures are bold. Added PKR, USD, EUR, GBP, AED, SAR, CAD and AUD display currencies. Permission-checked overview data is converted with Decimal arithmetic at the latest published daily cross rate, including charts, project rows, budgets and monetary notices. Worker/day counts and source books remain unchanged. The rate, update time, source attribution and book currency are visible; unavailable rates retain original amounts with a retry action.

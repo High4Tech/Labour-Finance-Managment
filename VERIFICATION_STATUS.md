@@ -2,6 +2,12 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Local preview startup recovery
+
+Diagnosed a running Docker container with no Bench or platform worker processes: its command was sleep infinity and the launcher had previously started both through detached exec calls. Replaced this with the container-owned local supervisor, successful-bootstrap readiness marker, unless-stopped restart policies and HTTP health check. Existing installed apps were verified before enabling the marker on this machine; persistent volumes were retained.
+
+Compose recreation reached healthy, an explicit app-container restart reached healthy without the launcher, and terminating only the observed main Honcho process triggered a higher Docker restart count and healthy HTTP recovery. All 11 offline/harness checks passed with approved loopback access; Python/PowerShell syntax and Compose configuration checks passed. This is actual container/process lifecycle evidence, not a Windows reboot or complete Docker Desktop restart test. The customer browser regression attempt did not complete (framework unavailable in the harness page). Browser control could not reacquire the existing preview tab due to its URL policy, so no fresh browser pass or in-app screenshot is claimed.
+
 ## Native-theme currency display follow-up
 
 **61 MariaDB regressions passed** with zero failures/errors. Four new currency cases cover Decimal projections and unchanged source accounting, counts/calendar quantities/notification IDs/budget states and warning signs through sub-cent rounding, unavailable-rate fallback, same-currency/invalid/Guest paths without fetching, and stale/future/invalid-rate refusal. Business fixtures roll back; provider snapshots in these tests are controlled examples, not live-rate evidence.

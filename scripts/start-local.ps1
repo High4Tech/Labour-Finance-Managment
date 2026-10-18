@@ -35,11 +35,6 @@ if ($WithPlatform) {
     Invoke-Compose exec -T frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site platform.localhost set-config pp_control_plane True --parse'
     Invoke-Compose exec -T frappe bash -lc 'cd /home/frappe/frappe-bench && bench --site platform.localhost execute plus_point.install.after_migrate'
 }
-# Start only if the prior bench process is absent. Re-running never creates duplicate servers.
-& docker compose exec -T frappe pgrep -f 'honcho start' *> $null
-if ($LASTEXITCODE -ne 0) {
-    Invoke-Compose exec -d frappe bash -lc 'cd /home/frappe/frappe-bench && bench start >> logs/bench-start.log 2>&1'
-}
-& docker compose exec -T frappe pgrep -f '/workspace/scripts/platform-worker.py' *> $null
-if ($LASTEXITCODE -ne 0) { Invoke-Compose exec -d frappe python /workspace/scripts/platform-worker.py }
+# Docker owns the app processes; wait for an actual HTTP health check.
+Invoke-Compose up -d --wait --wait-timeout 120
 Write-Host 'PLUS POINT started. Local site and port are in .env; credentials were not printed.'

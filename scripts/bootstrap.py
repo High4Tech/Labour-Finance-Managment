@@ -61,6 +61,8 @@ def main():
     run('bench', 'build', '--app', 'plus_point')
     run('bench', 'set-config', '-g', 'default_site', 'None', '--parse')
     run('bench', '--site', site, 'list-apps')
+    # The container supervisor waits until initial installation is complete.
+    (BENCH / 'sites/.plus-point-ready').touch()
 
 
 if __name__ == '__main__':
