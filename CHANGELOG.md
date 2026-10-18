@@ -1,5 +1,9 @@
 # Development changelog
 
+## Demo signup and header drag ordering — 2026-10-18
+
+Added a central local pricing/signup page linked from login, published native fixed-rate plans, a business/contact request, explicit simulated payment and High4Tech-only approval/rejection. Requests use private hashed status tokens and preserve price snapshots. Pending approvals appear in the platform dashboard. No money, password, user/tenant provisioning or email is created by this demo. Added actual section-header dragging with automatic per-user save, failed-save restoration and the existing keyboard arrangement controls. Documented local source/data storage, admin login and the invoice/document/signing feature boundaries.
+
 ## Local startup recovery — 2026-10-18
 
 The local app and platform worker now start with their Docker container, recover after process failure, and expose HTTP health status. Initial setup still uses the launcher; ordinary restarts preserve installed sites and skip bootstrap. Deliberately stopped services require Start/Up or the launcher to resume.

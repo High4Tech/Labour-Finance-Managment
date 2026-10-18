@@ -4,6 +4,8 @@ Executed evidence and limitations are in VERIFICATION_STATUS.md; source-of-truth
 
 ## Automated regression layers
 
+Demo acquisition and ordering: run `plus_point.testing.run_signup` on test-enabled platform.localhost for six rolled-back database cases. Run `scripts/browser-signup-drag.cjs` with PP_BROWSER_PASSWORD and PP_PLATFORM_PASSWORD supplied in the environment for the dummy customer/admin accounts, bundled Playwright and Edge. It uses an exact QA Signup Browser request with a random @signup-test.example email, restores the original personal navigation/read preferences and deletes only that request. Never run alongside manual sidebar edits or other same-user preference fixtures. The operator-only cleanup helper refuses non-test business/email records. Validate signup CTA, native published price, public request/payment simulation, approval/token status, mobile layout, actual header drag/reload, failed-save restoration and keyboard order. No financial/account/tenant records may be created by demo approval.
+
 1. Offline: 11 project/harness tests and 10 arithmetic/register tests. These do not replace ERPNext integration.
 2. Real MariaDB: 61 business regressions with rollback, run by plus_point.testing.run_operations. Includes assignment closing/rate replacement, same-site overlaps, report company/date scope, deployment deduplication, fixed-worker revenue, opening/period/closing wage balances, spending limits, guided setup and historical imports.
 3. Real HTTP: native login/REST CRUD, anonymous denial, cross-site token/record isolation and 60 authenticated concurrent reads through scripts/verify-live.py.

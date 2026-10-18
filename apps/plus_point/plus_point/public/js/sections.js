@@ -3,17 +3,26 @@
     frappe.provide('plus_point');
     const esc=value=>frappe.utils.escape_html(String(value??''));
     const num=value=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(value)||0);
+    const orderError=message=>frappe.msgprint({title:__('Order not saved'),message,
+        primary_action:{label:__('Close'),action:()=>frappe.hide_msgprint()}});
+    const applyNavigation=navigation=>{
+        frappe.boot.plus_point.navigation=navigation;frappe.boot.module_sidebars['PLUS POINT'].items=navigation.items;
+        frappe.app.sidebar.all_sidebar_items=frappe.boot.module_sidebars;frappe.app.sidebar.refresh();plus_point.enhance_sections();
+    };
+    plus_point.save_section_order=async order=>{
+        const navigation=(await frappe.call({method:'plus_point.navigation.save_section_order',type:'POST',args:{order:JSON.stringify(order)},silent:true})).message;
+        applyNavigation(navigation);
+        frappe.show_alert({message:__('Section order saved for your login.'),indicator:'green'});
+    };
     plus_point.arrange_sections=()=>{
         let order=[...frappe.boot.plus_point.navigation.groups];
         const dialog=new frappe.ui.Dialog({title:__('Arrange sections'),fields:[{fieldtype:'HTML',fieldname:'order'}],
             primary_action_label:__('Save my order'),async primary_action(){
                 dialog.disable_primary_action();
                 try{
-                    const navigation=(await frappe.call({method:'plus_point.navigation.save_section_order',type:'POST',args:{order:JSON.stringify(order)}})).message;
-                    frappe.boot.plus_point.navigation=navigation;frappe.boot.module_sidebars['PLUS POINT'].items=navigation.items;
-                    frappe.app.sidebar.all_sidebar_items=frappe.boot.module_sidebars;frappe.app.sidebar.refresh();plus_point.enhance_sections();
-                    dialog.hide();frappe.show_alert({message:__('Section order saved for your login.'),indicator:'green'});
-                }finally{dialog.enable_primary_action();}
+                    await plus_point.save_section_order(order);dialog.hide();
+                }catch{orderError(__('Could not save your section order. Keep this dialog open and try Save my order again.'));}
+                finally{dialog.enable_primary_action();}
             }});
         const draw=()=>{
             dialog.fields_dict.order.$wrapper.html(`<p>${esc(__('Move the sections you use most to the top. This changes only your sidebar.'))}</p><ol class="pp-section-order">${order.map((label,index)=>`<li><span>${esc(__(label))}</span><button type="button" data-index="${index}" data-move="-1" aria-label="${esc(__('Move {0} up',[__(label)]))}" ${index===0?'disabled':''}>↑</button><button type="button" data-index="${index}" data-move="1" aria-label="${esc(__('Move {0} down',[__(label)]))}" ${index===order.length-1?'disabled':''}>↓</button></li>`).join('')}</ol>`);
@@ -27,9 +36,31 @@
             if(label.dataset.ppHub)return;
             const section=groups.find(name=>label.textContent.trim()===name||label.textContent.trim()===__(name));if(!section)return;
             label.dataset.ppHub=section;label.setAttribute('role','link');label.tabIndex=0;
-            const open=event=>{event.preventDefault();event.stopPropagation();frappe.set_route('pp-section',{section});};
+            const open=event=>{event.preventDefault();event.stopPropagation();if(Date.now()<(plus_point.section_drag_until||0))return;frappe.set_route('pp-section',{section});};
             label.addEventListener('click',open);label.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key))open(event);});
             label.title=__('Open {0} overview',[__(section)]);
+            const row=label.closest('.section-item'),header=label.closest('.standard-sidebar-item');
+            row.dataset.ppSection=section;header.classList.add('pp-section-drag-header');
+            const grip=document.createElement('span');grip.className='pp-section-grip';grip.textContent='⠿';grip.setAttribute('aria-hidden','true');
+            grip.title=__('Drag this header to reorder. For keyboard controls, use Sidebar Menu → Arrange sections.');label.before(grip);
+            const parent=row.parentElement;
+            if(!parent.ppSectionSortable&&typeof Sortable!=='undefined')parent.ppSectionSortable=new Sortable(parent,{
+                draggable:'.section-item[data-pp-section]',handle:'.pp-section-drag-header',filter:'.drop-icon',preventOnFilter:false,
+                animation:matchMedia('(prefers-reduced-motion: reduce)').matches?0:150,ghostClass:'pp-section-drag-ghost',
+                delayOnTouchOnly:true,delay:180,touchStartThreshold:5,
+                onStart(){plus_point.section_drag_until=Infinity;},
+                async onEnd(event){
+                    plus_point.section_drag_until=Date.now()+350;
+                    if(event.oldIndex===event.newIndex)return;
+                    const original=frappe.boot.plus_point.navigation;
+                    const visible=[...parent.children].filter(node=>node.dataset.ppSection).map(node=>node.dataset.ppSection);
+                    const shown=new Set(visible);const order=original.groups.map(label=>shown.has(label)?visible.shift():label);
+                    parent.ppSectionSortable.option('disabled',true);
+                    try{await plus_point.save_section_order(order);}
+                    catch{applyNavigation(original);orderError(__('Could not save your section order. The previous order is restored. Try again or use Sidebar Menu → Arrange sections.'));}
+                    finally{parent.ppSectionSortable?.option('disabled',false);}
+                }
+            });
         });
     };
     plus_point.mount_section=async wrapper=>{

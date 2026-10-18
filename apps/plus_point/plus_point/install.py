@@ -46,6 +46,11 @@ def after_migrate():
     ]:
         frappe.db.add_index(doctype, columns, name)
     create_custom_fields({
+        'Subscription Plan': [
+            dict(fieldname='pp_public_plan',label='Show on demo signup pricing',fieldtype='Check',default='0',insert_after='plan_name',
+                 description='Publishes this fixed-rate plan on the local demo signup page. No payments are collected.'),
+            dict(fieldname='pp_plan_summary',label='Public plan summary',fieldtype='Small Text',insert_after='pp_public_plan'),
+        ],
         'Project': [dict(fieldname='pp_enforce_spending_budget', label='Stop spending above budget', fieldtype='Check',
             insert_after='estimated_costing', default='0', description='Warn at 80%; block new approved wages and submitted project purchases/claims above the spending budget. Client billing is separate.')],
         'Sales Invoice Item': [

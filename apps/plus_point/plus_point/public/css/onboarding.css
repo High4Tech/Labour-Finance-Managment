@@ -189,6 +189,10 @@
 .pp-section-order button { border:1px solid var(--border-color,#e5e7eb); border-radius:4px; background:var(--fg-color,#fff); min-width:40px; min-height:40px; color:var(--text-color); }
 .sidebar-item-label[data-pp-hub] { cursor:pointer; }
 .sidebar-item-label[data-pp-hub]:focus-visible { outline:2px solid var(--pp-accent,#147d72); outline-offset:3px; }
+.pp-section-drag-header { cursor:grab; }
+.pp-section-grip { color:var(--text-muted); margin-right:5px; font-size:16px; cursor:grab; user-select:none; }
+.pp-section-drag-header .section-break { flex:1; min-width:0; }
+.pp-section-drag-ghost { opacity:.35; outline:2px dashed var(--pp-accent,#147d72); outline-offset:-2px; }
 [data-theme=dark] .pp-dashboard { --pp-heat-0:#233630; --pp-heat-1:#285e3c; --pp-heat-2:#378552; --pp-heat-3:#65ae76; --pp-heat-4:#99d3a4; }
 .pp-setup-banner { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; margin-bottom:16px; border-top:1px solid var(--border-color,#e5e7eb); border-bottom:1px solid var(--border-color,#e5e7eb); }
 .pp-setup-banner:empty { display:none; }

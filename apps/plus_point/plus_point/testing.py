@@ -35,6 +35,18 @@ def run_operations():
     return dict(tests=result.testsRun, failures=len(result.failures), errors=len(result.errors))
 
 
+def run_signup():
+    from plus_point.platform import require_platform
+    require_platform()
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled platform required')
+    import unittest
+    from plus_point.tests.test_signup import SignupTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(SignupTests))
+    if not result.wasSuccessful():raise RuntimeError('Signup regression suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
+
+
 def setup_browser_fixture(action, run_id, restore_state=None):
     """Local operator-only setup UI fixture; never available over HTTP."""
     import re

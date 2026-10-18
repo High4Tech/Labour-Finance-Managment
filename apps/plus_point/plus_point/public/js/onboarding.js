@@ -69,6 +69,7 @@
         'PP Wage Settlement': ['Worker payments', 'Record payment'],
     };
     const platformLists = {
+        'PP Signup Request':['Signup approvals','Review signup'],
         'PP Tenant':['PLUS POINT customers','Add customer'], 'PP Support Request':['Customer support','New support request'],
         'Subscription Plan':['Pricing plans','Add pricing plan'], 'Subscription':['Subscriptions','Add subscription'],
         'Sales Invoice':['Software invoices','Create invoice'], 'Payment Entry':['Receipts and payments','Record payment'],
@@ -161,7 +162,7 @@
             <h3 class="pp-tools-heading">${esc(__('Your tools'))}</h3>
             <div class="pp-task-rows">
             ${[
-                ['Customer accounts', 'Businesses that bought PLUS POINT, their subscriptions and owner logins.', [['PP Tenant', 'Customers'], ['PP Support Request', 'Customer support']]],
+                ['Customer accounts', 'Review new signups and manage subscribers, subscriptions and owner logins.', [['PP Signup Request', 'Signup approvals'], ['PP Tenant', 'Customers'], ['PP Support Request', 'Customer support']]],
                 ['Pricing and subscriptions', 'Set monthly prices, trials and customer access.', [['Subscription Plan', 'Pricing plans'], ['Subscription', 'Subscriptions']]],
                 ['Software sales', 'Invoice customers for the software and record payments received.', [['Sales Invoice', 'Software invoices'], ['Payment Entry', 'Receipts and payments']]],
                 ['Your business finances', 'Record your expenses and review software-business results.', [['Purchase Invoice', 'Business expenses'], ['Company', 'High4Tech company']]],
@@ -460,6 +461,7 @@
             'Company':['High4Tech company','Your software-selling business and its accounting records.',[]],
             'User':['Your admin profile','Your High4Tech login. To help a customer sign in, open their Customer account instead.',[]],
             'PP Support Request':['Customer support','The background worker updates the registered customer owner login. View support result after completion. Password-reset links are available here for 20 minutes; native expiry also applies.', ['tenant','operation','new_username','status']],
+            'PP Signup Request':['Signup approvals','Review demo payments and approve or reject signup requests. No real charge, email or customer login is created by this demo.',[]],
         });
         // Filter native command/search suggestions without changing backend roles
         // or the registries that native route resolution and forms depend on.

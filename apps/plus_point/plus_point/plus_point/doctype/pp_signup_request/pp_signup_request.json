@@ -1,0 +1,20 @@
+{
+ "doctype":"DocType", "name":"PP Signup Request", "module":"PLUS POINT", "autoname":"hash",
+ "title_field":"business_name", "track_changes":1, "sort_field":"creation", "sort_order":"DESC",
+ "field_order":["contact_name","business_name","email","plan","amount","currency","interval","payment_status","review_status","reviewed_by","reviewed_on","token_hash"],
+ "fields":[
+  {"fieldname":"contact_name","label":"Contact name","fieldtype":"Data","reqd":1,"read_only":1},
+  {"fieldname":"business_name","label":"Business name","fieldtype":"Data","reqd":1,"read_only":1,"in_list_view":1},
+  {"fieldname":"email","label":"Email","fieldtype":"Data","options":"Email","reqd":1,"read_only":1,"in_list_view":1},
+  {"fieldname":"plan","label":"Selected plan","fieldtype":"Link","options":"Subscription Plan","reqd":1,"read_only":1},
+  {"fieldname":"amount","label":"Demo price at signup","fieldtype":"Currency","options":"currency","read_only":1},
+  {"fieldname":"currency","label":"Currency","fieldtype":"Data","read_only":1},
+  {"fieldname":"interval","label":"Billing period","fieldtype":"Data","read_only":1},
+  {"fieldname":"payment_status","label":"Demo payment","fieldtype":"Select","options":"Not simulated\nDemo payment submitted","default":"Not simulated","read_only":1,"in_list_view":1},
+  {"fieldname":"review_status","label":"Approval status","fieldtype":"Select","options":"Pending payment\nAwaiting approval\nApproved\nRejected","default":"Pending payment","read_only":1,"in_list_view":1},
+  {"fieldname":"reviewed_by","label":"Reviewed by","fieldtype":"Link","options":"User","read_only":1},
+  {"fieldname":"reviewed_on","label":"Reviewed on","fieldtype":"Datetime","read_only":1},
+  {"fieldname":"token_hash","label":"Private status token hash","fieldtype":"Data","hidden":1,"read_only":1,"permlevel":1}
+ ],
+ "permissions":[{"role":"High4Tech Platform Admin","read":1,"report":1}]
+}

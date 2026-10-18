@@ -182,6 +182,9 @@ def _platform(company):
         if path.startswith('/desk/query-report/'):
             path += '?company='+quote(company,safe='')
         conditions.append(dict(level=level,title=title,message=message,label=label,path=path,action=action))
+    signups=frappe.db.count('PP Signup Request',{'review_status':'Awaiting approval'}) if frappe.db.exists('DocType','PP Signup Request') else 0
+    if signups:
+        condition('warning','Demo signups await approval',f'{signups} signup request(s) submitted a demo payment. No money was collected. Review before approving.','Review signup requests','/desk/pp-signup-request?review_status=Awaiting%20approval')
     if not customers:
         condition('empty','Add your first software customer','Register a customer and link its subscription.','Add customer','/desk/pp-tenant','new:PP Tenant')
     if counts['Suspended']+counts['Expired']:

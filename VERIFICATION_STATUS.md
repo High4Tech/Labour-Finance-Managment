@@ -2,6 +2,14 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## Demo signup and direct section dragging
+
+Six new real MariaDB signup tests passed on the local platform, with fixture rollback: guest request → simulated payment → platform-admin decision, private hashed status token and guest read denial, server-derived immutable quote, hidden-plan/input refusal, review sequencing/replay refusal, customer-site refusal, and unchanged User/PP Tenant/Sales Invoice/Payment Entry counts. The labelled existing sample plan was explicitly published at its original price. Platform migration installed the new request table and publication/summary fields; native self-signup remains disabled.
+
+The final Edge browser flow passed customer-login CTA → central pricing → guest business request → simulated payment → reload/resume → High4Tech dashboard approval warning → native approval form → visitor status refresh, plus 390px layout. It also passed actual section-header dragging, per-login persistence after reload, injected failed-save rollback with a usable Close CTA, and keyboard up/down ordering. Original customer sidebar/read preferences were restored and each exact test signup was removed. Initial route and harness-dialog issues were corrected before the final pass. Live preview inspection confirms five visible drag grips and the native sample price/Choose plan screen. Screenshots remain in ignored .local/qa.
+
+These checks establish a local demo request/review flow, not real payment processing, email verification, customer account activation or client document e-signing. Existing 61-case contractor evidence below is prior evidence; it was not rerun for this increment.
+
 ## Local preview startup recovery
 
 Diagnosed a running Docker container with no Bench or platform worker processes: its command was sleep infinity and the launcher had previously started both through detached exec calls. Replaced this with the container-owned local supervisor, successful-bootstrap readiness marker, unless-stopped restart policies and HTTP health check. Existing installed apps were verified before enabling the marker on this machine; persistent volumes were retained.

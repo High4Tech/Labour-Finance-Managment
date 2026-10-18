@@ -15,7 +15,7 @@ CUSTOMER_GROUPS = [
                         ('Supplier', 'Suppliers'), ('Account', 'Accounts'), ('PP Work Entry', 'Wages earned')]),
 ]
 PLATFORM_GROUPS = [
-    ('PLUS POINT customers', [('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
+    ('PLUS POINT customers', [('PP Signup Request', 'Signup approvals'), ('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
     ('Pricing and access', [('Subscription Plan', 'Pricing plans'), ('Subscription', 'Subscriptions')]),
     ('Software sales', [('Sales Invoice', 'Software invoices'), ('Payment Entry', 'Receipts and payments')]),
     ('Business finances', [('Purchase Invoice', 'Business expenses'), ('Report:Profit and Loss Statement', 'Financial results'),

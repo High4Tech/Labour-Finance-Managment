@@ -1,0 +1,23 @@
+{% extends "templates/web.html" %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block page_content %}
+<link rel="stylesheet" href="/assets/plus_point/css/signup.css?v=20261018-1">
+<main class="pp-plans">
+ <header class="pp-plan-nav"><a class="pp-plan-brand" href="/plans">＋ PLUS POINT <small>by High4Tech</small></a><a href="http://demo.localhost:8000/login">Customer login</a><a href="/login?redirect-to=%2Fdesk%2Fhigh4tech">High4Tech admin</a></header>
+ <div class="pp-plan-intro"><p class="pp-demo-tag">Demo signup · No real payments</p><h1>Your business, brought together.</h1><p>Manage workers, daily work, contracts and client billing in one place. Choose a plan, try a demo payment and see how High4Tech approval works.</p></div>
+ <ol class="pp-signup-progress" aria-label="Signup steps"><li aria-current="step">1 · Choose a plan</li><li>2 · Your business</li><li>3 · Demo payment</li><li>4 · Approval</li></ol>
+ <section id="pp-plan-picker" aria-label="Available plans">
+  <div class="pp-plan-grid">
+   {% for plan in plans %}<article class="pp-plan-card"><h2>{{ plan.title | e }}</h2><p>{{ plan.summary | e }}</p><p class="pp-plan-price"><strong>{{ frappe.format_value(plan.amount, {"fieldtype":"Currency", "options":plan.currency}) }}</strong><span> / {{ plan.interval | e }}</span></p><ul><li>Worker and work-site management</li><li>Daily work and contract billing</li><li>Financial overview and imports</li></ul><button class="btn btn-primary pp-choose-plan" data-plan="{{ plan.name | e }}" type="button">Choose this plan</button><small>Example pricing. No charge or active account is created.</small></article>{% endfor %}
+  </div>
+  {% if not plans %}<div class="pp-signup-state"><h2>Plans are being prepared</h2><p>High4Tech can publish a plan from Pricing plans. Please check back soon.</p><a href="/login?redirect-to=%2Fdesk%2Fhigh4tech">High4Tech login</a></div>{% endif %}
+ </section>
+ <section id="pp-business-step" class="pp-signup-state" hidden><h2>Tell us about your business</h2><p id="pp-chosen-plan"></p><form id="pp-signup-form"><label>Your name<input class="form-control" name="contact_name" autocomplete="name" maxlength="140" required></label><label>Business name<input class="form-control" name="business_name" autocomplete="organization" maxlength="140" required></label><label>Email<input class="form-control" name="email" type="email" autocomplete="email" maxlength="140" required></label><div class="pp-honeypot" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div><p>This demo saves a signup request for High4Tech to review. It does not create a login, send email or ask for a password.</p><div class="pp-signup-actions"><button class="btn btn-default" id="pp-back-plans" type="button">Back to plans</button><button class="btn btn-primary" type="submit">Continue to demo payment</button></div></form></section>
+ <section id="pp-payment-step" class="pp-signup-state" hidden><h2>Try the payment step</h2><p id="pp-demo-summary"></p><p><strong>No charge.</strong> This button only marks the request as a simulated payment. No card or bank details are collected.</p><button class="btn btn-primary" id="pp-simulate-payment" type="button">Simulate payment &amp; request approval</button></section>
+ <section id="pp-approval-step" class="pp-signup-state" hidden tabindex="-1"><h2 id="pp-approval-title">Waiting for High4Tech approval</h2><p id="pp-approval-message"></p><p id="pp-reference"></p><div class="pp-signup-actions"><button class="btn btn-default" id="pp-check-status" type="button">Check approval status</button><a class="btn btn-primary" href="http://demo.localhost:8000/login">Explore existing demo</a></div><p>Approval is a demo review only. Account provisioning, verification email and real payments will be connected before launch.</p></section>
+ <p id="pp-signup-error" class="pp-signup-error" role="alert" hidden></p>
+ <footer>Already a customer? <a href="http://demo.localhost:8000/login">Sign in to PLUS POINT</a></footer>
+</main>
+<script src="/assets/plus_point/js/signup.js?v=20261018-1"></script>
+{% endblock %}
