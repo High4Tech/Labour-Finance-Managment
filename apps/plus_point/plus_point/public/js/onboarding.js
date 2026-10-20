@@ -423,6 +423,7 @@
             if(serviceItems)page?.btn_primary?.removeAttr('data-pp-event-action');
             if(!platform()&&route[1]==='Stock Reconciliation')primary('balances','Update warehouse balances',()=>plus_point.open_import(plus_point.dashboard_company,()=>listview.refresh(),'stock_balances'));
         }
+        if(route[0]==='List'&&!platform())plus_point.enhance_record_list?.(frappe.get_list_view(route[1]));
         if(serviceItems&&active.page?.btn_secondary?.hasClass('pp-list-import'))active.page.btn_secondary.addClass('hide');
         if(!platform()&&route[0]==='List'&&route[1]==='Employee'&&frappe.get_list_view('Employee')?.can_create&&!active.querySelector('.pp-open-assign-workers'))active.page?.add_inner_button(__('Assign workers'),()=>plus_point.assign_workers({},()=>frappe.get_list_view('Employee').refresh()))?.addClass('pp-open-assign-workers');
         if (route[0] === 'List' && !platform() && !serviceItems && listImports[route[1]] && frappe.user.has_role('System Manager')) {

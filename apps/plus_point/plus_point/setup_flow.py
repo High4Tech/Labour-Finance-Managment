@@ -55,7 +55,7 @@ def site_query(doctype, txt, searchfield, start, page_len, filters):
     if not projects:
         return []
     sites = frappe.get_list('PP Site', filters={'project':['in',projects], 'is_active':1,
-        'site_name':['like',f'%{txt}%']}, fields=['name','site_name'], start=start, page_length=min(page_len,50))
+        'site_name':['like',f'%{txt}%']}, fields=['name','site_name'], order_by='site_name,name',start=start, page_length=page_len)
     return [[site.name,site.site_name] for site in sites]
 
 

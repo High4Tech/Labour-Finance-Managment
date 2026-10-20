@@ -36,8 +36,10 @@ def browser_fixture(action,run_id):
     saved=json.loads(backup.read_text());frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
     frappe.db.set_single_value('PP Workspace Settings',dict(company=saved.get('workspace'),onboarding_state=saved.get('draft')))
     projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
-    if frappe.db.exists('GL Entry',{'company':prefix}) or (projects and frappe.db.exists('PP Work Entry',{'project':['in',projects]})):
+    work=frappe.get_all('PP Work Entry',filters={'project':['in',projects]},fields=['name','status','sales_invoice']) if projects else []
+    if frappe.db.exists('GL Entry',{'company':prefix}) or any(r.status!='Draft' or r.sales_invoice for r in work):
         raise RuntimeError('Fixture has recorded history; automatic cleanup refused')
+    for row in work:frappe.delete_doc('PP Work Entry',row.name)
     receipts=frappe.get_all('PP Import Record',filters={'company':prefix},fields=['name','kind','external_id','document_type','document_name'])
     for receipt in receipts:
         if (receipt.kind!='employees' or receipt.document_type!='Employee'

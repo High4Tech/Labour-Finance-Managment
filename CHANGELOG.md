@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-21 — Complete choices, faster forms and draft deletion
+
+Shared native record pickers now fetch all permission-filtered pages, handle smaller query caps, sort displayed names A–Z, show totals and use centered SVG arrows. Installed currencies are selectable before enabling; event timeline selectors and inventory listings no longer silently stop at their former caps. Available crew lists show all eligible workers. Added shared input restrictions and server/import name, phone, code and numeric validation while retaining legitimate international formats and business punctuation. Saved event details prefill assignment/reservation forms, client context carries into event creation, and onboarding can reuse the client’s saved address explicitly. Added confirmed record/list deletion through native permissions/link guards, atomic batches and native draft-delete permissions. Approved work/milestones and posted history remain protected; client cleanup is described in the confirmation. No existing customer records were removed by implementation or verification.
+
 ## 2026-10-20 — Editable country and invoice currencies
 
 Country now suggests an enabled searchable currency selector, including SAR, while allowing manual overrides. Company invoice preferences and client currencies persist separately from protected historical accounting currency. Invoice preparation converts approved base amounts into the selected invoice currency using a current published or agreed rate, with native currency-specific receivables and receipts. Corrected project/platform balance conversion and project cash allocation for foreign-currency invoices. Invoice rate lookup and missing-field errors stay within the form. Existing financial records are preserved.

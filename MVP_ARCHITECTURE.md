@@ -1,6 +1,16 @@
 # PLUS POINT — source-of-truth architecture
 
-Updated 2026-10-20. Local development scope; production acceptance is separate. Actual test evidence is in VERIFICATION_STATUS.md. The original blueprint is preserved under docs/archive. RESEARCH_ALIGNMENT.md maps the owner's October 17 research handoff to the implementation and remaining gaps.
+Updated 2026-10-21. Local development scope; production acceptance is separate. Actual test evidence is in VERIFICATION_STATUS.md. The original blueprint is preserved under docs/archive. RESEARCH_ALIGNMENT.md maps the owner's October 17 research handoff to the implementation and remaining gaps.
+
+## Shared record choices and form controls
+
+`choices.page` delegates to native `search_widget` and `build_for_autosuggest`, retaining the caller's filters, custom query, reference field and permission checks. It uses bounded request pages and continues until an empty page, including queries with smaller internal limits. The client cancels stale results, deduplicates IDs, sorts displayed titles A–Z and removes the autocomplete display cap. Disabled Currency metadata is included because existing company/client save paths enable chosen currencies; inactive workers/items and other native business filters remain in force. Native forms, dialogs and grid controls use the shared enhancer. Event timeline selectors return all matching plans; inventory availability no longer limits its item lookup to 500.
+
+`forms.js` uses input modes, before-input/paste guards, format guidance and native-form validation. Names support Unicode letters/marks and normal name punctuation; phones and identifiers retain their useful separators. Business names, addresses and free text are not subjected to person-name restrictions. `input_rules.validate_document` validates supported native/PP records and their numeric child fields, preserving unchanged legacy personal values. Worker import preview shares the same rules. Native email/date, business bounds, financial approval and permission validation remain authoritative.
+
+`form_defaults.context` returns only permission-readable saved project/company data. Sites and agreements auto-select only when unique; rates come only from an existing event plan. The client checks the current field against its pre-request snapshot before filling it, and explicit edits remain possible. New event forms reuse the active client context; onboarding can explicitly copy its saved address into the venue.
+
+`record_actions` restricts removal to supported customer-side records and native delete permissions, locks selected records, checks posted/approved state and delegates to `frappe.delete_doc` without force or ignored links. Native System Manager draft-delete permissions are enabled for work entries, daily registers and milestones. Approved work/milestone controllers and native submitted/link checks still protect history. Batches of up to 50 use a savepoint, including rollback of native contact/address cleanup if a client is linked. Client confirmations disclose removal of unshared contact/address profiles. These actions are not a financial reversal or an approved-attendance correction workflow.
 
 ## Scope and non-goals
 

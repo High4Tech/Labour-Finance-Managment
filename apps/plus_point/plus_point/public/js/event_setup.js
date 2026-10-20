@@ -39,6 +39,7 @@
     choose('venue_mode','Venue',['Add event site','Choose existing site'],s.site?'Choose existing site':undefined),
     {...existing('site','Event site','PP Site',{project:s.project,is_active:1},s.site),depends_on:'eval:doc.venue_mode==="Choose existing site"',mandatory_depends_on:'eval:doc.venue_mode==="Choose existing site"'},
     field('Check','edit_site','Edit this venue’s address',{default:s.site?1:0,depends_on:'eval:doc.venue_mode==="Choose existing site"'}),
+    field('Check','use_client_address','Use the client’s saved address for this venue',{depends_on:'eval:doc.venue_mode==="Add event site" || doc.edit_site'}),
     ...when([field('Data','site_name','Venue name',{reqd:1}),field('Link','country','Venue country',{options:'Country',default:country,reqd:1}),field('Data','state','State / region'),field('Data','city','City',{reqd:1}),field('Data','address_line1','Street address',{reqd:1}),field('Data','address_line2','Building / additional directions'),field('Data','postal_code','Postal code'),
      field('HTML','map_picker','',{options:'<button type="button" class="btn btn-default pp-choose-map">'+esc(__('Choose from map'))+'</button><div class="pp-location-map" hidden></div><p class="pp-map-status" role="status"></p>'}),
      field('Data','latitude','Latitude (optional)'),field('Data','longitude','Longitude (optional)')],'eval:doc.venue_mode==="Add event site" || doc.edit_site')];
@@ -52,7 +53,7 @@
     ...when(plus_point.resource_fields('vehicles').filter(f=>!['status','purpose','crew_seats','cargo_capacity','cargo_uom'].includes(f.fieldname)),'eval:!doc.no_vehicle && doc.mode==="Add vehicle"'),
     ...when([field('Int','crew_seats','Crew passenger seats (driver excluded)',{reqd:1})],'eval:!doc.no_vehicle && doc.mode==="Add vehicle" && doc.purpose==="Crew"'),
     ...when([field('Float','cargo_capacity','Inventory load capacity',{reqd:1}),choose('cargo_uom','Load unit',['units','kg','m³'])],'eval:!doc.no_vehicle && doc.mode==="Add vehicle" && doc.purpose==="Inventory"'),
-    field('Int','crew_count','Crew passengers for this event (driver excluded)',{default:1,depends_on:'eval:!doc.no_vehicle && doc.purpose==="Crew"'}),
+    field('Int','crew_count','Crew passengers for this event (driver excluded)',{default:Math.max(1,s.employees?.length||1),depends_on:'eval:!doc.no_vehicle && doc.purpose==="Crew"'}),
     field('Float','cargo_load','Inventory load for this event',{depends_on:'eval:!doc.no_vehicle && doc.purpose==="Inventory"'})];
    case 'inventory':return [
     field('Check','no_equipment','This event does not need warehouse equipment',{default:0}),
@@ -116,7 +117,7 @@
    try{wrapper.pp_onboarding_drafts||={};wrapper.pp_onboarding_drafts[s.step]=current();await api('control',{action:'go',step:button.dataset.step});await plus_point.load_onboarding(wrapper);}catch(e){error(errorText(e));}finally{busy(false);}
   });
   save.onclick=async()=>{
-   errorBox.hidden=true;const values=current();
+   errorBox.hidden=true;if(!plus_point.validate_inputs(form))return;const values=current();
    const missing=Object.values(form.fields_dict).filter(f=>f.df.reqd&&!f.df.hidden&&f.$wrapper?.is(':visible')&&(f.get_value?.()===undefined||f.get_value?.()===null||f.get_value?.()===''||f.df.fieldtype==='Check'&&!f.get_value()));
    if(s.step==='workers'&&!wrapper.pp_crew_picker?.valid()){error(__('Choose at least one available worker. Remove highlighted unavailable selections or refresh the list.'));return;}
    if(missing.length){error(__('Complete: {0}',[missing.map(f=>__(f.df.label)).join(', ')]));missing[0].set_focus?.();return;}
@@ -151,6 +152,7 @@
   if(s.step==='client'){
    let seq=0,filling=false;const summary=async(fill=true)=>{const id=++seq,name=form.get_value('customer'),box=form.fields_dict.client_summary.$wrapper;box.empty();if(!name)return;try{const data=await rpc('plus_point.clients.details',{customer:name});if(id!==seq)return;if(fill){filling=true;try{await form.set_values(Object.fromEntries(['customer_name','customer_type','contact_name','email','phone','country','state','city','address_line1','address_line2','postal_code','default_currency'].map(k=>[k,data[k]||''])));}finally{filling=false;}}box.html(`<div class="pp-client-summary"><strong>${esc(data.title)}</strong><p>${esc([data.contact_name,data.email,data.phone].filter(Boolean).join(' · ')||__('No contact saved yet'))}</p><p>${esc(data.address||__('No billing address saved yet'))}</p></div>`);}catch(e){if(id===seq)error(errorText(e));}};change('customer',summary);await summary(!wrapper.pp_onboarding_drafts?.[s.step]);let countrySeq=0;const suggest=async()=>{if(filling)return;const own=++countrySeq,before=form.get_value('default_currency');try{const result=await rpc('plus_point.locations.country_defaults',{country:form.get_value('country')});if(own===countrySeq&&form.get_value('default_currency')===before)await form.set_value('default_currency',result.currency);}catch(e){error(errorText(e));}};change('country',suggest);if(!form.get_value('default_currency'))await suggest();
   }
+  if(s.step==='event')change('use_client_address',async()=>{if(!form.get_value('use_client_address')||!s.customer)return;try{const client=await rpc('plus_point.clients.details',{customer:s.customer});await form.set_values(Object.fromEntries(['country','state','city','address_line1','address_line2','postal_code'].map(key=>[key,client[key]||''])));await form.set_values({latitude:'',longitude:''});}catch(e){error(errorText(e));}});
   if(s.step==='terms'){
    const fill=async()=>{const name=form.get_value('contract_terms');if(!name)return;try{const terms=await rpc('frappe.client.get',{doctype:'PP Contract Terms',name});const contract=await rpc('frappe.client.get',{doctype:'Contract',name:terms.contract});if(name!==form.get_value('contract_terms'))return;await form.set_values({billing_model:terms.billing_model,fixed_amount:terms.fixed_amount,agreement:contract.contract_terms});}catch(e){error(errorText(e));}};change('contract_terms',fill);
   }

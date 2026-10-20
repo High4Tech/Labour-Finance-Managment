@@ -37,6 +37,7 @@ def local_defaults():
 
 
 def after_migrate():
+    refresh_record_permissions()
     before_install()
     for doctype, columns, name in [
         ('PP Work Entry', ['employee', 'work_date'], 'pp_employee_work_date'),
@@ -112,3 +113,9 @@ def after_migrate():
     if frappe.db.exists('DocType','PP Workspace Settings'):
         from plus_point.workspace import bind_existing
         bind_existing()
+
+
+def refresh_record_permissions():
+    """Native delete permissions; record controllers retain their history guards."""
+    for name in ('pp_work_entry','pp_daily_register','pp_milestone'):
+        frappe.reload_doc('plus_point','doctype',name)

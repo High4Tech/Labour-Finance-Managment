@@ -67,6 +67,16 @@ def run_currency_billing():
     return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
 
 
+def run_forms():
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled site required')
+    import unittest
+    from plus_point.tests.test_forms import FormTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(FormTests))
+    if not result.wasSuccessful():raise RuntimeError('Form integration suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
+
+
 def run_events():
     if not frappe.conf.get('allow_tests') or frappe.conf.get('pp_control_plane') or not frappe.local.site.endswith('.localhost'):
         raise RuntimeError('Local test-enabled customer site required')

@@ -176,6 +176,9 @@ def validate_row(kind, company, row):
         from plus_point.event_imports import validate
         return validate(kind,company,row)
     if kind == 'employees':
+        from plus_point.input_rules import check, PERSON_FIELDS, PHONE_FIELDS, CODE_FIELDS
+        for key in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS:
+            check(key,row.get(key))
         required(row, 'first_name')
         linked('Gender', required(row, 'gender'))
         dob, joining = row_date(row, 'date_of_birth'), row_date(row, 'date_of_joining')

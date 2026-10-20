@@ -22,7 +22,7 @@ def fixture(prefix=None):
     customer = insert('Customer', customer_name=prefix, customer_type='Company',
                       customer_group='Commercial', territory='All Territories')
     project = insert('Project', project_name=prefix, company=company.name, customer=customer.name)
-    employee = insert('Employee', first_name=prefix, gender='Male', date_of_birth='1990-01-01',
+    employee = insert('Employee', first_name='Test Worker '+''.join(chr(97+int(c,16)) for c in company.abbr), gender='Male', date_of_birth='1990-01-01',
                       date_of_joining='2020-01-01', company=company.name, status='Active')
     contract = insert('Contract', party_type='Customer', party_name=customer.name,
                       contract_terms='Temporary QA contract', start_date=today())

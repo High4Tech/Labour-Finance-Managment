@@ -1,6 +1,16 @@
-# Verification status — 2026-10-20
+# Verification status — 2026-10-21
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
+
+## Complete dropdowns, input rules, saved defaults and deletion — October 21
+
+Shared Link/Dynamic Link pickers now fetch all native permission-filtered pages, including queries with smaller page caps, sort displayed names A–Z and show totals without the former autocomplete cap. Centered SVG arrows passed desktop/mobile bounds checks. Currency metadata is selectable before enabling; inactive business filters remain in force. Available crew renders completely. Event timeline selectors return all matching plans in name order, and inventory lookup no longer silently stops at 500 items.
+
+Added shared numeric/name/phone/code input guards and native server/import validation, with Unicode names and normal formatting supported. Unchanged legacy personal values remain preserved. Saved event dates, unique sites/agreements and plan rates populate assignment/reservation forms without replacing details edited during a pending request. Active-client event creation and explicit client-address reuse reduce repeated entry. Native draft-delete permissions are enabled for work, attendance and milestones. Confirmed record/list deletion uses native permissions/link checks, protected-state guards and an atomic savepoint; client confirmation explains its native unshared contact/address cleanup. Existing real customer records were not deleted or rewritten.
+
+Passed **18 new native form tests**, **65 operations/import tests**, **35 event tests** and **9 currency/billing tests** (**127 total**). Coverage includes more than 200 countries, a native query capped at seven rows, disabled SAR metadata, 21 alphabetically listed event plans, native invalid-name rejection, saved/unambiguous defaults, guest denial, draft deletion, immutable approved work, batch rollback and rollback of native contact/address cleanup when a client remains linked. Native platform invoice/receipt/dashboard checks also passed with fixtures rolled back.
+
+Passed Edge `browser-form-controls.cjs`: complete sorted country/currency choices, dynamic client link, live filtering, centered desktop/mobile arrows, numeric/name/phone restrictions, saved event context, real worker creation, Cancel/confirm draft-work deletion, list deletion and a linked-project error in a single dialog. The full inline onboarding journey passed explicit client-address reuse, template preview, crew selection, map/mobile/error behavior and completion without earned work. Ordinary crew selection/allocation and actual 15-worker import/replay journeys also passed. Exact QA records, import receipts, enabled currencies and workspace context were restored. Intermediate checks found an early list-toolbar initialization error and a missing address-reuse field; corrected before the final passes. Changed Python/JavaScript syntax and whitespace checks passed. Logs/screenshots remain ignored under .local/qa.
 
 ## Editable country and invoice currencies — October 20
 

@@ -45,6 +45,7 @@ async function journey({page,data,run,settings,out,errors}){
  assert.equal(await page.evaluate(()=>frappe.container.page.pp_setup_form.fields_dict.customer.df.only_select),1);
  assert.match(await root.locator('.pp-client-summary').innerText(),/Ayesha Malik/);
  await save();await step('event');
+ await root.getByRole('checkbox',{name:'Use the client’s saved address for this venue',exact:true}).check();await page.waitForFunction(()=>frappe.container.page.pp_setup_form.get_value('address_line1')==='12 Exhibition Road');assert.equal(await value('city'),'Riyadh');await root.getByRole('checkbox',{name:'Use the client’s saved address for this venue',exact:true}).uncheck();
  const dates=await page.evaluate(()=>({start:frappe.datetime.add_days(frappe.datetime.get_today(),2),end:frappe.datetime.add_days(frappe.datetime.get_today(),4)}));
  await values({event_name:data.prefix+' Event',site_name:'Riyadh exhibition hall QA',start_date:dates.start,end_date:dates.end,country:'Saudi Arabia',city:'Riyadh',state:'Riyadh',address_line1:'24 Venue Road',postal_code:'12345'});
  await root.getByRole('button',{name:'Choose from map',exact:true}).click();await root.locator('.leaflet-container').waitFor();
@@ -75,7 +76,7 @@ async function journey({page,data,run,settings,out,errors}){
  await root.locator('.pp-crew-picker[data-ready=true]').waitFor();await root.getByRole('button',{name:'Import workers',exact:true}).click();
  const importDialog=page.locator('.pp-import-dialog:visible');await importDialog.waitFor();
  const columns=['external_id','employee','first_name','last_name','gender','date_of_birth','date_of_joining','cell_number','status'];
- const csv=[columns.join(','),...Array.from({length:15},(_,i)=>['QAEMP'+i,'QA New Person '+run+' '+i,'QA New','Person '+run+' '+i,'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
+ const csv=[columns.join(','),...Array.from({length:15},(_,i)=>['QAEMP'+i,'QA New Person '+String.fromCharCode(65+i),'QA New','Person '+String.fromCharCode(65+i),'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
  await importDialog.locator('input[type=file]').setInputFiles({name:'workers.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
  await importDialog.getByRole('button',{name:'Review file',exact:true}).click();
  await importDialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await importDialog.locator('.pp-import-preview').innerText(),/15 create/);

@@ -12,6 +12,8 @@ Start with [the user guide](USER_GUIDE.md) for which app to use and the event-or
 
 **Display currency** converts overview money figures at the latest published daily exchange rate and shows its source/update time. The app keeps company books and approval limits in their original currency. The overview inherits the existing Desk theme and keeps the animated card/chart presentation.
 
+**Forms and record cleanup:** record choices load fully in A–Z order with centered arrows. Shared input rules accept valid names/numbers/phones and block unsuitable characters. Saved event details and optional client-address reuse reduce repeated typing. Records have Delete actions, and lists support confirmed atomic deletion; approved work, posted history and native dependencies remain protected.
+
 **Business reports** opens native project financial/deployment views and worker statements with assignment history, dated wages/payments and opening/closing balances. See [research alignment](RESEARCH_ALIGNMENT.md) for the October 17 business-context review, corrections and remaining MVP gaps.
 
 **Event operations** adds event plans with per-venue phases and daily crew requirements, exact-date staffing calendars, warehouse availability, equipment reservations and capacity-checked crew/cargo vehicle bookings. **Plan an event** creates the project/agreement/sites/plan together. A new company's saved guide walks through company → client → event/venue → agreement → workers → staffing → transport → equipment → allocation while the background is dimmed and disabled. Existing businesses are not forced through setup. The company menu opens **Guided company setup**. Workers are not software accounts; the customer menu represents the company.

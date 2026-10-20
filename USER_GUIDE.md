@@ -32,6 +32,20 @@ Fresh companies open a saved, company-owned journey automatically: company → c
 
 See [Event operations](EVENT_OPERATIONS.md) for the full guide, exact event-date calendars, multiple venues/phases, crew shortages and native equipment/vehicle reservations. A company account owns the workspace; named employees are workers, not staff software accounts. Payment is simulated; approved local signups receive separate empty company workspaces and choose their own passwords.
 
+## Faster forms and complete choices
+
+Record dropdowns load every available page, sort names A–Z and show the total choices. Type to filter immediately, or scroll the full list. Normal company, date, active-record and permission filters still apply. Currency choices include installed currencies that have not yet been enabled; saving a company/client currency enables it. The event timeline selector also lists all matching event plans. Dropdown arrows are centered on desktop and mobile.
+
+Selecting an existing event in worker assignment or reservation forms fills its saved dates, single active site, single active agreement and existing plan rates. Multiple valid sites/agreements stay selectable; prices are not guessed for a new event. Values remain editable, and details typed while a saved-context request is loading are preserved. A new event opened from a client profile carries that client forward. Onboarding offers **Use the client’s saved address for this venue** when that is the correct event address.
+
+Number fields accept numeric input; whole-number fields reject decimal entries. Personal names accept international letters, spaces, apostrophes, hyphens and periods. Phone fields accept digits with normal international formatting. Registration/passport/worker codes allow letters, numbers and their normal separators. Email and date fields retain native validation. Business names, addresses and agreement text retain useful punctuation. Worker import previews apply the same name/phone rules before saving.
+
+## Delete unused records
+
+Open a saved record and choose **Delete**, or tick records on a list and choose **Delete selected**. Review the records, then confirm **Delete** or choose **Cancel**. Up to 50 selected records are removed together; if one fails, the entire batch is kept. Errors explain linked records inside the same dialog. Native permissions still apply.
+
+Draft work, draft attendance/milestones and unused records can be deleted. Approved work/milestones, posted financial records and linked history stay protected. Release unused event crew before removing an allocated plan. Client deletion uses native cleanup: its unshared contacts/addresses are removed, while shared profiles remain. These actions do not erase earned wages or financial history.
+
 ## Import employees and existing finances
 
 Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import workers from a template** in guided setup. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. It also includes warehouses, stock items, vehicles and event sites. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.

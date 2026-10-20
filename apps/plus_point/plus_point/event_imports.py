@@ -24,6 +24,9 @@ def target(kind,row):
 
 def validate(kind,company,row):
     from plus_point.imports import required,row_date
+    if kind=='vehicles':
+        from plus_point.input_rules import check
+        check('license_plate',row.get('license_plate'))
     if kind in ('event_sites','vehicles','inventory_items') and row['status'] not in ('Active','Inactive'):
         frappe.throw('status must be Active or Inactive')
     if kind=='clients':

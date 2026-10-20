@@ -96,8 +96,8 @@ class SetupImportTests(unittest.TestCase):
     def test_new_worker_names_in_employee_column_create_profiles_and_replay(self):
         rows=[]
         for number in range(15):
-            row=self.employee();row.update(external_id=f'EMP{number+1:03}',employee=f'Imported Person {number}',
-                first_name='Imported',last_name=f'Person {number}',personal_email=f'worker{number}@example.invalid',
+            row=self.employee();row.update(external_id=f'EMP{number+1:03}',employee=f'Imported Person {chr(65+number)}',
+                first_name='Imported',last_name=f'Person {chr(65+number)}',personal_email=f'worker{number}@example.invalid',
                 current_address='12 Exhibition Road, Riyadh',person_to_be_contacted='Ayesha Malik',emergency_phone_number='+966501234567')
             rows.append(row)
         preview=self.preview('employees',rows)

@@ -7,10 +7,10 @@
  };
  const importFor=(dialog,company,refresh)=>{dialog.$wrapper.one('hidden.bs.modal',()=>plus_point.open_import(company,()=>setTimeout(()=>{dialog.show();refresh();},0),'employees','Return to crew selection'));dialog.hide();};
  plus_point.CrewPicker=class{
-  constructor(root,options){this.root=root;this.options=options;this.selected=[...(options.selected||[])];this.rows=[];this.labels=new Map();this.ready=false;this.limit=80;this.build();this.refresh();}
+  constructor(root,options){this.root=root;this.options=options;this.selected=[...(options.selected||[])];this.rows=[];this.labels=new Map();this.ready=false;this.limit=Number.MAX_SAFE_INTEGER;this.build();this.refresh();}
   build(){
    this.root.classList.add('pp-crew-picker');this.root.innerHTML=`<p class="pp-crew-dates"></p><div class="pp-crew-selected" aria-label="${esc(__('Selected workers'))}"></div><div class="pp-crew-tools"><label>${esc(__('Search workers'))}<input type="search" class="form-control pp-crew-search" placeholder="${esc(__('Name, worker ID or phone'))}"></label><button type="button" class="btn btn-default pp-crew-refresh">${esc(__('Refresh list'))}</button><button type="button" class="btn btn-default pp-crew-import">${esc(__('Import workers'))}</button><button type="button" class="btn btn-default pp-crew-add">${esc(__('Add worker'))}</button></div><div class="pp-crew-new" hidden></div><p class="pp-crew-count" role="status"></p><div class="pp-crew-error" role="alert" tabindex="-1" hidden></div><div class="pp-crew-list"></div><button type="button" class="btn btn-default pp-crew-more" hidden>${esc(__('Show more workers'))}</button><p class="pp-crew-excluded"></p>`;
-   this.root.querySelector('.pp-crew-search').oninput=()=>{this.limit=80;this.render();};
+   this.root.querySelector('.pp-crew-search').oninput=()=>{this.limit=Number.MAX_SAFE_INTEGER;this.render();};
    this.root.querySelector('.pp-crew-refresh').onclick=()=>this.refresh();
    this.root.querySelector('.pp-crew-import').onclick=()=>{if(this.options.onImport)this.options.onImport(()=>this.refresh());else plus_point.open_import(this.options.company,()=>this.refresh(),'employees');};
    this.root.querySelector('.pp-crew-add').onclick=()=>this.addForm();
@@ -46,7 +46,7 @@
    const fields=[['Data','first_name','First name'],['Data','last_name','Last name'],['Link','gender','Gender'],['Date','date_of_birth','Date of birth'],['Date','date_of_joining','Joining date'],['Data','cell_number','Phone']].map(([fieldtype,fieldname,label])=>({fieldtype,fieldname,label:__(label),reqd:['first_name','gender','date_of_birth','date_of_joining'].includes(fieldname)?1:0,...(fieldname==='gender'?{options:'Gender',only_select:1}:{}),...(fieldname==='date_of_joining'?{default:frappe.datetime.get_today()}:{} )}));
    const form=new frappe.ui.FieldGroup({fields,body:$(body)});form.make();this.add_form=form;plus_point.enhance_selectors?.(form);
    const button=$('<button type="button" class="btn btn-default"></button>').text(__('Create and select worker')).appendTo(body);
-   button.on('click',async()=>{const values=form.get_values(true)||{},missing=fields.filter(f=>f.reqd&&!values[f.fieldname]);if(missing.length){this.error(__('Complete: {0}',[missing.map(f=>f.label).join(', ')]));return;}button.prop('disabled',true);try{const worker=await plus_point.crew_rpc('crew.add_worker',{company:this.options.company,values:JSON.stringify(values)});this.labels.set(worker.name,worker.worker);this.selected.push(worker.name);await this.refresh();body.hidden=true;body.replaceChildren();}catch(error){this.error(error.message);}finally{button.prop('disabled',false);}});
+   button.on('click',async()=>{if(!plus_point.validate_inputs(form))return;const values=form.get_values(true)||{},missing=fields.filter(f=>f.reqd&&!values[f.fieldname]);if(missing.length){this.error(__('Complete: {0}',[missing.map(f=>f.label).join(', ')]));return;}button.prop('disabled',true);try{const worker=await plus_point.crew_rpc('crew.add_worker',{company:this.options.company,values:JSON.stringify(values)});this.labels.set(worker.name,worker.worker);this.selected.push(worker.name);await this.refresh();body.hidden=true;body.replaceChildren();}catch(error){this.error(error.message);}finally{button.prop('disabled',false);}});
   }
  };
  plus_point.choose_event_crew=async(frm)=>{
@@ -71,7 +71,7 @@
    field('Link','contract_terms','Client agreement',{options:'PP Contract Terms',get_query:()=>({filters:{project:dialog.get_value('project'),status:'Active'}})}),
    field('Date','start_date','From date',{default:defaults.start||frappe.datetime.get_today()}),field('Date','end_date','Through date',{default:defaults.end||frappe.datetime.get_today()}),
    field('Currency','wage_rate','Daily worker wage'),field('Currency','client_rate','Daily client rate',{reqd:0,default:0}),{fieldtype:'HTML',fieldname:'crew'}
-  ],primary_action_label:__('Assign selected workers'),async primary_action(){const values=dialog.get_values(true)||{};
+  ],primary_action_label:__('Assign selected workers'),async primary_action(){if(!plus_point.validate_inputs(dialog))return;const values=dialog.get_values(true)||{};
    if(!picker?.valid()){picker?.error(__('Choose at least one available worker.'));return;}
    const missing=dialog.fields.filter(f=>f.reqd&&!values[f.fieldname]);if(missing.length){picker.error(__('Complete: {0}',[missing.map(f=>f.label).join(', ')]));return;}
    dialog.disable_primary_action();try{const result=await plus_point.crew_rpc('crew.assign',{...values,employees:JSON.stringify(picker.values())});dialog.hide();after?.();frappe.container.page?.page?.set_indicator?.(__('{0} workers assigned.',[result.created]),'green');}catch(error){picker.error(error.message);await picker.refresh();picker.error(error.message);}finally{if(picker?.valid())dialog.enable_primary_action();else dialog.disable_primary_action();}
@@ -84,6 +84,7 @@
   };
   dialog.fields_dict.project.df.onchange=async()=>{await dialog.set_values({site:'',contract_terms:''});await refresh();};
   for(const name of ['start_date','end_date'])dialog.fields_dict[name].df.onchange=refresh;
+  plus_point.bind_saved_context(dialog);
   refresh();return dialog;
  };
 })();

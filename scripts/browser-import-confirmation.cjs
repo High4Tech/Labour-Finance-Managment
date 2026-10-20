@@ -18,7 +18,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await dialog.locator('input[type=file]').setInputFiles({name:'bad.csv',mimeType:'text/csv',buffer:Buffer.from('wrong,headers\ninvalid,row')});
   await dialog.getByRole('button',{name:'Review file',exact:true}).click();await dialog.locator('.pp-import-feedback').filter({hasText:'Column headers must match'}).waitFor();await oneModal();
   const columns=['external_id','employee','first_name','last_name','gender','date_of_birth','date_of_joining','cell_number','status'];
-  const content=[columns.join(','),...Array.from({length:15},(_,i)=>['UX-'+run+'-'+i,'Import UX QA '+run+' '+i,'Import UX QA '+run,String(i),'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
+  const content=[columns.join(','),...Array.from({length:15},(_,i)=>['UX-'+run+'-'+i,'Import UX QA '+String.fromCharCode(65+i),'Import UX QA',String.fromCharCode(65+i),'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
   const file={name:'workers.csv',mimeType:'text/csv',buffer:Buffer.from(content)};
   await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();
   await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/15 create/);

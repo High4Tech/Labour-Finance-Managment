@@ -9,23 +9,24 @@ after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
-web_include_js = ["/assets/plus_point/js/website.js?v=20261020-editable-currency-2"]
+web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/selectors.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/dashboard_motion.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/dashboard.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/activity.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/crew.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/events.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/sections.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/conditions.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/imports.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/setup_flow.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/event_setup.js?v=20261020-editable-currency-2",
-                  "/assets/plus_point/js/onboarding.js?v=20261020-editable-currency-2"]
-app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261020-editable-currency-2",
-                   "/assets/plus_point/css/events.css?v=20261020-editable-currency-2",
-                   "/assets/plus_point/css/dashboard_motion.css?v=20261020-editable-currency-2"]
+app_include_js = ["/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/forms.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/dashboard.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/activity.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/crew.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/events.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/sections.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/imports.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/setup_flow.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/event_setup.js?v=20261021-complete-forms-4",
+                  "/assets/plus_point/js/onboarding.js?v=20261021-complete-forms-4"]
+app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-forms-4",
+                   "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
+                   "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4"]
 scheduler_events = {"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -39,6 +40,7 @@ doc_events = {
     "Expense Claim": {"before_submit": "plus_point.budget.enforce", "before_update_after_submit": "plus_point.budget.enforce"},
     "Payment Entry": {"before_cancel": "plus_point.plus_point.doctype.pp_wage_settlement.pp_wage_settlement.protect_payment"},
     "*": {
+        "before_validate": "plus_point.input_rules.validate_document",
         "before_insert": "plus_point.tenancy.enforce_write",
         "validate": "plus_point.tenancy.enforce_write",
         "on_trash": "plus_point.tenancy.enforce_write",

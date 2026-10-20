@@ -327,7 +327,7 @@ def inventory(company,start_date=None,end_date=None):
     require_customer();linked('Company',company)
     start_date=start_date or today();end_date=end_date or start_date;span(start_date,end_date)
     warehouses=frappe.get_list('Warehouse',filters={'company':company,'is_group':0,'disabled':0},pluck='name',limit_page_length=0)
-    items={r.name:r for r in frappe.get_list('Item',filters={'is_stock_item':1,'disabled':0},fields=['name','item_name','stock_uom'],limit_page_length=500)}
+    items={r.name:r for r in frappe.get_list('Item',filters={'is_stock_item':1,'disabled':0},fields=['name','item_name','stock_uom'],order_by='item_name,name',limit_page_length=0)}
     bins=frappe.db.sql('select item_code,warehouse,actual_qty from tabBin where warehouse in %(warehouses)s and item_code in %(items)s',
         {'warehouses':warehouses,'items':list(items)},as_dict=True) if warehouses and items else []
     return dict(rows=[dict(item=r.item_code,title=items[r.item_code].item_name,warehouse=r.warehouse,uom=items[r.item_code].stock_uom,
@@ -370,4 +370,4 @@ def plans_for(company=None,customer=None,project=None):
     if customer:linked('Customer',customer);filters['customer']=customer
     if project:linked('Project',project);filters['name']=project
     projects=frappe.get_list('Project',filters=filters,pluck='name',limit_page_length=0)
-    return frappe.get_list('PP Event Plan',filters={'project':['in',projects]},fields=['name','event_name','company'],order_by='start_date desc',limit_page_length=20) if projects else []
+    return frappe.get_list('PP Event Plan',filters={'project':['in',projects]},fields=['name','event_name','company'],order_by='event_name,name',limit_page_length=0) if projects else []
