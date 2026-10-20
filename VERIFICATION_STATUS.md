@@ -2,6 +2,12 @@
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
+## New equipment starting-stock correction — October 20
+
+The equipment onboarding step previously hid starting stock behind an optional checkbox, then tried to reserve a new item with zero on hand. New-item mode now displays warehouse quantity, value per unit and count confirmation directly, followed by the event quantity. It records the item, native stock reconciliation and event booking in one transaction. The form shows an inline shortage and a warehouse/event/remaining summary; existing-item mode uses recorded stock unless the owner explicitly chooses to replace it with a count. An already-used item code cannot be overwritten from Add inventory item. No customer quantities, units or inventory values were inferred or changed by this fix.
+
+All **18 real MariaDB event tests passed**, including four new cases for direct new-item starting-stock/reservation with native stock and GL, missing/short/unconfirmed/zero-value refusal with no partial records, existing-stock booking without reposting and duplicate-code preservation. Test business fixtures roll back. Python/JavaScript syntax and whitespace checks passed. The isolated Edge wizard check also passed visible new-item quantity/value fields, the preserved Nos default, inline shortage refusal with no Item created, entered-value retention and remaining summary, existing-item count opt-in, the no-equipment path and 390px layout. A successful save flow continued through crew allocation; exact QA business fixtures and company preferences were restored. Earlier selector ambiguity in the test and a transient native Desk loading timeout were corrected or allowed for before the pass. The screenshot is ignored under .local/qa/event-starting-stock.png. Earlier broader operations/signup evidence below remains historical for unchanged code.
+
 ## Approved local company activation — October 20
 
 The latest owner request supersedes the earlier demo-only account boundary. Approved local signups now queue isolated site/database creation and a native owner login. Payment stays simulated. The 30-day simulated subscription cannot generate software invoices; normal native subscription billing remains enabled.

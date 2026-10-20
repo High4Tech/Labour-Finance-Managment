@@ -9,7 +9,7 @@ const {chromium}=require('playwright');
  const data=fixture('begin'),browser=await chromium.launch({headless:true,channel:process.env.PP_BROWSER_CHANNEL||'msedge'});
  const demo=await browser.newPage({viewport:{width:1440,height:1000}}),qa=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
  for(const p of [demo,qa]){p.setDefaultTimeout(30000);p.setDefaultNavigationTimeout(60000);p.on('pageerror',e=>errors.push(e.message));await p.addLocatorHandler(p.locator('.modal:visible').filter({hasText:'New updates are available'}),()=>p.keyboard.press('Escape'));}
- const login=async(p,site,user,password)=>{await p.goto(`http://${site}:8000/login`,{waitUntil:'commit'});assert.equal(await p.evaluate(async c=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)})).json()).message,{usr:user,pwd:password}),'Logged In');await p.goto(`http://${site}:8000/desk/plus-point`,{waitUntil:'commit'});await p.locator('.pp-dashboard[data-ready=true]').waitFor();};
+ const login=async(p,site,user,password)=>{await p.goto(`http://${site}:8000/login`,{waitUntil:'commit'});assert.equal(await p.evaluate(async c=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)})).json()).message,{usr:user,pwd:password}),'Logged In');await p.goto(`http://${site}:8000/desk/plus-point`,{waitUntil:'commit'});await p.locator('.pp-dashboard[data-ready=true]').waitFor({timeout:60000});};
  const modal=p=>p.locator('.modal:visible').last();
  const values=async(p,v)=>{await p.waitForFunction(()=>window.cur_dialog?.display&&cur_dialog.$wrapper.is(':visible'));await p.evaluate(async v=>{for(const [key,value] of Object.entries(v)){if(Array.isArray(value)&&cur_dialog.fields_dict[key]?.grid){cur_dialog.fields_dict[key].df.data=value;cur_dialog.fields_dict[key].grid.refresh();}else await cur_dialog.set_value(key,value);}},v);};
  const step=async title=>{await modal(qa).getByText(title,{exact:true}).waitFor();await qa.waitForFunction(()=>window.cur_dialog?.display&&cur_dialog.$wrapper.is(':visible'));console.log('STEP '+title);};
@@ -67,7 +67,23 @@ const {chromium}=require('playwright');
   await step('Plan each venue day');await values(qa,{wage_rate:2000,client_rate:3000});await save();
   await step('How will crew or inventory travel?');await values(qa,{mode:'Add vehicle',license_plate:'QA-'+run,make:'Toyota',model:'Crew van QA',crew_seats:4,cargo_capacity:0,purpose:'Crew',crew_count:1});
   await qa.setViewportSize({width:390,height:844});assert(await modal(qa).evaluate(el=>el.scrollWidth<=innerWidth));await qa.screenshot({path:path.join(out,'event-setup-mobile.png'),fullPage:true});await save();
-  await step('Equipment for the event');await values(qa,{no_equipment:1});await save();
+  await step('Equipment for the event');
+  const inventoryDialog=modal(qa);
+  assert.equal(await inventoryDialog.locator('[data-fieldname=stock_uom] input').inputValue(),'Nos');
+  assert(await inventoryDialog.locator('[data-fieldname=stock_quantity] input').isVisible());
+  assert.equal(await inventoryDialog.locator('input[data-fieldname=set_stock_balance]').isVisible(),false);
+  await values(qa,{item_code:'QA-UNSAVED-'+run,item_name:'Palm decoration QA',warehouse_mode:'Add warehouse',warehouse_name:'QA unsaved equipment',stock_quantity:1,quantity:2,valuation_rate:100,confirm_stock_balance:1});
+  await inventoryDialog.getByText('You entered 1 in the warehouse, but this event needs 2. Increase the warehouse quantity only if you own that stock, or reduce the event quantity.',{exact:true}).waitFor();
+  await save();assert.equal(await qa.locator('.modal:visible').count(),1);
+  assert.equal((await rpc(qa,'plus_point.event_setup.status')).state.step,'inventory');
+  assert.equal((await rpc(qa,'frappe.client.get_list',{doctype:'Item',filters:{item_code:'QA-UNSAVED-'+run},fields:['name']})).length,0);
+  await values(qa,{stock_quantity:5});await inventoryDialog.getByText('Warehouse: 5 · For this event: 2 · Remaining: 3',{exact:true}).waitFor();
+  await qa.setViewportSize({width:390,height:844});assert(await inventoryDialog.evaluate(el=>el.scrollWidth<=innerWidth));
+  await qa.screenshot({path:path.join(out,'event-starting-stock.png'),fullPage:true});
+  await values(qa,{mode:'Choose existing item'});assert.equal(await inventoryDialog.locator('[data-fieldname=stock_quantity] input').isVisible(),false);
+  await values(qa,{set_stock_balance:1});assert(await inventoryDialog.locator('[data-fieldname=stock_quantity] input').isVisible());
+  await values(qa,{no_equipment:1});await save();
+  console.log('PASS visible new-item warehouse count, Nos default, inline shortage prevents writes, coverage summary, existing-item count opt-in and mobile layout');
   await step('Review and allocate the crew');await modal(qa).getByText('Every phase can be covered. Save to create assignments; this still does not approve attendance.',{exact:true}).waitFor();
   await modal(qa).getByRole('button',{name:'Allocate crew & finish setup',exact:true}).click();await step('Your first event is ready');
   await modal(qa).getByRole('button',{name:'Open my event plan',exact:true}).click();await qa.locator('.pp-event-map').waitFor();assert.equal(await qa.locator('#body').evaluate(el=>el.inert),false);
@@ -85,6 +101,6 @@ const {chromium}=require('playwright');
   await modal(qa).getByRole('button',{name:'Back',exact:true}).click();await step('Event sites and daily staffing');await modal(qa).getByRole('button',{name:'Continue',exact:true}).click();await step('Review the event plan');assert.match(await modal(qa).innerText(),/Garden marquee QA/);
   await modal(qa).getByRole('button',{name:'Create event plan',exact:true}).click();await qa.locator('.pp-event-map').waitFor();
   assert.deepEqual(errors,[]);console.log('PASS required guided steps, disabled background, reload/resume, real vehicle, crew allocation, no earned work, wizard forward/back and atomic save');
- }catch(e){console.error(e.stack);await qa.screenshot({path:path.join(out,'event-qa-failure.png'),fullPage:true});await demo.screenshot({path:path.join(out,'event-demo-failure.png'),fullPage:true});throw e;}
+ }catch(e){console.error(e.stack);console.error('Page errors: '+JSON.stringify(errors));await qa.screenshot({path:path.join(out,'event-qa-failure.png'),fullPage:true});await demo.screenshot({path:path.join(out,'event-demo-failure.png'),fullPage:true});throw e;}
  finally{await browser.close();let cleaned;try{cleaned=fixture('end');}catch(e){console.error(String(e.stdout||e.stderr||'').slice(-5000));throw e;}assert(cleaned.restored);console.log('PASS exact isolated QA company and preferences restored');}
 })().catch(e=>{console.error(e.stack);process.exitCode=1;});

@@ -221,3 +221,46 @@ class EventTests(unittest.TestCase):
         self.assertEqual(final['step'],'done');self.assertEqual(len(events.timeline(final['plan'])['sites']),2)
         self.assertEqual(frappe.db.count('PP Assignment',{'pp_event_plan':final['plan']}),2)
         self.assertFalse(frappe.db.exists('PP Work Entry',{'project':final['project']}))
+
+    def inventory_step(self):
+        result=self.event();plan=frappe.get_doc('PP Event Plan',result['plan']);company=self.f.company.name
+        frappe.defaults.set_user_default(event_setup.SELECTED,company)
+        frappe.db.set_value('Company',company,'pp_event_setup_state',json.dumps(dict(company=company,step='inventory',
+            required=True,project=plan.project,site=plan.staffing[0].site,plan=plan.name,
+            start_date=str(plan.start_date),end_date=str(plan.end_date))))
+        return dict(item_code='QA-NEW-STOCK-'+uuid.uuid4().hex[:7],item_name='Palm decoration QA',stock_uom='Nos',
+            warehouse_name='New equipment QA '+uuid.uuid4().hex[:5],stock_quantity=5,quantity=2,valuation_rate=100,confirm_stock_balance=1)
+
+    def test_new_setup_item_records_stock_and_reserves_without_hidden_opt_in(self):
+        values=self.inventory_step()
+        state=event_setup.advance('inventory',values)
+        self.assertEqual(state['step'],'allocate')
+        available=events.stock_available(state['item'],state['warehouse'],state['start_date'],state['end_date'])
+        self.assertEqual({key:Decimal(value) for key,value in available.items()},
+            dict(on_hand=Decimal(5),reserved=Decimal(2),available=Decimal(3)))
+        self.assertTrue(frappe.db.exists('Stock Ledger Entry',{'item_code':values['item_code'],'warehouse':state['warehouse']}))
+        reconciliation=frappe.db.get_value('Stock Reconciliation Item',{'item_code':values['item_code']},'parent')
+        self.assertTrue(frappe.db.exists('GL Entry',{'voucher_type':'Stock Reconciliation','voucher_no':reconciliation}))
+
+    def test_missing_short_or_unconfirmed_starting_stock_creates_nothing(self):
+        values=self.inventory_step()
+        counts={dt:frappe.db.count(dt) for dt in ('Item','Warehouse','Stock Reconciliation','Stock Ledger Entry','GL Entry','PP Equipment Booking')}
+        for overrides,message in [({'stock_quantity':None},'starting warehouse quantity'),
+                ({'stock_quantity':1},'this event needs'),({'confirm_stock_balance':0},'Confirm the warehouse'),({'valuation_rate':0},'Value per unit')]:
+            with self.assertRaisesRegex(frappe.ValidationError,message):event_setup.advance('inventory',{**values,**overrides})
+            self.assertEqual(event_setup.current()['step'],'inventory')
+            for dt,count in counts.items():self.assertEqual(frappe.db.count(dt),count,dt)
+
+    def test_existing_setup_item_uses_stock_without_reposting_count(self):
+        values=self.inventory_step();item,warehouse,_=self.equipment(5)
+        count=frappe.db.count('Stock Reconciliation')
+        state=event_setup.advance('inventory',dict(item=item.name,warehouse=warehouse,quantity=2))
+        self.assertEqual(state['step'],'allocate');self.assertEqual(frappe.db.count('Stock Reconciliation'),count)
+        self.assertEqual(Decimal(events.stock_available(item.name,warehouse,state['start_date'],state['end_date'])['available']),3)
+
+    def test_add_new_cannot_overwrite_existing_equipment_or_stock(self):
+        values=self.inventory_step();item,warehouse,_=self.equipment(5)
+        with self.assertRaisesRegex(frappe.ValidationError,'code already exists'):
+            event_setup.advance('inventory',{**values,'item_code':item.name,'warehouse':warehouse,'stock_quantity':10})
+        item.reload();self.assertEqual(item.item_name,'Event chair QA')
+        self.assertEqual(Decimal(frappe.db.get_value('Bin',{'item_code':item.name,'warehouse':warehouse},'actual_qty')),5)

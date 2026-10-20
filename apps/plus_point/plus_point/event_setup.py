@@ -1,4 +1,4 @@
-"""Company-owned, resumable event setup. No public signup activation is implied."""
+"""Company-owned, resumable event setup using native business records."""
 import json
 import frappe
 from frappe.utils import cint,getdate,today
@@ -159,13 +159,27 @@ def advance(step,values=None):
                     saved['equipment_booking']=None
                 else:
                     from plus_point.event_imports import save,validate
+                    from plus_point.events import positive
+                    new_item=not values.item
+                    count_stock=new_item or cint(values.set_stock_balance)
+                    if new_item and (values.stock_quantity is None or values.stock_quantity==''):
+                        frappe.throw('Enter the starting warehouse quantity for this new item. The item name alone does not add stock.')
+                    if count_stock:
+                        quantity=positive(values.quantity,'Quantity needed for this event')
+                        counted=positive(values.stock_quantity,'Warehouse quantity',allow_zero=True)
+                        if counted<quantity:
+                            frappe.throw(f'Warehouse quantity is {counted}, but this event needs {quantity}. Enter the quantity you actually own or reduce the event quantity.')
+                        positive(values.valuation_rate,'Value per unit')
+                        if not cint(values.confirm_stock_balance):
+                            frappe.throw('Confirm the warehouse quantity and value before saving the item and reserving it.')
                     if values.item:item=linked('Item',values.item)
                     else:
+                        if frappe.db.exists('Item',values.item_code):
+                            frappe.throw('This equipment code already exists. Choose existing item to use its recorded stock, or enter a different code.')
                         row=dict(item_code=values.item_code,item_name=values.item_name,stock_uom=values.stock_uom,status='Active')
                         validate('inventory_items',company,row);item=save('inventory_items',company,row)
                     warehouse=linked('Warehouse',values.warehouse,company) if values.warehouse else save('warehouses',company,dict(warehouse_name=values.warehouse_name))
-                    if cint(values.set_stock_balance):
-                        if not cint(values.confirm_stock_balance):frappe.throw('Review and confirm the counted quantity and stock book value before posting')
+                    if count_stock:
                         row=dict(item_code=item.name,warehouse=warehouse.name,date=today(),quantity=str(values.stock_quantity),valuation_rate=str(values.valuation_rate))
                         validate('stock_balances',company,row);save('stock_balances',company,row)
                     booking=linked('PP Equipment Booking',saved['equipment_booking']) if saved.get('equipment_booking') else frappe.new_doc('PP Equipment Booking')

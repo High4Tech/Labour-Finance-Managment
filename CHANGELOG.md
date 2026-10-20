@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — New equipment starting stock
+
+The onboarding equipment step now shows warehouse quantity, value per unit and confirmation directly for a new item. One save records the item, starting stock and event reservation. An inline warehouse/event/remaining summary catches a shortage before submission; existing-item stock updates remain an explicit choice. Server validation rejects missing, short or unconfirmed counts without partial records, and Add inventory item cannot overwrite an existing equipment code.
+
 ## 2026-10-20 — Approved company access
 
 Approval now provisions a separate empty local company workspace and owner login instead of ending at a demo record. Signup accepts an optional company login ID, uses the email for login and offers private native password setup after approval. High4Tech has progress, retry, login and expiring-link refresh actions, including for older approved requests. Initial passwords are random; links are encrypted, role/token gated and consumed natively. Local trial software invoicing is blocked while normal subscription billing remains native. Payment stays simulated and no email is sent. New company onboarding uses the registered business name without copying demo data.

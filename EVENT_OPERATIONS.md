@@ -13,7 +13,7 @@ A fresh company opens the guided journey automatically. Its saved progress belon
 5. Add or choose a worker; **Import workers from a template** can bring in the rest of the crew.
 6. Set daily wage/client rates and venue phases. Each row has a venue, phase, inclusive dates and required workers per day. Add a new venue name when needed. The same venue's phases cannot overlap.
 7. Choose/create a vehicle and reserve it for Crew or Inventory. An event with no transport needs can state that explicitly.
-8. Choose/create equipment and its warehouse, optionally confirm a real counted starting balance, and reserve the event quantity. An event without warehouse equipment can state that explicitly.
+8. Choose/create equipment and its warehouse. For a new item, enter the total quantity you own, its value per unit and the quantity needed for this event, then confirm the count. One save creates the item, posts its starting stock and reserves the event quantity. Existing items use their recorded stock, with an explicit opt-in to replace it with an actual count. An event without warehouse equipment can state that explicitly.
 9. Review crew availability, address shortages and allocate workers. Then open the saved plan.
 
 The company menu displays the company account. Workers such as Ahmed Raza are crew records, not additional software accounts. Native authentication still uses a User internally. Staff account management is outside the customer interface for this MVP. Required onboarding is a UI focus mode; document permissions remain server enforced. Established companies may close a voluntarily opened guide.
@@ -34,7 +34,7 @@ Client, Project and Company forms offer a saved-event selector and the same time
 
 ## Inventory and transport
 
-**Inventory and transport → Warehouse availability** shows native counted stock, peak overlapping reservations and available quantity for selected dates. Every item stays in its own unit; quantities of unlike items are not combined. A catalog entry alone has no on-hand stock. Add items and warehouses, then import counted balances with valuation rates to establish stock.
+**Inventory and transport → Warehouse availability** shows native counted stock, peak overlapping reservations and available quantity for selected dates. Every item stays in its own unit; quantities of unlike items are not combined. A catalog entry alone has no on-hand stock. New items added inside onboarding include starting quantity and valuation directly; missing or short counts stop before any records are created, with inline guidance beside the event quantity. Outside onboarding, add items and warehouses, then import counted balances with valuation rates to establish stock. Use Nos for individual pieces, or the actual unit you count; the unit is never silently changed.
 
 An equipment reservation reduces planning availability, without moving or consuming stock. Non-overlapping reservations reuse equipment. Requests exceeding available stock stop with an actionable error. Cancelling a booking releases its reservation. Count submissions and outgoing Stock Entries cannot reduce available stock below future reservations. Other native stock document types and stock cancellation paths need separate production coverage; this is not a warehouse-dispatch workflow.
 
