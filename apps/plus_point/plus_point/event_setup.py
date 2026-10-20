@@ -45,28 +45,62 @@ def persist(saved):
     return saved
 
 
+def frontier(saved):
+    # Legacy journeys have no explicit high-water mark until their next action.
+    index=STEPS.index(saved['step'])
+    if saved['step']=='done' and not saved.get('project'):index=0
+    return max(index,int(saved.get('furthest',0)))
+
+
+def step_values(saved):
+    """Revisit the same native records; do not turn an edit into another insert."""
+    step=saved['step'];result={}
+    if step=='event' and saved.get('site'):
+        site=linked('PP Site',saved['site'])
+        result={k:site.get(k) for k in ('site_name','country','state','city','address_line1','address_line2','postal_code','latitude','longitude')}
+    elif step=='terms' and saved.get('contract_terms'):
+        terms=linked('PP Contract Terms',saved['contract_terms'])
+        result=dict(billing_model=terms.billing_model,fixed_amount=terms.fixed_amount,agreement=linked('Contract',terms.contract).contract_terms)
+    elif step=='plan' and saved.get('plan'):
+        plan=linked('PP Event Plan',saved['plan'])
+        result=dict(wage_rate=plan.wage_rate,client_rate=plan.client_rate,staffing=[{k:r.get(k) for k in ('site','phase','start_date','end_date','workers_required')} for r in plan.staffing])
+    elif step=='vehicle':
+        result['no_vehicle']=int(not saved.get('vehicle_booking') and frontier(saved)>STEPS.index(step))
+        if saved.get('vehicle_booking'):
+            booking=linked('PP Vehicle Booking',saved['vehicle_booking'])
+            result.update({k:booking.get(k) for k in ('purpose','crew_count','cargo_load')})
+    elif step=='inventory':
+        result['no_equipment']=int(not saved.get('equipment_booking') and frontier(saved)>STEPS.index(step))
+        if saved.get('equipment_booking'):result['quantity']=linked('PP Equipment Booking',saved['equipment_booking']).quantity
+    return result
+
+
 @frappe.whitelist()
 def status():
     require_customer();saved=current()
     from plus_point.locations import currency_locked
     return dict(state=saved,companies=companies(),required=bool(saved.get('required') and not saved.get('skipped') and saved['step']!='done'),
-        currency_locked=bool(currency_locked(saved.get('company'))))
+        currency_locked=bool(currency_locked(saved.get('company'))),furthest=frontier(saved),values=step_values(saved))
 
 
 @frappe.whitelist(methods=['POST'])
-def control(action):
+def control(action,step=None):
     require_customer()
     frappe.db.get_value('User',frappe.session.user,'name',for_update=True)
     saved=current()
     if saved.get('company'):
         frappe.db.get_value('Company',saved['company'],'name',for_update=True)
         saved=current()
+    saved['furthest']=frontier(saved)
     if action in ('start','resume'):
         saved['skipped']=False
         if saved['step']!='done':saved['required']=True
     elif action=='skip':saved.update(skipped=True,required=False)
     elif action=='back':saved['step']=STEPS[max(0,STEPS.index(saved['step'])-1)]
-    elif action not in ('start','resume','skip','back'):frappe.throw('Choose resume, skip or back')
+    elif action=='go':
+        if step not in STEPS[:-1] or STEPS.index(step)>saved['furthest']:frappe.throw('Complete the earlier steps before opening this section')
+        saved['step']=step
+    else:frappe.throw('Choose resume, skip, back or a completed step')
     return persist(saved)
 
 
@@ -83,6 +117,7 @@ def advance(step,values=None):
         frappe.db.get_value('Company',saved['company'],'name',for_update=True)
         saved=current()
     if step!=saved['step'] or step not in STEPS[:-1]:frappe.throw('Setup has moved on. Reopen the guide to continue.')
+    saved['furthest']=frontier(saved)
     frappe.db.savepoint('pp_event_setup_step')
     try:
         if step=='company':
@@ -108,7 +143,11 @@ def advance(step,values=None):
         else:
             company=saved['company'];linked('Company',company)
             if step=='client':
-                if values.customer:client=linked('Customer',values.customer)
+                if values.customer:
+                    client=linked('Customer',values.customer)
+                    if cint(values.edit_client):
+                        from plus_point.clients import save
+                        client=save(values,client.name)
                 else:
                     from plus_point.clients import create
                     client=create(values)
@@ -120,13 +159,21 @@ def advance(step,values=None):
                 if values.project:
                     project=linked('Project',values.project,company)
                     if project.customer!=saved['customer']:frappe.throw('Choose a project for this client')
+                    # Date changes after planning require revisiting the plan explicitly.
+                    if (str(getdate(project.expected_start_date))!=str(getdate(values.start_date)) or str(getdate(project.expected_end_date))!=str(getdate(values.end_date))):
+                        if saved.get('plan'):frappe.throw('This event already has a plan. Change its dates in the event plan so staffing and reservations stay aligned.')
+                        project.expected_start_date=values.start_date;project.expected_end_date=values.end_date;project.save()
                 else:project=insert('Project',project_name=values.event_name,company=company,customer=saved['customer'],
                     expected_start_date=values.start_date,expected_end_date=values.end_date)
                 if saved.get('project') and saved['project']!=project.name:
                     for key in ('contract_terms','billing_model','plan','vehicle_booking','equipment_booking'):saved.pop(key,None)
+                    saved['furthest']=STEPS.index('event')
                 if values.site:
                     site=linked('PP Site',values.site)
                     if site.project!=project.name or not site.is_active:frappe.throw('Choose an active venue for this project')
+                    if cint(values.edit_site):
+                        from plus_point.locations import site_values
+                        site.update(dict(site_name=values.site_name,**site_values(values)));site.save()
                 else:
                     from plus_point.locations import site_values
                     # Operator regression fixtures retain the older minimal API.
@@ -141,6 +188,10 @@ def advance(step,values=None):
                 if values.contract_terms:
                     terms=linked('PP Contract Terms',values.contract_terms)
                     if terms.project!=project.name or terms.status!='Active':frappe.throw('Choose active terms for this event')
+                    if cint(values.edit_terms):
+                        if not str(values.agreement or '').strip():frappe.throw('Describe the actual client agreement')
+                        terms.update(dict(billing_model=values.billing_model,fixed_amount=values.fixed_amount if values.billing_model=='Fixed' else 0));terms.save()
+                        contract=linked('Contract',terms.contract);contract.contract_terms=values.agreement;contract.save()
                 else:
                     if not str(values.agreement or '').strip():frappe.throw('Describe the actual client agreement')
                     contract=insert('Contract',party_type='Customer',party_name=saved['customer'],start_date=saved['start_date'],
@@ -231,6 +282,7 @@ def advance(step,values=None):
                 from plus_point.events import allocate_crew
                 allocate_crew(saved['plan'])
         saved['step']=STEPS[STEPS.index(step)+1]
+        saved['furthest']=max(frontier(saved),STEPS.index(saved['step']))
         if saved['step']=='done':saved['required']=False
         return persist(saved)
     except Exception:

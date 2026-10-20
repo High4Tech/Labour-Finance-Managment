@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — Worker import names and editable onboarding
+
+Employee imports now accept new names in the legacy employee column, create native profiles with the supplied details, match unique existing names with birth-date validation and retain stable external-ID replay/update protection. Expanded profile templates include contact/address/emergency/passport details; older CSV/XLSX templates remain supported without clearing omitted fields. Completed onboarding rows are clickable, saved clients/venues/agreements load for edits in place, country stays editable while historical monetary currency remains protected, and record pickers open without clearing the current value and search as you type. Import-close refreshes keep draft values.
+
 ## 2026-10-20 — Inline onboarding and one subscribed business
 
 Moved company onboarding from modal dialogs to a dashboard page with sidebar entry, sticky Skip, saved-step resume and inline errors. Bound one own-business profile per customer workspace and blocked additional Company creation while retaining older records. Country derives currency automatically, including SAR; unposted posting accounts update together, with agreements/stock/ledger protection. New clients save native contact/address details, venues have structured addresses and optional map pins, crew/cargo fields follow purpose and quantity-only stock accepts an explicitly confirmed zero value. Existing native accounting, imports and reservation controls remain in place.

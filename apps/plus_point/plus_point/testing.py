@@ -47,6 +47,16 @@ def run_signup():
     return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
 
 
+def run_setup_imports():
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled site required')
+    import unittest
+    from plus_point.tests.test_setup_imports import SetupImportTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(SetupImportTests))
+    if not result.wasSuccessful():raise RuntimeError('Setup/import integration suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
+
+
 def run_events():
     if not frappe.conf.get('allow_tests') or frappe.conf.get('pp_control_plane') or not frappe.local.site.endswith('.localhost'):
         raise RuntimeError('Local test-enabled customer site required')

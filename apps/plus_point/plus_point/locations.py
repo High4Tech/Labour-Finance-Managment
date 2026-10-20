@@ -25,7 +25,9 @@ def currency_locked(company):
 def set_company_country(doc,country):
     defaults=country_defaults(country)
     if currency_locked(doc.name):
-        if country!=doc.country:frappe.throw('Country and base currency are fixed after agreements or accounting entries. Event venues can use other countries.')
+        # A business address can be corrected without re-denominating existing money.
+        if country!=doc.country:
+            doc.country=country;doc.save()
         return
     old=doc.default_currency;new=defaults['currency']
     if old==new and country==doc.country:return

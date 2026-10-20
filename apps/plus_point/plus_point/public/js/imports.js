@@ -11,7 +11,7 @@
         warehouses:'Add warehouse_name under your company. Download reference IDs after creation before importing balances.',
         stock_balances:'Set a counted balance per item_code and warehouse, date (YYYY-MM-DD), quantity and valuation_rate per unit in company currency. This sets absolute warehouse quantities using a submitted native stock reconciliation and may change stock book value. It is not a receipt or a quantity to add. Review carefully; reservations still apply.',
         events:'One event and venue per row: client Customer ID, dates, site_name, workers_per_day, wage_rate, Daily/Fixed billing, client_rate (zero for Fixed), fixed_amount for Fixed, and agreement text. This creates a project, internal agreement and plan. It does not allocate crew, approve attendance or bill a client. Add more phases/sites in the saved event plan.',
-        employees:'Use one stable external_id per person. Format IDs and phone columns as text in your spreadsheet. Leave employee blank to add a person, or enter an existing Employee ID to update that profile. Required: first_name, gender, date_of_birth, date_of_joining, status (Active or Inactive). Dates use YYYY-MM-DD. Optional blank last_name and cell_number clear those fields on an update. No login is created.',
+        employees:'Use one stable external_id per person. Format IDs and phone columns as text in your spreadsheet. New workers: leave employee blank or enter their full name. Existing Employee IDs update that profile; a unique full-name match also checks date of birth. external_id links later uploads to the same profile. Required: first_name, gender, date_of_birth, date_of_joining, status (Active or Inactive). Dates use YYYY-MM-DD. The template also includes middle name, your worker number, personal email, home addresses, emergency contact, passport number and expiry. Optional columns left blank clear those fields; older templates preserve columns they do not contain. No login is created.',
         work:'Use an existing assignment ID, work_date (YYYY-MM-DD) and units (1, 0.5 or 0). Wages and client charges use that assignment’s agreed rates. Rows become approved earnings, not payments. Import work before its invoices or worker payments.',
         milestones:'Use active Fixed contract_terms, a title, date (YYYY-MM-DD) and amount. Rows become approved client earnings. The fixed contract cap still applies. Import milestones before their invoices.',
         expenses:'Use project, supplier and non-stock item_code IDs, date (YYYY-MM-DD) and the net amount. This posts an unpaid supplier invoice and updates project spending. Tax-bearing invoices need their full breakdown in the native invoice form.',
@@ -37,7 +37,7 @@
             if(!dialog)return;
             reset();const kind=dialog.get_value('kind');
             dialog.set_df_property('confirmed','label',__(kind==='stock_balances'?'I reviewed these absolute stock counts and unit values and confirm the native stock-value posting.':'I reviewed these records and confirm the listed changes and any described financial postings.'));
-            dialog.fields_dict.instructions.$wrapper.html(`<details><summary>${esc(__('How to fill this template'))}</summary><p>${esc(__(help[kind]))}</p><p>${esc(__('Keep external_id stable when re-uploading. Identical financial rows are skipped; changed posted rows require a reviewed correction. Employee profiles can be updated.'))}</p></details>`);
+            dialog.fields_dict.instructions.$wrapper.html(`<details ${kind==='employees'?'open':''}><summary>${esc(__('How to fill this template'))}</summary><p>${esc(__(help[kind]))}</p><p>${esc(__('Keep external_id stable when re-uploading. Identical financial rows are skipped; changed posted rows require a reviewed correction. Employee profiles can be updated.'))}</p></details>`);
         };
         dialog=new frappe.ui.Dialog({title:__('Import business records'),static:true,size:'extra-large',fields:[
             {fieldtype:'HTML',fieldname:'intro',options:`<p>${esc(__('Download a template, fill it in Excel or Google Sheets, then upload CSV or XLSX. Review every row before saving. Up to 200 rows and 2 MB per file.'))}</p>`},
@@ -91,7 +91,7 @@
         }
         dialog.$wrapper.on('hidden.bs.modal',()=>{if(onClose)onClose();else if(finished)plus_point.refresh_setup_banner?.();});
         dialog.$wrapper.addClass('pp-import-dialog');
-        dialog.show();helpText();
+        dialog.show();plus_point.enhance_selectors?.(dialog);helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
         upload.find('input').on('change',event=>{file=event.target.files[0];reset();});
         dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else frappe.msgprint(__('Choose your company first.'));});

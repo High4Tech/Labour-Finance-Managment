@@ -15,6 +15,15 @@ async function journey({page,data,run,settings,out,errors}){
  const rpc=(method,args={})=>page.evaluate(async({method,args})=>(await frappe.call({method,args,type:'POST'})).message,{method,args});
  await step('company');assert.equal(await page.locator('.pp-event-setup-dialog:visible').count(),0);
  assert.equal((await rpc('plus_point.event_setup.status')).companies.length,1);
+ // Clicking a filled link opens a list without erasing its selected value.
+ const countryInput=root.locator('[data-fieldname=country] input');await countryInput.click();
+ await root.locator('[data-fieldname=country] .awesomplete [role=option]').first().waitFor();
+ await countryInput.fill('Saud');await root.locator('[data-fieldname=country] .awesomplete [role=option]').filter({hasText:'Saudi Arabia'}).waitFor();
+ await root.locator('[data-fieldname=country] .awesomplete [role=option]').filter({hasText:'Saudi Arabia'}).click();
+ await page.waitForFunction(()=>frappe.container.page.pp_setup_form.get_value('currency')==='SAR');
+ await root.locator('[data-fieldname=country] .pp-picker-toggle').click();
+ assert.equal(await value('country'),'Saudi Arabia');await root.locator('[data-fieldname=country] .awesomplete [role=option]').first().waitFor();
+ await page.keyboard.press('Escape');
  await values({country:'Saudi Arabia'});await page.waitForFunction(()=>frappe.container.page.pp_setup_form.get_value('currency')==='SAR');
  assert.equal(await page.evaluate(()=>frappe.container.page.pp_setup_form.fields_dict.currency.df.read_only),1);
  await root.getByRole('button',{name:'Skip onboarding',exact:true}).click();await page.locator('.pp-dashboard[data-ready=true]').waitFor({timeout:60000});
@@ -50,6 +59,27 @@ async function journey({page,data,run,settings,out,errors}){
  const event=(await rpc('plus_point.event_setup.status')).state;
  const site=(await rpc('frappe.client.get',{doctype:'PP Site',name:event.site}));assert.equal(site.country,'Saudi Arabia');assert.equal(site.city,'Riyadh');assert.equal(Number(site.latitude),24.7136);
  await values({agreement:'Temporary QA event staffing and equipment agreement',billing_model:'Daily'});await save();await step('workers');
+ // Completed rows navigate directly and edit existing records, retaining later progress.
+ await root.locator('.pp-onboarding-step[data-step=client]').click();await step('client');
+ assert.equal(await value('contact_name'),'Ayesha Malik');await values({contact_name:'Haris Khan',city:'Jeddah'});await save();await step('event');
+ assert.equal((await rpc('plus_point.clients.details',{customer:client})).contact_name,'Haris Khan');
+ await root.locator('.pp-onboarding-step[data-step=terms]').click();await step('terms');
+ assert.equal(await value('agreement'),'Temporary QA event staffing and equipment agreement');
+ const originalTerms=(await rpc('plus_point.event_setup.status')).state.contract_terms;
+ await values({agreement:'Updated QA client agreement'});await save();await step('workers');
+ assert.equal((await rpc('plus_point.event_setup.status')).state.contract_terms,originalTerms);
+ await root.locator('.pp-onboarding-step[data-step=company]').click();await step('company');
+ assert.equal(await countryInput.isEditable(),true);await values({country:'United Arab Emirates'});assert.equal(await value('currency'),'SAR');
+ await save();await step('client');await root.locator('.pp-onboarding-step[data-step=workers]').click();await step('workers');
+ // The user's original template, with names in employee, previews new worker profiles.
+ await root.getByRole('button',{name:'Import workers from a template',exact:true}).click();
+ const importDialog=page.locator('.pp-import-dialog:visible');await importDialog.waitFor();
+ const columns=['external_id','employee','first_name','last_name','gender','date_of_birth','date_of_joining','cell_number','status'];
+ const csv=[columns.join(','),...Array.from({length:15},(_,i)=>['QAEMP'+i,'QA New Person '+run+' '+i,'QA New','Person '+run+' '+i,'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
+ await importDialog.locator('input[type=file]').setInputFiles({name:'workers.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
+ await importDialog.getByRole('button',{name:'Review file',exact:true}).click();
+ await importDialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await importDialog.locator('.pp-import-preview').innerText(),/15 create/);
+ assert.equal(await importDialog.getByText(/Employee .* not found/).count(),0);await importDialog.getByRole('button',{name:'Close',exact:true}).click();await importDialog.waitFor({state:'hidden'});await page.evaluate(()=>plus_point.load_onboarding(frappe.container.page));await step('workers');
  await values({mode:'Choose existing worker',employee:data.worker});await save();await step('plan');
  await values({wage_rate:2000,client_rate:3000});await save();await step('vehicle');
  await values({purpose:'Crew'});assert(await root.locator('[data-fieldname=crew_seats] input').isVisible());assert.equal(await root.locator('[data-fieldname=cargo_capacity] input').isVisible(),false);
@@ -83,7 +113,7 @@ async function journey({page,data,run,settings,out,errors}){
  assert.equal(await page.evaluate(()=>document.body.classList.contains('pp-onboarding-active')),false);
  assert.equal((await rpc('frappe.client.get_list',{doctype:'PP Work Entry',filters:{project:event.project},fields:['name']})).length,0);
  assert.deepEqual(errors,[]);
- console.log('PASS inline onboarding, persistent skip/reload/resume, SAR country mapping, full client contact/address, selection-only existing client, structured venue/map point, separate crew/cargo fields, zero-value quantity submission, inline network error, mobile bounds and completion without attendance');
+ console.log('PASS inline onboarding, persistent skip/reload/resume, SAR country mapping, full client contact/address, selection-only existing client, completed-step edits, live dropdown search, 15 new worker import previews, editable country with protected base currency, structured venue/map point, separate crew/cargo fields, zero-value quantity submission, inline network error, mobile bounds and completion without attendance');
 }
 
 module.exports={journey};

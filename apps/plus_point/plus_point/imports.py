@@ -25,6 +25,10 @@ SCHEMAS = {
     'receipts': ['external_id', 'date', 'invoice', 'amount', 'bank_account'],
     'worker_payments': ['external_id', 'date', 'project', 'employee', 'amount', 'bank_account'],
 }
+LEGACY_EMPLOYEE_COLUMNS = list(SCHEMAS['employees'])
+EMPLOYEE_OPTIONAL_COLUMNS = ['middle_name', 'employee_number', 'personal_email', 'current_address',
+    'permanent_address', 'person_to_be_contacted', 'emergency_phone_number', 'relation', 'passport_number', 'valid_upto']
+SCHEMAS['employees'] += EMPLOYEE_OPTIONAL_COLUMNS
 TARGETS = dict(employees='Employee', work='PP Work Entry', milestones='PP Milestone',
     expenses='Purchase Invoice', invoices='Sales Invoice', receipts='Payment Entry', worker_payments='PP Wage Settlement')
 MAX_ROWS = 200
@@ -93,7 +97,7 @@ def parse_file(filename, content, kind):
     headers = [str(value).strip() for value in rows.pop(0)]
     while headers and not headers[-1]:
         headers.pop()
-    if headers != SCHEMAS[kind]:
+    if headers != SCHEMAS[kind] and not (kind == 'employees' and headers == LEGACY_EMPLOYEE_COLUMNS):
         frappe.throw('Column headers must match the selected template in the same order. Download a fresh template.')
     if not rows or len(rows) > MAX_ROWS:
         frappe.throw('Add between 1 and 200 data rows. Blank rows between records are not allowed.')
@@ -143,11 +147,30 @@ def resolve(doctype, value, company, import_kind=None):
     return linked(doctype, value)
 
 
+def employee_target(company, row):
+    """A name in the old employee column is a label, not a required database ID."""
+    value = row.get('employee', '')
+    if not value:return None
+    if frappe.db.exists('Employee', value):
+        linked('Employee', value, company).check_permission('write')
+        return value
+    matches = frappe.get_list('Employee', filters={'company':company, 'employee_name':value},
+        fields=['name', 'date_of_birth'], limit_page_length=3)
+    if len(matches) > 1:
+        frappe.throw('More than one worker has this name. Use the Employee ID from reference IDs to select the correct profile.')
+    if matches:
+        if getdate(matches[0].date_of_birth) != getdate(row.get('date_of_birth')):
+            frappe.throw('A worker with this name has a different date of birth. Use their Employee ID to update them, or leave employee blank to add a different person.')
+        linked('Employee', matches[0].name, company).check_permission('write')
+        return matches[0].name
+    return None
+
+
 def validate_row(kind, company, row):
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,79}', required(row, 'external_id')):
         frappe.throw('external_id must be 1–80 letters, digits, dots, underscores or hyphens')
     for key, value in row.items():
-        if value[:1] in ('=', '@', '+') and not (key == 'cell_number' and re.fullmatch(r'\+\d[\d ()-]*', value)):
+        if value[:1] in ('=', '@', '+') and not (key in ('cell_number','emergency_phone_number') and re.fullmatch(r'\+\d[\d ()-]*', value)):
             frappe.throw(f'{key}: replace formulas with plain values')
     if kind in EVENT_SCHEMAS:
         from plus_point.event_imports import validate
@@ -160,8 +183,10 @@ def validate_row(kind, company, row):
             frappe.throw('date_of_birth must be before date_of_joining')
         if row['status'] not in ('Active', 'Inactive'):
             frappe.throw('status must be Active or Inactive')
-        if row['employee']:
-            linked('Employee', row['employee'], company).check_permission('write')
+        if row.get('personal_email'):
+            frappe.utils.validate_email_address(row['personal_email'], throw=True)
+        if row.get('valid_upto'):row_date(row, 'valid_upto', historical=False)
+        employee_target(company, row)
         return dict(label=f"{row['first_name']} {row['last_name']}".strip(), amount=None)
     if kind == 'work':
         assignment = linked('PP Assignment', required(row, 'assignment'))
@@ -250,7 +275,8 @@ def prepare(kind, company, rows):
                     if kind=='event_sites':linked('Project',target.project,company)
                     result['action']='Update' if previous.content_hash!=digest(row) else 'Skip'
                 elif kind == 'employees':
-                    if row['employee'] and row['employee'] != previous.document_name:
+                    current = employee_target(company, row)
+                    if current and current != previous.document_name:
                         frappe.throw('external_id is already linked to a different employee')
                     linked('Employee', previous.document_name, company).check_permission('write')
                     result['action'] = 'Update' if previous.content_hash != digest(row) else 'Skip'
@@ -259,8 +285,9 @@ def prepare(kind, company, rows):
                 else:
                     result['action'] = 'Skip'
                 result['document'] = previous.document_name
-            elif kind == 'employees' and row['employee']:
-                result.update(action='Update', document=row['employee'])
+            elif kind == 'employees':
+                current = employee_target(company, row)
+                if current:result.update(action='Update', document=current)
             elif kind in EVENT_PROFILES:
                 from plus_point.event_imports import target as catalog_target
                 current=catalog_target(kind,row)
@@ -282,6 +309,10 @@ def prepare(kind, company, rows):
                 if result['document'] in targets:
                     frappe.throw('The same employee is targeted twice in this file')
                 targets.add(result['document'])
+            elif kind == 'employees':
+                identity=tuple(row.get(k,'').casefold() for k in ('first_name','middle_name','last_name','date_of_birth'))
+                if identity in targets:frappe.throw('The same new worker appears twice in this file. Keep one row per person.')
+                targets.add(identity)
             result.update(details)
         except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError, ValueError) as exc:
             result.update(action='Fix', error=frappe.utils.strip_html(str(exc)))
@@ -433,8 +464,10 @@ def apply(token):
                 doc=save_catalog(kind,company_name,row,result.get('document'))
             elif kind == 'employees':
                 doc = linked('Employee', result['document'], company_name) if result.get('document') else frappe.new_doc('Employee')
-                doc.update({key: row[key] for key in SCHEMAS[kind] if key not in ('external_id', 'employee')})
+                # Older templates omit optional columns; never erase fields they cannot show.
+                doc.update({key: row[key] for key in SCHEMAS[kind] if key in row and key not in ('external_id', 'employee')})
                 doc.company = company_name
+                doc.create_user_automatically = 0
                 doc.save()
             else:
                 doc = create_financial(kind, company, row)

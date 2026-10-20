@@ -58,7 +58,7 @@ class SetupImportTests(unittest.TestCase):
         return imports.apply(preview['token'])
 
     def employee(self, **overrides):
-        return dict(external_id='worker-001',employee='',first_name='Imported worker',last_name='',
+        return dict.fromkeys(imports.EMPLOYEE_OPTIONAL_COLUMNS,'') | dict(external_id='worker-001',employee='',first_name='Imported worker',last_name='',
             gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',cell_number='+923001234567',status='Active',**overrides)
 
     def work(self):
@@ -92,6 +92,45 @@ class SetupImportTests(unittest.TestCase):
         other=fixture('PP Import other '+uuid.uuid4().hex[:6])
         row['employee']=other.employee.name
         self.assertFalse(self.preview('employees',[row])['valid'])
+
+    def test_new_worker_names_in_employee_column_create_profiles_and_replay(self):
+        rows=[]
+        for number in range(15):
+            row=self.employee();row.update(external_id=f'EMP{number+1:03}',employee=f'Imported Person {number}',
+                first_name='Imported',last_name=f'Person {number}',personal_email=f'worker{number}@example.invalid',
+                current_address='12 Exhibition Road, Riyadh',person_to_be_contacted='Ayesha Malik',emergency_phone_number='+966501234567')
+            rows.append(row)
+        preview=self.preview('employees',rows)
+        self.assertTrue(preview['valid'],preview);self.assertTrue(all(r['action']=='Create' for r in preview['rows']))
+        saved=imports.apply(preview['token']);self.assertEqual(saved['created'],15)
+        doc=frappe.get_doc('Employee',saved['rows'][0]['document'])
+        self.assertEqual(doc.personal_email,'worker0@example.invalid');self.assertIn('Riyadh',doc.current_address)
+        self.assertEqual(doc.person_to_be_contacted,'Ayesha Malik');self.assertFalse(doc.user_id)
+        self.assertEqual(self.apply('employees',rows)['skipped'],15)
+        rows[0]['cell_number']='+966555555555'
+        updated=self.apply('employees',rows);self.assertEqual(updated['updated'],1)
+        self.assertEqual(updated['rows'][0]['document'],doc.name)
+
+    def test_unique_existing_worker_name_matches_birthdate_and_refuses_ambiguity(self):
+        row=self.employee();row.update(employee=self.f.employee.employee_name,date_of_birth=str(self.f.employee.date_of_birth))
+        result=self.apply('employees',[row]);self.assertEqual(result['updated'],1)
+        self.assertEqual(result['rows'][0]['document'],self.f.employee.name)
+        row['external_id']='other';row['employee']='Imported worker';row['date_of_birth']='1989-01-01'
+        self.assertFalse(self.preview('employees',[row])['valid'])
+
+    def test_legacy_employee_template_preserves_new_profile_columns(self):
+        row=self.employee();row['personal_email']='existing@example.invalid'
+        saved=self.apply('employees',[row]);name=saved['rows'][0]['document']
+        legacy={key:row[key] for key in imports.LEGACY_EMPLOYEE_COLUMNS};legacy['cell_number']='+966501111111'
+        stream=io.StringIO(newline='');writer=csv.DictWriter(stream,fieldnames=imports.LEGACY_EMPLOYEE_COLUMNS)
+        writer.writeheader();writer.writerow(legacy)
+        preview=imports.preview('employees',self.f.company.name,'old.csv',base64.b64encode(stream.getvalue().encode()).decode())
+        self.tokens.append(preview['token']);self.assertTrue(preview['valid'],preview)
+        imports.apply(preview['token']);self.assertEqual(frappe.db.get_value('Employee',name,'personal_email'),'existing@example.invalid')
+
+    def test_duplicate_new_person_with_different_external_ids_is_refused(self):
+        row=self.employee();duplicate=dict(row,external_id='different')
+        self.assertFalse(self.preview('employees',[row,duplicate])['valid'])
 
     def test_preview_lists_duplicate_missing_and_invalid_data_rows(self):
         row=self.employee()

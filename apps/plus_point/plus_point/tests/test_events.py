@@ -227,6 +227,7 @@ class EventTests(unittest.TestCase):
         frappe.defaults.set_user_default(event_setup.SELECTED,company)
         frappe.db.set_value('Company',company,'pp_event_setup_state',json.dumps(dict(company=company,step='inventory',
             required=True,project=plan.project,site=plan.staffing[0].site,plan=plan.name,
+            customer=self.f.customer.name,contract_terms=plan.contract_terms,billing_model=frappe.db.get_value('PP Contract Terms',plan.contract_terms,'billing_model'),
             start_date=str(plan.start_date),end_date=str(plan.end_date))))
         return dict(item_code='QA-NEW-STOCK-'+uuid.uuid4().hex[:7],item_name='Palm decoration QA',stock_uom='Nos',
             warehouse_name='New equipment QA '+uuid.uuid4().hex[:5],stock_quantity=5,quantity=2,valuation_rate=100,confirm_stock_balance=1)
@@ -299,8 +300,36 @@ class EventTests(unittest.TestCase):
         set_company_country(company,'Saudi Arabia')
         self.assertEqual(company.default_currency,'SAR')
         self.assertEqual(frappe.db.get_value('Account',company.default_cash_account,'account_currency'),'SAR')
-        with self.assertRaisesRegex(frappe.ValidationError,'fixed after agreements'):
-            set_company_country(frappe.get_doc('Company',self.f.company.name),'Saudi Arabia')
+        existing=frappe.get_doc('Company',self.f.company.name);original=existing.default_currency
+        set_company_country(existing,'Saudi Arabia')
+        self.assertEqual(existing.country,'Saudi Arabia');self.assertEqual(existing.default_currency,original)
+
+    def test_completed_steps_can_be_revisited_without_losing_frontier(self):
+        self.inventory_step();before=event_setup.current()
+        state=event_setup.control('go',step='client');self.assertEqual(state['step'],'client')
+        self.assertEqual(event_setup.status()['furthest'],event_setup.STEPS.index('inventory'))
+        state=event_setup.control('go',step='terms');self.assertEqual(state['contract_terms'],before['contract_terms'])
+        self.assertTrue(event_setup.status()['values']['agreement'])
+        with self.assertRaisesRegex(frappe.ValidationError,'earlier steps'):event_setup.control('go',step='allocate')
+        state=event_setup.control('go',step='inventory');self.assertEqual(state['project'],before['project'])
+
+    def test_onboarding_edits_client_and_agreement_in_place(self):
+        from plus_point.clients import create,details
+        client=create(dict(customer_name='Edit client QA '+uuid.uuid4().hex[:6],contact_name='Ayesha Malik',email='first@example.invalid',
+            country='Saudi Arabia',city='Riyadh',address_line1='12 Road'))
+        company=self.f.company.name;frappe.defaults.set_user_default(event_setup.SELECTED,company)
+        event_setup.persist(dict(company=company,step='client',required=True,customer=client.name))
+        count=frappe.db.count('Customer');contacts=frappe.db.count('Contact');addresses=frappe.db.count('Address')
+        event_setup.advance('client',dict(customer=client.name,edit_client=1,customer_name=client.customer_name,contact_name='Haris Khan',
+            email='updated@example.invalid',phone='+966501111111',country='Saudi Arabia',city='Jeddah',address_line1='24 Road'))
+        data=details(client.name);self.assertEqual(data['contact_name'],'Haris Khan');self.assertEqual(data['city'],'Jeddah')
+        self.assertEqual((frappe.db.count('Customer'),frappe.db.count('Contact'),frappe.db.count('Address')),(count,contacts,addresses))
+        event_setup.advance('event',dict(event_name='Editable event QA',site_name='Editable venue QA',start_date=add_days(today(),2),end_date=add_days(today(),4)))
+        state=event_setup.advance('terms',dict(agreement='Original scope',billing_model='Daily'));name=state['contract_terms']
+        event_setup.control('go',step='terms')
+        state=event_setup.advance('terms',dict(contract_terms=name,edit_terms=1,agreement='Revised scope',billing_model='Daily'))
+        self.assertEqual(state['contract_terms'],name)
+        terms=frappe.get_doc('PP Contract Terms',name);self.assertEqual(frappe.db.get_value('Contract',terms.contract,'contract_terms'),'Revised scope')
 
     def test_structured_venue_rejects_missing_city_and_invalid_map_points(self):
         from plus_point.locations import site_values
