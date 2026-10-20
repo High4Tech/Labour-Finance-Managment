@@ -2,6 +2,16 @@
 (() => {
     frappe.provide('plus_point');
     const esc=value=>frappe.utils.escape_html(String(value ?? ''));
+    async function request(method,args){
+        const response=await fetch('/api/method/plus_point.'+method,{method:'POST',headers:{'Content-Type':'application/json','X-Frappe-CSRF-Token':frappe.csrf_token},body:JSON.stringify(args)});
+        const data=await response.json();
+        if(!response.ok||data.exc_type){
+            let message=__('Could not complete the import. Review the file and try again.');
+            try{if(data._server_messages)message=JSON.parse(data._server_messages).map(v=>JSON.parse(v).message).join(' ');}catch{}
+            throw new Error(message.replace(/<[^>]*>/g,''));
+        }
+        return data.message;
+    }
     const kinds={employees:'Employees',work:'Approved daily work',milestones:'Fixed-price milestones',expenses:'Project expenses',invoices:'Client invoices',receipts:'Client receipts',worker_payments:'Worker payments'};
     const help={
         clients:'Add clients using customer_name and customer_type (Company or Individual). Leave customer blank to create one, or use a Customer ID to update it.',
@@ -32,7 +42,7 @@
     }
     plus_point.open_import=async(defaultCompany,onClose,defaultKind='employees',returnLabel='Return to records')=>{
         let preview=null,file=null,busy=false,finished=false,dialog;
-        const reset=()=>{if(busy || !dialog)return;preview=null;dialog.set_value('confirmed',0);dialog.set_df_property('confirmed','hidden',1);dialog.fields_dict.preview.$wrapper.empty();dialog.set_primary_action(__('Review file'),review);};
+        const reset=()=>{if(busy || !dialog)return;preview=null;feedback();dialog.set_value('confirmed',0);dialog.set_df_property('confirmed','hidden',1);dialog.fields_dict.preview.$wrapper.empty();dialog.set_primary_action(__('Review file'),review);updateReady();};
         const helpText=()=>{
             if(!dialog)return;
             reset();const kind=dialog.get_value('kind');
@@ -41,26 +51,40 @@
         };
         dialog=new frappe.ui.Dialog({title:__('Import business records'),static:true,size:'extra-large',fields:[
             {fieldtype:'HTML',fieldname:'intro',options:`<p>${esc(__('Download a template, fill it in Excel or Google Sheets, then upload CSV or XLSX. Review every row before saving. Up to 200 rows and 2 MB per file.'))}</p>`},
+            {fieldtype:'HTML',fieldname:'feedback'},
             {fieldtype:'Link',fieldname:'company',label:__('Your company'),options:'Company',reqd:1,default:defaultCompany,onchange:reset},
             {fieldtype:'Select',fieldname:'kind',label:__('What are you importing?'),options:Object.entries(kinds).map(([value,label])=>({value,label:__(label)})),default:defaultKind,reqd:1,onchange:helpText},
             {fieldtype:'HTML',fieldname:'template_actions',options:`<div class="pp-import-tools"><button class="btn btn-primary pp-download-template" type="button">${esc(__('Download template'))}</button><button class="btn btn-default pp-download-ids" type="button">${esc(__('Download reference IDs'))}</button></div>`},
             {fieldtype:'HTML',fieldname:'instructions'},
             {fieldtype:'HTML',fieldname:'upload',options:`<label class="pp-import-file">${esc(__('Choose CSV or Excel file'))}<input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}"></label><p class="text-muted">${esc(__('Google Sheets: File → Download → CSV or Microsoft Excel. Use one sheet, keep the headers, and replace formulas with values. Use company-currency amounts without separators or symbols.'))}</p>`},
             {fieldtype:'HTML',fieldname:'preview'},
-            {fieldtype:'Check',fieldname:'confirmed',label:__('I reviewed these records and want to save the employee changes or post these historical finances.'),hidden:1},
+            {fieldtype:'Check',fieldname:'confirmed',label:__('I reviewed these records and confirm the changes.'),hidden:1,onchange:()=>updateReady()},
         ],primary_action_label:__('Review file'),primary_action:()=>review(),secondary_action_label:__('Close'),secondary_action:()=>{if(!busy)dialog.hide();}});
+        function feedback(message=''){
+            if(!dialog)return;const box=dialog.fields_dict.feedback.$wrapper;
+            box.empty();if(message){$('<div class="pp-import-feedback" role="alert" tabindex="-1"></div>').text(message).appendTo(box).get(0).focus();box.get(0).scrollIntoView({block:'nearest'});}
+        }
+        function updateReady(){
+            if(!dialog)return;const waiting=!!(preview?.valid&&preview?.token&&!dialog.get_value('confirmed'));
+            dialog.get_primary_btn().prop('disabled',busy||waiting);
+            dialog.$wrapper.find('.pp-import-confirmation-hint').text(waiting?__('Tick the review box to enable import.'):__('Ready to import the reviewed records.'));
+        }
         function setBusy(value){
-            busy=value;dialog.get_primary_btn().prop('disabled',value);dialog.get_secondary_btn().prop('disabled',value);
+            busy=value;updateReady();dialog.get_secondary_btn().prop('disabled',value);
             dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids').prop('disabled',value);
         }
         async function review(){
-            if(busy)return;const values=dialog.get_values();if(!values)return;
-            if(!file){frappe.msgprint(__('Choose a CSV or XLSX file first.'));return;}
-            if(file.size>2*1024*1024){frappe.msgprint(__('Choose a file smaller than 2 MB.'));return;}
+            if(busy)return;feedback();const values=dialog.get_values(true);
+            if(!values?.company||!values?.kind){feedback(__('Choose your company and import type first.'));return;}
+            if(!file){feedback(__('Choose a CSV or XLSX file first.'));return;}
+            if(file.size>2*1024*1024){feedback(__('Choose a file smaller than 2 MB.'));return;}
             setBusy(true);
             try {
+                dialog.fields_dict.preview.$wrapper.empty();
+                dialog.set_df_property('confirmed','hidden',1);
+                await dialog.set_value('confirmed',0);
                 const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(file);});
-                preview=(await frappe.call({method:'plus_point.imports.preview',type:'POST',args:{kind:values.kind,company:values.company,filename:file.name,content}})).message;
+                preview=await request('imports.preview',{kind:values.kind,company:values.company,filename:file.name,content});
                 const counts=['Create','Update','Skip','Fix'].map(action=>`${preview.rows.filter(r=>r.action===action).length} ${__(action.toLowerCase())}`).join(' · ');
                 dialog.fields_dict.preview.$wrapper.html(`<section class="pp-import-preview" aria-live="polite"><h3>${esc(__(preview.valid?'Review before saving':'Fix the file before importing'))}</h3><p>${esc(counts)}.${!['employees','clients','vehicles','inventory_items','warehouses','event_sites','events'].includes(values.kind)?` ${esc(__(values.kind==='stock_balances'?'Counted stock value (not cash or the value change)':'New or updated amount'))}: <strong>${esc(preview.total)} ${esc(preview.currency)}</strong>`:''}</p>
                     ${(preview.budgets||[]).filter(b=>b.enabled).map(b=>`<div class="pp-condition pp-condition-${esc(b.level)}"><div><h4>${esc(b.title)}</h4><p>${esc(b.projected)} / ${esc(b.limit)} ${esc(b.currency)}. ${esc(__(b.blocked?'Spending limit exceeded. Reduce the rows or review the budget.':b.level==='warning'?'This import reaches at least 80% of the spending budget.':'Within the spending budget.'))}</p></div><a href="/desk/project/${encodeURIComponent(b.project)}" target="_blank" rel="noopener noreferrer">${esc(__('Review spending budget'))}</a></div>`).join('')}
@@ -68,34 +92,42 @@
                     ${preview.rows.some(r=>r.error)?`<button type="button" class="btn btn-default pp-download-errors">${esc(__('Download errors to fix'))}</button>`:''}
                     <p>${esc(__('Nothing has been saved yet. Final posting checks run again when you import. If any row fails, no rows from this file are saved.'))}</p></section>`);
                 dialog.fields_dict.preview.$wrapper.find('.pp-download-errors').on('click',()=>errorsFile(preview.rows));
-                if(preview.valid){dialog.set_df_property('confirmed','hidden',0);dialog.set_primary_action(__(values.kind==='employees'?'Import employees':'Import and post records'),apply);}
-            }finally{setBusy(false);}
+                if(preview.valid){
+                    await dialog.set_value('confirmed',0);
+                    dialog.set_df_property('confirmed','label',__(values.kind==='employees'?'I reviewed these {0} worker profiles and want to save them.':values.kind==='stock_balances'?'I reviewed these {0} stock counts and values and confirm the stock posting.':'I reviewed these {0} records and confirm the listed changes and financial postings.',[preview.rows.length]));
+                    dialog.set_df_property('confirmed','hidden',0);dialog.set_primary_action(__(values.kind==='employees'?'Import employees':'Import and post records'),apply);
+                }
+            }catch(error){preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file'),review);feedback(error.message||__('Could not read this file. Try again.'));}finally{setBusy(false);}
         }
         async function apply(){
             if(busy||!preview?.token)return;
-            if(!dialog.get_value('confirmed')){frappe.msgprint(__('Review the rows and tick the confirmation before importing.'));return;}
+            if(!dialog.get_value('confirmed')){updateReady();dialog.fields_dict.confirmed.$input?.trigger('focus');return;}
+            feedback();
             setBusy(true);
             try{
-                const result=(await frappe.call({method:'plus_point.imports.apply',type:'POST',args:{token:preview.token}})).message;
+                const result=await request('imports.apply',{token:preview.token});
                 preview=null;finished=true;
                 dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li>${esc(r.external_id)}: <a href="/desk/${frappe.router.slug(r.doctype)}/${encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
                 dialog.fields_dict.preview.$wrapper.find('.pp-import-done').on('click',()=>dialog.hide());
                 dialog.set_df_property('confirmed','hidden',1);
                 dialog.set_primary_action(__('Import another file'),()=>{finished=false;file=null;dialog.fields_dict.upload.$wrapper.find('input').val('');reset();});
                 plus_point.refresh_setup_banner?.();
-            }catch{
-                // Show native row details; force another preview after a stale or
-                // failed batch so a retry cannot hide a changed state.
+            }catch(error){
                 preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file again'),review);
+                feedback(error.message||__('Import could not finish. Review the file again before retrying.'));
             }finally{setBusy(false);}
         }
         dialog.$wrapper.on('hidden.bs.modal',()=>{if(onClose)onClose();else if(finished)plus_point.refresh_setup_banner?.();});
         dialog.$wrapper.addClass('pp-import-dialog');
+        // Keep consent beside the action, outside the long, scrolling preview.
+        const confirmation=dialog.fields_dict.confirmed.$wrapper.addClass('pp-import-confirmation');
+        confirmation.append('<p class="pp-import-confirmation-hint" role="status"></p>');
+        confirmation.prependTo(dialog.$wrapper.find('.modal-footer'));
         dialog.show();plus_point.enhance_selectors?.(dialog);helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
         upload.find('input').on('change',event=>{file=event.target.files[0];reset();});
-        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else frappe.msgprint(__('Choose your company first.'));});
-        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else frappe.msgprint(__('Choose your company first.'));});
-        if(!defaultCompany){const info=(await frappe.call({method:'plus_point.setup_flow.status'})).message;if(info.companies.length===1)dialog.set_value('company',info.companies[0].name);}
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else feedback(__('Choose your company first.'));});
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else feedback(__('Choose your company first.'));});
+        if(!defaultCompany){try{const info=await request('setup_flow.status',{});if(info.companies.length===1)dialog.set_value('company',info.companies[0].name);}catch(error){feedback(error.message);}}
     };
 })();

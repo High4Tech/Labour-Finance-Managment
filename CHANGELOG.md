@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — Import confirmation without stacked popups
+
+Moved the review checkbox into the persistent import footer beside the save action, used worker-specific confirmation wording and disabled posting until it is checked. Missing-file, file-validation and posting errors now render in the same window through a local response handler. Kept native review/apply posting, permissions, stable IDs and transaction checks intact. Added a real browser check that saves 15 disposable worker profiles and replays them without duplicates, including mobile footer visibility and inline failures.
+
 ## 2026-10-20 — Worker import names and editable onboarding
 
 Employee imports now accept new names in the legacy employee column, create native profiles with the supplied details, match unique existing names with birth-date validation and retain stable external-ID replay/update protection. Expanded profile templates include contact/address/emergency/passport details; older CSV/XLSX templates remain supported without clearing omitted fields. Completed onboarding rows are clickable, saved clients/venues/agreements load for edits in place, country stays editable while historical monetary currency remains protected, and record pickers open without clearing the current value and search as you type. Import-close refreshes keep draft values.

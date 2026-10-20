@@ -38,6 +38,14 @@ def browser_fixture(action,run_id):
     projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
     if frappe.db.exists('GL Entry',{'company':prefix}) or (projects and frappe.db.exists('PP Work Entry',{'project':['in',projects]})):
         raise RuntimeError('Fixture has recorded history; automatic cleanup refused')
+    receipts=frappe.get_all('PP Import Record',filters={'company':prefix},fields=['name','kind','external_id','document_type','document_name'])
+    for receipt in receipts:
+        if (receipt.kind!='employees' or receipt.document_type!='Employee'
+                or not re.fullmatch('UX-'+run_id+r'-\d+',receipt.external_id)
+                or frappe.db.get_value('Employee',receipt.document_name,'company')!=prefix):
+            raise RuntimeError('Unrecognized imported fixture; automatic cleanup refused')
+    # Exact disposable, nonfinancial employee receipts only. Production receipts remain immutable.
+    for receipt in receipts:frappe.db.delete('PP Import Record',{'name':receipt.name})
     if projects:
         for doctype in ('PP Vehicle Booking','PP Equipment Booking','PP Assignment','PP Event Plan','PP Contract Terms','PP Site','Project'):
             filters={'name':['in',projects]} if doctype=='Project' else {'project':['in',projects]}
