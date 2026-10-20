@@ -37,32 +37,34 @@ def project_summary(project):
     result["gross_contribution_before_other_costs"] = str(money(total_revenue-total_wages))
     project_doc = frappe.get_doc('Project', project)
     invoices = frappe.get_list('Sales Invoice', filters=dict(project=project, company=project_doc.company, docstatus=1),
-        fields=['name', 'currency', 'base_net_total', 'base_grand_total', 'outstanding_amount', 'conversion_rate'], limit_page_length=0)
+        fields=['name', 'currency','party_account_currency', 'base_net_total', 'base_grand_total', 'outstanding_amount', 'conversion_rate'], limit_page_length=0)
     settlements = frappe.get_list('PP Wage Settlement', filters=dict(project=project, docstatus=1), fields=['amount'], limit_page_length=0)
     paid = sum((money(row.amount) for row in settlements), Decimal(0))
     currency = frappe.db.get_value('Company', project_doc.company, 'default_currency')
     payments = frappe.get_list('Payment Entry', filters=dict(company=project_doc.company, docstatus=1,
-        party_type='Customer', paid_from_account_currency=currency, paid_to_account_currency=currency),
-        fields=['name', 'payment_type'], limit_page_length=0)
+        party_type='Customer',payment_type=['in',['Receive','Pay']]),
+        fields=['name', 'payment_type','source_exchange_rate','target_exchange_rate'], limit_page_length=0)
     payment_sign = {row.name: (1 if row.payment_type == 'Receive' else -1) for row in payments}
-    invoice_names = [row.name for row in invoices if row.currency == currency]
+    payment_rate = {row.name:Decimal(str(row.source_exchange_rate if row.payment_type=='Receive' else row.target_exchange_rate)) for row in payments}
+    invoice_names = [row.name for row in invoices]
     references = frappe.get_all('Payment Entry Reference', filters=dict(parent=['in', list(payment_sign)],
         reference_doctype='Sales Invoice', reference_name=['in', invoice_names]),
         fields=['parent', 'allocated_amount'], limit_page_length=0) if payment_sign and invoice_names else []
-    cash = sum((money(row.allocated_amount) * payment_sign[row.parent] for row in references), Decimal(0))
+    cash = sum((money(Decimal(str(row.allocated_amount))*payment_rate[row.parent]) * payment_sign[row.parent] for row in references), Decimal(0))
     # Native project purchase and expense-claim totals exclude this operational wage ledger.
     from plus_point.budget import costs
     tracked_costs = costs(project)
     other_costs = tracked_costs['purchases'] + tracked_costs['claims']
+    from plus_point.billing import outstanding_base
     result.update(
         currency=frappe.db.get_value('Company', project_doc.company, 'default_currency'),
         fixed_contract_value=str(money(sum((money(t.fixed_amount) for t in terms), Decimal(0)))),
         invoiced_net=str(money(sum((money(i.base_net_total) for i in invoices), Decimal(0)))),
         invoiced_gross=str(money(sum((money(i.base_grand_total) for i in invoices), Decimal(0)))),
         cash_collected_gross=str(money(cash)),
-        cash_scope='Submitted native Payment Entry allocations in company currency, net of refunds; excludes unallocated receipts and FX receipts',
-        settled_against_invoices_gross=str(money(sum((money(i.base_grand_total) - money(Decimal(str(i.outstanding_amount)) * Decimal(str(i.conversion_rate))) for i in invoices), Decimal(0)))),
-        client_outstanding_gross=str(money(sum((money(Decimal(str(i.outstanding_amount)) * Decimal(str(i.conversion_rate))) for i in invoices), Decimal(0)))),
+        cash_scope='Submitted native Payment Entry allocations converted at their party-account exchange rate, net of refunds; excludes unallocated receipts',
+        settled_against_invoices_gross=str(money(sum((money(i.base_grand_total) - outstanding_base(i,currency) for i in invoices), Decimal(0)))),
+        client_outstanding_gross=str(money(sum((outstanding_base(i,currency) for i in invoices), Decimal(0)))),
         wages_paid=str(money(paid)), wages_outstanding=str(money(total_wages - paid)),
         other_project_costs=str(money(other_costs)),
         operational_profit=str(money(total_revenue - total_wages - other_costs)),

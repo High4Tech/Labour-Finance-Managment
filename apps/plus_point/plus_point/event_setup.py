@@ -12,7 +12,7 @@ STEPS=['company','client','event','terms','workers','plan','vehicle','inventory'
 def companies():
     from plus_point import workspace
     filters={} if workspace.fixture_context() else {'name':workspace.company() or ''}
-    return frappe.get_list('Company',filters=filters,fields=['name','company_name','default_currency','country','abbr'],order_by='name',limit_page_length=0)
+    return frappe.get_list('Company',filters=filters,fields=['name','company_name','default_currency','pp_invoice_currency','country','abbr'],order_by='name',limit_page_length=0)
 
 
 def established(company):
@@ -129,15 +129,16 @@ def advance(step,values=None):
                 doc=linked('Company',selected);company=doc.name
                 if values.country:
                     from plus_point.locations import set_company_country
-                    set_company_country(doc,values.country)
+                    set_company_country(doc,values.country,values.currency)
             else:
                 from plus_point.locations import country_defaults
                 defaults=country_defaults(values.country)
-                frappe.db.set_value('Currency',defaults['currency'],'enabled',1)
+                currency=values.currency or defaults['currency'];linked('Currency',currency)
+                frappe.db.set_value('Currency',currency,'enabled',1)
                 title=str(values.company_name or '').strip()
                 if not title:frappe.throw('Enter your business name')
                 abbr=str(values.abbr or '').strip() or ''.join(word[0] for word in title.split())[:5].upper()
-                company=insert('Company',company_name=title,abbr=abbr,country=values.country,default_currency=defaults['currency']).name
+                company=insert('Company',company_name=title,abbr=abbr,country=values.country,default_currency=currency,pp_invoice_currency=currency).name
             if saved.get('company') and saved['company']!=company:saved=dict(step='company',required=not established(company))
             saved['company']=company;frappe.defaults.set_user_default('Company',company)
         else:

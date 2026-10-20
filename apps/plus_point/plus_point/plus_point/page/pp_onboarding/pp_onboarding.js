@@ -5,7 +5,8 @@ frappe.pages['pp-onboarding'].on_page_load=function(wrapper){
 frappe.pages['pp-onboarding'].on_page_show=async function(wrapper){
  if(frappe.boot.plus_point?.is_platform){frappe.set_route('/desk/high4tech');return;}
  if(wrapper.pp_loading_setup)return;wrapper.pp_loading_setup=true;
+ wrapper.pp_onboarding_root.dataset.ready='false';wrapper.pp_onboarding_root.inert=true;
  try{await plus_point.setup_rpc('plus_point.event_setup.control',{action:'resume'});await plus_point.load_onboarding(wrapper);}
  catch{await plus_point.load_onboarding(wrapper);}
- finally{wrapper.pp_loading_setup=false;}
+ finally{wrapper.pp_loading_setup=false;wrapper.pp_onboarding_root.inert=false;}
 };

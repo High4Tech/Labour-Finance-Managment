@@ -18,6 +18,10 @@ def save(values,customer=None):
     data=address(values)
     if len(name)>140 or len(person)>140 or len(phone)>40:frappe.throw('Check the client name and contact lengths')
     customer=linked('Customer',customer) if customer else frappe.new_doc('Customer')
+    from plus_point.locations import country_defaults
+    currency=values.get('default_currency') or customer.default_currency or country_defaults(data['country'])['currency']
+    linked('Currency',currency);frappe.db.set_value('Currency',currency,'enabled',1)
+    customer.default_currency=currency
     customer.update(dict(customer_name=name,customer_type=values.get('customer_type') or 'Company',customer_group=customer.customer_group or 'Commercial',territory=customer.territory or 'All Territories'))
     customer.save()
     def profile(doctype,previous):
@@ -46,7 +50,7 @@ def save(values,customer=None):
 @frappe.whitelist()
 def details(customer):
     require_customer();doc=linked('Customer',customer)
-    result=dict(name=doc.name,title=doc.customer_name,customer_name=doc.customer_name,customer_type=doc.customer_type,
+    result=dict(name=doc.name,title=doc.customer_name,customer_name=doc.customer_name,customer_type=doc.customer_type,default_currency=doc.default_currency or '',
         email='',phone='',contact_name='',address='',country='',city='',state='',address_line1='',address_line2='',postal_code='')
     if doc.customer_primary_contact:
         c=linked('Contact',doc.customer_primary_contact)

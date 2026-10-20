@@ -79,3 +79,9 @@ Run scripts/browser-import-confirmation.cjs against the guarded QA fixture. Veri
 ## Shared crew selection
 
 Run plus_point.testing.run_events (35 cases) for explicit pool persistence, selected-only shortages, overlap/employment exclusions, guest/company/duplicate/inactive guards, stale booking rechecks and atomic manual multi-worker allocations. Run browser-inline-onboarding.cjs for three selected workers, inline additions, tag removal/reselection, search, mobile bounds and exact selected allocations on completion. Run browser-crew-selection.cjs for the ordinary event-plan checklist, import return without stacked dialogs, selected-only assignment, normal Worker assignments primary action, overlapping-project exclusions and mobile bulk save. Disposable QA fixtures restore exact context and records; no customer crew data is changed.
+
+## Editable country and invoice currencies
+
+Run `plus_point.testing.run_currency_billing` (9 cases) on a test-enabled customer site. Verify company/client overrides, protected accounting history, native USD daily and fixed invoices, GL posting, USD bank receipt, converted cash/outstanding, invalid rates/amount tampering and guest rejection. All test financial records roll back. Also run the 35 event and 65 operations/import tests plus the native platform finance check.
+
+Run `scripts/browser-currency-preferences.cjs` for Saudi → SAR, UAE → AED, enabled overrides, retained USD client choice, editable invoice currency/rate, inline missing-field feedback and company preference changes after an agreement without rewriting the base. The browser quote is deterministic; verify the public provider separately with a read-only `billing.quote` call. Run `browser-inline-onboarding.cjs` for the full setup/import/crew/mobile journey. Browser cleanup restores exact disposable QA records, all currency enablement flags and workspace settings.

@@ -39,8 +39,10 @@ class PPMilestone(Document):
             project = frappe.get_doc("Project", terms.project)
             if invoice.customer != project.customer:
                 frappe.throw("Linked invoice must belong to project customer")
-            if invoice.docstatus != 1 or invoice.project != terms.project or invoice.currency != terms.currency:
-                frappe.throw("Milestone invoice must be submitted and match the project and currency")
+            if invoice.docstatus != 1 or invoice.project != terms.project or invoice.company != project.company:
+                frappe.throw("Milestone invoice must be submitted and match the project and company")
+            if invoice.currency!=terms.currency and not any(row.get('pp_source_type')=='PP Milestone' and row.get('pp_source_name')==self.name for row in invoice.items):
+                frappe.throw('A foreign-currency milestone invoice must link this approved milestone as its source.')
         if self.status in {"Approved", "Invoiced"}:
             others = frappe.db.sql('''SELECT amount FROM `tabPP Milestone`
                 WHERE contract_terms=%s AND status IN ('Approved', 'Invoiced')

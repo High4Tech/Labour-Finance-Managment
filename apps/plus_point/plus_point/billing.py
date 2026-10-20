@@ -3,10 +3,56 @@ from decimal import Decimal
 import frappe
 from frappe.utils import getdate
 from plus_point.finance import money
+from plus_point.setup_flow import require_customer,linked
+
+
+def default_currency(company,customer=None):
+    return (frappe.db.get_value('Customer',customer,'default_currency') if customer else None) or frappe.db.get_value('Company',company,'pp_invoice_currency') or frappe.db.get_value('Company',company,'default_currency')
+
+
+@frappe.whitelist()
+def invoice_options(contract_terms):
+    require_customer();terms=linked('PP Contract Terms',contract_terms);project=linked('Project',terms.project)
+    customer=frappe.db.get_value('Contract',terms.contract,'party_name')
+    return dict(currency=default_currency(project.company,customer),base_currency=terms.currency,company=project.company)
+
+
+@frappe.whitelist()
+def quote(company,currency):
+    require_customer();doc=linked('Company',company);linked('Currency',currency)
+    if currency==doc.default_currency:return dict(rate='1',base_currency=doc.default_currency,currency=currency,as_of='')
+    from plus_point.exchange import _snapshot,RateUnavailable
+    try:
+        data=_snapshot();base=Decimal(data['rates'].get(doc.default_currency,'0'));target=Decimal(data['rates'].get(currency,'0'))
+        if not base.is_finite() or not target.is_finite() or base<=0 or target<=0:raise RateUnavailable()
+    except RateUnavailable:frappe.throw('Current exchange rates are unavailable. Enter the agreed exchange rate before creating the invoice.')
+    return dict(rate=str(base/target),base_currency=doc.default_currency,currency=currency,as_of=data['updated'])
+
+
+def outstanding_base(invoice,base_currency):
+    value=Decimal(str(invoice.outstanding_amount or 0))
+    return money(value if invoice.get('party_account_currency')==base_currency else value*Decimal(str(invoice.conversion_rate or 1)))
+
+
+def receivable_account(company,currency):
+    """Native receivable ledgers have one currency; never relabel an existing ledger."""
+    doc=frappe.get_doc('Company',company)
+    base=frappe.get_doc('Account',doc.default_receivable_account)
+    if base.account_currency==currency:return base.name
+    frappe.db.get_value('Company',company,'name',for_update=True)
+    title=f'Client receivables {currency}'
+    name=frappe.db.get_value('Account',{'company':company,'account_name':title},'name')
+    if name:
+        account=frappe.get_doc('Account',name)
+        if account.account_currency!=currency or account.account_type!='Receivable' or account.is_group or account.disabled:
+            frappe.throw('The client currency account needs review in Accounts before invoicing.')
+        return account.name
+    return frappe.get_doc(dict(doctype='Account',account_name=title,company=company,parent_account=base.parent_account,
+        account_currency=currency,account_type='Receivable',is_group=0)).insert().name
 
 
 @frappe.whitelist(methods=['POST'])
-def create_invoice(contract_terms, item_code, from_date=None, to_date=None):
+def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invoice_currency=None, exchange_rate=None):
     frappe.has_permission('Sales Invoice', 'create', throw=True)
     terms = frappe.get_doc('PP Contract Terms', contract_terms)
     terms.check_permission('read')
@@ -16,6 +62,12 @@ def create_invoice(contract_terms, item_code, from_date=None, to_date=None):
     project = frappe.get_doc('Project', terms.project)
     project.check_permission('read')
     customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
+    currency=invoice_currency or default_currency(project.company,customer)
+    linked('Currency',currency);frappe.db.set_value('Currency',currency,'enabled',1)
+    try:rate=Decimal(str(exchange_rate)) if exchange_rate not in (None,'') else Decimal(quote(project.company,currency)['rate'])
+    except (ValueError,ArithmeticError):frappe.throw('Enter a positive exchange rate.')
+    if not rate.is_finite() or rate<=0:frappe.throw('Enter a positive exchange rate.')
+    if currency==terms.currency:rate=Decimal(1)
     doctype = 'PP Work Entry' if terms.billing_model == 'Daily' else 'PP Milestone'
     filters = dict(contract_terms=terms.name, status='Approved', sales_invoice=['is', 'not set'])
     date_field = 'work_date' if doctype == 'PP Work Entry' else 'due_date'
@@ -33,8 +85,8 @@ def create_invoice(contract_terms, item_code, from_date=None, to_date=None):
     if not sources:
         frappe.throw('No approved unbilled work or milestones in this period')
     invoice = frappe.get_doc(dict(doctype='Sales Invoice', customer=customer,
-        company=project.company, project=project.name, currency=terms.currency,
-        items=[dict(item_code=item_code, qty=1, rate=float(money(row[amount_field])),
+        company=project.company, project=project.name, currency=currency,conversion_rate=float(rate),debit_to=receivable_account(project.company,currency),
+        items=[dict(item_code=item_code, qty=1, rate=float(money(Decimal(str(row[amount_field]))/rate)),
             project=project.name, pp_source_type=doctype, pp_source_name=row.name)
             for row in sources]))
     invoice.insert()
@@ -66,10 +118,13 @@ def validate_invoice(doc, method=None):
         customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
         expected = source.billable_amount if key[0] == 'PP Work Entry' else source.amount
         if (doc.project != project.name or row.project != project.name or doc.company != project.company
-                or doc.currency != terms.currency or doc.customer != customer or doc.is_return):
-            frappe.throw('Invoice must match the source customer, project, company and currency')
-        if money(row.amount) != money(expected) or money(row.net_amount) != money(expected):
-            frappe.throw('Invoice source amount must equal its approved value without discounts')
+                or doc.customer != customer or doc.is_return):
+            frappe.throw('Invoice must match the source customer, project and company')
+        rate=Decimal(str(doc.conversion_rate or 0))
+        if not rate.is_finite() or rate<=0 or (doc.currency==terms.currency and rate!=1):frappe.throw('Enter a valid invoice exchange rate.')
+        converted=money(Decimal(str(expected))/rate)
+        if money(row.amount) != converted or money(row.net_amount) != converted:
+            frappe.throw('Invoice source amount must equal its approved value converted at the invoice exchange rate, without discounts')
     if not doc.is_new():
         old = doc.get_doc_before_save()
         if old:

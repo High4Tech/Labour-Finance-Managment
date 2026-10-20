@@ -8,7 +8,7 @@ Start with [the user guide](USER_GUIDE.md) for which app to use and the event-or
 
 **Arrange sections** in the sidebar menu saves your preferred section order for your login. Section headings open live summaries and work-list counts; charts stay on the main overview. Client and company forms show approved work calendars on their front page.
 
-**Onboarding** now lives inside the dashboard with a sidebar entry and persistent Skip/Resume. One paid workspace has one own-business profile, with clients and events underneath it. Country selects currency automatically; clients include contact/address details, venues support a map pin, transport fields follow purpose and equipment can record quantities with an optional unit value.
+**Onboarding** now lives inside the dashboard with a sidebar entry and persistent Skip/Resume. One paid workspace has one own-business profile, with clients and events underneath it. Country suggests an editable currency, including SAR. Clients can use another invoice currency, such as USD for a UAE client; new invoices convert approved base amounts at a published or agreed rate. Existing accounting history keeps its original currency. Clients include contact/address details, venues support a map pin, transport fields follow purpose and equipment can record quantities with an optional unit value.
 
 **Display currency** converts overview money figures at the latest published daily exchange rate and shows its source/update time. The app keeps company books and approval limits in their original currency. The overview inherits the existing Desk theme and keeps the animated card/chart presentation.
 

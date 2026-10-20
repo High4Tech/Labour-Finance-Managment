@@ -148,14 +148,16 @@ def _platform(company):
     start = getdate(today()).replace(day=1)
     months = [str(add_months(start, offset))[:7] for offset in range(-5, 1)]
     invoices = frappe.get_list('Sales Invoice', filters={'company': company, 'docstatus': 1},
-        fields=['posting_date', 'base_grand_total', 'outstanding_amount', 'conversion_rate'], limit_page_length=0)
+        fields=['posting_date', 'base_grand_total', 'outstanding_amount', 'conversion_rate','party_account_currency'], limit_page_length=0)
     payments = frappe.get_list('Payment Entry', filters={'company': company, 'docstatus': 1, 'party_type': 'Customer',
         'posting_date': ['between', [months[0]+'-01', today()]]},
         fields=['posting_date', 'payment_type', 'base_received_amount', 'base_paid_amount'], limit_page_length=0)
     billed, cash = defaultdict(Decimal), defaultdict(Decimal)
     balance = Decimal(0)
+    from plus_point.billing import outstanding_base
+    base_currency=frappe.db.get_value('Company',company,'default_currency')
     for row in invoices:
-        balance += max(Decimal(0), Decimal(str(row.outstanding_amount)) * Decimal(str(row.conversion_rate)))
+        balance += max(Decimal(0), outstanding_base(row,base_currency))
         if getdate(row.posting_date) <= getdate(today()):
             billed[str(row.posting_date)[:7]] += money(row.base_grand_total)
     for row in payments:

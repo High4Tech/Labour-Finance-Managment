@@ -22,7 +22,7 @@ def browser_fixture(action,run_id):
         if backup.exists() or frappe.db.exists('Company',prefix):raise RuntimeError('Restore this run first')
         from plus_point.testing import _finish_demo_setup
         _finish_demo_setup()
-        saved=dict(defaults={key:frappe.defaults.get_user_default(key) for key in ('Company',SELECTED)},entitlement=frappe.conf.get('pp_entitlement'),workspace=frappe.db.get_single_value('PP Workspace Settings','company'),draft=frappe.db.get_single_value('PP Workspace Settings','onboarding_state'),currencies={c:frappe.db.get_value('Currency',c,'enabled') for c in ('PKR','SAR')})
+        saved=dict(defaults={key:frappe.defaults.get_user_default(key) for key in ('Company',SELECTED)},entitlement=frappe.conf.get('pp_entitlement'),workspace=frappe.db.get_single_value('PP Workspace Settings','company'),draft=frappe.db.get_single_value('PP Workspace Settings','onboarding_state'),currencies={r.name:r.enabled for r in frappe.get_all('Currency',fields=['name','enabled'])})
         backup.parent.mkdir(parents=True,exist_ok=True);backup.write_text(json.dumps(saved))
         update_site_config('pp_entitlement',dict(valid_until='2099-12-31',limits={}))
         frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}

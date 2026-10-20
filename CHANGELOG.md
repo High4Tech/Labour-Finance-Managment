@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — Editable country and invoice currencies
+
+Country now suggests an enabled searchable currency selector, including SAR, while allowing manual overrides. Company invoice preferences and client currencies persist separately from protected historical accounting currency. Invoice preparation converts approved base amounts into the selected invoice currency using a current published or agreed rate, with native currency-specific receivables and receipts. Corrected project/platform balance conversion and project cash allocation for foreign-currency invoices. Invoice rate lookup and missing-field errors stay within the form. Existing financial records are preserved.
+
 ## 2026-10-20 — Shared available-crew selection
 
 Replaced onboarding’s single worker selector with a searchable date-aware checklist and removable tags. The same picker supports event-plan crew allocation and ordinary multi-worker assignments from worker/site/allocation screens, with inline worker creation and refreshed imports. Persisted the explicit pool on event plans so unchecked workers cannot fill shortages. Added locked availability checks for overlapping bookings and employment dates, atomic bulk allocation and protected allocated-plan selection. Existing profile, attendance and financial history are preserved.

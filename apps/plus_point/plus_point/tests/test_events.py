@@ -272,16 +272,16 @@ class EventTests(unittest.TestCase):
         self.assertEqual(Decimal(events.stock_available(state['item'],state['warehouse'],state['start_date'],state['end_date'])['available']),3)
         self.assertEqual(frappe.db.get_value('Stock Reconciliation Item',{'item_code':state['item']},'allow_zero_valuation_rate'),1)
 
-    def test_country_sets_currency_including_sar_and_ignores_spoofed_currency(self):
+    def test_country_sets_currency_including_sar_and_accepts_manual_override(self):
         from plus_point.locations import country_defaults
         for country,currency in [('Saudi Arabia','SAR'),('Pakistan','PKR'),('United Arab Emirates','AED'),('United States','USD')]:
             self.assertEqual(country_defaults(country)['currency'],currency)
         company=self.f.company.name;frappe.defaults.set_user_default(event_setup.SELECTED,company)
         frappe.db.set_value('Company',company,'pp_event_setup_state',json.dumps(dict(company=company,step='company',required=True)))
         frappe.db.set_value('Currency','SAR','enabled',0)
-        state=event_setup.advance('company',dict(company_name='Saudi events QA '+uuid.uuid4().hex[:5],abbr=uuid.uuid4().hex[:5],country='Saudi Arabia',currency='PKR'))
-        self.assertEqual(frappe.db.get_value('Company',state['company'],'default_currency'),'SAR')
-        self.assertEqual(frappe.db.get_value('Currency','SAR','enabled'),1)
+        state=event_setup.advance('company',dict(company_name='Saudi events QA '+uuid.uuid4().hex[:5],abbr=uuid.uuid4().hex[:5],country='Saudi Arabia',currency='USD'))
+        self.assertEqual(frappe.db.get_value('Company',state['company'],'default_currency'),'USD')
+        self.assertEqual(frappe.db.get_value('Currency','USD','enabled'),1)
 
     def test_new_client_requires_details_and_saves_native_contact_address(self):
         from plus_point.clients import create,details

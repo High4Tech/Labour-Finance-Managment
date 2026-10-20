@@ -22,15 +22,16 @@ def currency_locked(company):
     return frappe.get_doc('Company',company).check_if_transactions_exist()
 
 
-def set_company_country(doc,country):
+def set_company_country(doc,country,currency=None):
     defaults=country_defaults(country)
+    chosen=currency or defaults['currency'];linked('Currency',chosen)
+    frappe.db.set_value('Currency',chosen,'enabled',1)
+    doc.pp_invoice_currency=chosen
     if currency_locked(doc.name):
         # A business address can be corrected without re-denominating existing money.
-        if country!=doc.country:
-            doc.country=country;doc.save()
+        doc.country=country;doc.save()
         return
-    old=doc.default_currency;new=defaults['currency']
-    if old==new and country==doc.country:return
+    old=doc.default_currency;new=chosen
     frappe.db.set_value('Currency',new,'enabled',1)
     if old!=new:
         # Native Account validation permits a currency change only before GL.

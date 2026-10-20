@@ -25,7 +25,7 @@ async function journey({page,data,run,settings,out,errors}){
  assert.equal(await value('country'),'Saudi Arabia');await root.locator('[data-fieldname=country] .awesomplete [role=option]').first().waitFor();
  await page.keyboard.press('Escape');
  await values({country:'Saudi Arabia'});await page.waitForFunction(()=>frappe.container.page.pp_setup_form.get_value('currency')==='SAR');
- assert.equal(await page.evaluate(()=>frappe.container.page.pp_setup_form.fields_dict.currency.df.read_only),1);
+ assert.equal(await page.evaluate(()=>frappe.container.page.pp_setup_form.fields_dict.currency.df.read_only||0),0);
  await root.getByRole('button',{name:'Skip onboarding',exact:true}).click();await page.locator('.pp-dashboard[data-ready=true]').waitFor({timeout:60000});
  assert((await rpc('plus_point.event_setup.status')).state.skipped);assert.equal(await page.evaluate(()=>document.body.classList.contains('pp-onboarding-active')),false);
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('.pp-dashboard[data-ready=true]').waitFor();
@@ -69,7 +69,7 @@ async function journey({page,data,run,settings,out,errors}){
  await values({agreement:'Updated QA client agreement'});await save();await step('workers');
  assert.equal((await rpc('plus_point.event_setup.status')).state.contract_terms,originalTerms);
  await root.locator('.pp-onboarding-step[data-step=company]').click();await step('company');
- assert.equal(await countryInput.isEditable(),true);await values({country:'United Arab Emirates'});assert.equal(await value('currency'),'SAR');
+ assert.equal(await countryInput.isEditable(),true);await values({country:'United Arab Emirates'});await page.waitForFunction(()=>frappe.container.page.pp_setup_form.get_value('currency')==='AED');await values({currency:'USD'});assert.equal(await value('currency'),'USD');
  await save();await step('client');await root.locator('.pp-onboarding-step[data-step=workers]').click();await step('workers');
  // The user's original template, with names in employee, previews new worker profiles.
  await root.locator('.pp-crew-picker[data-ready=true]').waitFor();await root.getByRole('button',{name:'Import workers',exact:true}).click();
