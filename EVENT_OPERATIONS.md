@@ -1,6 +1,6 @@
 # Event organizer workflow
 
-PLUS POINT is the customer company's event operations workspace. High4Tech manages software customers, pricing, approvals, account support and software finances on its separate platform site. Plan selection, signup, payment and approval remain a **demo**: they do not activate a new tenant or charge a card.
+PLUS POINT is the customer company's event operations workspace. High4Tech manages software customers, pricing, approvals, account support and software finances on its separate platform site. Payment remains **simulated**. Approval now creates a separate local company site/database and owner login. A private native password setup link opens the empty workspace and its company onboarding; no existing demo workers or projects are copied. No charge or email is sent.
 
 ## Start a company
 

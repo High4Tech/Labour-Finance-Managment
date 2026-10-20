@@ -1,4 +1,4 @@
-/* Actual demo acquisition/review and personal drag ordering; exact fixtures restored. */
+/* Public signup rejection and personal drag ordering; no disposable tenant is provisioned. */
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{execFileSync}=require('node:child_process');
 (async()=>{
  assert(process.env.PP_BROWSER_PASSWORD&&process.env.PP_PLATFORM_PASSWORD,'Supply local dummy passwords through environment variables');
@@ -38,12 +38,12 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),cryp
   assert((await rpc(admin,'plus_point.dashboard.overview')).conditions.some(r=>r.title==='Demo signups await approval'));
   await admin.locator('.body-sidebar').getByRole('link',{name:'Signup approvals',exact:true}).click();
   await admin.getByRole('link',{name:'QA Signup Browser',exact:true}).click();
-  await admin.getByRole('button',{name:'Approve demo signup',exact:true}).click();
+  await admin.getByRole('button',{name:'Reject signup',exact:true}).click();
   await publicPage.getByRole('button',{name:'Check approval status',exact:true}).click();
-  await publicPage.getByRole('heading',{name:'Demo signup approved',exact:true}).waitFor();
+  await publicPage.getByRole('heading',{name:'Signup not approved',exact:true}).waitFor();
   await publicPage.screenshot({path:'.local/qa/signup-approved.png',fullPage:true});
   await publicPage.setViewportSize({width:390,height:844});assert(await publicPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  console.log('PASS login signup CTA, editable native-plan pricing, guest registration, demo payment, reload/resume, High4Tech approval alert/form, token-protected status and mobile');
+  console.log('PASS login signup CTA, native-plan pricing, guest registration, demo payment, reload/resume, High4Tech rejection form, token-protected status and mobile');
   await login(customer,'demo.localhost',process.env.PP_BROWSER_PASSWORD,'plus-point');await collapse(customer);
   const initial=await customer.evaluate(()=>frappe.boot.plus_point.navigation.groups);
   const source=initial[1],target=initial[0];

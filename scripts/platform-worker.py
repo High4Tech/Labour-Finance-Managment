@@ -20,8 +20,10 @@ def main():
                     'plus_point.platform.export_all'], cwd=BENCH, text=True, capture_output=True, check=True)
                 for entry in json.loads(result.stdout):
                     # provision.py re-reads authoritative tenant/subscription state itself.
-                    subprocess.run(['python', '/workspace/scripts/provision.py', '--tenant', entry['site']],
-                        cwd=BENCH, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    provisioned=subprocess.run(['python', '/workspace/scripts/provision.py', '--tenant', entry['site']],
+                        cwd=BENCH, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    if provisioned.returncode:
+                        print('A local workspace needs operator attention; continuing other companies.',flush=True)
         except Exception as error:
             print(f'Platform sync needs operator attention ({type(error).__name__})', flush=True)
         time.sleep(60)

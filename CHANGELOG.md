@@ -1,5 +1,10 @@
 # Development changelog
 
+## 2026-10-20 — Approved company access
+
+Approval now provisions a separate empty local company workspace and owner login instead of ending at a demo record. Signup accepts an optional company login ID, uses the email for login and offers private native password setup after approval. High4Tech has progress, retry, login and expiring-link refresh actions, including for older approved requests. Initial passwords are random; links are encrypted, role/token gated and consumed natively. Local trial software invoicing is blocked while normal subscription billing remains native. Payment stays simulated and no email is sent. New company onboarding uses the registered business name without copying demo data.
+
+
 ## 2026-10-18 — Event organizer operations
 
 - Add saved event plans, venue phases/daily crew requirements, availability previews, atomic crew allocation and exact-date accessible calendars.

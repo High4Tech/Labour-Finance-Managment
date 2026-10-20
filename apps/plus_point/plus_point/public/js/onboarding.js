@@ -505,7 +505,7 @@
             'Company':['High4Tech company','Your software-selling business and its accounting records.',[]],
             'User':['Your admin profile','Your High4Tech login. To help a customer sign in, open their Customer account instead.',[]],
             'PP Support Request':['Customer support','The background worker updates the registered customer owner login. View support result after completion. Password-reset links are available here for 20 minutes; native expiry also applies.', ['tenant','operation','new_username','status']],
-            'PP Signup Request':['Signup approvals','Review demo payments and approve or reject signup requests. No real charge, email or customer login is created by this demo.',[]],
+            'PP Signup Request':['Signup approvals','Review simulated payments and approve a fresh company workspace. View Company login to provide its private password setup link. No payment is collected or email sent.',[]],
         });
         // Filter native command/search suggestions without changing backend roles
         // or the registries that native route resolution and forms depend on.

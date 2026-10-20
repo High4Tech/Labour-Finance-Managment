@@ -1,6 +1,7 @@
-"""Local demo acquisition flow. No payments, passwords or tenant access are created."""
+"""Local demo acquisition flow. Simulated payment with real approved local company access."""
 import hashlib
 import secrets
+import re
 
 import frappe
 from frappe.rate_limiter import rate_limit
@@ -21,8 +22,9 @@ def plans():
 
 
 def public_state(doc):
+    from plus_point.activation import state
     return dict(reference=doc.name,business=doc.business_name,plan=doc.plan,amount=str(doc.amount),currency=doc.currency,
-        interval=doc.interval,status=doc.review_status,payment=doc.payment_status,demo=True)
+        interval=doc.interval,status=doc.review_status,payment=doc.payment_status,demo=True,**state(doc,True))
 
 
 def request_for_token(reference, token):
@@ -40,7 +42,7 @@ def request_for_token(reference, token):
 
 @frappe.whitelist(allow_guest=True,methods=['POST'])
 @rate_limit(limit=5,seconds=60)
-def register(contact_name,business_name,email,plan,website=''):
+def register(contact_name,business_name,email,plan,website='',login_username=''):
     require_demo()
     if website:
         frappe.throw('Unable to register')
@@ -53,9 +55,11 @@ def register(contact_name,business_name,email,plan,website=''):
     selected=next((row for row in plans() if row['name']==plan),None)
     if not selected:
         frappe.throw('Choose a currently published plan')
+    if login_username and (not isinstance(login_username,str) or not re.fullmatch(r'[A-Za-z0-9._-]{3,64}',login_username) or login_username.casefold() in ('administrator','guest')):
+        frappe.throw('Company login ID must use 3–64 letters, numbers, dots, underscores or hyphens; system names are reserved')
     token=secrets.token_hex(32)
     doc=frappe.get_doc(dict(doctype='PP Signup Request',**values,plan=selected['name'],amount=selected['amount'],
-        currency=selected['currency'],interval=selected['interval'],token_hash=hashlib.sha256(token.encode()).hexdigest()))
+        currency=selected['currency'],interval=selected['interval'],login_username=login_username,token_hash=hashlib.sha256(token.encode()).hexdigest()))
     doc.flags.public_signup=True
     doc.insert(ignore_permissions=True)
     return dict(**public_state(doc),token=token)
@@ -65,6 +69,16 @@ def register(contact_name,business_name,email,plan,website=''):
 @rate_limit(limit=30,seconds=60)
 def status(reference,token):
     return public_state(request_for_token(reference,token))
+
+
+@frappe.whitelist(allow_guest=True,methods=['POST'])
+@rate_limit(limit=5,seconds=60)
+def refresh_password_setup(reference,token):
+    from plus_point.activation import requeue_setup
+    doc=request_for_token(reference,token)
+    doc.flags.public_signup=True
+    requeue_setup(doc)
+    return public_state(doc)
 
 
 @frappe.whitelist(allow_guest=True,methods=['POST'])
@@ -86,8 +100,12 @@ def review(reference,decision):
     doc=frappe.get_doc('PP Signup Request',reference,for_update=True)
     if doc.review_status!='Awaiting approval' or doc.payment_status!='Demo payment submitted':
         frappe.throw('Only requests with a submitted demo payment can be reviewed')
+    doc.flags.signup_review=True
     doc.review_status=decision;doc.reviewed_by=frappe.session.user;doc.reviewed_on=now_datetime()
     doc.save(ignore_permissions=True)
+    if decision=='Approved':
+        from plus_point.activation import queue
+        queue(doc.name);doc.reload()
     return public_state(doc)
 
 
@@ -110,7 +128,7 @@ def enable_local_demo_plan():
     require_platform();require_demo()
     doc=frappe.get_doc('Subscription Plan','PLUS POINT Local Trial Plan')
     doc.pp_public_plan=1
-    doc.pp_plan_summary='A sample monthly plan for exploring PLUS POINT. High4Tech reviews every demo signup.'
+    doc.pp_plan_summary='A sample monthly plan for exploring PLUS POINT. High4Tech approves each empty local workspace. Payment is simulated.'
     doc.save()
     frappe.db.commit()
     return 'Existing sample plan published; no price, invoice or subscription changed'
@@ -122,6 +140,8 @@ def cleanup_browser_request(reference):
     if not frappe.conf.get('allow_tests'):
         raise RuntimeError('Tests must be enabled')
     doc=frappe.get_doc('PP Signup Request',reference)
+    if doc.workspace_site:
+        raise RuntimeError('Provisioned signups must retain their workspace registry')
     if doc.business_name!='QA Signup Browser' or not doc.email.endswith('@signup-test.example'):
         raise RuntimeError('Refusing to remove a non-test signup')
     frappe.delete_doc('PP Signup Request',reference,ignore_permissions=True)

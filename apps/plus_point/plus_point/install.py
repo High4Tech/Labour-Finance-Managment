@@ -56,6 +56,7 @@ def after_migrate():
         ],
         'PP Assignment': [dict(fieldname='pp_event_plan',label='Event plan',fieldtype='Link',options='PP Event Plan',read_only=1,insert_after='project')],
         'Company': [dict(fieldname='pp_event_setup_state',label='Event setup progress',fieldtype='Long Text',hidden=1,read_only=1)],
+        'Subscription': [dict(fieldname='pp_demo_workspace',label='Simulated-payment local workspace',fieldtype='Check',read_only=1,default='0',description='Disables software invoice generation for this local exploration trial.')],
         'Subscription Plan': [
             dict(fieldname='pp_public_plan',label='Show on demo signup pricing',fieldtype='Check',default='0',insert_after='plan_name',
                  description='Publishes this fixed-rate plan on the local demo signup page. No payments are collected.'),

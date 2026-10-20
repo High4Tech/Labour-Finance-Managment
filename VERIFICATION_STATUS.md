@@ -1,8 +1,18 @@
-# Verification status — 2026-10-19
+# Verification status — 2026-10-20
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
-## Event organizer operations
+## Approved local company activation — October 20
+
+The latest owner request supersedes the earlier demo-only account boundary. Approved local signups now queue isolated site/database creation and a native owner login. Payment stays simulated. The 30-day simulated subscription cannot generate software invoices; normal native subscription billing remains enabled.
+
+**85 real MariaDB cases passed:** 10 signup/activation cases, 61 existing operations/finance/import cases and 14 event cases. Signup coverage includes payment/review sequencing, role and token denial, immutable identity/status/bindings, optional alias validation, two pending requests, one workspace registry per approval, replay idempotency, encrypted private-link expiry/refresh and simulated-subscription invoice refusal. Fixtures roll back. The native platform finance check separately posted ordinary subscription invoices/receipts, checked GL and dashboard balances, and rolled back. All 21 source/harness/finance/register unit checks passed; the socket harness required approved loopback access.
+
+The native password browser check passed on an exact temporary QA owner: password form submission, consumed one-time key, replay rejection, email and optional login-ID authentication, invalid-password rejection and denial at another site's login. The user/config/settings fixture was restored. The real approved customer workspace was provisioned with all four pinned apps and enabled owner roles, zero Company/Customer/Employee/Project/PP Site/PP Work Entry/Vehicle/Sales Invoice business rows, and native setup complete. Its approved-request Company login action and untouched native password page passed in Edge. Operator entry to the real empty workspace passed the first company onboarding screen, registered business-name prefill and inert background with no page errors; no company data was added and the real owner's password was left for the owner to choose. The existing in-app preview was refreshed from its cached old form, then Company login → Set your password opened the verified password form for user handoff.
+
+An initial finalization failure exposed Bench v16's Python-literal --kwargs parser rejecting JSON booleans; native worker arguments now use Python literals. Retry reused the bound site and completed successfully without deleting data. An early browser harness response-URL assumption was replaced with the native successful redirect check. Python/JavaScript syntax and whitespace checks passed. Screenshots are ignored under .local/qa. Outgoing email, payment-provider integration and production domain/TLS/provisioning acceptance remain undelivered; this is local activation evidence.
+
+## Earlier event organizer operations — October 19
 
 The current increment specializes the customer workspace for events: Company-owned identity and first-event onboarding, venue-phase staffing plans and exact-date calendars, crew/cargo vehicles, native equipment/warehouse availability and reservations, and seven additional template types. Public signup, pricing, simulated payment and approval remain a demo as explicitly requested; no customer workspace is activated by approval.
 
@@ -14,7 +24,7 @@ The labelled demo now uses event projects/venues and named client organizations,
 
 Earlier transient browser navigation timeouts, QA's uncompleted native Desk wizard, missing catalog owner permissions, the Warehouse tree's separate toolbar, a stock-test rollback fixture, venue-table restoration and native list action replacement were corrected or handled before the final successful checks. The in-app preview control retained a stale older page and aborted direct navigation; the fresh Edge evidence above is the verified UI. Opening the app panel was queued by the desktop tool.
 
-## Demo signup and direct section dragging
+## Earlier demo signup and direct section dragging
 
 Six new real MariaDB signup tests passed on the local platform, with fixture rollback: guest request → simulated payment → platform-admin decision, private hashed status token and guest read denial, server-derived immutable quote, hidden-plan/input refusal, review sequencing/replay refusal, customer-site refusal, and unchanged User/PP Tenant/Sales Invoice/Payment Entry counts. The labelled existing sample plan was explicitly published at its original price. Platform migration installed the new request table and publication/summary fields; native self-signup remains disabled.
 
