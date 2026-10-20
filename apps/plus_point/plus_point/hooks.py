@@ -9,25 +9,26 @@ after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
-web_include_js = ["/assets/plus_point/js/website.js?v=20261020-stock-setup-1"]
+web_include_js = ["/assets/plus_point/js/website.js?v=20261020-inline-setup-2"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/dashboard_motion.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/dashboard.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/activity.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/events.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/sections.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/conditions.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/imports.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/setup_flow.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/event_setup.js?v=20261020-stock-setup-1",
-                  "/assets/plus_point/js/onboarding.js?v=20261020-stock-setup-1"]
-app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261020-stock-setup-1",
-                   "/assets/plus_point/css/events.css?v=20261020-stock-setup-1",
-                   "/assets/plus_point/css/dashboard_motion.css?v=20261020-stock-setup-1"]
+app_include_js = ["/assets/plus_point/js/dashboard_motion.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/dashboard.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/activity.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/events.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/sections.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/conditions.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/imports.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/setup_flow.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/event_setup.js?v=20261020-inline-setup-2",
+                  "/assets/plus_point/js/onboarding.js?v=20261020-inline-setup-2"]
+app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261020-inline-setup-2",
+                   "/assets/plus_point/css/events.css?v=20261020-inline-setup-2",
+                   "/assets/plus_point/css/dashboard_motion.css?v=20261020-inline-setup-2"]
 scheduler_events = {"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
 doc_events = {
+    "Company": {"before_insert":"plus_point.workspace.prevent_extra_company","after_insert":"plus_point.workspace.company_created"},
     "Vehicle": {"validate":"plus_point.events.validate_vehicle"},
     "Stock Reconciliation": {"before_submit":"plus_point.events.protect_stock_snapshot"},
     "Stock Entry": {"before_submit":"plus_point.events.protect_stock_issue"},
@@ -51,6 +52,8 @@ doc_events = {
         "on_update": "plus_point.billing.reserve_invoice",
     }
 }
+permission_query_conditions={"Company":"plus_point.workspace.company_query"}
+has_permission={"Company":"plus_point.workspace.company_permission"}
 
 # Existing Frappe Desk handles the frontend automatically; this adds an app entry.
 app_home = "/desk/plus-point"

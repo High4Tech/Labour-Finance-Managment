@@ -327,6 +327,16 @@ def save_resource(kind,company,values):
     from plus_point.event_imports import SCHEMAS,validate,save
     if kind not in ('clients','vehicles','inventory_items','warehouses','event_sites'):frappe.throw('Choose an event resource type')
     raw=frappe.parse_json(values) or {}
+    if kind=='clients':
+        from plus_point.clients import create
+        frappe.db.savepoint('pp_new_client')
+        try:doc=create(raw)
+        except Exception:
+            frappe.db.rollback(save_point='pp_new_client');raise
+        return dict(doctype=doc.doctype,name=doc.name)
+    if kind=='vehicles' and raw.get('purpose') in ('Crew','Inventory'):
+        if raw['purpose']=='Crew':raw.update(cargo_capacity=0,cargo_uom='units')
+        else:raw['crew_seats']=0
     row={key:str(raw.get(key) if raw.get(key) is not None else '') for key in SCHEMAS[kind]}
     validate(kind,company,row);doc=save(kind,company,row)
     return dict(doctype=doc.doctype,name=doc.name)

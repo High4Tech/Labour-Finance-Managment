@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — Inline onboarding and one subscribed business
+
+Moved company onboarding from modal dialogs to a dashboard page with sidebar entry, sticky Skip, saved-step resume and inline errors. Bound one own-business profile per customer workspace and blocked additional Company creation while retaining older records. Country derives currency automatically, including SAR; unposted posting accounts update together, with agreements/stock/ledger protection. New clients save native contact/address details, venues have structured addresses and optional map pins, crew/cargo fields follow purpose and quantity-only stock accepts an explicitly confirmed zero value. Existing native accounting, imports and reservation controls remain in place.
+
 ## 2026-10-20 — New equipment starting stock
 
 The onboarding equipment step now shows warehouse quantity, value per unit and confirmation directly for a new item. One save records the item, starting stock and event reservation. An inline warehouse/event/remaining summary catches a shortage before submission; existing-item stock updates remain an explicit choice. Server validation rejects missing, short or unconfirmed counts without partial records, and Add inventory item cannot overwrite an existing equipment code.

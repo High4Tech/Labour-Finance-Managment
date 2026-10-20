@@ -128,13 +128,13 @@
                 const draw=()=>{
                 root.innerHTML=`<div class="pp-dashboard-toolbar"><div><h3>${esc(__('At a glance'))}</h3>
                     <p>${esc(frappe.datetime.str_to_user(data.date))}${data.currency ? ` · ${esc(__('Amounts in'))} ${esc(data.currency)}` : ''}</p></div>
-                    <div class="pp-dashboard-controls"><label>${esc(__('Company'))}<select class="form-control pp-dashboard-company" aria-label="${esc(__('Dashboard company'))}">
+                    <div class="pp-dashboard-controls"><label ${data.is_platform?'':'hidden'}>${esc(__('Company'))}<select class="form-control pp-dashboard-company" aria-label="${esc(__('Dashboard company'))}">
                     ${data.companies.map(row=>`<option value="${esc(row.name)}" ${row.name===data.company?'selected':''}>${esc(row.company_name||row.name)}</option>`).join('')}</select></label>
                     <label>${esc(__('Display currency'))}<select class="form-control pp-dashboard-currency" aria-label="${esc(__('Display currency'))}" ${!data.company?'disabled':''}>${(data.currency_options||[data.currency].filter(Boolean)).map(code=>`<option value="${esc(code)}" ${code===data.currency?'selected':''}>${esc(code)}</option>`).join('')}</select></label>
                     <button class="btn btn-default btn-sm pp-open-updates" type="button" aria-label="${esc(__('Notifications'))}">${esc(__('Updates'))} <span class="pp-count">${(data.notifications||[]).filter(row=>!row.read).length}</span></button>
                     <button class="btn btn-default btn-sm pp-dashboard-refresh" type="button">${esc(__('Refresh figures'))}</button></div></div>
                     ${exchangeNote(data)}
-                    ${data.company ? (data.is_platform ? platform(data) : customer(data,Number(root.dataset.range)||14)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/company" data-pp-action="new:Company">${esc(__('Create company'))}</a></div>`}
+                    ${data.company ? (data.is_platform ? platform(data) : customer(data,Number(root.dataset.range)||14)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/pp-onboarding">${esc(__('Set up my business'))}</a></div>`}
                     <p class="pp-dashboard-updated" role="status">${esc(__('Updated just now. Refresh to see the latest records.'))}</p>`;
                 root.querySelector('.pp-dashboard-company').addEventListener('change',event=>load(event.target.value));
                 root.querySelector('.pp-dashboard-currency').addEventListener('change',event=>load(data.company,event.target.value));

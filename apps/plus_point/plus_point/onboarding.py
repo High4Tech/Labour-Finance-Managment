@@ -11,11 +11,13 @@ def boot_context(bootinfo):
         'home': '/desk/high4tech' if platform else '/desk/plus-point',
         'navigation': navigation,
     }
-    companies=frappe.get_list('Company',fields=['name','company_name'],order_by='name',limit_page_length=0)
+    from plus_point.event_setup import companies as workspace_companies
+    companies=frappe.get_list('Company',fields=['name','company_name'],order_by='name',limit_page_length=0) if platform else workspace_companies()
     default=frappe.defaults.get_user_default('Company')
     identity=next((row for row in companies if row.name==default),companies[0] if companies else None)
     bootinfo.plus_point['company_identity']=dict(name=identity.name,title=identity.company_name) if identity else dict(name=None,title='High4Tech' if platform else frappe.conf.get('pp_signup_company') or 'Your event company')
     bootinfo.plus_point['signup_company_name']=frappe.conf.get('pp_signup_company') or ''
+    if identity:bootinfo.plus_point['company_country']=frappe.db.get_value('Company',identity.name,'country')
     # One product entry per site. Retain every engine's route/dock metadata for
     # native forms and workspaces; only their separate launcher entries change.
     for app in bootinfo.get('app_data', []):

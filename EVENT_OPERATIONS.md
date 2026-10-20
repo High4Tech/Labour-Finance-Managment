@@ -4,19 +4,19 @@ PLUS POINT is the customer company's event operations workspace. High4Tech manag
 
 ## Start a company
 
-A fresh company opens the guided journey automatically. Its saved progress belongs to the Company, and resumes after a reload. The background is dimmed and unavailable to pointer and keyboard interaction while the guide is open. Existing businesses with assignments, including the demo, are not forced through onboarding. Choose the company menu at the bottom of the sidebar → **Guided company setup** to reopen it deliberately.
+A fresh business opens **Onboarding** inside the dashboard, with a permanent sidebar entry. It is a page, not a popup. A sticky **Skip onboarding** action is available at every unfinished step; skipping unlocks the other tools and keeps saved steps. Resume from the sidebar, including after a reload. Saved progress belongs to the business; a native single settings record also retains a skip made before the business profile exists. Other sidebar links are dimmed and unavailable during active onboarding. Established businesses are not forced through it.
 
-1. Choose or create your event company and its accounting currency.
-2. Add or choose the client organization hiring you.
-3. Enter the event project, setup through pack-down dates and first venue.
+1. Enter your business name and country once. Currency is derived automatically from native country data, including Saudi Arabia → SAR. Unposted businesses can change country/base currency together with their posting accounts; existing agreements, stock or accounting entries lock it. Event venues can be in other countries.
+2. Add a client with a contact person, email or phone, and structured billing address. Or select an existing client and review its saved contact/address; the selector does not offer a nested Create form.
+3. Enter the event project and setup through pack-down dates. The first venue has separate country, region, city, street and postal fields, with an optional Choose from map pin.
 4. Record the client agreement and Daily or Fixed billing terms.
 5. Add or choose a worker; **Import workers from a template** can bring in the rest of the crew.
 6. Set daily wage/client rates and venue phases. Each row has a venue, phase, inclusive dates and required workers per day. Add a new venue name when needed. The same venue's phases cannot overlap.
-7. Choose/create a vehicle and reserve it for Crew or Inventory. An event with no transport needs can state that explicitly.
-8. Choose/create equipment and its warehouse. For a new item, enter the total quantity you own, its value per unit and the quantity needed for this event, then confirm the count. One save creates the item, posts its starting stock and reserves the event quantity. Existing items use their recorded stock, with an explicit opt-in to replace it with an actual count. An event without warehouse equipment can state that explicitly.
+7. Choose Crew or Inventory first. Crew asks only for passenger seats and event passengers, excluding the driver. Inventory asks for load capacity, units and event load. Unused crew/cargo fields are hidden. An event without transport can state that explicitly.
+8. Choose/create equipment and its warehouse. For a new item, enter the total quantity you own and the quantity needed for this event, then confirm the count. Unit value is optional: 0 explicitly records quantity without assigning a stock value. One save creates the item, posts its starting stock and reserves the event quantity. Existing items use their recorded stock, with an explicit opt-in to replace it with an actual count. An event without warehouse equipment can state that explicitly.
 9. Review crew availability, address shortages and allocate workers. Then open the saved plan.
 
-The company menu displays the company account. Workers such as Ahmed Raza are crew records, not additional software accounts. Native authentication still uses a User internally. Staff account management is outside the customer interface for this MVP. Required onboarding is a UI focus mode; document permissions remain server enforced. Established companies may close a voluntarily opened guide.
+The company menu displays the company account. Workers such as Ahmed Raza are crew records, not additional software accounts. Native authentication still uses a User internally. Staff account management is outside the customer interface for this MVP. Each subscription has one business profile and workspace. Clients are native Customer records inside it, not additional Company profiles or paid workspaces. Extra Company creation is blocked on customer sites. Older spare profiles are retained in the database but excluded from the active company selector/scope; records are not merged or deleted. The dashboard no longer asks customers to switch companies. Required onboarding is a UI focus mode; document permissions remain server enforced.
 
 ## Plan subsequent events
 
@@ -62,3 +62,7 @@ Existing finance templates remain available. Use stable external IDs; repeated u
 On an actual work date, **Mark attendance**, review units and submit the register to approve wages. Daily client billing uses approved worker-days at the separate client rate. Fixed-price client earnings use approved milestones, independently of daily wages. Billing terms → **Prepare client invoice** creates a native invoice for review; submitting posts it. Native receipts, worker payments and project spending budgets retain their existing behavior.
 
 Help sits in the top action bar. The overview's inbox and Updates reflect saved business conditions on open/refresh. They are not outgoing email, live push or online signature notifications. Contracts and attachments are native records; a complete online signing workflow is not part of this increment.
+
+## Venue maps and addresses
+
+Venue country and city are separate searchable/filterable fields. The map uses the framework’s bundled Leaflet library and attributed OpenStreetMap tiles, loaded only when Choose from map is selected. Clicking or dragging the pin fills latitude/longitude; it does not guess a street address or silently change the country. Map tiles require Internet access. If the provider cannot load, enter the address and optional coordinates manually; the rest of onboarding still works. No geocoding service, browser location permission, external database or API key was added. Country/city/address and chosen coordinates are saved in the local PP Site record.

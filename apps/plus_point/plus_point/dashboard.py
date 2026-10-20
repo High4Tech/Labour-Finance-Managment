@@ -18,7 +18,11 @@ def overview(company=None, display_currency=None):
     else:
         from plus_point.api import _manager_only
         _manager_only()
-    companies = frappe.get_list('Company', fields=['name', 'company_name', 'default_currency'], order_by='name', limit_page_length=0)
+    if platform:
+        companies = frappe.get_list('Company', fields=['name', 'company_name', 'default_currency'], order_by='name', limit_page_length=0)
+    else:
+        from plus_point.event_setup import companies as workspace_companies
+        companies=workspace_companies()
     names = {row.name for row in companies}
     if company and company not in names:
         frappe.throw('Choose a company you can access', frappe.PermissionError)

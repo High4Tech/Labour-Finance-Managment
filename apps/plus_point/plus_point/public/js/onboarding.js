@@ -377,7 +377,7 @@
                 const clone=footer.cloneNode(true);clone.dataset.ppCompanyMenu='1';footer.replaceWith(clone);
                 clone.querySelector('.sidebar-user-button')?.setAttribute('aria-label',__('Company menu'));
                 new frappe.ui.Dropdown({trigger:$(clone),side:'top',align:'start',options:[{group:'',options:[
-                    {name:'company',label:__('Your company'),onclick:()=>frappe.set_route('Form','Company',plus_point.dashboard_company||identity?.name)},
+                    {name:'company',label:__('Your company'),onclick:()=>{const name=plus_point.dashboard_company||identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();}},
                     {name:'setup',label:__('Guided company setup'),onclick:()=>plus_point.open_setup()},
                     {name:'logout',label:__('Sign out'),onclick:()=>frappe.app.logout()}]}]});
             }
@@ -394,6 +394,7 @@
             window.location.replace(home());
             return;
         }
+        if(!platform()&&route[0]==='List'&&route[1]==='Company'){const name=frappe.boot.plus_point?.company_identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();return;}
         const active = frappe.container?.page;
         if (!active || !$(active).is(':visible')) return;
         // A route changes before the next native page finishes loading. Do not

@@ -194,7 +194,7 @@ class EventTests(unittest.TestCase):
         frappe.set_user(owner.name)
         for doctype in ('Customer','Vehicle','Item','Item Group','Warehouse'):
             self.assertTrue(frappe.has_permission(doctype,'create'),doctype)
-        client=events.save_resource('clients',self.f.company.name,dict(customer_name='Organizer client QA',customer_type='Company'))
+        client=events.save_resource('clients',self.f.company.name,dict(customer_name='Organizer client QA',customer_type='Company',contact_name='Sana Ali',email='sana@example.invalid',country='Pakistan',city='Lahore',address_line1='12 Garden Road'))
         self.assertTrue(client['name'])
         item=events.save_resource('inventory_items',self.f.company.name,dict(item_code='QA-OWNER-'+uuid.uuid4().hex[:6],item_name='Event light QA',stock_uom='Nos',status='Active'))
         self.assertTrue(item['name'])
@@ -246,7 +246,7 @@ class EventTests(unittest.TestCase):
         values=self.inventory_step()
         counts={dt:frappe.db.count(dt) for dt in ('Item','Warehouse','Stock Reconciliation','Stock Ledger Entry','GL Entry','PP Equipment Booking')}
         for overrides,message in [({'stock_quantity':None},'starting warehouse quantity'),
-                ({'stock_quantity':1},'this event needs'),({'confirm_stock_balance':0},'Confirm the warehouse'),({'valuation_rate':0},'Value per unit')]:
+                ({'stock_quantity':1},'this event needs'),({'confirm_stock_balance':0},'Confirm the warehouse')]:
             with self.assertRaisesRegex(frappe.ValidationError,message):event_setup.advance('inventory',{**values,**overrides})
             self.assertEqual(event_setup.current()['step'],'inventory')
             for dt,count in counts.items():self.assertEqual(frappe.db.count(dt),count,dt)
@@ -264,3 +264,80 @@ class EventTests(unittest.TestCase):
             event_setup.advance('inventory',{**values,'item_code':item.name,'warehouse':warehouse,'stock_quantity':10})
         item.reload();self.assertEqual(item.item_name,'Event chair QA')
         self.assertEqual(Decimal(frappe.db.get_value('Bin',{'item_code':item.name,'warehouse':warehouse},'actual_qty')),5)
+
+    def test_quantity_only_inventory_allows_explicit_zero_value(self):
+        values=self.inventory_step();values['valuation_rate']=0
+        state=event_setup.advance('inventory',values)
+        self.assertEqual(Decimal(events.stock_available(state['item'],state['warehouse'],state['start_date'],state['end_date'])['available']),3)
+        self.assertEqual(frappe.db.get_value('Stock Reconciliation Item',{'item_code':state['item']},'allow_zero_valuation_rate'),1)
+
+    def test_country_sets_currency_including_sar_and_ignores_spoofed_currency(self):
+        from plus_point.locations import country_defaults
+        for country,currency in [('Saudi Arabia','SAR'),('Pakistan','PKR'),('United Arab Emirates','AED'),('United States','USD')]:
+            self.assertEqual(country_defaults(country)['currency'],currency)
+        company=self.f.company.name;frappe.defaults.set_user_default(event_setup.SELECTED,company)
+        frappe.db.set_value('Company',company,'pp_event_setup_state',json.dumps(dict(company=company,step='company',required=True)))
+        frappe.db.set_value('Currency','SAR','enabled',0)
+        state=event_setup.advance('company',dict(company_name='Saudi events QA '+uuid.uuid4().hex[:5],abbr=uuid.uuid4().hex[:5],country='Saudi Arabia',currency='PKR'))
+        self.assertEqual(frappe.db.get_value('Company',state['company'],'default_currency'),'SAR')
+        self.assertEqual(frappe.db.get_value('Currency','SAR','enabled'),1)
+
+    def test_new_client_requires_details_and_saves_native_contact_address(self):
+        from plus_point.clients import create,details
+        before=frappe.db.count('Customer');companies_before=frappe.db.count('Company')
+        with self.assertRaisesRegex(frappe.ValidationError,'contact person'):create(dict(customer_name='Name only QA'))
+        self.assertEqual(frappe.db.count('Customer'),before)
+        client=create(dict(customer_name='Cedar events QA '+uuid.uuid4().hex[:5],contact_name='Ayesha Malik',email='ayesha@example.invalid',
+            phone='+966501234567',country='Saudi Arabia',state='Riyadh',city='Riyadh',address_line1='12 Exhibition Road',postal_code='12345'))
+        data=details(client.name);self.assertEqual(data['email'],'ayesha@example.invalid');self.assertIn('Riyadh',data['address'])
+        self.assertEqual(frappe.db.get_value('Address',client.customer_primary_address,'country'),'Saudi Arabia')
+        self.assertEqual(frappe.db.count('Company'),companies_before)
+
+    def test_unposted_company_country_change_updates_base_accounts(self):
+        from plus_point.locations import set_company_country
+        company=insert('Company',company_name='Country change QA '+uuid.uuid4().hex[:5],abbr=uuid.uuid4().hex[:5],country='Pakistan',default_currency='PKR')
+        set_company_country(company,'Saudi Arabia')
+        self.assertEqual(company.default_currency,'SAR')
+        self.assertEqual(frappe.db.get_value('Account',company.default_cash_account,'account_currency'),'SAR')
+        with self.assertRaisesRegex(frappe.ValidationError,'fixed after agreements'):
+            set_company_country(frappe.get_doc('Company',self.f.company.name),'Saudi Arabia')
+
+    def test_structured_venue_rejects_missing_city_and_invalid_map_points(self):
+        from plus_point.locations import site_values
+        with self.assertRaisesRegex(frappe.ValidationError,'city'):site_values(dict(country='Saudi Arabia',address_line1='12 Road'))
+        for lat,lon in [('nan','2'),('91','0'),('0','181'),('1','')]:
+            with self.assertRaises(frappe.ValidationError):site_values(dict(country='Saudi Arabia',city='Riyadh',address_line1='12 Road',latitude=lat,longitude=lon))
+        values=site_values(dict(country='Saudi Arabia',city='Riyadh',state='Riyadh',address_line1='12 Road',latitude='24.7136',longitude='46.6753'))
+        site=insert('PP Site',project=self.f.project.name,site_name='Riyadh venue QA',**values)
+        self.assertEqual(site.country,'Saudi Arabia');self.assertIn('Riyadh',site.address);self.assertEqual(float(site.latitude),24.7136)
+
+    def test_skip_and_resume_preserve_saved_event_step(self):
+        values=self.inventory_step();before=event_setup.current()
+        skipped=event_setup.control('skip');self.assertTrue(skipped['skipped']);self.assertFalse(event_setup.status()['required'])
+        resumed=event_setup.control('resume');self.assertFalse(resumed['skipped']);self.assertTrue(event_setup.status()['required'])
+        self.assertEqual(resumed['step'],'inventory');self.assertEqual(resumed['project'],before['project'])
+
+    def test_skip_before_business_creation_is_saved_without_creating_company(self):
+        from unittest.mock import patch
+        before=frappe.db.count('Company')
+        frappe.db.set_single_value('PP Workspace Settings','onboarding_state',None)
+        with patch('plus_point.event_setup.companies',return_value=[]):
+            skipped=event_setup.control('skip');self.assertTrue(skipped['skipped']);self.assertFalse(event_setup.status()['required'])
+            self.assertEqual(event_setup.control('resume')['step'],'company');self.assertTrue(event_setup.status()['required'])
+        self.assertEqual(frappe.db.count('Company'),before)
+
+    def test_customer_subscription_cannot_create_second_company(self):
+        from unittest.mock import patch
+        with patch('plus_point.workspace.fixture_context',return_value=False):
+            frappe.db.set_single_value('PP Workspace Settings','company',self.f.company.name)
+            with self.assertRaisesRegex(frappe.ValidationError,'one company workspace'):
+                insert('Company',company_name='Extra company forbidden QA',abbr='EXQA',country='Pakistan',default_currency='PKR')
+            self.assertEqual([c.name for c in event_setup.companies()],[self.f.company.name])
+
+    def test_vehicle_setup_only_requires_capacity_for_its_purpose(self):
+        values=self.inventory_step();company=self.f.company.name
+        state=event_setup.current();state['step']='vehicle';event_setup.persist(state)
+        saved=event_setup.advance('vehicle',dict(purpose='Inventory',license_plate='QA-CARGO-'+uuid.uuid4().hex[:6],make='Toyota',model='Cargo van',
+            cargo_capacity=40,cargo_uom='units',cargo_load=10,fuel_type='Diesel'))
+        vehicle=frappe.get_doc('Vehicle',saved['vehicle']);self.assertEqual(vehicle.pp_crew_seats,0)
+        self.assertEqual(vehicle.pp_cargo_capacity,40)

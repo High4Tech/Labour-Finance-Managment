@@ -39,6 +39,7 @@ def product_navigation(platform):
     groups = [(label,dict(groups)[label]) for label in ordered]
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
+    if not platform:items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))
     doctypes, reports = set(COMMON_DEPENDENCIES), set()
     for label, entries in groups:
         visible = []
@@ -72,7 +73,7 @@ def product_navigation(platform):
         doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
-                pages=['pp-section']+([] if platform else ['pp-inventory']),groups=ordered)
+                pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding']),groups=ordered)
 
 
 @frappe.whitelist(methods=['POST'])

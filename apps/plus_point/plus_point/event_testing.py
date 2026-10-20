@@ -22,17 +22,19 @@ def browser_fixture(action,run_id):
         if backup.exists() or frappe.db.exists('Company',prefix):raise RuntimeError('Restore this run first')
         from plus_point.testing import _finish_demo_setup
         _finish_demo_setup()
-        saved=dict(defaults={key:frappe.defaults.get_user_default(key) for key in ('Company',SELECTED)},entitlement=frappe.conf.get('pp_entitlement'))
+        saved=dict(defaults={key:frappe.defaults.get_user_default(key) for key in ('Company',SELECTED)},entitlement=frappe.conf.get('pp_entitlement'),workspace=frappe.db.get_single_value('PP Workspace Settings','company'),draft=frappe.db.get_single_value('PP Workspace Settings','onboarding_state'),currencies={c:frappe.db.get_value('Currency',c,'enabled') for c in ('PKR','SAR')})
         backup.parent.mkdir(parents=True,exist_ok=True);backup.write_text(json.dumps(saved))
         update_site_config('pp_entitlement',dict(valid_until='2099-12-31',limits={}))
         frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
         company=insert('Company',company_name=prefix,abbr=run_id[:5],country='Pakistan',default_currency='PKR')
+        frappe.db.set_single_value('PP Workspace Settings','company',company.name)
         worker=insert('Employee',first_name='Sana Browser QA',gender='Female',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=company.name,status='Active')
         for key in ('Company',SELECTED):frappe.defaults.set_user_default(key,company.name)
         frappe.clear_cache();frappe.db.commit()
         return dict(company=company.name,worker=worker.name,prefix=prefix)
     if action!='end' or not backup.exists():raise RuntimeError('Exact fixture backup required')
     saved=json.loads(backup.read_text());frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
+    frappe.db.set_single_value('PP Workspace Settings',dict(company=saved.get('workspace'),onboarding_state=saved.get('draft')))
     projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
     if frappe.db.exists('GL Entry',{'company':prefix}) or (projects and frappe.db.exists('PP Work Entry',{'project':['in',projects]})):
         raise RuntimeError('Fixture has recorded history; automatic cleanup refused')
@@ -44,6 +46,10 @@ def browser_fixture(action,run_id):
         for name in frappe.get_all(doctype,filters={'company':prefix},pluck='name'):frappe.delete_doc(doctype,name)
     customer=frappe.db.get_value('Customer',{'customer_name':prefix+' Client'},'name')
     if customer:
+        frappe.db.set_value('Customer',customer,dict(customer_primary_contact=None,customer_primary_address=None))
+        for dt in ('Address','Contact'):
+            for name in frappe.get_all('Dynamic Link',filters={'link_doctype':'Customer','link_name':customer,'parenttype':dt},pluck='parent'):
+                frappe.delete_doc(dt,name)
         for name in frappe.get_all('Contract',filters={'party_type':'Customer','party_name':customer},pluck='name'):frappe.delete_doc('Contract',name)
         frappe.delete_doc('Customer',customer)
     # HRMS creates company-specific account rows on shared claim-type parents.
@@ -55,6 +61,7 @@ def browser_fixture(action,run_id):
             doc.save()
     if frappe.db.exists('Company',prefix):frappe.delete_doc('Company',prefix)
     for key,value in saved['defaults'].items():frappe.defaults.set_user_default(key,value)
+    for code,enabled in saved.get('currencies',{}).items():frappe.db.set_value('Currency',code,'enabled',enabled)
     update_site_config('pp_entitlement',saved['entitlement']);frappe.clear_cache();frappe.db.commit();backup.unlink()
     return dict(restored=True)
 

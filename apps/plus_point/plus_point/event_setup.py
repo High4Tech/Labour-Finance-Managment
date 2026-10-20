@@ -10,7 +10,9 @@ STEPS=['company','client','event','terms','workers','plan','vehicle','inventory'
 
 
 def companies():
-    return frappe.get_list('Company',fields=['name','company_name','default_currency'],order_by='name',limit_page_length=0)
+    from plus_point import workspace
+    filters={} if workspace.fixture_context() else {'name':workspace.company() or ''}
+    return frappe.get_list('Company',filters=filters,fields=['name','company_name','default_currency','country','abbr'],order_by='name',limit_page_length=0)
 
 
 def established(company):
@@ -24,6 +26,10 @@ def current():
     company=company if company in allowed else rows[0].name if rows else None
     raw=frappe.db.get_value('Company',company,'pp_event_setup_state') if company else None
     if raw:return json.loads(raw)
+    if not company:
+        from plus_point.workspace import draft
+        saved=draft()
+        if saved:return saved
     ready=bool(company and established(company))
     return dict(step='done' if ready else 'company',company=company,required=not ready)
 
@@ -33,24 +39,34 @@ def persist(saved):
         linked('Company',saved['company']).check_permission('write')
         frappe.db.set_value('Company',saved['company'],'pp_event_setup_state',json.dumps(saved),update_modified=False)
         frappe.defaults.set_user_default(SELECTED,saved['company'])
+    else:
+        from plus_point.workspace import save_draft
+        save_draft(saved)
     return saved
 
 
 @frappe.whitelist()
 def status():
     require_customer();saved=current()
-    return dict(state=saved,companies=companies(),required=bool(saved.get('required') and saved['step']!='done'))
+    from plus_point.locations import currency_locked
+    return dict(state=saved,companies=companies(),required=bool(saved.get('required') and not saved.get('skipped') and saved['step']!='done'),
+        currency_locked=bool(currency_locked(saved.get('company'))))
 
 
 @frappe.whitelist(methods=['POST'])
 def control(action):
-    require_customer();saved=current()
+    require_customer()
+    frappe.db.get_value('User',frappe.session.user,'name',for_update=True)
+    saved=current()
     if saved.get('company'):
         frappe.db.get_value('Company',saved['company'],'name',for_update=True)
         saved=current()
-    if action=='start' and saved['step']=='done':saved=dict(step='company',company=saved.get('company'),required=False)
+    if action in ('start','resume'):
+        saved['skipped']=False
+        if saved['step']!='done':saved['required']=True
+    elif action=='skip':saved.update(skipped=True,required=False)
     elif action=='back':saved['step']=STEPS[max(0,STEPS.index(saved['step'])-1)]
-    elif action not in ('start','back'):frappe.throw('Choose start or back')
+    elif action not in ('start','resume','skip','back'):frappe.throw('Choose resume, skip or back')
     return persist(saved)
 
 
@@ -70,15 +86,32 @@ def advance(step,values=None):
     frappe.db.savepoint('pp_event_setup_step')
     try:
         if step=='company':
-            company=linked('Company',values.company).name if values.company else insert('Company',company_name=values.company_name,
-                abbr=values.abbr,country=values.country,default_currency=values.currency).name
+            from plus_point import workspace
+            bound=workspace.company() if not workspace.fixture_context() else None
+            if bound and values.company and values.company!=bound:frappe.throw('Use the company attached to this workspace')
+            selected=values.company or bound
+            if selected:
+                doc=linked('Company',selected);company=doc.name
+                if values.country:
+                    from plus_point.locations import set_company_country
+                    set_company_country(doc,values.country)
+            else:
+                from plus_point.locations import country_defaults
+                defaults=country_defaults(values.country)
+                frappe.db.set_value('Currency',defaults['currency'],'enabled',1)
+                title=str(values.company_name or '').strip()
+                if not title:frappe.throw('Enter your business name')
+                abbr=str(values.abbr or '').strip() or ''.join(word[0] for word in title.split())[:5].upper()
+                company=insert('Company',company_name=title,abbr=abbr,country=values.country,default_currency=defaults['currency']).name
             if saved.get('company') and saved['company']!=company:saved=dict(step='company',required=not established(company))
             saved['company']=company;frappe.defaults.set_user_default('Company',company)
         else:
             company=saved['company'];linked('Company',company)
             if step=='client':
-                client=linked('Customer',values.customer) if values.customer else insert('Customer',customer_name=values.customer_name,
-                    customer_type='Company',customer_group='Commercial',territory='All Territories')
+                if values.customer:client=linked('Customer',values.customer)
+                else:
+                    from plus_point.clients import create
+                    client=create(values)
                 if saved.get('customer') and saved['customer']!=client.name:
                     saved={key:saved[key] for key in ('company','step','required') if key in saved}
                 saved.update(customer=client.name,client_label=client.customer_name)
@@ -94,7 +127,13 @@ def advance(step,values=None):
                 if values.site:
                     site=linked('PP Site',values.site)
                     if site.project!=project.name or not site.is_active:frappe.throw('Choose an active venue for this project')
-                else:site=insert('PP Site',site_name=values.site_name,project=project.name,address=values.address,is_active=1)
+                else:
+                    from plus_point.locations import site_values
+                    # Operator regression fixtures retain the older minimal API.
+                    from plus_point.workspace import fixture_context
+                    structured=site_values(values,required=not fixture_context() or bool(values.country))
+                    if not structured['address']:structured['address']=values.address or ''
+                    site=insert('PP Site',site_name=values.site_name,project=project.name,is_active=1,**structured)
                 saved.update(project=project.name,event_name=project.project_name,site=site.name,site_label=site.site_name,
                     start_date=str(getdate(values.start_date)),end_date=str(getdate(values.end_date)))
             elif step=='terms':
@@ -147,6 +186,8 @@ def advance(step,values=None):
                     if values.vehicle:vehicle=linked('Vehicle',values.vehicle,company)
                     else:
                         row={key:str(values.get(key) if values.get(key) is not None else '') for key in ('license_plate','make','model','crew_seats','cargo_capacity','cargo_uom','fuel_type')};row['status']='Active'
+                        if values.purpose=='Crew':row.update(cargo_capacity='0',cargo_uom='units')
+                        elif values.purpose=='Inventory':row['crew_seats']='0'
                         validate('vehicles',company,row);vehicle=save('vehicles',company,row)
                     booking=linked('PP Vehicle Booking',saved['vehicle_booking']) if saved.get('vehicle_booking') else frappe.new_doc('PP Vehicle Booking')
                     booking.update(dict(vehicle=vehicle.name,project=saved['project'],site=saved['site'],purpose=values.purpose,
@@ -169,7 +210,7 @@ def advance(step,values=None):
                         counted=positive(values.stock_quantity,'Warehouse quantity',allow_zero=True)
                         if counted<quantity:
                             frappe.throw(f'Warehouse quantity is {counted}, but this event needs {quantity}. Enter the quantity you actually own or reduce the event quantity.')
-                        positive(values.valuation_rate,'Value per unit')
+                        positive(values.valuation_rate or 0,'Value per unit',allow_zero=True)
                         if not cint(values.confirm_stock_balance):
                             frappe.throw('Confirm the warehouse quantity and value before saving the item and reserving it.')
                     if values.item:item=linked('Item',values.item)
@@ -180,7 +221,7 @@ def advance(step,values=None):
                         validate('inventory_items',company,row);item=save('inventory_items',company,row)
                     warehouse=linked('Warehouse',values.warehouse,company) if values.warehouse else save('warehouses',company,dict(warehouse_name=values.warehouse_name))
                     if count_stock:
-                        row=dict(item_code=item.name,warehouse=warehouse.name,date=today(),quantity=str(values.stock_quantity),valuation_rate=str(values.valuation_rate))
+                        row=dict(item_code=item.name,warehouse=warehouse.name,date=today(),quantity=str(values.stock_quantity),valuation_rate=str(values.valuation_rate or 0),allow_zero_valuation_rate=1)
                         validate('stock_balances',company,row);save('stock_balances',company,row)
                     booking=linked('PP Equipment Booking',saved['equipment_booking']) if saved.get('equipment_booking') else frappe.new_doc('PP Equipment Booking')
                     booking.update(dict(item=item.name,warehouse=warehouse.name,project=saved['project'],site=saved['site'],quantity=values.quantity,

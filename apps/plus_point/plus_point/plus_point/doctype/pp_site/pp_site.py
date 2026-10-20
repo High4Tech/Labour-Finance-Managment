@@ -4,6 +4,11 @@ from frappe.model.document import Document
 
 class PPSite(Document):
     def validate(self):
+        from plus_point.locations import address,coordinates
+        if self.country or self.city or self.address_line1:
+            data=address(self.as_dict(),required=False)
+            self.address='\n'.join(data[k] for k in ('address_line1','address_line2','city','state','postal_code','country') if data.get(k))
+        coordinates(self.as_dict())
         old = self.get_doc_before_save()
         if old and old.project != self.project and frappe.db.exists("PP Assignment", {"site": self.name}):
             frappe.throw("A site with assignments cannot move to another project")

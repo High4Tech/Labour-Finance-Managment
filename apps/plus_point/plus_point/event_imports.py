@@ -45,7 +45,7 @@ def validate(kind,company,row):
         if not item.is_stock_item or item.disabled or item.has_serial_no or item.has_batch_no or warehouse.is_group or warehouse.disabled:
             frappe.throw('Use an active, unbatched stock item and a leaf warehouse in this company')
         positive(row['quantity'],'Counted quantity',allow_zero=True)
-        positive(row['valuation_rate'],'Value per stock unit')
+        positive(row['valuation_rate'],'Value per stock unit',allow_zero=bool(row.get('allow_zero_valuation_rate')))
         from plus_point.events import reserved_peak
         if positive(row['quantity'],'Counted quantity',allow_zero=True)<reserved_peak(item.name,warehouse.name,frappe.utils.today(),'9999-12-30'):
             frappe.throw('Quantity is below event reservations. Review bookings first.')
@@ -70,7 +70,7 @@ def validate(kind,company,row):
     value=None
     if kind=='stock_balances':
         from plus_point.finance import money
-        value=str(money(positive(row['quantity'],'Counted quantity',allow_zero=True)*positive(row['valuation_rate'],'Value per unit')))
+        value=str(money(positive(row['quantity'],'Counted quantity',allow_zero=True)*positive(row['valuation_rate'],'Value per unit',allow_zero=bool(row.get('allow_zero_valuation_rate')))))
     return dict(label=row.get('customer_name') or row.get('site_name') or row.get('event_name') or row.get('item_name') or row.get('license_plate') or row.get('warehouse_name') or row.get('item_code'),amount=value)
 
 
@@ -98,7 +98,7 @@ def save(kind,company,row,document=None):
         from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_difference_account
         purpose='Stock Reconciliation' if frappe.db.exists('Stock Ledger Entry',{'company':company}) else 'Opening Stock'
         doc.update(dict(company=company,purpose=purpose,expense_account=get_difference_account(purpose,company),posting_date=row['date'],set_posting_time=1,
-            items=[dict(item_code=row['item_code'],warehouse=row['warehouse'],qty=float(row['quantity']),valuation_rate=float(row['valuation_rate']))]))
+            items=[dict(item_code=row['item_code'],warehouse=row['warehouse'],qty=float(row['quantity']),valuation_rate=float(row['valuation_rate']),allow_zero_valuation_rate=int(bool(row.get('allow_zero_valuation_rate'))))]))
         doc.insert();doc.submit();return doc
     elif kind=='events':
         from plus_point.events import create_event

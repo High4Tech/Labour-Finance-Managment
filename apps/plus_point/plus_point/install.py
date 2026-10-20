@@ -73,7 +73,7 @@ def after_migrate():
     })
     if not frappe.conf.get('pp_control_plane'):
         from frappe.permissions import add_permission,update_permission_property
-        for target in ('Vehicle','Customer','Item','Item Group','Warehouse'):
+        for target in ('Vehicle','Customer','Item','Item Group','Warehouse','Contact','Address'):
             # The current product has one company owner. Preserve all native
             # roles and any explicit operator-defined System Manager rule.
             if not any(p.role=='System Manager' and p.permlevel==0 for p in frappe.get_meta(target).permissions):
@@ -108,3 +108,6 @@ def after_migrate():
                   [dict(type='Link', link_type='DocType', link_to=name, label=name) for name in names])).insert(ignore_permissions=True)
     from plus_point.ux import configure_tenant_workspace
     configure_tenant_workspace()
+    if frappe.db.exists('DocType','PP Workspace Settings'):
+        from plus_point.workspace import bind_existing
+        bind_existing()

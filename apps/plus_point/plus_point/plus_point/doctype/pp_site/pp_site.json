@@ -15,6 +15,14 @@
     "project",
     "site_type",
     "parent_site",
+    "country",
+    "state",
+    "city",
+    "address_line1",
+    "address_line2",
+    "postal_code",
+    "latitude",
+    "longitude",
     "address",
     "is_active"
   ],
@@ -25,7 +33,7 @@
       "label": "Site Name",
       "reqd": 1,
       "in_list_view": 1,
-      "description": "Use a recognizable location name, such as DHA Phase 6 construction site."
+      "description": "A recognizable venue name, such as Riyadh Convention Centre."
     },
     {
       "fieldname": "project",
@@ -55,7 +63,8 @@
     {
       "fieldname": "address",
       "fieldtype": "Small Text",
-      "label": "Address"
+      "label": "Formatted address",
+      "read_only": 1
     },
     {
       "fieldname": "is_active",
@@ -64,6 +73,49 @@
       "default": "1",
       "in_list_view": 1,
       "description": "Only active sites can be used to prepare daily attendance."
+    },
+    {
+      "fieldname": "country",
+      "fieldtype": "Link",
+      "label": "Country",
+      "options": "Country",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "state",
+      "fieldtype": "Data",
+      "label": "State / region"
+    },
+    {
+      "fieldname": "city",
+      "fieldtype": "Data",
+      "label": "City",
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "address_line1",
+      "fieldtype": "Data",
+      "label": "Street address"
+    },
+    {
+      "fieldname": "address_line2",
+      "fieldtype": "Data",
+      "label": "Building / additional directions"
+    },
+    {
+      "fieldname": "postal_code",
+      "fieldtype": "Data",
+      "label": "Postal code"
+    },
+    {
+      "fieldname": "latitude",
+      "fieldtype": "Data",
+      "label": "Latitude"
+    },
+    {
+      "fieldname": "longitude",
+      "fieldtype": "Data",
+      "label": "Longitude"
     }
   ],
   "permissions": [
