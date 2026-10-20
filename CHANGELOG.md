@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-20 — Shared available-crew selection
+
+Replaced onboarding’s single worker selector with a searchable date-aware checklist and removable tags. The same picker supports event-plan crew allocation and ordinary multi-worker assignments from worker/site/allocation screens, with inline worker creation and refreshed imports. Persisted the explicit pool on event plans so unchecked workers cannot fill shortages. Added locked availability checks for overlapping bookings and employment dates, atomic bulk allocation and protected allocated-plan selection. Existing profile, attendance and financial history are preserved.
+
 ## 2026-10-20 — Import confirmation without stacked popups
 
 Moved the review checkbox into the persistent import footer beside the save action, used worker-specific confirmation wording and disabled posting until it is checked. Missing-file, file-validation and posting errors now render in the same window through a local response handler. Kept native review/apply posting, permissions, stable IDs and transaction checks intact. Added a real browser check that saves 15 disposable worker profiles and replays them without duplicates, including mobile footer visibility and inline failures.

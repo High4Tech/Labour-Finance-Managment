@@ -39,7 +39,7 @@
         'Warehouse':['Warehouses','Physical storage locations for the event company. Import counted balances to establish quantities, then reserve equipment for event dates.',[]],
         'Stock Reconciliation':['Warehouse balances','A reviewed absolute stock count with a value per unit. Submitting updates native stock and stock book value. This is not a receipt, payment or inventory-to-car manifest.',[]],
         'PP Site': ['Event sites', 'A venue, hall, stage or setup area within a client event. Prepare daily attendance after workers have active allocations.', ['site_name', 'project', 'parent_site']],
-        'PP Assignment': ['Worker allocations', 'Connect one worker to a site, billing agreement and date range. These agreed rates are copied into work records so later rate changes cannot rewrite past earnings.', ['employee', 'contract_terms', 'site', 'start_date', 'wage_rate', 'client_rate']],
+        'PP Assignment': ['Worker allocations', 'Choose available workers together for a site, billing agreement and date range. These agreed rates are copied into work records so later rate changes cannot rewrite past earnings.', ['employee', 'contract_terms', 'site', 'start_date', 'wage_rate', 'client_rate']],
         'PP Contract Terms': ['Billing terms', 'Choose daily worker-day billing or a fixed contract amount. Prepare client invoices and review Project finances from this screen.', ['contract', 'project', 'billing_model', 'fixed_amount', 'status']],
         'PP Daily Register': ['Daily attendance', 'One register records a site and date. Saving keeps a draft; Submit creates approved work entries and earnings for the listed workers. Review before submitting.', ['work_date', 'site', 'entries']],
         'PP Work Entry': ['Worker earnings', 'A worker-day and its locked wage and client billing amounts. Earnings are not proof of payment. Prefer the site attendance register for bulk daily entry.', ['assignment', 'units', 'status', 'wage_amount', 'billable_amount']],
@@ -73,7 +73,7 @@
         'Vehicle':['Event vehicles','Add vehicle'],'Item':['Inventory items','Add inventory item'],
         'Warehouse':['Warehouses','Add warehouse'],'Stock Reconciliation':['Warehouse balances','Update warehouse balances'],
         'PP Vehicle Booking':['Vehicle assignments','Assign vehicle'],'PP Equipment Booking':['Event equipment','Reserve equipment'],
-        'PP Assignment': ['Worker assignments', 'Assign worker'],
+        'PP Assignment': ['Worker assignments', 'Assign workers'],
         'PP Contract Terms': ['Client billing', 'Add billing terms'],
         'PP Daily Register': ['Daily attendance', 'Add attendance'],
         'PP Work Entry': ['Wages earned', 'Add work entry'],
@@ -419,10 +419,12 @@
             const primary=(key,label,handler)=>{if(page?.btn_primary?.attr('data-pp-event-action')!==key){page.set_primary_action({label:__(label)},handler,'plus');page.btn_primary.attr('data-pp-event-action',key);}};
             if(!platform()&&['Project','PP Event Plan'].includes(route[1]))primary('plan','Plan an event',()=>plus_point.open_event_wizard());
             if(!platform()&&!serviceItems&&['Customer','Vehicle','Item','Warehouse'].includes(route[1]))primary('resource',action,()=>plus_point.open_resource({Customer:'clients',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses'}[route[1]],()=>listview.refresh()));
+            if(!platform()&&route[1]==='PP Assignment')primary('crew','Assign workers',()=>plus_point.assign_workers({},()=>listview.refresh()));
             if(serviceItems)page?.btn_primary?.removeAttr('data-pp-event-action');
             if(!platform()&&route[1]==='Stock Reconciliation')primary('balances','Update warehouse balances',()=>plus_point.open_import(plus_point.dashboard_company,()=>listview.refresh(),'stock_balances'));
         }
         if(serviceItems&&active.page?.btn_secondary?.hasClass('pp-list-import'))active.page.btn_secondary.addClass('hide');
+        if(!platform()&&route[0]==='List'&&route[1]==='Employee'&&frappe.get_list_view('Employee')?.can_create&&!active.querySelector('.pp-open-assign-workers'))active.page?.add_inner_button(__('Assign workers'),()=>plus_point.assign_workers({},()=>frappe.get_list_view('Employee').refresh()))?.addClass('pp-open-assign-workers');
         if (route[0] === 'List' && !platform() && !serviceItems && listImports[route[1]] && frappe.user.has_role('System Manager')) {
             const listview = frappe.get_list_view(route[1]);
             const page = active.page;

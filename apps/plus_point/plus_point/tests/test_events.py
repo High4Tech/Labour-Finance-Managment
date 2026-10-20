@@ -370,3 +370,64 @@ class EventTests(unittest.TestCase):
             cargo_capacity=40,cargo_uom='units',cargo_load=10,fuel_type='Diesel'))
         vehicle=frappe.get_doc('Vehicle',saved['vehicle']);self.assertEqual(vehicle.pp_crew_seats,0)
         self.assertEqual(vehicle.pp_cargo_capacity,40)
+
+    def test_available_crew_excludes_overlapping_sites_and_employment_dates(self):
+        from plus_point import crew
+        result=self.event();plan=frappe.get_doc('PP Event Plan',result['plan'])
+        crew.assign(plan.project,plan.staffing[0].site,plan.contract_terms,plan.start_date,plan.end_date,100,150,[self.worker.name])
+        rows={r['name']:r for r in crew.available(plan.company,str(plan.start_date),str(plan.end_date))['rows']}
+        self.assertFalse(rows[self.worker.name]['available']);self.assertIn('overlapping',rows[self.worker.name]['reason'])
+        later=crew.available(plan.company,str(add_days(plan.end_date,1)),str(add_days(plan.end_date,2)))
+        self.assertTrue(next(r for r in later['rows'] if r['name']==self.worker.name)['available'])
+        with self.assertRaises(frappe.ValidationError):crew.validate_selected([self.worker.name],plan.company,plan.start_date,plan.end_date)
+        frappe.db.set_value('Employee',self.f.employee.name,'date_of_joining',add_days(plan.end_date,1))
+        rows={r['name']:r for r in crew.available(plan.company,str(plan.start_date),str(plan.end_date))['rows']}
+        self.assertFalse(rows[self.f.employee.name]['available'])
+
+    def test_selected_pool_controls_event_assignments_and_never_fills_from_others(self):
+        from plus_point import crew
+        result=self.event(headcount=2);plan=frappe.get_doc('PP Event Plan',result['plan'])
+        crew.save_selection(plan.name,[self.worker.name])
+        self.assertTrue(events.preview_crew(plan.name)['shortages'])
+        with self.assertRaises(frappe.ValidationError):events.allocate_crew(plan.name)
+        self.assertFalse(frappe.db.exists('PP Assignment',{'pp_event_plan':plan.name}))
+        crew.save_selection(plan.name,[self.worker.name,self.f.employee.name])
+        self.assertEqual(events.allocate_crew(plan.name)['created'],2)
+        self.assertEqual(set(frappe.get_all('PP Assignment',filters={'pp_event_plan':plan.name},pluck='employee')),{self.worker.name,self.f.employee.name})
+        with self.assertRaises(frappe.ValidationError):crew.save_selection(plan.name,[self.worker.name])
+        self.assertFalse(frappe.db.exists('PP Work Entry',{'project':plan.project}))
+
+    def test_onboarding_saves_multiple_selected_workers_in_plan(self):
+        self.inventory_step();state=event_setup.current();state['step']='workers';event_setup.persist(state)
+        chosen=[self.worker.name,self.f.employee.name]
+        state=event_setup.advance('workers',dict(employees=chosen));self.assertEqual(state['employees'],chosen)
+        self.assertEqual(json.loads(frappe.db.get_value('PP Event Plan',state['plan'],'selected_crew')),chosen)
+
+    def test_manual_bulk_assignment_is_atomic_and_rechecks_bookings(self):
+        from plus_point import crew
+        result=self.event(headcount=2);plan=frappe.get_doc('PP Event Plan',result['plan']);site=plan.staffing[0].site
+        args=(plan.project,site,plan.contract_terms,plan.start_date,plan.end_date,100,150)
+        result=crew.assign(*args,[self.worker.name,self.f.employee.name]);self.assertEqual(result['created'],2)
+        with self.assertRaises(frappe.ValidationError):crew.assign(*args,[self.worker.name])
+        self.assertEqual(frappe.db.count('PP Assignment',{'project':plan.project}),2)
+        self.assertFalse(frappe.db.exists('PP Work Entry',{'project':plan.project}))
+
+    def test_crew_selection_refuses_guest_other_company_duplicates_and_inactive(self):
+        from plus_point import crew
+        result=self.event();plan=frappe.get_doc('PP Event Plan',result['plan'])
+        with self.assertRaises(frappe.ValidationError):crew.validate_selected([self.worker.name,self.worker.name],plan.company,plan.start_date,plan.end_date)
+        other=fixture('Other crew QA '+uuid.uuid4().hex[:5])
+        with self.assertRaises(frappe.ValidationError):crew.save_selection(plan.name,[other.employee.name])
+        frappe.db.set_value('Employee',self.worker.name,'status','Inactive')
+        with self.assertRaises(frappe.ValidationError):crew.save_selection(plan.name,[self.worker.name])
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):crew.available(plan.company,str(plan.start_date),str(plan.end_date))
+
+    def test_crew_allocation_rechecks_selection_after_preview(self):
+        from plus_point import crew
+        first=self.event();plan=frappe.get_doc('PP Event Plan',first['plan'])
+        crew.save_selection(plan.name,[self.worker.name]);self.assertFalse(events.preview_crew(plan.name)['shortages'])
+        other=self.event();other_plan=frappe.get_doc('PP Event Plan',other['plan'])
+        crew.assign(other_plan.project,other_plan.staffing[0].site,other_plan.contract_terms,other_plan.start_date,other_plan.end_date,100,150,[self.worker.name])
+        with self.assertRaises(frappe.ValidationError):events.allocate_crew(plan.name)
+        self.assertFalse(frappe.db.exists('PP Assignment',{'pp_event_plan':plan.name}))

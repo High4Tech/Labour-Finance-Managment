@@ -14,6 +14,7 @@
     "wage_rate",
     "client_rate",
     "staffing",
+    "selected_crew",
     "crew_allocated",
     "timeline",
     "notes"
@@ -97,6 +98,13 @@
       "fieldname": "notes",
       "label": "Planning notes",
       "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "selected_crew",
+      "label": "Selected crew",
+      "fieldtype": "Long Text",
+      "hidden": 1,
+      "read_only": 1
     }
   ],
   "title_field": "event_name",

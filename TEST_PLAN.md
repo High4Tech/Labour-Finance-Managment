@@ -75,3 +75,7 @@ Run plus_point.testing.run_setup_imports for the 17 native setup/import cases: f
 ## Import confirmation UI regression
 
 Run scripts/browser-import-confirmation.cjs against the guarded QA fixture. Verify a single modal during missing-file/invalid-header/apply errors; a footer review checkbox with an initially disabled import action; visible checkbox and action within 390 px mobile bounds; a new unchecked preview after a failed apply; actual 15-worker native creation followed by a duplicate-free replay. Cleanup must restore exact test receipts/profiles and refuse unfamiliar or financial records. No customer CSV or real records are imported by this harness.
+
+## Shared crew selection
+
+Run plus_point.testing.run_events (35 cases) for explicit pool persistence, selected-only shortages, overlap/employment exclusions, guest/company/duplicate/inactive guards, stale booking rechecks and atomic manual multi-worker allocations. Run browser-inline-onboarding.cjs for three selected workers, inline additions, tag removal/reselection, search, mobile bounds and exact selected allocations on completion. Run browser-crew-selection.cjs for the ordinary event-plan checklist, import return without stacked dialogs, selected-only assignment, normal Worker assignments primary action, overlapping-project exclusions and mobile bulk save. Disposable QA fixtures restore exact context and records; no customer crew data is changed.

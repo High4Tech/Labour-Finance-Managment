@@ -201,13 +201,23 @@ def advance(step,values=None):
                         effective_start=saved['start_date'],effective_end=saved['end_date'],status='Active')
                 saved.update(contract_terms=terms.name,billing_model=terms.billing_model)
             elif step=='workers':
-                if values.employee:
+                from plus_point.crew import validate_selected
+                existing_plan=frappe.db.get_value('PP Event Plan',{'project':saved['project']},'name')
+                if existing_plan:frappe.db.get_value('PP Event Plan',existing_plan,'name',for_update=True)
+                if values.employees is not None:
+                    names=validate_selected(values.employees,company,saved['start_date'],saved['end_date'],lock=True)
+                elif values.employee:
                     employee=linked('Employee',values.employee,company)
                     if employee.status!='Active':frappe.throw('Choose an active worker')
+                    names=[employee.name]
                 else:employee=insert('Employee',first_name=values.first_name,last_name=values.last_name,gender=values.gender,
                     date_of_birth=values.date_of_birth,date_of_joining=values.date_of_joining,company=company,status='Active',cell_number=values.cell_number)
-                saved.update(employee=employee.name,worker_label=employee.employee_name)
-                saved['plan']=frappe.db.get_value('PP Event Plan',{'project':saved['project']},'name')
+                if values.employees is None and not values.employee:names=[employee.name]
+                saved.update(employee=names[0],employees=names,worker_label=frappe.db.get_value('Employee',names[0],'employee_name'))
+                saved['plan']=existing_plan
+                if saved.get('plan'):
+                    from plus_point.crew import save_selection
+                    save_selection(saved['plan'],names)
             elif step=='plan':
                 project=project_context(saved)
                 previous=frappe.db.get_value('PP Event Plan',{'project':project.name},'name')
@@ -226,6 +236,9 @@ def advance(step,values=None):
                         client_rate=0 if saved['billing_model']=='Fixed' else values.client_rate,
                         staffing=staffing))
                     plan.save()
+                if saved.get('employees'):
+                    from plus_point.crew import save_selection
+                    if not plan.crew_allocated:save_selection(plan.name,saved['employees'])
                 saved['plan']=plan.name
             elif step=='vehicle':
                 if cint(values.no_vehicle):

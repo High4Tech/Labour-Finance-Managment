@@ -47,6 +47,9 @@ def validate_plan(doc):
     require_customer();project=linked('Project',doc.project);linked('Company',project.company);doc.company=project.company
     if not doc.is_new():frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True)
     terms=linked('PP Contract Terms',doc.contract_terms)
+    if doc.get('selected_crew'):
+        from plus_point.crew import selection
+        for name in selection(doc.selected_crew):linked('Employee',name,doc.company)
     if terms.project!=doc.project or terms.status!='Active':
         frappe.throw('Choose active client billing terms for this event project')
     days=span(doc.start_date,doc.end_date)
@@ -83,7 +86,7 @@ def validate_plan(doc):
         if old and int(doc.crew_allocated or 0)!=int(old.crew_allocated or 0):
             frappe.throw('Use the crew allocation or release action to change deployment status')
         if old and (old.crew_allocated or frappe.db.exists('PP Assignment',{'pp_event_plan':doc.name})):
-            keys=('project','contract_terms','start_date','end_date','wage_rate','client_rate')
+            keys=('project','contract_terms','start_date','end_date','wage_rate','client_rate','selected_crew')
             rows=lambda d:[(r.site,str(r.start_date),str(r.end_date),int(r.workers_required),r.phase) for r in d.staffing]
             if any(str(doc.get(k))!=str(old.get(k)) for k in keys) or rows(doc)!=rows(old):
                 frappe.throw('Release unused crew before changing this plan. Recorded attendance keeps its original plan locked.')
@@ -190,6 +193,10 @@ def plan_doc(name,write=False):
 def crew_proposal(doc,lock=False):
     people=frappe.get_list('Employee',filters={'company':doc.company,'status':'Active'},fields=['name','employee_name','date_of_joining','relieving_date'],order_by='name',limit_page_length=0)
     if len(people)>2000:frappe.throw('Use a smaller active crew pool for this local planner')
+    if doc.get('selected_crew'):
+        from plus_point.crew import selection
+        chosen=selection(doc.selected_crew);by_name={p.name:p for p in people}
+        people=[by_name[name] for name in chosen if name in by_name]
     if lock:
         for person in people:frappe.db.get_value('Employee',person.name,'name',for_update=True)
     busy=defaultdict(list);commitments=defaultdict(list)
@@ -216,9 +223,12 @@ def crew_proposal(doc,lock=False):
 
 
 @frappe.whitelist()
-def preview_crew(plan):
+def preview_crew(plan,employees=None):
     doc=plan_doc(plan)
     if doc.crew_allocated:return dict(already_allocated=True,assignments=[],shortages=[])
+    if employees is not None:
+        from plus_point.crew import validate_selected
+        doc.selected_crew=json.dumps(validate_selected(employees,doc.company,doc.start_date,doc.end_date))
     return crew_proposal(doc)
 
 
@@ -226,6 +236,9 @@ def preview_crew(plan):
 def allocate_crew(plan):
     doc=plan_doc(plan,True);frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True);doc.reload()
     if doc.crew_allocated:return dict(created=0,already_allocated=True)
+    if doc.get('selected_crew'):
+        from plus_point.crew import validate_selected
+        validate_selected(doc.selected_crew,doc.company,doc.start_date,doc.end_date,lock=True)
     validate_plan(doc);proposal=crew_proposal(doc,lock=True)
     if proposal['shortages']:frappe.throw('Not enough available workers for every phase. Add workers, close conflicting assignments or reduce the requirement, then preview again.')
     frappe.db.savepoint('pp_event_crew')
