@@ -15,7 +15,7 @@ from plus_point.setup_flow import linked, require_customer
 def span(start,end):
     start,end=getdate(start),getdate(end)
     if end<start or (end-start).days>365:
-        frappe.throw('Use an inclusive date range of 1–366 days')
+        frappe.throw('Use an inclusive date range of 1â€“366 days')
     return [str(add_days(start,i)) for i in range((end-start).days+1)]
 
 
@@ -60,7 +60,7 @@ def validate_plan(doc):
     if terms.billing_model=='Fixed' and as_decimal(doc.client_rate or 0)!=0:
         frappe.throw('Fixed contracts use milestones, not worker-day client charges')
     if not doc.staffing or len(doc.staffing)>60 or len({r.site for r in doc.staffing})>12:
-        frappe.throw('Add 1–60 staffing phases covering at most 12 event sites')
+        frappe.throw('Add 1â€“60 staffing phases covering at most 12 event sites')
     by_site=defaultdict(list)
     for row in doc.staffing:
         site=linked('PP Site',row.site)
@@ -69,12 +69,17 @@ def validate_plan(doc):
         span(row.start_date,row.end_date)
         if str(getdate(row.start_date))<days[0] or str(getdate(row.end_date))>days[-1]:
             frappe.throw('Staffing phases must be within the event dates')
+        if row.get('designation'):
+            linked('Designation',row.designation)
+            positive(row.wage_rate or doc.wage_rate,'Category daily wage')
+            positive(row.client_rate or doc.client_rate,'Category client rate',allow_zero=terms.billing_model=='Fixed')
+            if terms.billing_model=='Fixed' and as_decimal(row.client_rate or 0)!=0:frappe.throw('Fixed staffing categories cannot have worker-day client charges')
         count=positive(row.workers_required,'Workers per day',whole=True)
         if count>500:frappe.throw('Use at most 500 workers per site per day')
-        for first,last in by_site[row.site]:
+        for first,last in by_site[(row.site,row.get("designation") or "")]:
             if getdate(row.start_date)<=last and getdate(row.end_date)>=first:
                 frappe.throw('Staffing phases at the same site cannot overlap; use one daily requirement')
-        by_site[row.site].append((getdate(row.start_date),getdate(row.end_date)))
+        by_site[(row.site,row.get("designation") or "")].append((getdate(row.start_date),getdate(row.end_date)))
     if doc.is_new() and doc.crew_allocated:
         frappe.throw('Use Preview crew plan and Allocate crew to create a deployment')
     if not doc.is_new():
@@ -87,8 +92,8 @@ def validate_plan(doc):
             frappe.throw('Use the crew allocation or release action to change deployment status')
         if old and (old.crew_allocated or frappe.db.exists('PP Assignment',{'pp_event_plan':doc.name})):
             keys=('project','contract_terms','start_date','end_date','wage_rate','client_rate','selected_crew')
-            rows=lambda d:[(r.site,str(r.start_date),str(r.end_date),int(r.workers_required),r.phase) for r in d.staffing]
-            if any(str(doc.get(k))!=str(old.get(k)) for k in keys) or rows(doc)!=rows(old):
+            rows=lambda d:[(r.site,str(r.start_date),str(r.end_date),r.phase,r.get('designation'),r.get('wage_rate'),r.get('client_rate')) for r in d.staffing]
+            if any(str(doc.get(k))!=str(old.get(k)) for k in keys) or rows(doc)[:len(old.staffing)]!=rows(old) or len(doc.staffing)<len(old.staffing):
                 frappe.throw('Release unused crew before changing this plan. Recorded attendance keeps its original plan locked.')
 
 
@@ -116,7 +121,7 @@ def validate_vehicle_booking(doc):
     if not vehicle.pp_event_enabled:frappe.throw('Choose an active event vehicle')
     if doc.purpose=='Crew':
         count=positive(doc.crew_count,'Crew passengers',whole=True)
-        if count>vehicle.pp_crew_seats:frappe.throw('Crew passengers exceed this vehicle’s seats (driver excluded)')
+        if count>vehicle.pp_crew_seats:frappe.throw('Crew passengers exceed this vehicleâ€™s seats (driver excluded)')
         doc.cargo_load=0;doc.cargo_uom=''
     elif doc.purpose=='Inventory':
         load=positive(doc.cargo_load,'Inventory load',whole=vehicle.pp_cargo_uom=='units')
@@ -191,7 +196,7 @@ def plan_doc(name,write=False):
 
 
 def crew_proposal(doc,lock=False):
-    people=frappe.get_list('Employee',filters={'company':doc.company,'status':'Active'},fields=['name','employee_name','date_of_joining','relieving_date'],order_by='name',limit_page_length=0)
+    people=frappe.get_list('Employee',filters={'company':doc.company,'status':'Active'},fields=['name','employee_name','date_of_joining','relieving_date','designation'],order_by='name',limit_page_length=0)
     if len(people)>2000:frappe.throw('Use a smaller active crew pool for this local planner')
     if doc.get('selected_crew'):
         from plus_point.crew import selection
@@ -208,15 +213,15 @@ def crew_proposal(doc,lock=False):
     proposal,shortages=[],[];existing_coverage=0
     for phase in sorted(doc.staffing,key=lambda r:(str(r.start_date),str(r.end_date),r.site)):
         first,last=getdate(phase.start_date),getdate(phase.end_date)
-        eligible=[p for p in people if (not p.date_of_joining or getdate(p.date_of_joining)<=first) and (not p.relieving_date or getdate(p.relieving_date)>=last)]
+        eligible=[p for p in people if (not phase.get('designation') or p.designation==phase.designation) and (not p.date_of_joining or getdate(p.date_of_joining)<=first) and (not p.relieving_date or getdate(p.relieving_date)>=last)]
         covered=[p for p in eligible if any(r.project==doc.project and r.site==phase.site and getdate(r.start_date)<=first and getdate(r.end_date or '9999-12-31')>=last for r in commitments[p.name])
             and not any(r.site!=phase.site and getdate(r.start_date)<=last and getdate(r.end_date or '9999-12-31')>=first for r in commitments[p.name])]
         need=max(0,int(phase.workers_required)-len(covered));existing_coverage+=min(len(covered),int(phase.workers_required))
         candidates=[p for p in eligible if not any(a<=last and b>=first for a,b in busy[p.name])]
         chosen=candidates[:need]
-        if len(chosen)<need:shortages.append(dict(site=phase.site,from_date=str(first),to_date=str(last),missing=need-len(chosen)))
+        if len(chosen)<need:shortages.append(dict(site=phase.site,from_date=str(first),to_date=str(last),missing=need-len(chosen),designation=phase.get('designation') or 'All crew'))
         for person in chosen:
-            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last)))
+            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),wage_rate=phase.get('wage_rate') or doc.wage_rate,client_rate=phase.get('client_rate') or doc.client_rate))
             busy[person.name].append((first,last))
     if len(proposal)>1000:frappe.throw('Split this event into smaller plans (maximum 1,000 generated assignments)')
     return dict(assignments=proposal,shortages=shortages,existing_coverage=existing_coverage)
@@ -234,7 +239,10 @@ def preview_crew(plan,employees=None):
 
 @frappe.whitelist(methods=['POST'])
 def allocate_crew(plan):
-    doc=plan_doc(plan,True);frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True);doc.reload()
+    doc=plan_doc(plan,True)
+    from plus_point.budget import lock_project
+    lock_project(doc.project)
+    frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True);doc.reload()
     if doc.crew_allocated:return dict(created=0,already_allocated=True)
     if doc.get('selected_crew'):
         from plus_point.crew import validate_selected
@@ -246,7 +254,7 @@ def allocate_crew(plan):
         for row in proposal['assignments']:
             frappe.get_doc(dict(doctype='PP Assignment',employee=row['employee'],site=row['site'],project=doc.project,
                 contract_terms=doc.contract_terms,start_date=row['start_date'],end_date=row['end_date'],
-                wage_rate=doc.wage_rate,client_rate=doc.client_rate,pp_event_plan=doc.name)).insert()
+                wage_rate=row.get('wage_rate') or doc.wage_rate,client_rate=row.get('client_rate') or doc.client_rate,pp_event_plan=doc.name)).insert()
         frappe.db.set_value('PP Event Plan',doc.name,'crew_allocated',1)
     except Exception:
         frappe.db.rollback(save_point='pp_event_crew');raise
@@ -255,7 +263,10 @@ def allocate_crew(plan):
 
 @frappe.whitelist(methods=['POST'])
 def release_crew(plan):
-    doc=plan_doc(plan,True);frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True)
+    doc=plan_doc(plan,True)
+    from plus_point.budget import lock_project
+    lock_project(doc.project)
+    frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True)
     names=frappe.get_list('PP Assignment',filters={'pp_event_plan':doc.name},pluck='name',order_by='name',limit_page_length=0)
     for name in names:
         frappe.db.get_value('PP Assignment',name,'name',for_update=True)

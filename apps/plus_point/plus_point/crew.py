@@ -87,6 +87,8 @@ def assign(project,site,contract_terms,start_date,end_date,wage_rate,client_rate
     if terms.status!='Active' or (terms.effective_start and getdate(start_date)<getdate(terms.effective_start)) or (terms.effective_end and getdate(end_date)>getdate(terms.effective_end)):
         frappe.throw('Assignment dates must be inside the active client agreement.')
     frappe.has_permission('PP Assignment','create',throw=True)
+    from plus_point.budget import lock_project
+    lock_project(project.name)
     names=validate_selected(employees,project.company,start_date,end_date,lock=True)
     frappe.db.savepoint('pp_selected_assignments')
     try:

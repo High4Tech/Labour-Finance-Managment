@@ -28,6 +28,8 @@ SCHEMAS = {
 LEGACY_EMPLOYEE_COLUMNS = list(SCHEMAS['employees'])
 EMPLOYEE_OPTIONAL_COLUMNS = ['middle_name', 'employee_number', 'personal_email', 'current_address',
     'permanent_address', 'person_to_be_contacted', 'emergency_phone_number', 'relation', 'passport_number', 'valid_upto']
+EMPLOYEE_PROFILE_COLUMNS=LEGACY_EMPLOYEE_COLUMNS+EMPLOYEE_OPTIONAL_COLUMNS
+EMPLOYEE_OPTIONAL_COLUMNS += ['designation']
 SCHEMAS['employees'] += EMPLOYEE_OPTIONAL_COLUMNS
 TARGETS = dict(employees='Employee', work='PP Work Entry', milestones='PP Milestone',
     expenses='Purchase Invoice', invoices='Sales Invoice', receipts='Payment Entry', worker_payments='PP Wage Settlement')
@@ -107,7 +109,7 @@ def parse_file(filename, content, kind):
         headers.pop()
     from plus_point.event_imports import LEGACY_SCHEMAS
     legacy = LEGACY_EMPLOYEE_COLUMNS if kind=='employees' else LEGACY_SCHEMAS.get(kind)
-    if headers != SCHEMAS[kind] and headers != legacy:
+    if headers != SCHEMAS[kind] and headers != legacy and not (kind=='employees' and headers==EMPLOYEE_PROFILE_COLUMNS):
         frappe.throw('Column headers must match the selected template in the same order. Download a fresh template.')
     if not rows or len(rows) > MAX_ROWS:
         frappe.throw('Add between 1 and 200 data rows. Blank rows between records are not allowed.')
@@ -198,6 +200,9 @@ def validate_row(kind, company, row):
             frappe.throw('status must be Active or Inactive')
         if row.get('personal_email'):
             frappe.utils.validate_email_address(row['personal_email'], throw=True)
+        if row.get('designation'):
+            if len(row['designation'])>100 or '\n' in row['designation']:frappe.throw('Worker category must be a single line of up to 100 characters.')
+            if not frappe.db.exists('Designation',row['designation']):frappe.has_permission('Designation','create',throw=True)
         if row.get('valid_upto'):row_date(row, 'valid_upto', historical=False)
         employee_target(company, row)
         return dict(label=f"{row['first_name']} {row['last_name']}".strip(), amount=None)
@@ -505,6 +510,8 @@ def apply(token):
                 doc = linked('Employee', result['document'], company_name) if result.get('document') else frappe.new_doc('Employee')
                 # Older templates omit optional columns; never erase fields they cannot show.
                 doc.update({key: row[key] for key in SCHEMAS[kind] if key in row and key not in ('external_id', 'employee')})
+                if row.get('designation') and not frappe.db.exists('Designation',row['designation']):
+                    frappe.get_doc(dict(doctype='Designation',designation_name=row['designation'])).insert()
                 doc.company = company_name
                 doc.create_user_automatically = 0
                 doc.save()

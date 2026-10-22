@@ -88,12 +88,12 @@
             ]:section==='Business reports'?[
                 ['Revenue earned',data.earned_revenue,data.currency],['Wages unpaid',data.wages_unpaid,data.currency],['Client balance',data.client_balance,data.currency],['Operational contribution',data.contribution,data.currency]
             ]:[['Active workers',data.workers],['Active work sites',data.active_sites],['Open projects',data.open_projects],['Worker-days today',data.attendance.at(-1).units]];
-            root.innerHTML=`<div class="pp-section-intro"><p>${esc(__('Your section at a glance. Choose a work list below to continue.'))}</p><label>${esc(__('Company'))}<select class="form-control pp-section-company">${data.companies.map(c=>`<option value="${esc(c.name)}" ${c.name===data.company?'selected':''}>${esc(c.company_name||c.name)}</option>`).join('')}</select></label></div>
+            root.innerHTML=`<div class="pp-section-intro"><p>${esc(__('Your section at a glance. Choose a work list below to continue.'))}</p>${data.is_platform?`<label>${esc(__('Company'))}<select class="form-control pp-section-company">${data.companies.map(c=>`<option value="${esc(c.name)}" ${c.name===data.company?'selected':''}>${esc(c.company_name||c.name)}</option>`).join('')}</select></label>`:''}</div>
                 <dl class="pp-dashboard-metrics">${metrics.map(([label,value,currency])=>`<div class="pp-dashboard-metric"><dt>${esc(__(label))}</dt><dd>${esc(num(value))}${currency?`<small>${esc(currency)}</small>`:''}</dd></div>`).join('')}</dl>
                 <section class="pp-section-worklists"><h2>${esc(__('Work lists'))}</h2>${data.links.map(link=>`<a class="pp-section-list" href="${esc(link.path)}"><span>${esc(__(link.title))}</span><strong>${link.count===null?esc(__(link.is_report===false?'Open availability':'Open report')):esc(num(link.count))}</strong><span aria-hidden="true">›</span></a>`).join('')}</section>
                 <p class="pp-activity-note">${esc(__('Record counts include drafts. Financial totals use approved work and posted records. Shared setup records may cover the whole business.'))}</p>
                 <a class="pp-section-back" href="${frappe.boot.plus_point.home}">${esc(__('Back to overview and charts'))}</a>`;
-            root.querySelector('select').onchange=event=>{plus_point.dashboard_company=event.target.value;plus_point.mount_section(wrapper);};
+            if(root.querySelector('select'))root.querySelector('select').onchange=event=>{plus_point.dashboard_company=event.target.value;plus_point.mount_section(wrapper);};
             root.dataset.section=section;root.dataset.ready='true';
         }catch{
             root.innerHTML=`<div class="pp-condition pp-condition-error"><div><h3>${esc(__('Section could not load'))}</h3><p>${esc(__('Retry to load the current figures. Your work lists remain in the sidebar.'))}</p></div><button class="btn btn-default">${esc(__('Try again'))}</button></div>`;

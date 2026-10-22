@@ -3,17 +3,15 @@ import frappe
 import json
 
 CUSTOMER_GROUPS = [
-    ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers'),
-                    ('PP Site', 'Event sites'), ('PP Assignment', 'Assign workers')]),
+    ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
     ('Inventory and transport', [('Page:pp-inventory','Warehouse availability'),('Item','Inventory items'),('Warehouse','Warehouses'),
         ('Vehicle','Vehicles'),('PP Vehicle Booking','Vehicle assignments'),('PP Equipment Booking','Event equipment'),('Stock Reconciliation','Warehouse balances')]),
-    ('Clients and billing', [('Customer', 'Clients'), ('Contract', 'Client agreements'), ('PP Event Plan','Event plans'),('Project', 'Event projects'),
-                            ('PP Contract Terms', 'Client billing'), ('PP Milestone', 'Fixed milestones'), ('Sales Invoice', 'Client invoices')]),
+    ('Clients and billing', [('Page:pp-agreements', 'Client agreements'), ('Page:pp-event-plans','Event plans'),('Page:pp-client-billing', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
                            ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
     ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
                           ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
-    ('Business setup', [('Company', 'Your company'), ('Item', 'Billing items'),
+    ('Business setup', [('Item', 'Billing items'),
                         ('Supplier', 'Suppliers'), ('Account', 'Accounts'), ('PP Work Entry', 'Wages earned')]),
 ]
 PLATFORM_GROUPS = [
@@ -71,9 +69,9 @@ def product_navigation(platform):
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
         doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
-                         'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record'])
+                         'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
-                pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding']),groups=ordered)
+                pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)
 
 
 @frappe.whitelist(methods=['POST'])

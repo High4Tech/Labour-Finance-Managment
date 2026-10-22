@@ -382,3 +382,13 @@ def cleanup_support_test_fixtures():
             count+=1
     frappe.db.commit()
     return dict(temporary_records_removed=count)
+
+
+def run_hierarchy():
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled site required')
+    import unittest
+    from plus_point.tests.test_hierarchy import HierarchyTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(HierarchyTests))
+    if not result.wasSuccessful():raise RuntimeError('Hierarchy integration suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))

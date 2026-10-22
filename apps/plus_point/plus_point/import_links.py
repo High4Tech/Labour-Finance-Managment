@@ -129,7 +129,12 @@ def normalize(kind, company, original):
             if positive(row.get('client_rate'),'Client daily rate',allow_zero=True):
                 row['client_rate']='0'
                 notes.append('Fixed-price event: client_rate is unused and will be saved as 0. The fixed_amount is the client contract total; crew wages stay separate.')
-    if kind == 'employees':return row, notes
+    if kind == 'employees':
+        if row.get('designation'):
+            existing=frappe.db.get_value('Designation',row['designation'],'name')
+            if existing:row['designation']=existing
+            else:notes.append('Create worker category '+row['designation'])
+        return row, notes
     if kind == 'clients':
         value = row.get('customer') or row.get('customer_name')
         row['customer'] = find('Customer',value,company,'customer',optional=True) or ''

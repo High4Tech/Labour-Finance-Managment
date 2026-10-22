@@ -38,7 +38,7 @@
   const section=frm.__pp_attendance.get(0);let saving=false,dirty=false;
   const values=new Map(data.rows.map(row=>[row.id,row.status]));
   const amount=value=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(value);
-  section.innerHTML=`<header class="pp-register-header"><div><p>${esc(data.date)} · ${esc(data.approved?__('Approved attendance'):__('Attendance to review'))}</p><h2>${esc(data.event)}</h2><p>${esc(data.site)}</p></div><a class="btn btn-default" href="/desk/${data.plan?'pp-event-plan/'+encodeURIComponent(data.plan):'project/'+encodeURIComponent(data.project)}">${esc(__('Review event plan'))}</a></header>
+  section.innerHTML=`<header class="pp-register-header"><div><p>${esc(data.date)} · ${esc(data.approved?__('Approved attendance'):__('Attendance to review'))}</p><h2>${esc(data.event)}</h2><p>${esc(data.site)}</p></div><a class="btn btn-default" href="/desk/pp-event-plans?${data.plan?'record='+encodeURIComponent(data.plan):'project='+encodeURIComponent(data.project)}">${esc(__('Review event plan'))}</a></header>
    <div class="pp-register-error" role="alert"></div><div class="pp-register-stats" aria-live="polite"></div>
    ${data.required!=null&&data.rows.length!==data.required?`<div class="pp-onboarding-errors">${esc(__('{0} workers planned for this site today; {1} allocated. Review the event plan before approving.',[data.required,data.rows.length]))}</div>`:''}
    <div class="pp-register-tools"><label>${esc(__('Find worker'))}<input type="search" class="form-control pp-attendance-search" placeholder="${esc(__('Search name or role'))}"></label><button type="button" class="btn btn-default pp-refresh-roster" ${data.approved?'disabled':''}>${esc(__('Refresh crew'))}</button></div>

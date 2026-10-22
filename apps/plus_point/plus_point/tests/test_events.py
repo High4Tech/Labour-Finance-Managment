@@ -144,7 +144,8 @@ class EventTests(unittest.TestCase):
     def test_generated_crew_can_release_only_before_recorded_work(self):
         result=self.event(start=today(),end=today());events.allocate_crew(result['plan'])
         plan=frappe.get_doc('PP Event Plan',result['plan']);plan.staffing[0].workers_required=2
-        with self.assertRaises(frappe.ValidationError):plan.save()
+        plan.save()
+        self.assertEqual(frappe.db.count('PP Assignment',{'pp_event_plan':plan.name}),1)
         plan.staffing[0].workers_required=1;plan.crew_allocated=0
         with self.assertRaises(frappe.ValidationError):plan.save()
         assignment=frappe.db.get_value('PP Assignment',{'pp_event_plan':result['plan']},'name')

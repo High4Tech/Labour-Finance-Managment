@@ -122,6 +122,30 @@ def attendance_browser_fixture(action,run_id):
     return browser_fixture('end',run_id)
 
 
+def hierarchy_browser_fixture(action,run_id):
+    """Only exact local QA draft invoices/milestones/files may be cleaned up."""
+    guard('qa.localhost')
+    if not re.fullmatch('[a-f0-9]{12}',run_id):raise RuntimeError('Exact browser run required')
+    if action=='begin':return browser_fixture(action,run_id)
+    prefix='Event Browser QA '+run_id
+    backup=Path(frappe.get_site_path('private','backups','pp-event-browser-'+run_id+'.json'))
+    if action!='end' or not backup.exists() or not frappe.db.exists('Company',prefix):raise RuntimeError('Exact disposable hierarchy fixture required')
+    if frappe.db.exists('GL Entry',{'company':prefix}):raise RuntimeError('Posted financial history; cleanup refused')
+    invoices=frappe.get_all('Sales Invoice',filters={'company':prefix},fields=['name','docstatus'])
+    if any(r.docstatus for r in invoices):raise RuntimeError('Submitted invoices; cleanup refused')
+    for row in invoices:frappe.delete_doc('Sales Invoice',row.name)
+    projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
+    terms=frappe.get_all('PP Contract Terms',filters={'project':['in',projects or ['']]},pluck='name')
+    for name in frappe.get_all('PP Milestone',filters={'contract_terms':['in',terms or ['']]},pluck='name'):
+        frappe.db.set_value('PP Milestone',name,'status','Planned');frappe.delete_doc('PP Milestone',name)
+    people=frappe.get_all('Employee',filters={'company':prefix},pluck='name')
+    for name in frappe.get_all('File',filters={'attached_to_doctype':'Employee','attached_to_name':['in',people or ['']]},pluck='name'):frappe.delete_doc('File',name)
+    result=attendance_browser_fixture('end',run_id)
+    for dt,filters in [('Designation',{'name':['like','QA role '+run_id+'%']}),('Item',{'item_code':prefix+' Service'})]:
+        for name in frappe.get_all(dt,filters=filters,pluck='name'):frappe.delete_doc(dt,name)
+    frappe.db.commit();return result
+
+
 def seed_demo():
     """Adapt only labelled local dummy records; retain all financial history."""
     guard('demo.localhost')

@@ -52,7 +52,7 @@ def receivable_account(company,currency):
 
 
 @frappe.whitelist(methods=['POST'])
-def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invoice_currency=None, exchange_rate=None):
+def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invoice_currency=None, exchange_rate=None, source_names=None):
     frappe.has_permission('Sales Invoice', 'create', throw=True)
     terms = frappe.get_doc('PP Contract Terms', contract_terms)
     terms.check_permission('read')
@@ -70,6 +70,10 @@ def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invo
     if currency==terms.currency:rate=Decimal(1)
     doctype = 'PP Work Entry' if terms.billing_model == 'Daily' else 'PP Milestone'
     filters = dict(contract_terms=terms.name, status='Approved', sales_invoice=['is', 'not set'])
+    if source_names is not None:
+        names=frappe.parse_json(source_names)
+        if not isinstance(names,list) or not names or any(not isinstance(n,str) for n in names):frappe.throw('Choose valid approved invoice sources.')
+        filters['name']=['in',names]
     date_field = 'work_date' if doctype == 'PP Work Entry' else 'due_date'
     if from_date and to_date and getdate(from_date) > getdate(to_date):
         frappe.throw('Start date must not be after end date')

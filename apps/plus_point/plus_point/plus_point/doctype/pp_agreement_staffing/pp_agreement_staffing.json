@@ -1,0 +1,72 @@
+{
+  "doctype": "DocType",
+  "name": "PP Agreement Staffing",
+  "module": "PLUS POINT",
+  "istable": 1,
+  "editable_grid": 1,
+  "field_order": [
+    "site",
+    "designation",
+    "phase",
+    "start_date",
+    "end_date",
+    "workers_required",
+    "wage_rate",
+    "client_rate"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "Event site",
+      "fieldtype": "Link",
+      "options": "PP Site",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "designation",
+      "label": "Worker category",
+      "fieldtype": "Link",
+      "options": "Designation",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "phase",
+      "label": "Phase",
+      "fieldtype": "Select",
+      "options": "Setup\nEvent\nPack-down\nOther",
+      "default": "Event"
+    },
+    {
+      "fieldname": "start_date",
+      "label": "From",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "end_date",
+      "label": "Through",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "workers_required",
+      "label": "Workers per day",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "wage_rate",
+      "label": "Daily wage",
+      "fieldtype": "Currency",
+      "reqd": 1
+    },
+    {
+      "fieldname": "client_rate",
+      "label": "Daily client charge",
+      "fieldtype": "Currency"
+    }
+  ]
+}

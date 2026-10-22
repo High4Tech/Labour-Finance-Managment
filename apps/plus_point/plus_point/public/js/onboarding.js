@@ -106,8 +106,9 @@
     const esc = value => frappe.utils.escape_html(String(value));
     const platform = () => !!frappe.boot.plus_point?.is_platform;
     const home = () => frappe.boot.plus_point?.home || '/desk/plus-point';
+    const mergedRoutes={'Customer':'pp-agreements','Contract':'pp-agreements','PP Contract Terms':'pp-agreements','Project':'pp-event-plans','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing','PP Milestone':'pp-client-billing'};
     const link = ([doctype, label]) => frappe.model.can_read(doctype)
-        ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
+        ? `<a class="pp-guide-link" href="/desk/${!platform()&&mergedRoutes[doctype]||frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
 
     function attendancePicker() {
         return plus_point.open_attendance_picker();
@@ -124,10 +125,10 @@
                 <button type="button" class="btn btn-primary pp-mark-attendance" ${frappe.model.can_create('PP Daily Register') ? '' : 'disabled'}>${esc(__('Mark attendance'))}</button></div>
             <div class="pp-task-rows">
                 <div class="pp-task-row"><div><h3>${esc(__('Event plans and crew'))}</h3><p>${esc(__('Plan each venue day, then assign available workers.'))}</p></div>
-                    <div class="pp-task-links">${link(['PP Event Plan', 'Event plans'])}${link(['Employee', 'Workers'])}${link(['PP Site', 'Event sites'])}${link(['PP Assignment', 'Assign workers'])}</div></div>
+                    <div class="pp-task-links">${link(['PP Event Plan', 'Event plans'])}${link(['Employee', 'Workers'])}</div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Inventory and transport'))}</h3><p>${esc(__('Check warehouse availability and reserve vehicles or equipment for an event.'))}</p></div><div class="pp-task-links"><a href="/desk/pp-inventory">${esc(__('Warehouse availability'))}</a>${link(['Vehicle','Vehicles'])}${link(['PP Vehicle Booking','Vehicle assignments'])}</div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Client billing'))}</h3><p>${esc(__('Set the agreement, prepare an invoice and record client receipts.'))}</p></div>
-                    <div class="pp-task-links">${link(['PP Contract Terms', 'Billing terms'])}${link(['Sales Invoice', 'Invoices'])}</div></div>
+                    <div class="pp-task-links"><a href="/desk/pp-agreements">${esc(__('Client agreements'))}</a><a href="/desk/pp-client-billing">${esc(__('Billing and finances'))}</a></div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Worker payments'))}</h3><p>${esc(__('Keep wages earned separate from money actually paid.'))}</p></div>
                     <div class="pp-task-links">${link(['PP Wage Settlement', 'Record payment'])}${link(['PP Work Entry', 'Wages earned'])}</div></div>
                 ${frappe.user.has_role('System Manager') ? `<div class="pp-task-row"><div><h3>${esc(__('Business reports'))}</h3><p>${esc(__('Review project results, deployment and each worker’s history.'))}</p></div>

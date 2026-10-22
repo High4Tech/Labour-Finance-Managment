@@ -1,0 +1,13 @@
+{
+  "doctype": "Page",
+  "name": "pp-client-billing",
+  "page_name": "pp-client-billing",
+  "title": "Billing and finances",
+  "module": "PLUS POINT",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    }
+  ]
+}

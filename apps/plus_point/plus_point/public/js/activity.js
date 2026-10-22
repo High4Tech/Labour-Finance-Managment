@@ -32,9 +32,9 @@
             ${days.map((day,index)=>{const position=offset+index,label=`${day.date}: ${num(day.units)} ${__('worker-days')}, ${day.entries} ${__('approved entries')}`;return `<button type="button" class="pp-day pp-heat-${level(Number(day.units))}" data-day="${day.date}" style="grid-column:${Math.floor(position/7)+2};grid-row:${position%7+2}" tabindex="${index===days.length-1?'0':'-1'}" title="${esc(label)}" aria-label="${esc(label)}"></button>`;}).join('')}</div></div>`;
     }
     plus_point.activity_markup=(activity,company)=>{
-        if(!activity?.clients?.length)return `<div class="pp-activity-empty"><p>${esc(__('No client work recorded yet. Add a client project and approve its attendance to build this history.'))}</p><a href="/desk/customer">${esc(__('View clients'))}</a></div>`;
+        if(!activity?.clients?.length)return `<div class="pp-activity-empty"><p>${esc(__('No client work recorded yet. Add a client project and approve its attendance to build this history.'))}</p><a href="/desk/pp-agreements">${esc(__('View clients'))}</a></div>`;
         return `<div class="pp-client-activity-grid">${activity.clients.map(client=>{
-            return `<article class="pp-client-activity"><header><div><a href="/desk/customer/${encodeURIComponent(client.name)}">${esc(client.title)}</a><p>${esc(__('{0} projects · {1} days with work',[client.projects,client.active_days]))}</p></div><strong>${esc(num(client.units))}<small>${esc(__('worker-days'))}</small></strong></header>
+            return `<article class="pp-client-activity"><header><div><a href="/desk/pp-agreements?client=${encodeURIComponent(client.name)}">${esc(client.title)}</a><p>${esc(__('{0} projects · {1} days with work',[client.projects,client.active_days]))}</p></div><strong>${esc(num(client.units))}<small>${esc(__('worker-days'))}</small></strong></header>
                 ${calendar(client.days,client,company)}
                 <footer><span>${esc(activity.start)} – ${esc(activity.end)}</span><span>${esc(__('Less'))} ${[0,1,2,3,4].map(n=>`<i class="pp-heat-${n}" aria-hidden="true"></i>`).join('')} ${esc(__('More'))}</span></footer>
                 <p class="pp-activity-note">${esc(__('Longest run: {0} calendar days. Select a day for workers, sites and quantities.',[client.longest_streak]))}</p></article>`;

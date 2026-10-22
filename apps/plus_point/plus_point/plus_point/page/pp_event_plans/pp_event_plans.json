@@ -1,0 +1,13 @@
+{
+  "doctype": "Page",
+  "name": "pp-event-plans",
+  "page_name": "pp-event-plans",
+  "title": "Event plans",
+  "module": "PLUS POINT",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    }
+  ]
+}

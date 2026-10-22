@@ -9,7 +9,10 @@
     "phase",
     "start_date",
     "end_date",
-    "workers_required"
+    "workers_required",
+    "designation",
+    "wage_rate",
+    "client_rate"
   ],
   "fields": [
     {
@@ -48,6 +51,23 @@
       "fieldtype": "Int",
       "reqd": 1,
       "in_list_view": 1
+    },
+    {
+      "fieldname": "designation",
+      "label": "Worker category",
+      "fieldtype": "Link",
+      "options": "Designation",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "wage_rate",
+      "label": "Daily wage",
+      "fieldtype": "Currency"
+    },
+    {
+      "fieldname": "client_rate",
+      "label": "Daily client charge",
+      "fieldtype": "Currency"
     }
   ],
   "istable": 1,

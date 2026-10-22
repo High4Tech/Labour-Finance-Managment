@@ -11,6 +11,7 @@
   "engine": "InnoDB",
   "is_submittable": 0,
   "field_order": [
+    "agreement_title",
     "contract",
     "project",
     "billing_model",
@@ -18,7 +19,10 @@
     "fixed_amount",
     "status",
     "effective_start",
-    "effective_end"
+    "effective_end",
+    "staffing",
+    "billing_item",
+    "auto_invoice"
   ],
   "fields": [
     {
@@ -83,6 +87,30 @@
       "fieldname": "effective_end",
       "fieldtype": "Date",
       "label": "End Date"
+    },
+    {
+      "fieldname": "agreement_title",
+      "label": "Agreement name",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "staffing",
+      "label": "Agreed venues and worker categories",
+      "fieldtype": "Table",
+      "options": "PP Agreement Staffing"
+    },
+    {
+      "fieldname": "billing_item",
+      "label": "Invoice service item",
+      "fieldtype": "Link",
+      "options": "Item"
+    },
+    {
+      "fieldname": "auto_invoice",
+      "label": "Create invoice draft when a milestone is approved",
+      "fieldtype": "Check",
+      "default": "0"
     }
   ],
   "permissions": [

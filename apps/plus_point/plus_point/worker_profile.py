@@ -16,7 +16,7 @@ def overview(employee,days=91):
     work=frappe.get_list('PP Work Entry',filters={'employee':employee,'status':'Approved'},
         fields=['name','work_date','project','site','units','wage_amount'],order_by='work_date desc,name',limit_page_length=0)
     # Follow parent company permissions before including any source in the profile.
-    projects={r.name:r for r in frappe.get_list('Project',filters={'company':company.name},fields=['name','project_name'],limit_page_length=0)}
+    projects={r.name:r for r in frappe.get_list('Project',filters={'company':company.name},fields=['name','project_name','status'],limit_page_length=0)}
     work=[r for r in work if r.project in projects]
     totals=defaultdict(Decimal);earned=Decimal(0)
     for row in work:
@@ -44,11 +44,14 @@ def overview(employee,days=91):
     longest=current=0
     for row in calendar:
         current=current+1 if row['units'] is not None and Decimal(row['units'])>0 else 0;longest=max(longest,current)
-    assignments=[dict(name=r.name,event=projects[r.project].project_name,project=r.project,site=sites.get(r.site,r.site),
-        start=str(r.start_date),end=str(r.end_date or ''),wage_rate=str(money(r.wage_rate))) for r in allocations if getdate(r.start_date)<=end and (not r.end_date or getdate(r.end_date)>=end)]
+    plan_rows=frappe.get_list('PP Event Plan',filters={'company':company.name},fields=['name','project','event_name'],limit_page_length=0)
+    plans={r.project:r.name for r in plan_rows};titles={r.project:r.event_name for r in plan_rows}
+    assignments=[dict(plan=plans.get(r.project),name=r.name,event=titles.get(r.project,projects[r.project].project_name),project=r.project,site=sites.get(r.site,r.site),
+        start=str(r.start_date),end=str(r.end_date or ''),wage_rate=str(money(r.wage_rate))) for r in allocations if projects[r.project].status=='Open' and (not r.end_date or getdate(r.end_date)>=end)]
     history=[dict(name=r.name,date=str(r.work_date),event=projects[r.project].project_name,site=sites.get(r.site,r.site),
         status='Present' if Decimal(str(r.units))==1 else 'Half day' if Decimal(str(r.units))>0 else 'Absent',amount=str(money(r.wage_amount))) for r in work[:20]]
-    return dict(employee=employee,title=worker.employee_name,designation=worker.designation or '',department=worker.department or '',
+    assigned=any(getdate(r['start'])<=end for r in assignments)
+    return dict(image=worker.image or '',allocation_status='Assigned' if assigned else 'Scheduled' if assignments else 'Available',employee=employee,title=worker.employee_name,designation=worker.designation or '',department=worker.department or '',
         company=company.company_name,company_id=company.name,currency=company.default_currency,status=worker.status,
         phone=worker.cell_number or '',email=worker.personal_email or '',joining=str(worker.date_of_joining or ''),
         full_days=full,half_days=half,absent_days=absent,paid_days=str(sum(totals.values(),Decimal(0))),

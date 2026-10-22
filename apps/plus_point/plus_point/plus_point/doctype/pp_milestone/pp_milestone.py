@@ -39,8 +39,12 @@ class PPMilestone(Document):
             project = frappe.get_doc("Project", terms.project)
             if invoice.customer != project.customer:
                 frappe.throw("Linked invoice must belong to project customer")
-            if invoice.docstatus != 1 or invoice.project != terms.project or invoice.company != project.company:
-                frappe.throw("Milestone invoice must be submitted and match the project and company")
+            if invoice.project != terms.project or invoice.company != project.company or invoice.docstatus not in (0,1):
+                frappe.throw("Milestone invoice must match the project and company")
+            if self.status=='Invoiced' and invoice.docstatus!=1:
+                frappe.throw('Submit the invoice before marking the milestone Invoiced')
+            if invoice.docstatus==0 and not any(row.get('pp_source_type')=='PP Milestone' and row.get('pp_source_name')==self.name for row in invoice.items):
+                frappe.throw('A reserved draft invoice must include this milestone as its source')
             if invoice.currency!=terms.currency and not any(row.get('pp_source_type')=='PP Milestone' and row.get('pp_source_name')==self.name for row in invoice.items):
                 frappe.throw('A foreign-currency milestone invoice must link this approved milestone as its source.')
         if self.status in {"Approved", "Invoiced"}:

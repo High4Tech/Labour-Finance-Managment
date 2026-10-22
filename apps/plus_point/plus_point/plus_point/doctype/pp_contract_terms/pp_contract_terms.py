@@ -6,6 +6,8 @@ from plus_point.finance import as_decimal
 
 class PPContractTerms(Document):
     def validate(self):
+        from plus_point.operations import validate_agreement
+        validate_agreement(self)
         frappe.db.get_value('Contract', self.contract, 'name', for_update=True)
         old = self.get_doc_before_save()
         def normalized(doc, field):

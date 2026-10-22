@@ -314,6 +314,20 @@ class SetupImportTests(unittest.TestCase):
         self.tokens.append(preview['token']);self.assertTrue(preview['valid'],preview)
         imports.apply(preview['token']);self.assertEqual(frappe.db.get_value('Employee',name,'personal_email'),'existing@example.invalid')
 
+    def test_import_category_is_reviewed_created_and_legacy_preserves_it(self):
+        role='Imported event role '+uuid.uuid4().hex[:7];row=self.employee(designation=role)
+        preview=self.preview('employees',[row]);self.assertTrue(preview['valid'],preview)
+        self.assertFalse(frappe.db.exists('Designation',role));self.assertIn('Create worker category '+role,preview['rows'][0]['notes'])
+        result=imports.apply(preview['token']);worker=result['rows'][0]['document']
+        self.assertEqual(frappe.db.get_value('Employee',worker,'designation'),role)
+        self.assertTrue(frappe.db.exists('Designation',role))
+        old={key:row[key] for key in imports.EMPLOYEE_PROFILE_COLUMNS};old['cell_number']='+923001111111'
+        stream=io.StringIO(newline='');writer=csv.DictWriter(stream,fieldnames=imports.EMPLOYEE_PROFILE_COLUMNS);writer.writeheader();writer.writerow(old)
+        preview=imports.preview('employees',self.f.company.name,'previous-profile.csv',base64.b64encode(stream.getvalue().encode()).decode());self.tokens.append(preview['token'])
+        self.assertTrue(preview['valid'],preview);imports.apply(preview['token'])
+        self.assertEqual(frappe.db.get_value('Employee',worker,'designation'),role)
+        self.assertNotIn('image',imports.SCHEMAS['employees'])
+
     def test_duplicate_new_person_with_different_external_ids_is_refused(self):
         row=self.employee();duplicate=dict(row,external_id='different')
         self.assertFalse(self.preview('employees',[row,duplicate])['valid'])

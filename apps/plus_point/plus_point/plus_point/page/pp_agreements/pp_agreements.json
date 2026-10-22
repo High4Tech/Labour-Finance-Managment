@@ -1,0 +1,13 @@
+{
+  "doctype": "Page",
+  "name": "pp-agreements",
+  "page_name": "pp-agreements",
+  "title": "Client agreements",
+  "module": "PLUS POINT",
+  "standard": "Yes",
+  "roles": [
+    {
+      "role": "System Manager"
+    }
+  ]
+}

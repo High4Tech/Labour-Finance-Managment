@@ -523,7 +523,7 @@ class OperationsTests(unittest.TestCase):
         self.work(0)
         frappe.db.set_value('PP Site',self.f.site.name,'is_active',0)
         result=overview(self.f.company.name)
-        self.assertTrue(any(row['title']=='Add a work site' and row['action']=='new:PP Site' for row in result['conditions']))
+        self.assertTrue(any(row['title']=='Add a work site' and row['path']=='/desk/pp-agreements' and not row['action'] for row in result['conditions']))
 
 
     def test_client_activity_uses_approved_days_and_excludes_future_work(self):

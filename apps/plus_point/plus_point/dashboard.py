@@ -64,6 +64,9 @@ def _customer(company):
     budgets.sort(key=lambda row: (rank[row['level']], row['title']))
     conditions = []
     def condition(level, title, message, label, path, action=None):
+        merged={'/desk/pp-contract-terms':'/desk/pp-agreements','/desk/project':'/desk/pp-agreements?record=new','/desk/pp-site':'/desk/pp-agreements','/desk/pp-assignment':'/desk/pp-event-plans'}
+        if path in merged:path=merged[path];action=None
+        elif path.startswith('/desk/project/'):path='/desk/pp-event-plans?project='+path.rsplit('/',1)[-1];action=None
         if path.startswith('/desk/query-report/'):
             path += '?company='+quote(company,safe='')
         conditions.append(dict(level=level, title=title, message=message, label=label, path=path, action=action))
