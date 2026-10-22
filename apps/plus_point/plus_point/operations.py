@@ -8,6 +8,56 @@ from frappe.utils import getdate, today, add_days
 from plus_point.setup_flow import require_customer, linked
 from plus_point.finance import money
 
+EVENT_ROLES = ('Event manager', 'Site supervisor', 'Crew leader', 'Event crew', 'Stagehand',
+    'Electrician', 'Lighting technician', 'Sound technician', 'AV technician', 'Rigger',
+    'Carpenter', 'Decorator', 'Usher', 'Security staff', 'Cleaner', 'Driver', 'Warehouse crew')
+
+
+def event_roles():
+    """Event choices do not inherit unrelated ERP demonstration designations."""
+    custom=frappe.parse_json(frappe.defaults.get_global_default('pp_event_roles') or '[]')
+    return sorted(set(EVENT_ROLES) | set(custom), key=str.casefold)
+
+
+def install_event_defaults():
+    """Native event roles are local reference data, not worker accounts."""
+    frappe.set_user('Administrator')
+    from plus_point.install import ensure_event_archive_field
+    ensure_event_archive_field()
+    for title in EVENT_ROLES:ensure_event_role(title)
+    frappe.db.commit()
+    return dict(categories=len(EVENT_ROLES))
+
+
+def ensure_event_role(title):
+    if not frappe.db.exists('Designation',title):
+        if title not in event_roles():frappe.throw('Choose an event crew category, or add a new category first.')
+        frappe.get_doc(dict(doctype='Designation',designation_name=title)).insert()
+
+
+def service_item():
+    """Create the application's native non-stock service when it is first needed."""
+    code='PP-EVENT-SERVICE'
+    frappe.db.get_value('DocType','Item','name',for_update=True)
+    if frappe.db.exists('Item',code):
+        item=linked('Item',code)
+        if item.disabled or item.is_stock_item:frappe.throw('The Event services item must be enabled and non-stock before billing.')
+        return item.name
+    group=frappe.db.get_value('Item Group',{'name':'Services','is_group':0},'name') or frappe.db.get_value('Item Group',{'is_group':0},'name')
+    unit=frappe.db.get_value('UOM',{'name':'Nos'},'name') or frappe.db.get_value('UOM',{},'name')
+    return frappe.get_doc(dict(doctype='Item',item_code=code,item_name='Event services',
+        item_group=group,stock_uom=unit,is_stock_item=0)).insert().name
+
+
+@frappe.whitelist(methods=['POST'])
+def prepare_billing(contract_terms):
+    terms=terms_doc(contract_terms,True)
+    if not terms.billing_item:
+        terms.billing_item=service_item();terms.save()
+    from plus_point.billing import invoice_options
+    return dict(invoice_options(terms.name),item=terms.billing_item,
+        service_name=frappe.db.get_value('Item',terms.billing_item,'item_name'))
+
 
 def company():
     require_customer()
@@ -27,14 +77,14 @@ def terms_doc(name,write=False):
 @frappe.whitelist()
 def catalogue():
     business=company()
-    projects={r.name:r for r in frappe.get_list('Project',filters={'company':business.name},fields=['name','project_name','customer','status'],limit_page_length=0)}
+    projects={r.name:r for r in frappe.get_list('Project',filters={'company':business.name,'pp_archived':0},fields=['name','project_name','customer','status'],limit_page_length=0)}
     terms=frappe.get_list('PP Contract Terms',filters={'project':['in',list(projects) or ['']]},fields=['name','project','contract','billing_model','status','fixed_amount','effective_start','effective_end','agreement_title'],order_by='modified desc',limit_page_length=0)
-    clients={r.name:r.customer_name for r in frappe.get_list('Customer',fields=['name','customer_name'],order_by='customer_name,name',limit_page_length=0)}
+    clients={r.name:r.customer_name for r in frappe.get_list('Customer',filters={'disabled':0},fields=['name','customer_name'],order_by='customer_name,name',limit_page_length=0)}
     for row in terms:row.update(title=row.agreement_title or projects[row.project].project_name,customer=projects[row.project].customer,client=clients.get(projects[row.project].customer,''))
-    plans=frappe.get_list('PP Event Plan',filters={'company':business.name},fields=['name','event_name','contract_terms','project','start_date','end_date','crew_allocated'],order_by='start_date desc,event_name',limit_page_length=0)
+    plans=frappe.get_list('PP Event Plan',filters={'company':business.name,'project':['in',list(projects) or ['']]},fields=['name','event_name','contract_terms','project','start_date','end_date','crew_allocated'],order_by='start_date desc,event_name',limit_page_length=0)
     return dict(currency=business.default_currency,country=business.country,agreements=terms,plans=plans,
         clients=[dict(name=k,title=v) for k,v in clients.items()],
-        designations=frappe.get_list('Designation',pluck='name',order_by='name',limit_page_length=0),
+        designations=event_roles(),
         items=frappe.get_list('Item',filters={'is_stock_item':0,'disabled':0},fields=['name','item_name'],order_by='item_name,name',limit_page_length=0))
 
 
@@ -91,6 +141,7 @@ def save_agreement(values,name=None):
             save(values.client,customer)
         for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status'):
             if key in values:doc.set(key,values[key])
+        if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
             contract.check_permission('write');contract.contract_terms=values.scope;contract.save()
         if 'staffing' in values:
@@ -98,6 +149,7 @@ def save_agreement(values,name=None):
             rows=[]
             for raw in values.staffing:
                 raw=frappe._dict(raw);site=raw.get('site')
+                if raw.get('designation'):ensure_event_role(raw.designation)
                 if site:
                     venue=linked('PP Site',site)
                     if venue.project!=project.name:frappe.throw('Choose a venue in this agreement.')
@@ -232,8 +284,13 @@ def available_crew(name,requirement):
     row=next((r for r in doc.staffing if r.name==requirement),None)
     if not row:frappe.throw('Reload the site requirements.')
     result=available(doc.company,row.start_date,row.end_date)
+    assigned={r.employee:r.name for r in frappe.get_list('PP Assignment',filters={
+        'project':doc.project,'site':row.site,'start_date':['<=',row.end_date]},
+        fields=['name','employee','end_date'],limit_page_length=0)
+        if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
     roles={r.name:r.designation for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','designation'],limit_page_length=0)}
-    result['rows']=[dict(r,designation=roles.get(r['name']) or '') for r in result['rows'] if not row.designation or roles.get(r['name'])==row.designation]
+    result['rows']=[dict(r,designation=roles.get(r['name']) or '',assigned=r['name'] in assigned,
+        assignment=assigned.get(r['name'])) for r in result['rows'] if not row.designation or roles.get(r['name'])==row.designation]
     return result
 
 
@@ -248,7 +305,13 @@ def assign_crew(name,requirement,employees):
     for employee in names:
         worker=linked('Employee',employee,doc.company)
         if row.designation and worker.designation!=row.designation:frappe.throw('Select workers in the required category.')
-    result=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,row.wage_rate or doc.wage_rate,row.client_rate or doc.client_rate,names)
+    from plus_point.budget import lock_project
+    lock_project(doc.project)
+    existing={r.employee for r in frappe.get_list('PP Assignment',filters={'project':doc.project,'site':row.site,
+        'start_date':['<=',row.end_date]},fields=['employee','end_date'],limit_page_length=0)
+        if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
+    names=[n for n in names if n not in existing]
+    result=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,row.wage_rate or doc.wage_rate,row.client_rate or doc.client_rate,names) if names else dict(created=0)
     frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not r['missing'] for r in coverage(doc))))
     return result
 
@@ -328,7 +391,8 @@ def milestone_invoice(doc,method=None):
     if doc.status!='Approved' or doc.sales_invoice or frappe.flags.in_migrate:return
     terms=frappe.get_doc('PP Contract Terms',doc.contract_terms)
     if not terms.get('auto_invoice'):return
-    if not terms.billing_item:frappe.throw('Choose a billing item on the agreement before approving this milestone.')
+    if not terms.billing_item:
+        terms.billing_item=service_item();frappe.db.set_value('PP Contract Terms',terms.name,'billing_item',terms.billing_item)
     from plus_point.billing import create_invoice
     create_invoice(terms.name,terms.billing_item,source_names=[doc.name])
 
@@ -337,7 +401,10 @@ def milestone_invoice(doc,method=None):
 def billing(contract_terms):
     terms=terms_doc(contract_terms)
     from plus_point.api import project_summary
+    source_type='PP Milestone' if terms.billing_model=='Fixed' else 'PP Work Entry'
     return dict(agreement=agreement(terms.name),totals=project_summary(terms.project),
+        unbilled_count=frappe.db.count(source_type,{'contract_terms':terms.name,'status':'Approved','sales_invoice':['is','not set'],
+            ('amount' if source_type=='PP Milestone' else 'billable_amount'):['>',0]}),
         invoices=frappe.get_list('Sales Invoice',filters={'project':terms.project},fields=['name','posting_date','due_date','grand_total','outstanding_amount','currency','docstatus','status'],order_by='posting_date desc,name desc',limit_page_length=0))
 
 
@@ -471,8 +538,9 @@ def worker_states():
 def create_category(title):
     company();title=str(title or '').strip()
     if not title or len(title)>100:frappe.throw('Enter a worker category of up to 100 characters.')
-    if frappe.db.exists('Designation',title):return dict(name=title)
-    doc=frappe.get_doc(dict(doctype='Designation',designation_name=title)).insert();return dict(name=doc.name)
+    if not frappe.db.exists('Designation',title):frappe.get_doc(dict(doctype='Designation',designation_name=title)).insert()
+    frappe.defaults.set_global_default('pp_event_roles',json.dumps(sorted(set(event_roles())|{title})))
+    return dict(name=title)
 
 
 def activity_doc(doctype,name):

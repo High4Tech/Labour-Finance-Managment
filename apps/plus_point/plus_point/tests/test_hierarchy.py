@@ -37,6 +37,52 @@ class HierarchyTests(unittest.TestCase):
         plan=op.plan(name);self.assertEqual(plan['allocations'][0]['employee'],self.worker.name)
         self.assertTrue(all(row['missing']==0 and row['extra']==0 for row in plan['coverage']))
         self.assertEqual(op.worker_states()[self.worker.name],'Assigned')
+    def test_assigned_workers_remain_checked_and_reselection_is_idempotent(self):
+        name=self.event();op.auto_assign(name);doc=frappe.get_doc('PP Event Plan',name)
+        roster=op.available_crew(name,doc.staffing[0].name)
+        person=next(r for r in roster['rows'] if r['name']==self.worker.name)
+        self.assertTrue(person['assigned']);self.assertTrue(person['assignment'])
+        op.assign_crew(name,doc.staffing[0].name,[self.worker.name])
+        self.assertEqual(frappe.db.count('PP Assignment',{'project':doc.project}),1)
+    def test_partial_phase_allocations_stay_selected_without_extending_them(self):
+        name=self.event();op.auto_assign(name);doc=frappe.get_doc('PP Event Plan',name)
+        assignment=frappe.get_doc('PP Assignment',{'project':doc.project,'employee':self.worker.name})
+        assignment.end_date=today();assignment.save()
+        person=next(r for r in op.available_crew(name,doc.staffing[0].name)['rows'] if r['name']==self.worker.name)
+        self.assertTrue(person['assigned'])
+        op.assign_crew(name,doc.staffing[0].name,[self.worker.name])
+        self.assertEqual(str(frappe.db.get_value('PP Assignment',assignment.name,'end_date')),today())
+    def test_billing_provisions_a_service_for_legacy_agreements_without_items(self):
+        a=self.agreement(fixed=True)
+        frappe.db.set_value('PP Contract Terms',a['name'],'billing_item',None)
+        prepared=op.prepare_billing(a['name']);item=frappe.get_doc('Item',prepared['item'])
+        self.assertEqual(item.is_stock_item,0);self.assertFalse(item.disabled)
+        self.assertEqual(op.prepare_billing(a['name'])['item'],item.name)
+        saved=op.save_milestone(a['name'],dict(milestone_title='Stage setup',due_date=today(),amount=2000,status='Approved'))
+        self.assertTrue(saved['sales_invoice']);self.assertEqual(frappe.db.get_value('Sales Invoice',saved['sales_invoice'],'grand_total'),2000)
+    def test_default_categories_are_event_specific_and_custom_categories_stay_available(self):
+        roles=op.catalogue()['designations']
+        self.assertIn('Stagehand',roles);self.assertIn('Electrician',roles)
+        self.assertNotIn('Software Engineer',roles);self.assertNotIn('Accountant',roles)
+        title='Festival steward QA '+uuid.uuid4().hex[:6]
+        op.create_category(title);self.assertIn(title,op.catalogue()['designations'])
+    def test_invoice_creation_without_internal_service_selection(self):
+        a=self.agreement(fixed=True)
+        frappe.db.set_value('PP Contract Terms',a['name'],'auto_invoice',0)
+        op.save_milestone(a['name'],dict(milestone_title='Setup complete',due_date=today(),amount=1500,status='Approved'))
+        from plus_point.billing import create_invoice
+        result=create_invoice(a['name'])
+        self.assertEqual(frappe.db.get_value('Sales Invoice',result['name'],'grand_total'),1500)
+    def test_archived_samples_keep_receipts_and_attendance_out_of_active_views(self):
+        a=self.agreement();name=self.event(a);op.auto_assign(name)
+        assignment=frappe.db.get_value('PP Assignment',{'project':a['project'],'employee':self.worker.name},'name')
+        work=insert('PP Work Entry',assignment=assignment,work_date=today(),units=1,status='Draft');work.status='Approved';work.save()
+        project=frappe.get_doc('Project',a['project']);project.pp_archived=1;project.save()
+        self.assertNotIn(a['name'],[r.name for r in op.catalogue()['agreements']])
+        self.assertNotIn(name,[r.name for r in op.catalogue()['plans']])
+        self.assertTrue(frappe.db.exists('PP Work Entry',work.name))
+        from plus_point.worker_profile import overview
+        self.assertEqual(overview(self.worker.name)['earned'],'0.00')
     def test_shortage_rolls_back_all_categories(self):
         name=self.event();doc=frappe.get_doc('PP Event Plan',name);doc.staffing[0].workers_required=2;doc.save()
         with self.assertRaises(frappe.ValidationError):op.auto_assign(name)

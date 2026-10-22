@@ -19,6 +19,7 @@ def _scope(filters):
         frappe.throw(_('Select your company'))
     frappe.get_doc('Company', filters.company).check_permission('read')
     project_filters = {'company': filters.company}
+    if not filters.get('include_archived'):project_filters['pp_archived']=0
     if filters.project:
         project = frappe.get_doc('Project', filters.project)
         project.check_permission('read')

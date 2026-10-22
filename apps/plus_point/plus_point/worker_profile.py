@@ -16,7 +16,7 @@ def overview(employee,days=91):
     work=frappe.get_list('PP Work Entry',filters={'employee':employee,'status':'Approved'},
         fields=['name','work_date','project','site','units','wage_amount'],order_by='work_date desc,name',limit_page_length=0)
     # Follow parent company permissions before including any source in the profile.
-    projects={r.name:r for r in frappe.get_list('Project',filters={'company':company.name},fields=['name','project_name','status'],limit_page_length=0)}
+    projects={r.name:r for r in frappe.get_list('Project',filters={'company':company.name,'pp_archived':0},fields=['name','project_name','status'],limit_page_length=0)}
     work=[r for r in work if r.project in projects]
     totals=defaultdict(Decimal);earned=Decimal(0)
     for row in work:

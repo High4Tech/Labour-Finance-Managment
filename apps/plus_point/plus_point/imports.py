@@ -510,8 +510,9 @@ def apply(token):
                 doc = linked('Employee', result['document'], company_name) if result.get('document') else frappe.new_doc('Employee')
                 # Older templates omit optional columns; never erase fields they cannot show.
                 doc.update({key: row[key] for key in SCHEMAS[kind] if key in row and key not in ('external_id', 'employee')})
-                if row.get('designation') and not frappe.db.exists('Designation',row['designation']):
-                    frappe.get_doc(dict(doctype='Designation',designation_name=row['designation'])).insert()
+                if row.get('designation'):
+                    from plus_point.operations import create_category
+                    create_category(row['designation'])
                 doc.company = company_name
                 doc.create_user_automatically = 0
                 doc.save()

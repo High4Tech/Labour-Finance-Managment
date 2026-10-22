@@ -38,7 +38,10 @@ def local_defaults():
 
 def after_migrate():
     refresh_record_permissions()
+    ensure_event_archive_field()
     before_install()
+    from plus_point.operations import EVENT_ROLES,ensure_event_role
+    for title in EVENT_ROLES:ensure_event_role(title)
     for doctype, columns, name in [
         ('PP Work Entry', ['employee', 'work_date'], 'pp_employee_work_date'),
         ('PP Work Entry', ['contract_terms', 'status'], 'pp_terms_status'),
@@ -119,3 +122,9 @@ def refresh_record_permissions():
     """Native delete permissions; record controllers retain their history guards."""
     for name in ('pp_work_entry','pp_daily_register','pp_milestone'):
         frappe.reload_doc('plus_point','doctype',name)
+
+
+def ensure_event_archive_field():
+    create_custom_fields({'Project':[dict(fieldname='pp_archived',label='Archived event',
+        fieldtype='Check',default='0',read_only=1,hidden=1,
+        description='Preserves the event and its audit history outside active operations.')]})

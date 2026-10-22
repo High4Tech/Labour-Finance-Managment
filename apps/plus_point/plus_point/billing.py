@@ -52,7 +52,7 @@ def receivable_account(company,currency):
 
 
 @frappe.whitelist(methods=['POST'])
-def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invoice_currency=None, exchange_rate=None, source_names=None):
+def create_invoice(contract_terms, item_code=None, from_date=None, to_date=None, invoice_currency=None, exchange_rate=None, source_names=None):
     frappe.has_permission('Sales Invoice', 'create', throw=True)
     terms = frappe.get_doc('PP Contract Terms', contract_terms)
     terms.check_permission('read')
@@ -61,6 +61,9 @@ def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invo
         frappe.throw('Billing requires active terms')
     project = frappe.get_doc('Project', terms.project)
     project.check_permission('read')
+    if not item_code:
+        from plus_point.operations import service_item
+        item_code=terms.billing_item or service_item()
     customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
     currency=invoice_currency or default_currency(project.company,customer)
     linked('Currency',currency);frappe.db.set_value('Currency',currency,'enabled',1)
@@ -84,13 +87,13 @@ def create_invoice(contract_terms, item_code, from_date=None, to_date=None, invo
     elif to_date:
         filters[date_field] = ['<=', to_date]
     amount_field = 'billable_amount' if doctype == 'PP Work Entry' else 'amount'
-    sources = frappe.get_list(doctype, filters=filters, fields=['name', amount_field], limit_page_length=0, order_by='name')
+    sources = frappe.get_list(doctype, filters=filters, fields=['name', amount_field]+(['milestone_title'] if doctype=='PP Milestone' else ['employee','work_date']), limit_page_length=0, order_by='name')
     sources = [row for row in sources if money(row[amount_field]) > 0]
     if not sources:
         frappe.throw('No approved unbilled work or milestones in this period')
     invoice = frappe.get_doc(dict(doctype='Sales Invoice', customer=customer,
         company=project.company, project=project.name, currency=currency,conversion_rate=float(rate),debit_to=receivable_account(project.company,currency),
-        items=[dict(item_code=item_code, qty=1, rate=float(money(Decimal(str(row[amount_field]))/rate)),
+        items=[dict(item_code=item_code,description=frappe.utils.escape_html(project.project_name+' — '+(row.milestone_title if doctype=='PP Milestone' else (frappe.db.get_value('Employee',row.employee,'employee_name') or row.employee)+' / '+str(row.work_date))),qty=1, rate=float(money(Decimal(str(row[amount_field]))/rate)),
             project=project.name, pp_source_type=doctype, pp_source_name=row.name)
             for row in sources]))
     invoice.insert()

@@ -143,6 +143,8 @@ def hierarchy_browser_fixture(action,run_id):
     result=attendance_browser_fixture('end',run_id)
     for dt,filters in [('Designation',{'name':['like','QA role '+run_id+'%']}),('Item',{'item_code':prefix+' Service'})]:
         for name in frappe.get_all(dt,filters=filters,pluck='name'):frappe.delete_doc(dt,name)
+    roles=frappe.parse_json(frappe.defaults.get_global_default('pp_event_roles') or '[]')
+    frappe.defaults.set_global_default('pp_event_roles',json.dumps([r for r in roles if not r.startswith('QA role '+run_id)]))
     frappe.db.commit();return result
 
 

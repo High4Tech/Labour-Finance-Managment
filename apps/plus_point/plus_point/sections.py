@@ -14,7 +14,7 @@ def overview(section,company=None):
         frappe.throw('Choose an available section')
     company=data['company']
     links=[]
-    projects=frappe.get_list('Project',filters={'company':company},fields=['name','customer'],limit_page_length=0) if company and not data['is_platform'] else []
+    projects=frappe.get_list('Project',filters={'company':company,'pp_archived':0},fields=['name','customer'],limit_page_length=0) if company and not data['is_platform'] else []
     names=[p.name for p in projects]
     customers=list({p.customer for p in projects if p.customer})
     subscriptions=frappe.get_list('Subscription',filters={'company':company},pluck='name',limit_page_length=0) if data['is_platform'] and company else []

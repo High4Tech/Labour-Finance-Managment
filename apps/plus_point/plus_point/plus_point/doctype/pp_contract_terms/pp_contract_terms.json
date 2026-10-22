@@ -4,7 +4,7 @@
   "module": "PLUS POINT",
   "custom": 0,
   "autoname": "hash",
-  "title_field": "project",
+  "title_field": "agreement_title",
   "description": "ERPNext contract + project billing policy (not a replacement contract)",
   "track_changes": 1,
   "allow_import": 1,
@@ -130,5 +130,5 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "show_title_field_in_link": 1,
-  "search_fields": "project,billing_model,contract"
+  "search_fields": "agreement_title,project,billing_model,contract"
 }

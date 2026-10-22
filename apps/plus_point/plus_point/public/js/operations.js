@@ -7,26 +7,31 @@
  const plain=html=>{const node=document.createElement('textarea');node.innerHTML=String(html||'').replace(/<[^>]*>/g,'');return node.value;};
  const field=(fieldtype,fieldname,label,extra={})=>({fieldtype,fieldname,label:__(label),...extra});
  const link=(name,label,options,extra={})=>field('Link',name,label,{options,only_select:true,...extra});
- function form(root,fields,values={}){
-  const layoutFields=[...fields];if(fields.length>=6&&!fields.some(df=>['Table','Column Break','Section Break'].includes(df.fieldtype)))layoutFields.splice(Math.ceil(fields.length/2),0,field('Column Break','columns',''));
-  const group=new frappe.ui.FieldGroup({body:root,fields:layoutFields});group.make();root.pp_form=group;
-  for(const [key,value] of Object.entries(values))if(group.fields_dict[key]&&value!=null)group.set_value(key,value);
-  plus_point.enhance_selectors?.(group);if(group.fields_dict.country&&group.fields_dict.default_currency)plus_point.bind_country_currency?.(group);
+ function form(root,fields,values={},currency){
+  currency=currency||root.closest('.pp-operations')?.dataset.currency||frappe.boot.sysdefaults.currency;
+  const prepare=df=>df.fieldtype==='Currency'?{...df,fieldtype:'Float',options:'',label:df.label+' ('+currency+')',precision:2}:df.fieldtype==='Table'?{...df,fields:df.fields.map(prepare)}:df;
+  const layoutFields=fields.map(prepare).map(df=>Object.hasOwn(values,df.fieldname)?{...df,default:values[df.fieldname]}:df);if(fields.length>=6&&!fields.some(df=>['Table','Column Break','Section Break'].includes(df.fieldtype)))layoutFields.splice(Math.ceil(fields.length/2),0,field('Column Break','columns',''));
+  const group=new frappe.ui.FieldGroup({body:root,fields:layoutFields}),setValues=group.set_values.bind(group);let initial;
+  // Native defaults validate asynchronously. Finish them before applying saved
+  // values or binding country suggestions, so a company default cannot win a race.
+  group.set_values=data=>(initial=setValues(data));group.make();group.set_values=setValues;
+  root.pp_form=group;root.dataset.ppForm='true';
+  group.pp_ready=Promise.resolve(initial).then(()=>setValues(values)).then(()=>{plus_point.enhance_selectors?.(group);if(group.fields_dict.country&&group.fields_dict.default_currency)return plus_point.bind_country_currency?.(group);});
   return group;
  }
  function values(group){
   const result=group.get_values(true)||{};
-  for(const df of group.fields){if(df.reqd&&!group.fields_dict[df.fieldname]?.df.hidden&&(result[df.fieldname]==null||result[df.fieldname]===''||(Array.isArray(result[df.fieldname])&&!result[df.fieldname].length)))throw new Error(__('{0} is required.',[df.label]));}
+  for(const df of group.fields){if(df.reqd&&!group.fields_dict[df.fieldname]?.df.hidden&&(result[df.fieldname]==null||result[df.fieldname]===''||(Array.isArray(result[df.fieldname])&&!result[df.fieldname].length))){const control=group.fields_dict[df.fieldname],fold=control?.$wrapper.get(0)?.closest('details');if(fold)fold.open=true;control?.set_focus?.();throw new Error(__('{0} is required.',[df.label]));}}
   if(!plus_point.validate_inputs?.(group))throw new Error(__('Review the highlighted fields.'));
   return result;
  }
  const message=(root,text,success=false)=>{const box=root.querySelector('.pp-op-message');if(box){box.className='pp-op-message '+(success?'pp-op-success':'pp-onboarding-errors');box.textContent=text||'';box.hidden=!text;}};
- async function act(root,el,run){el.disabled=true;message(root,'');try{return await run();}catch(error){message(root,error.message);}finally{if(el.isConnected)el.disabled=false;}}
+ async function act(root,el,run){el.disabled=true;message(root,'');try{await Promise.all([...root.querySelectorAll('[data-pp-form]')].map(node=>node.pp_form?.pp_ready));return await run();}catch(error){message(root,error.message);}finally{if(el.isConnected)el.disabled=false;}}
  const section=(title,content)=>`<section class="pp-op-section"><h3>${esc(__(title))}</h3>${content}</section>`;
  const grid=(columns,rows)=>`<div class="pp-op-table-scroll"><table class="pp-register-table"><thead><tr>${columns.map(c=>`<th>${esc(__(c))}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
  const money=(n,currency)=>esc(fmt(n)+' '+currency);
- function requirementsFields(){return [
-  field('Data','site_name','Venue name',{reqd:1,in_list_view:1}),link('designation','Worker category','Designation',{reqd:1,in_list_view:1}),
+ function requirementsFields(roles=[]){return [
+  field('Data','site_name','Venue name',{reqd:1,in_list_view:1}),field('Select','designation','Worker category',{options:['',...roles],reqd:1,in_list_view:1}),
   field('Select','phase','Phase',{options:'Setup\nEvent\nPack-down\nOther',default:'Event'}),
   field('Date','start_date','From',{reqd:1,in_list_view:1}),field('Date','end_date','Through',{reqd:1,in_list_view:1}),
   field('Int','workers_required','Workers / day',{reqd:1,in_list_view:1}),field('Currency','wage_rate','Daily wage',{reqd:1,in_list_view:1}),field('Currency','client_rate','Daily client charge'),
@@ -38,29 +43,56 @@
   const root=document.createElement('div');root.className='pp-operations';page.main.get(0).append(root);
   let catalogue,sequence=0,record;
   async function load(){
-   const token=++sequence;root.innerHTML=`<p role="status">${esc(__('Loading your records…'))}</p>`;
+   frappe.route_options=null;
+   const token=++sequence;delete root.dataset.ready;root.innerHTML=`<p role="status">${esc(__('Loading your records…'))}</p>`;
    try{
     catalogue=await rpc('catalogue');if(token!==sequence)return;
-    const params=new URL(location.href).searchParams;record=params.get('record')||frappe.route_options?.record;
+    root.dataset.currency=catalogue.currency;
+    const params=new URL(location.href).searchParams;record=params.get('record');
     if(params.has('project'))record=(mode==='pp-event-plans'?catalogue.plans:catalogue.agreements).find(r=>r.project===params.get('project'))?.name;
     if(mode==='pp-agreements'&&params.has('client'))record=catalogue.agreements.find(r=>r.customer===params.get('client'))?.name;
     const rows=mode==='pp-event-plans'?catalogue.plans:catalogue.agreements;
-    if(record==='new'||mode==='pp-event-plans'&&(params.has('agreement')||params.has('project')&&!record))record=null;else if(!record)record=rows[0]?.name;
-    root.innerHTML=`<div class="pp-op-layout"><aside class="pp-op-index"><label>${esc(__('Find '+(mode==='pp-event-plans'?'event':'agreement')))}<input type="search" class="form-control pp-op-search"></label><div class="pp-op-records">${rows.map(row=>`<button type="button" class="pp-op-record ${row.name===record?'is-selected':''}" data-record="${esc(row.name)}"><strong>${esc(row.event_name||row.title)}</strong><span>${esc(row.client||row.start_date||'')}</span><small>${esc(__(row.status||'Event plan'))}</small></button>`).join('')||`<p>${esc(__('No records yet. Start with a client agreement.'))}</p>`}</div></aside><main class="pp-op-main"><div class="pp-op-message" role="status" hidden></div><div class="pp-op-content"></div></main><aside class="pp-op-activity" hidden></aside></div>`;
-    root.querySelector('.pp-op-search').oninput=e=>root.querySelectorAll('.pp-op-record').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(e.target.value.toLowerCase()));
-    root.querySelectorAll('[data-record]').forEach(el=>el.onclick=()=>frappe.set_route(mode,{record:el.dataset.record}));
+    const creating=record==='new'||mode==='pp-event-plans'&&(params.has('agreement')||params.has('project')&&!record);
+    const missing=record&&!creating&&!rows.some(r=>r.name===record);if(creating||missing)record=null;
+    root.innerHTML=`<div class="pp-op-layout"><main class="pp-op-main"><div class="pp-op-message" role="status" hidden></div><div class="pp-op-content"></div></main><aside class="pp-op-activity" hidden></aside></div>`;
     page.clear_primary_action();page.clear_secondary_action();
     if(mode==='pp-agreements')page.set_primary_action(__('New agreement'),()=>frappe.set_route(mode,{record:'new'}),'add');
-    if(mode==='pp-event-plans')page.set_primary_action(__('Plan from agreement'),()=>createEvent(),'add');
+    if(mode==='pp-event-plans')page.set_primary_action(__('Plan from agreement'),()=>frappe.set_route(mode,{record:'new'}),'add');
     if(mode==='pp-client-billing')page.set_secondary_action(__('Refresh figures'),load,'refresh');
-    if(mode==='pp-agreements'){page.set_secondary_action(__('Import clients'),()=>plus_point.open_import(plus_point.dashboard_company,load,'clients'),'upload');await agreementEditor(record);}
-    else if(mode==='pp-event-plans'){page.set_secondary_action(__('Import event plans'),()=>plus_point.open_import(plus_point.dashboard_company,load,'events'),'upload');if(record)await eventView(record);else await createEvent();}
-    else if(record)await billingView(record);else content().innerHTML=section('Start with an agreement',`<p>${esc(__('Invoices and milestones appear here after you create a client agreement.'))}</p><a class="btn btn-primary" href="/desk/pp-agreements?record=new">${esc(__('Create client agreement'))}</a>`);
+    if(mode==='pp-agreements')page.set_secondary_action(__('Import clients'),()=>plus_point.open_import(plus_point.dashboard_company,load,'clients'),'upload');
+    if(mode==='pp-event-plans')page.set_secondary_action(__('Import event plans'),()=>plus_point.open_import(plus_point.dashboard_company,load,'events'),'upload');
+    if(!record&&!creating)renderList(rows);
+    else{
+     if(mode==='pp-agreements')await agreementEditor(record);
+     else if(mode==='pp-event-plans'){if(record)await eventView(record);else await createEvent();}
+     else if(record)await billingView(record);
+     finishView();
+    }
+    if(missing){message(root,__('That record is no longer available in this section. Choose a record from the list.'));root.querySelector('.pp-op-message').className='pp-op-message pp-op-notice';}
     if(record)await activityRail(mode==='pp-event-plans'?'PP Event Plan':'PP Contract Terms',record);
+    await Promise.all([...root.querySelectorAll('[data-pp-form]')].map(node=>node.pp_form?.pp_ready));
     root.dataset.ready='true';
    }catch(error){root.innerHTML=`<p class="pp-onboarding-errors" role="alert">${esc(error.message)}</p>${button('Try again')}`;root.querySelector('button').onclick=load;}
   }
   const content=()=>root.querySelector('.pp-op-content');
+  function renderList(rows){
+   const isEvent=mode==='pp-event-plans';
+   content().innerHTML=`<header class="pp-op-heading"><div><h2>${esc(__(titles[mode]))}</h2><p>${esc(__(isEvent?'Choose an event to manage its sites, crew and daily work.':mode==='pp-agreements'?'Choose an agreement to review the client, staffing requirements and milestones.':'Choose an agreement to review milestones, invoices, costs and payments.'))}</p></div></header><label class="pp-op-list-search">${esc(__('Search by name or client'))}<input type="search" class="form-control pp-op-search" placeholder="${esc(__('Search records…'))}"></label>${rows.length?grid([isEvent?'Event':'Agreement','Client','Dates','Status',''],rows.map(row=>{const agreement=isEvent?catalogue.agreements.find(a=>a.name===row.contract_terms):row;return `<tr data-list-record><th><a href="/desk/${mode}?record=${encodeURIComponent(row.name)}">${esc(row.event_name||row.title)}</a></th><td>${esc(agreement?.client||'—')}</td><td>${esc(row.start_date||row.effective_start||'—')} – ${esc(row.end_date||row.effective_end||'—')}</td><td><span class="pp-op-badge">${esc(__(row.status||(row.crew_allocated?'Crew assigned':'Needs crew')))}</span></td><td><a class="btn btn-default" href="/desk/${mode}?record=${encodeURIComponent(row.name)}">${esc(__('Open'))}</a></td></tr>`;})):`<p>${esc(__('No records yet. Create a client agreement to begin.'))}</p><a class="btn btn-primary" href="/desk/pp-agreements?record=new">${esc(__('Create client agreement'))}</a>`}<p class="pp-op-list-count">${esc(__('{0} records',[rows.length]))}</p>`;
+   content().querySelector('.pp-op-search').oninput=e=>{let count=0;content().querySelectorAll('[data-list-record]').forEach(r=>{r.hidden=!r.textContent.toLowerCase().includes(e.target.value.toLowerCase());if(!r.hidden)count++;});content().querySelector('.pp-op-list-count').textContent=__('{0} records',[count]);};
+  }
+  function organizeSections(){
+   // Related sections fold independently; editing one record never adds another index.
+   const sections=content().querySelectorAll(':scope > .pp-op-section');sections.forEach((section,index)=>{
+    const heading=section.querySelector(':scope > h3');if(!heading)return;
+    const details=document.createElement('details');details.className='pp-op-section pp-op-fold';details.open=sections.length===1||(mode==='pp-agreements'?index===0:mode==='pp-event-plans'?index===1:index<2);
+    const summary=document.createElement('summary');summary.textContent=heading.textContent;details.append(summary);heading.remove();
+    while(section.firstChild)details.append(section.firstChild);section.replaceWith(details);
+   });
+  }
+  function finishView(){
+   if(!content().querySelector('.pp-op-back')){const back=document.createElement('a');back.className='btn btn-default pp-op-back';back.href='/desk/'+mode;back.textContent=__('Back to '+titles[mode].toLowerCase());content().prepend(back);}
+   organizeSections();
+  }
   async function activityRail(doctype,name){
    const rail=root.querySelector('.pp-op-activity');if(!rail)return;
    const data=await rpc('activity',{doctype,name});rail.hidden=false;root.querySelector('.pp-op-layout').classList.add('has-activity');
@@ -69,39 +101,41 @@
   }
   async function agreementEditor(name){
    const data=name?await rpc('agreement',{name}):{},venues=Object.fromEntries((data.venues||[]).map(r=>[r.name,r]));
+   const roles=[...new Set([...catalogue.designations,...(data.staffing||[]).map(r=>r.designation).filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
    const area=content();area.innerHTML=`<header class="pp-op-heading"><div><h2>${esc(data.agreement_title||__('New client agreement'))}</h2><p>${esc(__('Define the client, venues, worker categories and payment milestones here. The event plan uses these details.'))}</p></div></header>
     ${section('Client details',`<div class="pp-op-client-choice"></div><div class="pp-op-client-fields"></div>`)}
-    ${section('Agreement and billing',`<div class="pp-op-terms"></div>${name?`<p>${esc(__(data.is_signed?'Signed agreement':'Agreement documents'))}</p>${(data.files||[]).map(r=>`<p><a href="${esc(r.file_url)}" target="_blank" rel="noopener">${esc(r.file_name)}</a></p>`).join('')}${button('Upload agreement document','btn-default','data-upload-agreement')}`:''}`)}
+    ${section('Agreement and billing',`<p>${esc(__('Agreement values and crew wages are in {0}. The client invoice currency is a separate payment preference; invoice amounts are converted at the selected exchange rate.',[data.currency||catalogue.currency]))}</p><div class="pp-op-terms"></div>${name?`<p>${esc(__(data.is_signed?'Signed agreement':'Agreement documents'))}</p>${(data.files||[]).map(r=>`<p><a href="${esc(r.file_url)}" target="_blank" rel="noopener">${esc(r.file_name)}</a></p>`).join('')}${button('Upload agreement document','btn-default','data-upload-agreement')}`:''}`)}
     ${section('Venues and staffing categories',`<p>${esc(__('One row per venue, worker category and date range. Set the daily wage and client charge for each category. Open a row for its address.'))}</p><div class="pp-op-staffing"></div><details><summary>${esc(__("Add a worker category"))}</summary><div class="pp-op-category"></div>${button("Save category","btn-default","data-save-category")}</details>`)}
     <div class="pp-op-save">${button('Save agreement','btn-primary','data-save-agreement')}${name?`<a class="btn btn-default" href="/desk/pp-event-plans?agreement=${encodeURIComponent(name)}">${esc(__('Plan this event'))}</a>`:''}</div>
     ${name?section('Payment milestones',`<p>${esc(__('Add milestones now or later. Approval earns the milestone and can automatically create an invoice draft for review.'))}</p><div class="pp-op-milestones"></div>`):''}`;
    let clientData=data.client||{},newClient=!name&&!catalogue.clients.length;
-   const choose=form(area.querySelector('.pp-op-client-choice'),[field('Select','client_mode','Client',{options:'Choose existing client\nAdd new client',default:newClient?'Add new client':'Choose existing client'}),link('customer','Client profile','Customer',{default:data.customer,read_only:!!name})]);
+   const choose=form(area.querySelector('.pp-op-client-choice'),[field('Select','client_mode','Client',{options:'Choose existing client\nAdd new client',default:newClient?'Add new client':'Choose existing client'}),field('Select','customer','Client profile',{options:[{label:'',value:''},...catalogue.clients.map(r=>({value:r.name,label:r.title}))],default:data.customer,read_only:!!name})]);
    let clientForm;
    async function drawClient(){
     newClient=choose.get_value('client_mode')==='Add new client';
-    choose.fields_dict.customer.$wrapper.toggle(!newClient);if(name){choose.fields_dict.client_mode.$wrapper.hide();newClient=false;}
+    choose.fields_dict.customer.$wrapper.toggle(!newClient&&!name);if(name){choose.fields_dict.client_mode.$wrapper.hide();newClient=false;}
     if(!newClient&&choose.get_value('customer'))clientData=await plus_point.form_rpc('clients.details',{customer:choose.get_value('customer')});
-    clientForm=form(area.querySelector('.pp-op-client-fields'),plus_point.resource_fields('clients').map(df=>({...df,only_select:true})),clientData);
+    clientForm=form(area.querySelector('.pp-op-client-fields'),plus_point.resource_fields('clients').map(df=>({...df,only_select:true,...(df.fieldname==='default_currency'?{label:__('Client invoice currency'),description:__('Payment preference. Agreement costs remain in {0}.',[data.currency||catalogue.currency])}:{})})),clientData);await clientForm.pp_ready;
    }
    choose.fields_dict.client_mode.df.onchange=()=>{clientData={};area.querySelector('.pp-op-client-fields').innerHTML='';drawClient();};
    choose.fields_dict.customer.df.onchange=()=>{area.querySelector('.pp-op-client-fields').innerHTML='';drawClient();};
    await drawClient();
    const terms=form(area.querySelector('.pp-op-terms'),[
-    field('Data','agreement_title','Agreement name',{reqd:1}),field('Date','effective_start','Agreement starts',{reqd:1,default:frappe.datetime.get_today()}),field('Date','effective_end','Agreement ends',{reqd:1,default:frappe.datetime.get_today()}),
-    field('Select','billing_model','Client billing',{options:'Daily\nFixed',default:'Daily',reqd:1}),field('Currency','fixed_amount','Fixed contract value',{default:0}),field('Select','status','Agreement status',{options:'Draft\nActive\nClosed',default:'Active'}),
-    field('Text Editor','scope','Agreed scope',{reqd:1}),link('billing_item','Invoice service item','Item',{get_query:()=>({filters:{is_stock_item:0,disabled:0}})}),field('Check','auto_invoice','Create invoice draft when a milestone is approved',{default:1})],data);
+    field('Section Break','agreement_details','Agreement details'),field('Data','agreement_title','Agreement name',{reqd:1}),field('Select','status','Agreement status',{options:'Draft\nActive\nClosed',default:'Active'}),field('Column Break','agreement_dates',''),field('Date','effective_start','Agreement starts',{reqd:1,default:frappe.datetime.get_today()}),field('Date','effective_end','Agreement ends',{reqd:1,default:frappe.datetime.get_today()}),
+    field('Section Break','scope_section','Agreed work'),field('Text Editor','scope','Scope and deliverables',{reqd:1}),
+    field('Section Break','pricing_section','Pricing and invoice rules'),field('Select','billing_model','Client billing',{options:'Daily\nFixed',default:'Daily',reqd:1}),field('Currency','fixed_amount','Fixed contract value',{default:0}),field('Check','auto_invoice','Create invoice draft when a milestone is approved',{default:1})],data,data.currency);
+   const billingMode=()=>{const fixed=terms.get_value('billing_model')==='Fixed';terms.fields_dict.fixed_amount.$wrapper.toggle(fixed);terms.fields_dict.auto_invoice.$wrapper.toggle(fixed);};terms.fields_dict.billing_model.df.onchange=billingMode;billingMode();
    const rows=(data.staffing||[]).map(r=>({...r,site_name:venues[r.site]?.site_name||r.site,...Object.fromEntries(['country','city','address_line1'].map(k=>[k,venues[r.site]?.[k]]))}));
-   const staffing=form(area.querySelector('.pp-op-staffing'),[field('Table','staffing','Contracted staffing',{fields:requirementsFields(),in_place_edit:true,data:rows,reqd:1})]);
-   const category=form(area.querySelector('.pp-op-category'),[field('Data','title','Category name')]);area.querySelector('[data-save-category]').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('create_category',{title:category.get_value('title')});message(root,__('Category added. Select it in the staffing row.'),true);});
+   const staffing=form(area.querySelector('.pp-op-staffing'),[field('Table','staffing','Contracted staffing',{fields:requirementsFields(roles).filter(df=>data.billing_model!=='Fixed'||df.fieldname!=='client_rate'),in_place_edit:true,data:rows,reqd:1})],{},data.currency);
+   const category=form(area.querySelector('.pp-op-category'),[field('Data','title','Category name')]);area.querySelector('[data-save-category]').onclick=e=>act(root,e.currentTarget,async()=>{const added=await rpc('create_category',{title:category.get_value('title')});catalogue.designations=[...new Set([...catalogue.designations,added.name])].sort();staffing.fields_dict.staffing.grid.update_docfield_property('designation','options',['',...catalogue.designations]);message(root,__('Category added. Select it in the staffing row.'),true);});
    area.querySelector('[data-save-agreement]').onclick=e=>act(root,e.currentTarget,async()=>{
-    const result=values(terms);result.staffing=staffing.get_value('staffing');
-    const client=values(clientForm);
+    const client=values(clientForm),result=values(terms);result.staffing=(staffing.get_value('staffing')||[]).map(r=>({...r,client_rate:result.billing_model==='Fixed'?0:r.client_rate}));if(!result.staffing.length){area.querySelector('.pp-op-staffing').closest('details').open=true;throw new Error(__('Add a venue and at least one worker category.'));}
     if(newClient)result.client=client;else{result.customer=choose.get_value('customer');if(!result.customer)throw new Error(__('Choose the client.'));result.client=client;}
     const saved=await rpc('save_agreement',{name,values:result});message(root,__('Agreement saved.'),true);frappe.set_route('pp-agreements',{record:saved.name});if(name===saved.name)await load();
    });
    area.querySelector('[data-upload-agreement]')?.addEventListener('click',()=>new frappe.ui.FileUploader({doctype:'Contract',docname:data.contract,make_attachments_public:false,on_success:()=>agreementEditor(name)}));
    if(name)milestones(area.querySelector('.pp-op-milestones'),data,()=>agreementEditor(name));
+   finishView();
   }
   async function createEvent(){
    const area=content();if(!area)return;area.innerHTML=section('Plan an event from an agreement',`<p>${esc(__('Select the agreement first. Client, venues, dates, categories and rates are copied into the event plan.'))}</p><div class="pp-op-new-plan"></div>${button('Create event plan','btn-primary','data-create-plan')}`);
@@ -133,15 +167,17 @@
    area.querySelectorAll('[data-edit-headcount]').forEach(el=>el.onclick=()=>{const target=area.querySelector('.pp-op-crew-picker'),row=data.staffing.find(r=>r.name===el.dataset.editHeadcount);target.innerHTML=`<h4>${esc(__('Adjust planned headcount'))}</h4><p>${esc(__('The agreed count stays unchanged. Existing allocations and wages stay intact; extras are labelled.'))}</p><div class="pp-op-headcount-form"></div>${button('Save planned headcount','btn-primary','data-save-headcount')}`;const group=form(target.querySelector('div'),[field('Int','workers_required','Workers / day',{reqd:1,default:row.workers_required})]);target.querySelector('button').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('update_headcount',{name,requirement:row.name,...values(group)});await eventView(name);});target.scrollIntoView({block:'center'});});
    area.querySelectorAll('[data-choose-crew]').forEach(el=>el.onclick=()=>chooseCrew(data,el.dataset.chooseCrew));
    area.querySelectorAll('[data-move-worker]').forEach(el=>el.onclick=()=>transferEditor(area.querySelector('.pp-op-transfer'),data.allocations.find(r=>r.name===el.dataset.moveWorker),()=>eventView(name)));
-   const extra=form(area.querySelector('.pp-op-extra-form'),[link('site','Event site','PP Site',{get_query:()=>({filters:{project:data.project,is_active:1}}),reqd:1}),link('designation','Worker category','Designation',{reqd:1}),field('Date','start_date','From',{reqd:1,default:data.start_date}),field('Date','end_date','Through',{reqd:1,default:data.end_date}),field('Int','workers_required','Workers / day',{reqd:1,default:1}),field('Currency','wage_rate','Daily wage',{reqd:1,default:data.wage_rate}),field('Currency','client_rate','Daily client charge',{default:data.client_rate}),field('Select','phase','Phase',{options:'Setup\nEvent\nPack-down\nOther',default:'Event'})]);
+   const extra=form(area.querySelector('.pp-op-extra-form'),[field('Select','site','Event site',{options:data.timeline.sites.map(r=>({value:r.site,label:r.title})),reqd:1}),field('Select','designation','Worker category',{options:catalogue.designations,reqd:1}),field('Date','start_date','From',{reqd:1,default:data.start_date}),field('Date','end_date','Through',{reqd:1,default:data.end_date}),field('Int','workers_required','Workers / day',{reqd:1,default:1}),field('Currency','wage_rate','Daily wage',{reqd:1}),field('Currency','client_rate','Daily client charge',{default:0,hidden:data.agreement.billing_model==='Fixed'}),field('Select','phase','Phase',{options:'Setup\nEvent\nPack-down\nOther',default:'Event'})]);
+   extra.fields_dict.designation.df.onchange=()=>{const match=data.staffing.find(r=>r.designation===extra.get_value('designation'));extra.set_value('wage_rate',match?.wage_rate||0);extra.set_value('client_rate',match?.client_rate||0);};
    area.querySelector('[data-add-requirement]').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('add_requirement',{name,values:values(extra)});await eventView(name);});
    for(const kind of ['vehicle','equipment'])area.querySelector('[data-book-'+kind+']').onclick=()=>plus_point.book_event_resource(kind,data.project,data.staffing[0]?.site,data.start_date,data.end_date,()=>eventView(name));
    area.querySelector('.pp-op-reservations').innerHTML=(data.reservations||[]).map(r=>`<p>${esc(r.title)} · ${esc(r.site)} · ${esc(r.start)} – ${esc(r.end)}</p>`).join('')||`<p>${esc(__('No transport or equipment reserved yet.'))}</p>`;
+   finishView();
   }
   async function chooseCrew(data,requirement){
-   const rootPicker=content().querySelector('.pp-op-crew-picker'),response=await rpc('available_crew',{name:data.name,requirement}),chosen=new Set();
+   const rootPicker=content().querySelector('.pp-op-crew-picker'),response=await rpc('available_crew',{name:data.name,requirement}),chosen=new Set(response.rows.filter(r=>r.assigned).map(r=>r.name));
    rootPicker.innerHTML=`<h4>${esc(__('Choose available workers'))}</h4><input type="search" class="form-control pp-op-crew-search" aria-label="${esc(__('Find worker'))}" placeholder="${esc(__('Find worker'))}"><div class="pp-op-crew-tags"></div><div class="pp-op-crew-options"></div>${button('Assign selected workers','btn-primary','data-assign-selected disabled')}${button('Close','btn-default','data-close-crew')}`;
-   const draw=()=>{const query=rootPicker.querySelector('input').value.toLowerCase(),rows=response.rows.filter(r=>r.worker.toLowerCase().includes(query));rootPicker.querySelector('.pp-op-crew-options').innerHTML=rows.map(r=>`<label><input type="checkbox" value="${esc(r.name)}" ${chosen.has(r.name)?'checked':''} ${!r.available?'disabled':''}><span>${esc(r.worker)}<small>${esc(r.available?r.designation:r.reason)}</small></span></label>`).join('')||`<p>${esc(__('No workers in this category. Add a worker profile with this designation, then try again.'))}</p>`;rootPicker.querySelector('.pp-op-crew-tags').innerHTML=[...chosen].map(id=>`<button class="pp-op-tag" type="button" data-remove="${esc(id)}">${esc(response.rows.find(r=>r.name===id)?.worker)} ×</button>`).join('');rootPicker.querySelector('[data-assign-selected]').disabled=!chosen.size;rootPicker.querySelectorAll('[data-remove]').forEach(el=>el.onclick=()=>{chosen.delete(el.dataset.remove);draw();});rootPicker.querySelectorAll('input[type=checkbox]').forEach(el=>el.onchange=()=>{el.checked?chosen.add(el.value):chosen.delete(el.value);draw();});};
+   const draw=()=>{const query=rootPicker.querySelector('input').value.toLowerCase(),rows=response.rows.filter(r=>r.worker.toLowerCase().includes(query));rootPicker.querySelector('.pp-op-crew-options').innerHTML=rows.map(r=>`<label><input type="checkbox" value="${esc(r.name)}" ${chosen.has(r.name)?'checked':''} ${!r.available?'disabled':''}><span>${esc(r.worker)}<small>${esc(r.assigned?__('Assigned to this site'):r.available?r.designation:r.reason)}</small></span></label>`).join('')||`<p>${esc(__('No workers in this category. Add a worker profile with this designation, then try again.'))}</p>`;rootPicker.querySelector('.pp-op-crew-tags').innerHTML=[...chosen].map(id=>`<button class="pp-op-tag" type="button" data-remove="${esc(id)}">${esc(response.rows.find(r=>r.name===id)?.worker)} ×</button>`).join('');rootPicker.querySelector('[data-assign-selected]').disabled=![...chosen].some(id=>!response.rows.find(r=>r.name===id)?.assigned);rootPicker.querySelectorAll('[data-remove]').forEach(el=>el.onclick=()=>{const row=response.rows.find(r=>r.name===el.dataset.remove);if(row?.assigned){transferEditor(content().querySelector('.pp-op-transfer'),data.allocations.find(a=>a.name===row.assignment),()=>eventView(data.name));}else{chosen.delete(el.dataset.remove);draw();}});rootPicker.querySelectorAll('input[type=checkbox]').forEach(el=>el.onchange=()=>{el.checked?chosen.add(el.value):chosen.delete(el.value);draw();});};
    rootPicker.querySelector('.pp-op-crew-search').oninput=draw;rootPicker.querySelector('[data-close-crew]').onclick=()=>rootPicker.innerHTML='';draw();
    rootPicker.querySelector('[data-assign-selected]').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('assign_crew',{name:data.name,requirement,employees:[...chosen]});await eventView(data.name);});rootPicker.scrollIntoView({block:'center',behavior:'smooth'});
   }
@@ -156,7 +192,7 @@
    area.innerHTML=`${data.billing_model!=='Fixed'?`<p>${esc(__('This agreement bills approved worker-days. Payment milestones apply to fixed-price agreements.'))}</p>`:grid(['Milestone','Due','Amount','Status','Invoice'],(data.milestones||[]).map(r=>`<tr><th>${esc(r.milestone_title)}</th><td>${esc(r.due_date||'—')}</td><td>${money(r.amount,data.currency)}</td><td>${esc(r.status)} ${r.status==='Planned'?button('Edit / approve','btn-default',`data-edit-milestone="${esc(r.name)}"`):''}</td><td>${r.sales_invoice?`<a href="/desk/pp-client-billing?record=${encodeURIComponent(data.name)}&invoice=${encodeURIComponent(r.sales_invoice)}">${esc(r.sales_invoice)}</a>`:'—'}</td></tr>`))}${data.billing_model==='Fixed'?button('Add milestone','btn-default','data-add-milestone'):''}<div class="pp-op-milestone-editor"></div>`;
    function editor(row={}){
     const target=area.querySelector('.pp-op-milestone-editor');target.innerHTML=`<div class="pp-op-milestone-fields"></div>${button('Save milestone','btn-primary','data-save-milestone')}${button('Cancel','btn-default','data-cancel-milestone')}`;
-    const group=form(target.querySelector('div'),[field('Data','milestone_title','Milestone',{reqd:1}),field('Date','due_date','Due date',{default:frappe.datetime.get_today()}),field('Currency','amount','Amount',{reqd:1}),field('Select','status','Status',{options:'Planned\nApproved',default:'Planned',reqd:1})],row);
+    const group=form(target.querySelector('div'),[field('Data','milestone_title','Milestone',{reqd:1}),field('Date','due_date','Due date',{default:frappe.datetime.get_today()}),field('Currency','amount','Amount',{reqd:1}),field('Select','status','Status',{options:'Planned\nApproved',default:'Planned',reqd:1})],row,data.currency);
     target.querySelector('[data-save-milestone]').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('save_milestone',{contract_terms:data.name,name:row.name,values:values(group)});await after();message(root,__('Milestone saved. Approved milestones follow the agreement invoice setting.'),true);});target.querySelector('[data-cancel-milestone]').onclick=()=>target.innerHTML='';
    }
    area.querySelector('[data-add-milestone]')?.addEventListener('click',()=>editor());area.querySelectorAll('[data-edit-milestone]').forEach(el=>el.onclick=()=>editor(data.milestones.find(r=>r.name===el.dataset.editMilestone)));
@@ -170,25 +206,27 @@
     ${section('Costs and payments',`<p>${esc(__('Project costs and worker payments stay linked to the same event and appear in its totals.'))}</p><div class="pp-op-actions"><a class="btn btn-default" href="/desk/purchase-invoice?project=${encodeURIComponent(agreement.project)}">${esc(__('Project expenses'))}</a><a class="btn btn-default" href="/desk/pp-wage-settlement?project=${encodeURIComponent(agreement.project)}">${esc(__('Worker payments'))}</a><a class="btn btn-default" href="/desk/payment-entry?project=${encodeURIComponent(agreement.project)}">${esc(__('Client receipts'))}</a><a class="btn btn-default" href="/desk/query-report/PLUS%20POINT%20Project%20Finances?project=${encodeURIComponent(agreement.project)}">${esc(__('Detailed finances'))}</a></div>`)} `;
    milestones(area.querySelector('.pp-op-billing-milestones'),agreement,()=>billingView(name));
    area.querySelector('[data-generate-invoice]').onclick=e=>act(root,e.currentTarget,async()=>{
-    const options=await plus_point.form_rpc('billing.invoice_options',{contract_terms:name}),target=area.querySelector('.pp-op-invoice-editor');target.innerHTML=`<h4>${esc(__('Generate from approved work'))}</h4><div class="pp-op-generate-fields"></div>${button('Create invoice draft','btn-primary','data-create-billing-draft')}`;
-    const group=form(target.querySelector('div'),[link('item_code','Invoice service item','Item',{reqd:1,default:agreement.billing_item,get_query:()=>({filters:{is_stock_item:0,disabled:0}})}),link('invoice_currency','Invoice currency','Currency',{reqd:1,default:options.currency}),field('Float','exchange_rate','Exchange rate (accounting currency per invoice unit)',{reqd:1,default:options.currency===options.base_currency?1:0}),field('Date','from_date','From date (optional)'),field('Date','to_date','Through date (optional)')]);
+    if(!data.unbilled_count){const target=area.querySelector('.pp-op-invoice-editor');target.innerHTML=`<h4>${esc(__('No approved items waiting for an invoice'))}</h4><p>${esc(__(agreement.billing_model==='Fixed'?'Add or approve a milestone to create its invoice draft. Existing drafts are listed above.':'Approve daily attendance before generating a work invoice. Existing drafts are listed above.'))}</p>${agreement.billing_model==='Fixed'?button('Add milestone','btn-default','data-new-billing-milestone'):`<a class="btn btn-default" href="/desk/pp-daily-register">${esc(__('Open attendance'))}</a>`}`;target.querySelector('[data-new-billing-milestone]')?.addEventListener('click',()=>{const area=content().querySelector('.pp-op-billing-milestones');area.closest('details').open=true;area.querySelector('[data-add-milestone]').click();area.scrollIntoView({block:'center'});});return;}
+    const options=await rpc('prepare_billing',{contract_terms:name}),target=area.querySelector('.pp-op-invoice-editor');target.innerHTML=`<h4>${esc(__('Generate from approved work'))}</h4><p>${esc(options.service_name)} · ${esc(__('Agreement amounts: {0}',[options.base_currency]))}</p><div class="pp-op-generate-fields"></div>${button('Create invoice draft','btn-primary','data-create-billing-draft')}`;
+    const group=form(target.querySelector('div'),[link('invoice_currency','Invoice currency','Currency',{reqd:1,default:options.currency}),field('Float','exchange_rate','Exchange rate (accounting currency per invoice unit)',{reqd:1,default:options.currency===options.base_currency?1:0}),field('Date','from_date','From date (optional)'),field('Date','to_date','Through date (optional)')]);
     const quote=async()=>{try{const result=await plus_point.form_rpc('billing.quote',{company:options.company,currency:group.get_value('invoice_currency')});await group.set_value('exchange_rate',Number(result.rate));}catch(error){group.set_value('exchange_rate',0);message(root,error.message);}};group.fields_dict.invoice_currency.df.onchange=quote;if(options.currency!==options.base_currency)await quote();
-    target.querySelector('button').onclick=e=>act(root,e.currentTarget,async()=>{const result=await plus_point.form_rpc('billing.create_invoice',{contract_terms:name,...values(group)});await billingView(name);await invoiceEditor(result.name,data);});target.scrollIntoView({block:'center'});
+    target.querySelector('[data-create-billing-draft]').onclick=e=>act(root,e.currentTarget,async()=>{const result=await plus_point.form_rpc('billing.create_invoice',{contract_terms:name,item_code:options.item,...values(group)});await billingView(name);await invoiceEditor(result.name,data);});target.scrollIntoView({block:'center'});
    });
    area.querySelectorAll('[data-review-invoice]').forEach(el=>el.onclick=()=>invoiceEditor(el.dataset.reviewInvoice,data));
-   area.querySelector('[data-extra-invoice]').onclick=()=>{
+   area.querySelector('[data-extra-invoice]').onclick=e=>act(root,e.currentTarget,async()=>{
+    const options=await rpc('prepare_billing',{contract_terms:name});
     const target=area.querySelector('.pp-op-invoice-editor');target.innerHTML=`<h4>${esc(__('Extra client charge'))}</h4><div class="pp-op-extra-invoice-fields"></div>${button('Create invoice draft','btn-primary','data-save-extra-invoice')}`;
-    const group=form(target.querySelector('div'),[link('item_code','Service item','Item',{reqd:1,default:agreement.billing_item,get_query:()=>({filters:{is_stock_item:0,disabled:0}})}),field('Small Text','description','Charge description',{reqd:1}),field('Currency','amount','Amount',{reqd:1})]);target.querySelector('button').onclick=e=>act(root,e.currentTarget,async()=>{const result=await rpc('extra_invoice',{contract_terms:name,...values(group)});await billingView(name);await invoiceEditor(result.name,data);});
-   };
-   const requested=new URL(location.href).searchParams.get('invoice');if(requested&&data.invoices.some(r=>r.name===requested))await invoiceEditor(requested,data);
+    const group=form(target.querySelector('div'),[field('Small Text','description','Charge description',{reqd:1}),field('Currency','amount','Amount',{reqd:1})],{},agreement.currency);target.querySelector('[data-save-extra-invoice]').onclick=e=>act(root,e.currentTarget,async()=>{const result=await rpc('extra_invoice',{contract_terms:name,item_code:options.item,...values(group)});await billingView(name);await invoiceEditor(result.name,data);});
+   });
+   finishView();const requested=new URL(location.href).searchParams.get('invoice');if(requested&&data.invoices.some(r=>r.name===requested))await invoiceEditor(requested,data);
   }
   async function invoiceEditor(name,data){
    const invoice=await rpc('invoice',{name}),target=content().querySelector('.pp-op-invoice-editor');
    target.innerHTML=`<h4>${esc(name)}</h4><p>${esc(invoice.docstatus?__('Posted invoice. Saved amounts retain their audit history.'):__('Edit the draft below. Approved work and milestone amounts are locked; descriptions and extra charges can be edited.'))}</p><div class="pp-op-invoice-fields"></div><div class="pp-op-actions">${!invoice.docstatus?button('Save invoice draft','btn-default','data-save-invoice')+button('Submit invoice','btn-primary','data-post-invoice'):''}<a class="btn btn-default" target="_blank" rel="noopener" href="/api/method/plus_point.operations.download_invoice?name=${encodeURIComponent(name)}">${esc(__('Download PDF'))}</a>${button('Email invoice','btn-default','data-email-invoice')}</div><div class="pp-op-email-info" role="status"></div>`;
    const fields=[link('currency','Invoice currency','Currency',{reqd:1,read_only:!!invoice.docstatus}),field('Float','exchange_rate','Exchange rate (accounting currency per invoice unit)',{reqd:1,read_only:!!invoice.docstatus}),field('Date','due_date','Due date',{read_only:!!invoice.docstatus}),field('Small Text','remarks','Invoice notes',{read_only:!!invoice.docstatus})];
    invoice.items.forEach((r,index)=>{fields.push(field('Small Text','description_'+index,'Line '+(index+1)+' description',{default:r.description,read_only:!!invoice.docstatus}));fields.push(field('Currency','rate_'+index,'Rate',{default:r.rate,read_only:!!invoice.docstatus||r.locked}));});
-   const group=form(target.querySelector('.pp-op-invoice-fields'),fields,invoice);
-   const convert=()=>{const rate=Number(group.get_value('exchange_rate'));if(!(rate>0))return;invoice.items.forEach((r,i)=>group.set_value('rate_'+i,Number(r.rate)*Number(invoice.exchange_rate)/rate));};
+   const group=form(target.querySelector('.pp-op-invoice-fields'),fields,invoice,invoice.currency);
+   const convert=()=>{const rate=Number(group.get_value('exchange_rate'));if(!(rate>0))return;invoice.items.forEach((r,i)=>{group.fields_dict['rate_'+i].df.label=__('Rate')+' ('+group.get_value('currency')+')';group.fields_dict['rate_'+i].refresh();group.set_value('rate_'+i,Number(r.rate)*Number(invoice.exchange_rate)/rate);});};
    group.fields_dict.exchange_rate.df.onchange=convert;
    group.fields_dict.currency.df.onchange=async()=>{group.set_value('exchange_rate',0);try{const result=await plus_point.form_rpc('billing.quote',{company:data.agreement.client_company||frappe.boot.plus_point.company_identity.name,currency:group.get_value('currency')});await group.set_value('exchange_rate',Number(result.rate));}catch(error){message(root,error.message);}};
    const saveDraft=async()=>{const v=values(group);v.items=invoice.items.map((r,i)=>({name:r.name,description:v['description_'+i],rate:v['rate_'+i]}));await rpc('update_invoice',{name,values:v});};
@@ -213,7 +251,7 @@
   plus_point.refresh_record_rail=()=>rail(frm);
 
  }
- $(document).on('form-refresh.pp-record-rail',(_e,frm)=>{if(!frappe.boot.plus_point?.is_platform){for(const df of frm.meta.fields)if(df.fieldtype==='Link'&&df.options==='Company'){frm.set_df_property(df.fieldname,'hidden',1);if(frm.is_new()&&!frm.doc[df.fieldname])frm.set_value(df.fieldname,frappe.boot.plus_point?.company_identity?.name);}}setTimeout(()=>rail(frm),150);});
+ $(document).on('form-refresh.pp-record-rail',(_e,frm)=>{if(!frappe.boot.plus_point?.is_platform){for(const df of frm.meta.fields)if(df.fieldtype==='Link'&&df.options==='Company'){frm.set_df_property(df.fieldname,'hidden',1);if(frm.is_new()&&!frm.doc[df.fieldname])frm.set_value(df.fieldname,frappe.boot.plus_point?.company_identity?.name);}if(frm.doctype==='Employee')rpc('catalogue').then(data=>frm.set_query('designation',()=>({filters:{name:['in',[...data.designations,frm.doc.designation].filter(Boolean)]}}))).catch(()=>{});}setTimeout(()=>rail(frm),150);});
  let workerRefresh=0;
  async function workerList(){
   const route=frappe.get_route();if(route[0]!=='List'||route[1]!=='Employee'||frappe.boot.plus_point?.is_platform)return;

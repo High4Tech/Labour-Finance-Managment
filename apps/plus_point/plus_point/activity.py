@@ -10,7 +10,7 @@ from plus_point.setup_flow import linked, require_customer
 
 
 def client_activity(company, customer=None):
-    projects = frappe.get_list('Project', filters={'company':company, **({'customer':customer} if customer else {})},
+    projects = frappe.get_list('Project', filters={'company':company,'pp_archived':0, **({'customer':customer} if customer else {})},
         fields=['name','project_name','customer'], limit_page_length=0)
     clients = frappe.get_list('Customer', filters={'name':['in',list({p.customer for p in projects if p.customer})]},
         fields=['name','customer_name'], order_by='customer_name', limit_page_length=0) if projects else []
