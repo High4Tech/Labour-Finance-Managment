@@ -110,16 +110,20 @@
     ${name?section('Payment milestones',`<p>${esc(__('Add milestones now or later. Approval earns the milestone and can automatically create an invoice draft for review.'))}</p><div class="pp-op-milestones"></div>`):''}`;
    let clientData=data.client||{},newClient=!name&&!catalogue.clients.length;
    const choose=form(area.querySelector('.pp-op-client-choice'),[field('Select','client_mode','Client',{options:'Choose existing client\nAdd new client',default:newClient?'Add new client':'Choose existing client'}),field('Select','customer','Client profile',{options:[{label:'',value:''},...catalogue.clients.map(r=>({value:r.name,label:r.title}))],default:data.customer,read_only:!!name})]);
-   let clientForm;
+   await choose.pp_ready;
+   let clientForm,clientRequest=0,clientLoading;
    async function drawClient(){
-    newClient=choose.get_value('client_mode')==='Add new client';
-    choose.fields_dict.customer.$wrapper.toggle(!newClient&&!name);if(name){choose.fields_dict.client_mode.$wrapper.hide();newClient=false;}
-    if(!newClient&&choose.get_value('customer'))clientData=await plus_point.form_rpc('clients.details',{customer:choose.get_value('customer')});
-    clientForm=form(area.querySelector('.pp-op-client-fields'),plus_point.resource_fields('clients').map(df=>({...df,only_select:true,...(df.fieldname==='default_currency'?{label:__('Client invoice currency'),description:__('Payment preference. Agreement costs remain in {0}.',[data.currency||catalogue.currency])}:{})})),clientData);await clientForm.pp_ready;
+    const request=++clientRequest,adding=!name&&choose.get_value('client_mode')==='Add new client',customer=choose.get_value('customer');
+    choose.fields_dict.customer.$wrapper.toggle(!adding&&!name);if(name)choose.fields_dict.client_mode.$wrapper.hide();
+    const profile=!adding&&customer?await plus_point.form_rpc('clients.details',{customer}):clientData;
+    if(request!==clientRequest||!area.isConnected)return;
+    newClient=adding;clientData=profile;const holder=area.querySelector('.pp-op-client-fields');holder.replaceChildren();
+    clientForm=form(holder,plus_point.resource_fields('clients').map(df=>({...df,only_select:true,...(df.fieldname==='default_currency'?{label:__('Client invoice currency'),description:__('Payment preference. Agreement costs remain in {0}.',[data.currency||catalogue.currency])}:{})})),clientData);await clientForm.pp_ready;
    }
-   choose.fields_dict.client_mode.df.onchange=()=>{clientData={};area.querySelector('.pp-op-client-fields').innerHTML='';drawClient();};
-   choose.fields_dict.customer.df.onchange=()=>{area.querySelector('.pp-op-client-fields').innerHTML='';drawClient();};
-   await drawClient();
+   const redrawClient=()=>{clientLoading=drawClient();clientLoading.catch(error=>message(root,error.message));return clientLoading;};
+   choose.fields_dict.client_mode.df.onchange=()=>{clientData={};return redrawClient();};
+   choose.fields_dict.customer.df.onchange=redrawClient;
+   await redrawClient();
    const terms=form(area.querySelector('.pp-op-terms'),[
     field('Section Break','agreement_details','Agreement details'),field('Data','agreement_title','Agreement name',{reqd:1}),field('Select','status','Agreement status',{options:'Draft\nActive\nClosed',default:'Active'}),field('Column Break','agreement_dates',''),field('Date','effective_start','Agreement starts',{reqd:1,default:frappe.datetime.get_today()}),field('Date','effective_end','Agreement ends',{reqd:1,default:frappe.datetime.get_today()}),
     field('Section Break','scope_section','Agreed work'),field('Text Editor','scope','Scope and deliverables',{reqd:1}),
@@ -129,6 +133,7 @@
    const staffing=form(area.querySelector('.pp-op-staffing'),[field('Table','staffing','Contracted staffing',{fields:requirementsFields(roles).filter(df=>data.billing_model!=='Fixed'||df.fieldname!=='client_rate'),in_place_edit:true,data:rows,reqd:1})],{},data.currency);
    const category=form(area.querySelector('.pp-op-category'),[field('Data','title','Category name')]);area.querySelector('[data-save-category]').onclick=e=>act(root,e.currentTarget,async()=>{const added=await rpc('create_category',{title:category.get_value('title')});catalogue.designations=[...new Set([...catalogue.designations,added.name])].sort();staffing.fields_dict.staffing.grid.update_docfield_property('designation','options',['',...catalogue.designations]);message(root,__('Category added. Select it in the staffing row.'),true);});
    area.querySelector('[data-save-agreement]').onclick=e=>act(root,e.currentTarget,async()=>{
+    await clientLoading;
     const client=values(clientForm),result=values(terms);result.staffing=(staffing.get_value('staffing')||[]).map(r=>({...r,client_rate:result.billing_model==='Fixed'?0:r.client_rate}));if(!result.staffing.length){area.querySelector('.pp-op-staffing').closest('details').open=true;throw new Error(__('Add a venue and at least one worker category.'));}
     if(newClient)result.client=client;else{result.customer=choose.get_value('customer');if(!result.customer)throw new Error(__('Choose the client.'));result.client=client;}
     const saved=await rpc('save_agreement',{name,values:result});message(root,__('Agreement saved.'),true);frappe.set_route('pp-agreements',{record:saved.name});if(name===saved.name)await load();

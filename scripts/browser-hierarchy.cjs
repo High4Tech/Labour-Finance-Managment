@@ -29,6 +29,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await app.getByRole('button',{name:'Save agreement',exact:true}).click();await app.getByRole('heading',{name:data.prefix+' Festival agreement',exact:true}).waitFor();
   let catalogue=await rpc('operations.catalogue');const agreement=catalogue.agreements.find(r=>r.title===data.prefix+' Festival agreement');assert(agreement);
   assert.equal(await app.locator('.pp-op-index').count(),0);
+  assert.equal(await app.locator('.pp-op-client-fields .frappe-control[data-fieldname=country]').count(),1);
   await app.locator('summary').getByText('Agreement and billing',{exact:true}).click();await app.getByText('Fixed contract value (PKR)',{exact:true}).waitFor();
   const groups=await page.evaluate(()=>frappe.boot.plus_point.navigation.items);assert(!groups.some(r=>['Event sites','Assign workers','Clients','Event projects','Client invoices','Fixed milestones','Your company'].includes(r.label)));
   await app.locator('.pp-op-comment').fill('Agreement & venue reviewed');await app.getByRole('button',{name:'Post comment',exact:true}).click();await app.locator('.pp-op-comment-list').getByText('Agreement & venue reviewed',{exact:true}).waitFor();
