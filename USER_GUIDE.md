@@ -46,6 +46,10 @@ Open a saved record and choose **Delete**, or tick records on a list and choose 
 
 Draft work, draft attendance/milestones and unused records can be deleted. Approved work/milestones, posted financial records and linked history stay protected. Release unused event crew before removing an allocated plan. Client deletion uses native cleanup: its unshared contacts/addresses are removed, while shared profiles remain. These actions do not erase earned wages or financial history.
 
+## Appearance and buttons
+
+Choose **Appearance** at the bottom of the sidebar for **Light**, **Dark** or **System**. Your choice is saved for your login; System follows your device's appearance. Buttons share the same sizing across dashboards, lists, forms and dialogs, with larger touch targets on mobile.
+
 ## Import employees and existing finances
 
 Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import workers from a template** in guided setup. Select your company and import type, then **Download template**. **Download reference IDs** provides all visible existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. It also includes warehouses, stock items, vehicles, event sites and approved unbilled work/milestone sources. Related profile fields accept exact, unique display names as well as IDs. Duplicate names need an ID. Missing dependencies have row-specific instructions rather than being silently created as financial history.

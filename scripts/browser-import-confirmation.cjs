@@ -18,10 +18,12 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await dialog.locator('input[type=file]').setInputFiles({name:'bad.csv',mimeType:'text/csv',buffer:Buffer.from('wrong,headers\ninvalid,row')});
   await dialog.getByRole('button',{name:'Review file',exact:true}).click();await dialog.locator('.pp-import-feedback').filter({hasText:'Column headers must match'}).waitFor();await oneModal();
   const columns=['external_id','employee','first_name','last_name','gender','date_of_birth','date_of_joining','cell_number','status'];
-  const content=[columns.join(','),...Array.from({length:15},(_,i)=>['UX-'+run+'-'+i,'Import UX QA '+String.fromCharCode(65+i),'Import UX QA',String.fromCharCode(65+i),'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
+  // Keep this browser batch within the QA subscription's ten-worker allowance.
+  // Larger native import batches are exercised by rollback integration tests.
+  const content=[columns.join(','),...Array.from({length:5},(_,i)=>['UX-'+run+'-'+i,'Import UX QA '+String.fromCharCode(65+i),'Import UX QA',String.fromCharCode(65+i),'Male','1990-01-01','2020-01-01','','Active'].join(','))].join('\n');
   const file={name:'workers.csv',mimeType:'text/csv',buffer:Buffer.from(content)};
   await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();
-  await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/15 create/);
+  await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/5 create/);
   assert(await primary.isDisabled());assert(await check.isVisible());await dialog.getByText('Tick the review box to enable import.',{exact:true}).waitFor();await oneModal();
   await dialog.locator('.modal-body').evaluate(el=>el.scrollTop=0);
   assert(await check.isVisible());await page.screenshot({path:path.join(out,'import-confirmation-desktop.png'),fullPage:true});
@@ -36,14 +38,14 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.unroute('**/api/method/plus_point.imports.apply');
   await dialog.getByRole('button',{name:'Review file again',exact:true}).click();await dialog.getByText('Review before saving',{exact:true}).waitFor();
   assert(await primary.isDisabled());assert.equal(await check.isChecked(),false);await check.check();await primary.click();
-  await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/15 created, 0 updated, 0 skipped/);await oneModal();
+  await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/5 created, 0 updated, 0 skipped/);await oneModal();
   const count=()=>page.evaluate(async company=>(await frappe.db.get_list('Employee',{filters:{company},fields:['name'],limit:100})).length,data.company);
-  assert.equal(await count(),16);
+  assert.equal(await count(),6);
   await primary.click();await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();
-  await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/15 skip/);assert(await primary.isDisabled());
-  await check.check();await primary.click();await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/0 created, 0 updated, 15 skipped/);
-  assert.equal(await count(),16);assert.deepEqual(errors,[]);
-  console.log('PASS one import dialog, inline file/server errors, persistent footer consent, disabled-until-reviewed action, mobile fit, actual 15-worker save and duplicate-free replay');
+  await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/5 skip/);assert(await primary.isDisabled());
+  await check.check();await primary.click();await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/0 created, 0 updated, 5 skipped/);
+  assert.equal(await count(),6);assert.deepEqual(errors,[]);
+  console.log('PASS one import dialog, inline file/server errors, persistent footer consent, disabled-until-reviewed action, mobile fit, actual 5-worker save and duplicate-free replay');
  }catch(error){await page.screenshot({path:path.join(out,'import-confirmation-failure.png'),fullPage:true});throw error;}
  finally{await browser.close();assert(fixture('end').restored);console.log('PASS exact disposable import receipts, employees and workspace settings restored');}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});

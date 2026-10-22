@@ -1,0 +1,166 @@
+/* Shared action geometry and semantic colors. Loaded after feature styles so
+   legacy btn-sm / es-button rules cannot make neighboring actions unequal. */
+body.pp-ui {
+    --pp-action-height:36px;
+    --pp-action-padding:12px;
+    --pp-action-radius:8px;
+    --pp-action-icon:16px;
+    --pp-action-gap:8px;
+    --pp-accent:#147d72;
+    --pp-action-primary:#116f65;
+    --pp-action-primary-hover:#0c5b53;
+    --pp-action-on-primary:#fff;
+    --pp-action-bg:var(--control-bg,#f3f5f4);
+    --pp-action-hover:var(--fg-hover-color,#e9efed);
+    --pp-action-border:var(--border-color,#dfe5e2);
+    --pp-status-danger:#b42335;
+    --pp-status-warning:#8a5200;
+    --pp-status-success:#147046;
+    --pp-action-danger:#a62d3c;
+    --pp-action-danger-hover:#892332;
+    --btn-height:var(--pp-action-height);
+}
+html[data-theme=dark] body.pp-ui {
+    --pp-accent:#70d1bd;
+    --pp-action-primary:#217c70;
+    --pp-action-primary-hover:#286e65;
+    --pp-status-danger:#ffaaaa;
+    --pp-status-warning:#f0c479;
+    --pp-status-success:#82d5a8;
+    --pp-action-danger:#a62d3c;
+    --pp-action-danger-hover:#892332;
+}
+/* Geometry is intentionally authoritative; behavior, visibility, loading
+   spinners and native disabled states are left to the owning control. */
+body.pp-ui :is(.btn,.es-button):not(.btn-reset) {
+    box-sizing:border-box;
+    --es-bt-h:var(--pp-action-height);
+    height:var(--pp-action-height)!important;
+    min-height:var(--pp-action-height)!important;
+    padding:0 var(--pp-action-padding)!important;
+    border-radius:var(--pp-action-radius)!important;
+    font-family:inherit;
+    font-size:13px!important;
+    font-weight:500;
+    line-height:20px!important;
+    vertical-align:middle;
+    align-items:center;
+    justify-content:center;
+    gap:var(--pp-action-gap);
+    box-shadow:none;
+    white-space:nowrap;
+}
+/* Never override display on .hide/.hidden or on spinners and icon utilities. */
+body.pp-ui :is(.btn,.es-button):not(.btn-reset,.hide,.hidden,[hidden]) { display:inline-flex; }
+body.pp-ui :is(.btn,.es-button):not(.btn-reset) :is(svg.icon,.pp-theme-symbol svg) {
+    width:var(--pp-action-icon);
+    height:var(--pp-action-icon);
+    flex-shrink:0;
+    vertical-align:middle;
+    margin:0;
+}
+body.pp-ui :is(.btn-default,.btn-secondary,.es-button:not([data-variant=solid])):not(.btn-reset) {
+    background:var(--pp-action-bg);
+    color:var(--text-color);
+    border:1px solid var(--pp-action-border);
+}
+body.pp-ui :is(.btn-primary,.es-button[data-variant=solid]) {
+    background:var(--pp-action-primary);
+    border:1px solid var(--pp-action-primary);
+    color:var(--pp-action-on-primary);
+    --icon-stroke:var(--pp-action-on-primary);
+    --icon-fill:transparent;
+    font-weight:600;
+}
+body.pp-ui :is(.btn,.es-button):is(.icon-btn,[data-icon-button=true]) {
+    width:var(--pp-action-height)!important;
+    min-width:var(--pp-action-height)!important;
+    padding:0!important;
+    flex-shrink:0;
+}
+body.pp-ui :is(.btn-danger,.pp-delete-dialog .btn-modal-primary) {
+    background:var(--pp-action-danger)!important;
+    border:1px solid var(--pp-action-danger)!important;
+    color:#fff!important;
+}
+body.pp-ui :is(.btn,.es-button):focus-visible {
+    outline:2px solid var(--pp-accent)!important;
+    outline-offset:3px;
+}
+body.pp-ui :is(.btn,.es-button):is(:disabled,.disabled,[aria-disabled=true]) {
+    opacity:.5;
+    cursor:not-allowed;
+}
+@media(hover:hover) {
+    body.pp-ui :is(.btn-default,.btn-secondary,.es-button:not([data-variant=solid])):not(:disabled,.disabled):hover {
+        background:var(--pp-action-hover);color:var(--text-color);
+    }
+    body.pp-ui :is(.btn-primary,.es-button[data-variant=solid]):not(:disabled,.disabled):hover {
+        background:var(--pp-action-primary-hover);border-color:var(--pp-action-primary-hover);color:#fff;
+    }
+    body.pp-ui :is(.btn-danger,.pp-delete-dialog .btn-modal-primary):not(:disabled,.disabled):hover {
+        background:var(--pp-action-danger-hover)!important;border-color:var(--pp-action-danger-hover)!important;
+    }
+}
+/* Toolbar groups share one baseline and a single gap, including list controls. */
+body.pp-ui .page-actions,
+body.pp-ui .page-actions :is(.standard-actions,.custom-actions,.page-icon-group),
+body.pp-ui :is(.pp-import-tools,.pp-crew-tools,.pp-setup-actions) {
+    align-items:center;gap:8px;
+}
+body.pp-ui .page-actions .pp-top-help { margin-right:0; }
+body.pp-ui .page-actions :is(.btn,.es-button) { margin:0; }
+body.pp-ui .page-actions .page-icon-group { display:inline-flex; }
+body.pp-ui .page-actions :is(.btn-group,.menu-btn-group,.actions-btn-group) { align-self:center; }
+body.pp-ui .modal-footer :is(.btn,.es-button) { flex-shrink:0; }
+body.pp-ui .pp-theme-toggle {
+    width:100%;justify-content:flex-start!important;margin:4px 0 8px;
+    text-align:left;
+}
+body.pp-ui .pp-theme-symbol { display:inline-flex; }
+body.pp-ui .pp-theme-value { margin-left:auto;color:var(--text-muted);font-size:12px; }
+/* Dark mode uses Desk surfaces and changes product data/status colors only. */
+html[data-theme=dark] body.pp-ui .pp-dashboard {
+    --pp-accent:#70d1bd;
+    --pp-highlight:#70d1bd;
+    --pp-secondary:#8bb8eb;
+    --pp-warning:var(--pp-status-warning);
+    --pp-danger:var(--pp-status-danger);
+    --pp-success:var(--pp-status-success);
+}
+html[data-theme=dark] body.pp-ui :is(.pp-heatmap,.pp-client-activity,.pp-event-map) {
+    --pp-heat-0:#233630;--pp-heat-1:#285e3c;--pp-heat-2:#378552;--pp-heat-3:#65ae76;--pp-heat-4:#99d3a4;
+}
+html[data-theme=dark] body.pp-ui .pp-event-map :is(.pp-heat-3,.pp-heat-4) { color:#10291d; }
+html[data-theme=dark] body.pp-ui .pp-event-map .pp-heat-2 { color:#fff; }
+html[data-theme=dark] body.pp-ui .pp-workforce-metrics>.pp-dashboard-metric:first-child {
+    background:#155f56;border-color:#287e71;color:#fff;
+}
+html[data-theme=dark] body.pp-ui :is(.pp-input-hint,.pp-import-error td:last-child,.pp-status-alert,
+    .pp-condition-error .pp-condition-label,.pp-value-error dd,.pp-value-error strong) { color:var(--pp-status-danger); }
+html[data-theme=dark] body.pp-ui :is(.pp-condition-warning .pp-condition-label,.pp-value-warning dd,
+    .pp-budget-row.pp-value-warning .pp-budget-figures strong) { color:var(--pp-status-warning); }
+html[data-theme=dark] body.pp-ui :is(.pp-condition-success .pp-condition-label,.pp-value-success dd) { color:var(--pp-status-success); }
+html[data-theme=dark] body.pp-ui .pp-onboarding-layout>nav .is-complete>span { color:var(--pp-accent);border-color:var(--pp-accent); }
+html[data-theme=dark] body.pp-ui .pp-event-shortage { background:#47351e;border-color:#99783d;color:#ffe0a3; }
+html[data-theme=dark] body.pp-ui .pp-chart-range button[aria-pressed=true] { background:#155f56;color:#fff; }
+html[data-theme=dark] body.pp-ui .pp-company-avatar { background:#155f56;color:#fff; }
+@media(max-width:767px),(pointer:coarse) {
+    body.pp-ui { --pp-action-height:44px; }
+    body.pp-ui .page-actions { flex-wrap:wrap;row-gap:8px; }
+    body.pp-ui .pp-theme-toggle { margin-block:4px; }
+}
+@media(max-width:767px) {
+    body.pp-ui { --page-head-height:108px; }
+    body.pp-ui .page-head { height:auto;min-height:var(--page-head-height); }
+    body.pp-ui .page-head-content { flex-wrap:wrap!important;align-content:center;gap:8px;height:auto;min-height:108px;padding-block:8px; }
+    body.pp-ui .page-head-content .page-title { flex:0 0 100%;max-width:100%; }
+    body.pp-ui .page-head-content .standard-items-section { flex:0 0 100%;width:100%;min-width:0;padding-inline:15px; }
+    body.pp-ui .page-head-content .page-actions { flex:0 0 100%;max-width:100%;justify-content:flex-end;padding:0; }
+    body.pp-ui .page-actions .es-button:has(>.es-button__label.hidden-xs):not(:has(>.es-button__label.hidden-lg)) {
+        width:var(--pp-action-height)!important;min-width:var(--pp-action-height)!important;padding:0!important;
+    }
+}
+@media(prefers-reduced-motion:reduce) {
+    body.pp-ui :is(.btn,.es-button) { transition:none!important; }
+}
