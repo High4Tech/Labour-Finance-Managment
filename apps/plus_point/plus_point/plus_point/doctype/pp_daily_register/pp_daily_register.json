@@ -4,7 +4,7 @@
   "module": "PLUS POINT",
   "custom": 0,
   "autoname": "format:PP-REG-{work_date}-{#####}",
-  "description": "Bulk daily site attendance using Frappe's standard form, table and Submit controls",
+  "description": "One event/site/day roster with explicit attendance and auditable approved wages.",
   "track_changes": 1,
   "is_submittable": 1,
   "engine": "InnoDB",
@@ -36,17 +36,18 @@
     {
       "fieldname": "project",
       "fieldtype": "Link",
-      "label": "Project",
+      "label": "Event",
       "options": "Project",
-      "read_only": 1
+      "read_only": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "entries",
       "fieldtype": "Table",
       "label": "Worker Attendance",
       "options": "PP Register Line",
-      "reqd": 1,
-      "description": "Review every worker before Submit: 1 = full day, 0.5 = half day, 0 = absent. Saving keeps a draft; Submit creates approved earnings. This does not run HR payroll."
+      "reqd": 0,
+      "description": "Crew is filled from the event/site allocations. Mark Present, Absent or Half day, then approve the reviewed register to record wages."
     },
     {
       "fieldname": "notes",

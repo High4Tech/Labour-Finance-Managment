@@ -115,6 +115,7 @@ class OperationsTests(unittest.TestCase):
     def test_bulk_register_posts_work_atomically(self):
         result = prepare_daily_register(self.f.site.name, today())
         register = frappe.get_doc('PP Daily Register', result['name'])
+        register.entries[0].attendance_status='Present';register.entries[0].units='1'
         register.submit()
         work = frappe.get_doc('PP Work Entry', register.entries[0].work_entry)
         self.assertEqual(work.status, 'Approved')
@@ -456,6 +457,7 @@ class OperationsTests(unittest.TestCase):
         self.set_spending_budget(1000)
         result=prepare_daily_register(self.f.site.name,today())
         register=frappe.get_doc('PP Daily Register',result['name'])
+        register.entries[0].attendance_status='Present';register.entries[0].units='1'
         with self.assertRaises(frappe.ValidationError):
             register.submit()
         self.assertEqual(frappe.db.get_value('PP Daily Register',register.name,'docstatus'),0)

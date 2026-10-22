@@ -39,6 +39,10 @@ def browser_fixture(action,run_id):
     work=frappe.get_all('PP Work Entry',filters={'project':['in',projects]},fields=['name','status','sales_invoice']) if projects else []
     if frappe.db.exists('GL Entry',{'company':prefix}) or any(r.status!='Draft' or r.sales_invoice for r in work):
         raise RuntimeError('Fixture has recorded history; automatic cleanup refused')
+    if projects:
+        for row in frappe.get_all('PP Daily Register',filters={'project':['in',projects]},fields=['name','docstatus']):
+            if row.docstatus:raise RuntimeError('Fixture has approved attendance; automatic cleanup refused')
+            frappe.delete_doc('PP Daily Register',row.name)
     for row in work:frappe.delete_doc('PP Work Entry',row.name)
     receipts=frappe.get_all('PP Import Record',filters={'company':prefix},fields=['name','kind','external_id','document_type','document_name'])
     for receipt in receipts:
@@ -90,6 +94,32 @@ def describe_demo():
     return dict(permissions=permissions,projects=projects,sites=frappe.get_all('PP Site',fields=['name','project','site_name']),
         terms=frappe.get_all('PP Contract Terms',fields=['name','project','billing_model','effective_start','effective_end']),
         work=frappe.db.sql('select project,min(work_date) first_day,max(work_date) last_day,count(*) rows_count from `tabPP Work Entry` group by project',as_dict=True))
+
+
+def attendance_browser_fixture(action,run_id):
+    """Approve real QA attendance, then remove only its exact unbilled test history."""
+    guard('qa.localhost')
+    if not re.fullmatch('[a-f0-9]{12}',run_id):raise RuntimeError('Exact browser run required')
+    if action=='begin':return browser_fixture(action,run_id)
+    prefix='Event Browser QA '+run_id
+    backup=Path(frappe.get_site_path('private','backups','pp-event-browser-'+run_id+'.json'))
+    if action!='end' or not backup.exists() or not frappe.db.exists('Company',prefix):raise RuntimeError('Exact disposable attendance fixture required')
+    frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
+    projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
+    if frappe.db.exists('GL Entry',{'company':prefix}):raise RuntimeError('Financial postings present; cleanup refused')
+    if projects and frappe.db.exists('PP Wage Settlement',{'project':['in',projects]}):raise RuntimeError('Payments present; cleanup refused')
+    work=frappe.get_all('PP Work Entry',filters={'project':['in',projects or ['']]},fields=['name','sales_invoice'])
+    names=[r.name for r in work]
+    if any(r.sales_invoice for r in work) or names and frappe.db.exists('Sales Invoice Item',{'pp_source_name':['in',names]}):raise RuntimeError('Billed source present; cleanup refused')
+    # Only operator-created, exact QA fixtures may be returned to Draft for
+    # normal native deletion. Real attendance remains immutable everywhere.
+    for name in frappe.get_all('PP Daily Register',filters={'project':['in',projects or ['']]},pluck='name'):
+        frappe.db.set_value('PP Daily Register',name,'docstatus',0)
+        frappe.delete_doc('PP Daily Register',name)
+    for row in work:
+        frappe.db.set_value('PP Work Entry',row.name,'status','Draft')
+        frappe.delete_doc('PP Work Entry',row.name)
+    return browser_fixture('end',run_id)
 
 
 def seed_demo():

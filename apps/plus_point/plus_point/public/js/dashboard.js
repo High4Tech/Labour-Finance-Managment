@@ -123,6 +123,7 @@
                 const response = await frappe.call({method:'plus_point.dashboard.overview',args:{company:company || undefined,display_currency:displayCurrency || undefined},silent:true});
                 if (!root.isConnected || current !== request) return;
                 const data=response.message;plus_point.dashboard_company=data.company;
+                if(!data.is_platform)plus_point.ensure_attendance_today?.(data.company).catch(()=>{});
                 plus_point.dashboard_currency=data.currency;
                 root.classList.toggle('pp-motion-dashboard',!data.is_platform);
                 const draw=()=>{

@@ -99,6 +99,8 @@ def proposals(doc):
         values[assignment.project] += daily_amounts(assignment.wage_rate, 0, doc.units)[0]
     elif doc.doctype == 'PP Daily Register':
         for row in doc.entries or []:
+            if row.get('attendance_status')=='Not marked':continue
+            if row.get('work_entry') and frappe.db.get_value('PP Work Entry',row.work_entry,'status')=='Approved':continue
             assignment = frappe.get_doc('PP Assignment', row.assignment)
             values[assignment.project] += daily_amounts(assignment.wage_rate, 0, row.units)[0]
     elif doc.doctype == 'Purchase Invoice':

@@ -57,6 +57,16 @@ def run_setup_imports():
     return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
 
 
+def run_attendance():
+    if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
+        raise RuntimeError('Local test-enabled site required')
+    import unittest
+    from plus_point.tests.test_attendance import AttendanceTests
+    result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(AttendanceTests))
+    if not result.wasSuccessful():raise RuntimeError('Attendance/profile integration suite failed')
+    return dict(tests=result.testsRun,failures=len(result.failures),errors=len(result.errors))
+
+
 def run_currency_billing():
     if not frappe.conf.get('allow_tests') or not frappe.local.site.endswith('.localhost'):
         raise RuntimeError('Local test-enabled site required')

@@ -23,7 +23,7 @@
             links: [['PP Contract Terms', 'Billing terms'], ['PP Milestone', 'Fixed milestones']]},
         {title: 'Choose where each worker will work', text: 'Plan venue phases and workers per day in an Event plan. Preview availability, allocate crew, then reserve vehicles and warehouse equipment.',
             links: [['PP Site', 'Event sites'], ['Employee', 'Workers'], ['PP Assignment', 'Worker allocations']]},
-        {title: 'Record daily attendance and dehadi', text: 'Choose Mark attendance on Event operations, then select a work site and date. Review each worker: 1 = full day, 0.5 = half day, 0 = absent. Submit the register to approve earnings.',
+        {title: 'Record daily attendance and dehadi', text: 'Choose an event, site and work date. Crew is filled automatically. Mark Present, Absent or Half day, then approve the reviewed register to record wages.',
             links: [['PP Daily Register', 'Daily attendance'], ['PP Work Entry', 'Worker earnings']]},
         {title: 'Invoice the client and record receipts', text: 'Open active Billing terms and choose Prepare client invoice. Review and submit the invoice, then record the client payment as a receipt.',
             links: [['PP Contract Terms', 'Prepare an invoice'], ['Sales Invoice', 'Client invoices'], ['Payment Entry', 'Receipts and payments']]},
@@ -41,7 +41,7 @@
         'PP Site': ['Event sites', 'A venue, hall, stage or setup area within a client event. Prepare daily attendance after workers have active allocations.', ['site_name', 'project', 'parent_site']],
         'PP Assignment': ['Worker allocations', 'Choose available workers together for a site, billing agreement and date range. These agreed rates are copied into work records so later rate changes cannot rewrite past earnings.', ['employee', 'contract_terms', 'site', 'start_date', 'wage_rate', 'client_rate']],
         'PP Contract Terms': ['Billing terms', 'Choose daily worker-day billing or a fixed contract amount. Prepare client invoices and review Project finances from this screen.', ['contract', 'project', 'billing_model', 'fixed_amount', 'status']],
-        'PP Daily Register': ['Daily attendance', 'One register records a site and date. Saving keeps a draft; Submit creates approved work entries and earnings for the listed workers. Review before submitting.', ['work_date', 'site', 'entries']],
+        'PP Daily Register': ['Daily attendance', 'One register per event site and date. Crew comes from allocations. Mark Present, Absent or Half day, then approve to record wages.', ['work_date', 'site', 'entries']],
         'PP Work Entry': ['Worker earnings', 'A worker-day and its locked wage and client billing amounts. Earnings are not proof of payment. Prefer the site attendance register for bulk daily entry.', ['assignment', 'units', 'status', 'wage_amount', 'billable_amount']],
         'PP Milestone': ['Fixed contract milestones', 'A completed portion of a fixed-price agreement. Approved milestones earn client revenue; daily worker wages are calculated separately.', ['contract_terms', 'amount', 'status']],
         'PP Wage Settlement': ['Worker payments', 'Link a real, submitted employee Payment Entry to approved wages. Saving is a draft; Submit allocates the payment. This does not create a bank payment or payroll run.', ['employee', 'project', 'payment_entry', 'amount']],
@@ -75,7 +75,7 @@
         'PP Vehicle Booking':['Vehicle assignments','Assign vehicle'],'PP Equipment Booking':['Event equipment','Reserve equipment'],
         'PP Assignment': ['Worker assignments', 'Assign workers'],
         'PP Contract Terms': ['Client billing', 'Add billing terms'],
-        'PP Daily Register': ['Daily attendance', 'Add attendance'],
+        'PP Daily Register': ['Attendance registers', 'Create register'],
         'PP Work Entry': ['Wages earned', 'Add work entry'],
         'PP Milestone': ['Fixed contract milestones', 'Add milestone'],
         'PP Wage Settlement': ['Worker payments', 'Record payment'],
@@ -110,40 +110,7 @@
         ? `<a class="pp-guide-link" href="/desk/${frappe.router.slug(doctype)}">${esc(__(label))}</a>` : '';
 
     function attendancePicker() {
-        let opening = false;
-        const dialog = new frappe.ui.Dialog({title: __('Mark attendance'), fields: [
-            {fieldtype: 'HTML', fieldname: 'explanation', options: `<p>${esc(__('Choose a work site and date. You will review a draft before approving any earnings. A saved register will reopen.'))}</p>`},
-            {fieldtype: 'Link', fieldname: 'site', label: __('Work site'), options: 'PP Site', reqd: 1,
-                get_query: () => ({filters: {is_active: 1}})},
-            {fieldtype: 'Date', fieldname: 'work_date', label: __('Date'), reqd: 1, default: frappe.datetime.get_today()},
-        ], primary_action_label: __('Review attendance'), async primary_action(values) {
-            if (opening) return;
-            opening = true;
-            dialog.get_primary_btn().prop('disabled', true);
-            try {
-                const saved = await frappe.db.get_list('PP Daily Register', {filters: {site: values.site, work_date: values.work_date},
-                    fields: ['name', 'docstatus'], limit: 1});
-                let name = saved[0]?.name;
-                if (!name) {
-                    const result = await frappe.call({method: 'plus_point.api.prepare_daily_register', type: 'POST',
-                        args: values, freeze: true, freeze_message: __('Preparing an attendance draft…')});
-                    name = result.message.name;
-                }
-                dialog.hide();
-                await frappe.set_route('Form', 'PP Daily Register', name);
-                frappe.show_alert({message: __(saved.length ? 'Opened your saved attendance register.' : 'Draft ready. Review workers before Submit.'), indicator: 'blue'});
-            } catch {
-                // Native calls display permission/validation details. Keep selections for retry.
-                frappe.show_alert({message: __('Attendance was not opened. Review the message and try again.'), indicator: 'red'});
-            } finally {
-                opening = false;
-                dialog.get_primary_btn().prop('disabled', false);
-            }
-        }});
-        dialog.show();
-        frappe.db.get_list('PP Site', {filters: {is_active: 1}, fields: ['name'], limit: 2})
-            .then(sites => { if (sites.length === 1 && !dialog.get_value('site')) dialog.set_value('site', sites[0].name); })
-            .catch(() => { /* The native Link picker remains available. */ });
+        return plus_point.open_attendance_picker();
     }
 
     function taskHome() {
@@ -420,6 +387,10 @@
             if(!platform()&&['Project','PP Event Plan'].includes(route[1]))primary('plan','Plan an event',()=>plus_point.open_event_wizard());
             if(!platform()&&!serviceItems&&['Customer','Vehicle','Item','Warehouse'].includes(route[1]))primary('resource',action,()=>plus_point.open_resource({Customer:'clients',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses'}[route[1]],()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Assignment')primary('crew','Assign workers',()=>plus_point.assign_workers({},()=>listview.refresh()));
+            if(!platform()&&route[1]==='PP Daily Register'){
+                primary('attendance','Create register',()=>plus_point.open_attendance_picker());
+                if(!listview.__pp_ensured){listview.__pp_ensured=true;plus_point.form_rpc('attendance.ensure_today',{}).then(data=>{if(data.created)listview.refresh();}).catch(()=>{listview.__pp_ensured=false;});}
+            }
             if(serviceItems)page?.btn_primary?.removeAttr('data-pp-event-action');
             if(!platform()&&route[1]==='Stock Reconciliation')primary('balances','Update warehouse balances',()=>plus_point.open_import(plus_point.dashboard_company,()=>listview.refresh(),'stock_balances'));
         }

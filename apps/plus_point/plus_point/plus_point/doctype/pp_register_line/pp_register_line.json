@@ -8,6 +8,7 @@
   "field_order": [
     "assignment",
     "employee",
+    "attendance_status",
     "units",
     "remarks",
     "work_entry"
@@ -31,14 +32,21 @@
       "in_list_view": 1
     },
     {
+      "fieldname": "attendance_status",
+      "fieldtype": "Select",
+      "label": "Attendance",
+      "options": "\nNot marked\nPresent\nAbsent\nHalf day",
+      "in_list_view": 1
+    },
+    {
       "fieldname": "units",
       "fieldtype": "Select",
       "label": "Attendance Units",
-      "options": "0\n0.5\n1",
-      "default": "1",
-      "reqd": 1,
+      "options": "\n0\n0.5\n1",
+      "reqd": 0,
       "in_list_view": 1,
-      "description": "1 = full day, 0.5 = half day, 0 = absent. Wage and daily client amounts use this fraction."
+      "description": "1 = full day, 0.5 = half day, 0 = absent. Wage and daily client amounts use this fraction.",
+      "read_only": 1
     },
     {
       "fieldname": "remarks",

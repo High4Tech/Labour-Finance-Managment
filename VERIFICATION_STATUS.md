@@ -1,6 +1,14 @@
-# Verification status — 2026-10-21
+# Verification status — 2026-10-22
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
+
+## Event/site attendance and worker overview - October 22
+
+Registers now use event, site and work date, reuse the existing site/day register, derive crew from active dated allocations and show planned headcount. Today's unmarked drafts are prepared by current-event allocation, dashboard/list POST and hourly scheduler. Creating a draft never assumes presence or creates earnings. Present, Absent and Half day map to 1, 0 and 0.5 day; explicit approval validates all current allocated workers, dates, locked prior work, duplicates and spending budget before posting atomically. Existing approved work is reused without duplicate wages or budget. Unused allocations can leave automatically generated unmarked rosters; marked/approved history stays protected.
+
+Workers now open on an identity/attendance/wage overview with active allocations, recent history, full statement and 91/366-day activity calendars. Draft, unmarked, absent and unscheduled dates remain distinct. Native editing remains available through Edit profile. The duplicate native sidebar is hidden only in overview mode, including mobile. Calendar weekday labels stay visible when scrolling. Shared light/dark styles and action sizing are preserved.
+
+Passed 12 new rollback-only attendance/profile tests, 79 operations tests and 35 event tests (126 total). Edge browser verification passed actual automatic roster creation, event/site picker, three unmarked workers, all three marks, draft/approval financial separation, budget rejection, exact 1500 PKR wages/2250 PKR daily client earnings, no duplicate posting, worker overview/edit/history, annual calendar/keyboard navigation and 390px dark-mode layout. Exact unbilled QA registers/work, fixture records, workspace and appearance were restored. Visual review caught a mobile native-sidebar overlay missed by the initial overflow assertion; the layout and assertion were corrected and the complete journey passed again. Docker Desktop stopped during an intermediate run; local services were restored before final verification. Syntax/schema and whitespace checks passed. Screenshots remain ignored under .local/qa. Real customer attendance was not marked or approved by the tests.
 
 ## Complete dropdowns, input rules, saved defaults and deletion — October 21
 

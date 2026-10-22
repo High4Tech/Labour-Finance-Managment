@@ -75,41 +75,8 @@ def project_summary(project):
 
 @frappe.whitelist(methods=["POST"])
 def prepare_daily_register(site, work_date):
-    """Create a Draft native Frappe Desk register from dated active site assignments.
-
-    Does not create or approve attendance; users review and Submit explicitly.
-    """
-    _manager_only()
-    frappe.has_permission("PP Daily Register", "create", throw=True)
-    from frappe.utils import getdate
-
-    day = getdate(work_date)
-    site_doc = frappe.get_doc("PP Site", site)
-    site_doc.check_permission("read")
-    if not site_doc.is_active:
-        frappe.throw("Cannot create register for an inactive site")
-    assignments = frappe.get_list(
-        "PP Assignment",
-        filters={"site": site, "start_date": ["<=", day]},
-        fields=["name", "employee", "end_date"],
-        order_by="employee asc",
-        limit_page_length=0,
-    )
-    active = [x for x in assignments if not x.end_date or getdate(x.end_date) >= day]
-    if not active:
-        frappe.throw("No active workers are assigned to this site")
-    register = frappe.get_doc({
-        "doctype": "PP Daily Register",
-        "site": site,
-        "work_date": str(day),
-        "project": site_doc.project,
-        "entries": [
-            {"assignment": x.name, "employee": x.employee, "units": "1"}
-            for x in active
-        ],
-    })
-    register.insert()
-    return {"name": register.name, "site": site, "work_date": str(day), "workers": len(active)}
+    from plus_point.attendance import prepare
+    return prepare(site,work_date)
 
 
 @frappe.whitelist()
