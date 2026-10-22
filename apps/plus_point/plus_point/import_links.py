@@ -1,4 +1,5 @@
 """Resolve spreadsheet labels without modifying the uploaded data or bypassing permissions."""
+import re
 import frappe
 from plus_point.setup_flow import linked
 
@@ -58,9 +59,27 @@ def find(doctype, value, company, field=None, optional=False, filters=None):
 CLIENT_FIELDS = ['contact_name','email','phone','country','address_line1','address_line2','city','state','postal_code','default_currency']
 
 
+def choice(value, field, options, aliases=None, default=None):
+    """CSV labels are human input; retain strict meaning without strict casing."""
+    def key(text):return re.sub(r'[\s_-]+',' ',str(text or '').strip().casefold())
+    choices={key(option):option for option in options}
+    choices.update({key(label):canonical for label,canonical in (aliases or {}).items()})
+    if not str(value or '').strip() and default is not None:return default
+    result=choices.get(key(value))
+    if result is None:
+        frappe.throw(f'{field}: “{value or "(blank)"}” is not supported. Use '+ ' or '.join(options)+'. Capitalization does not matter.')
+    return result
+
+
+def customer_type(value, default='Company'):
+    return choice(value,'customer_type',('Company','Individual'),
+        {'business':'Company','corporate':'Company','organization':'Company','organisation':'Company',
+         'person':'Individual','personal':'Individual'},default)
+
+
 def client_values(row, prefix=''):
     return dict(customer_name=row.get('customer_name') or row.get('customer'),
-        customer_type=row.get('customer_type') or 'Company',
+        customer_type=customer_type(row.get('customer_type')),
         **{key:row.get(prefix+key,'') for key in CLIENT_FIELDS})
 
 
@@ -90,10 +109,34 @@ def normalize(kind, company, original):
         before = row.get(key,'')
         row[key] = find(doctype,before,company,key,**options)
         if before != row[key]:notes.append(f'{key}: {before} → {row[key]}')
+    def select(key, options, aliases=None, default=None):
+        before=row.get(key,'')
+        row[key]=choice(before,key,options,aliases,default)
+        if before!=row[key]:notes.append(f'{key}: {before or "(blank)"} → {row[key]}')
+    if kind in ('employees','event_sites','vehicles','inventory_items'):
+        select('status',('Active','Inactive'))
+    if kind=='employees' and row.get('gender'):
+        select('gender',frappe.get_list('Gender',pluck='name',limit_page_length=0))
+    if kind=='vehicles':
+        select('fuel_type',('Petrol','Diesel','Natural Gas','Electric'))
+        select('cargo_uom',('units','kg','m³'),{'m3':'m³','cubic metres':'m³','cubic meters':'m³'})
+    if kind=='invoices' and row.get('source_type'):
+        select('source_type',('PP Work Entry','PP Milestone'))
+    if kind=='events':
+        select('billing_model',('Daily','Fixed'),{'per_worker':'Daily','per worker day':'Daily','fixed price':'Fixed'})
+        if row['billing_model']=='Fixed':
+            from plus_point.events import positive
+            if positive(row.get('client_rate'),'Client daily rate',allow_zero=True):
+                row['client_rate']='0'
+                notes.append('Fixed-price event: client_rate is unused and will be saved as 0. The fixed_amount is the client contract total; crew wages stay separate.')
     if kind == 'employees':return row, notes
     if kind == 'clients':
         value = row.get('customer') or row.get('customer_name')
         row['customer'] = find('Customer',value,company,'customer',optional=True) or ''
+        before=row.get('customer_type','')
+        default=linked('Customer',row['customer']).customer_type if row['customer'] else 'Company'
+        row['customer_type']=customer_type(before,default)
+        if before!=row['customer_type']:notes.append(f'customer_type: {before or "(blank)"} → {row["customer_type"]}')
         if row['customer'] and value!=row['customer']:notes.append(f'Client: {value} → {row["customer"]}')
     elif kind == 'event_sites':
         ref('project','Project')
@@ -115,6 +158,9 @@ def normalize(kind, company, original):
             if value!=existing:notes.append(f'Client: {value} → {existing}')
         else:
             row['customer_name'] = row.get('customer_name') or value
+            before=row.get('customer_type','')
+            row['customer_type']=customer_type(before)
+            if before and before!=row['customer_type']:notes.append(f'customer_type: {before} → {row["customer_type"]}')
             values = client_values(row,'client_')
             full = validate_client(values)
             frappe.has_permission('Customer','create',throw=True)

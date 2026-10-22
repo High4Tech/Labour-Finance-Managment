@@ -36,7 +36,6 @@ def validate(kind,company,row):
         frappe.throw('status must be Active or Inactive')
     if kind=='clients':
         required(row,'customer_name')
-        if row['customer_type'] not in ('Company','Individual'):frappe.throw('customer_type must be Company or Individual')
         from plus_point.import_links import client_values,validate_client
         validate_client(client_values(row))
     elif kind=='event_sites':
@@ -100,7 +99,7 @@ def save(kind,company,row,document=None):
         if validate_client(values):
             from plus_point.clients import save as save_client
             return save_client(values,doc.name if exists else None)
-        doc.update(dict(customer_name=row['customer_name'],customer_type=row['customer_type'],customer_group=doc.customer_group or 'Commercial',territory=doc.territory or 'All Territories'))
+        doc.update(dict(customer_name=row['customer_name'],customer_type=values['customer_type'],customer_group=doc.customer_group or 'Commercial',territory=doc.territory or 'All Territories'))
         if row.get('default_currency'):doc.default_currency=row['default_currency']
     elif kind=='event_sites':doc.update(dict(site_name=row['site_name'],project=row['project'],address=row['address'],is_active=int(row['status']=='Active')))
     elif kind=='vehicles':

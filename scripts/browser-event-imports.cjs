@@ -25,13 +25,14 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert(headers.events.includes('client_contact_name'));assert(headers.clients.includes('country'));assert(headers.employees.includes('passport_number'));
   await page.evaluate(async()=>{await cur_dialog.set_value('kind','events');});
   const day=new Date();day.setUTCDate(day.getUTCDate()+2);const first=day.toISOString().slice(0,10);day.setUTCDate(day.getUTCDate()+1);const last=day.toISOString().slice(0,10);
-  const rows=[0,1].map(i=>({external_id:`EVT-${run}-${i}`,event_name:`${data.prefix} event ${i}`,customer:data.prefix+' Client',start_date:first,end_date:last,site_name:'Exhibition Hall',workers_per_day:'2',billing_model:'Daily',fixed_amount:'0',wage_rate:'100',client_rate:'150',agreement:'Event staffing agreement',customer_type:'Company',client_contact_name:'Ayesha Malik',client_email:'client@example.invalid',client_phone:'+966501234567',client_country:'Saudi Arabia',client_address_line1:'12 Exhibition Road',client_city:'Riyadh',client_default_currency:'USD'}));
+  const rows=[0,1].map(i=>({external_id:`EVT-${run}-${i}`,event_name:`${data.prefix} event ${i}`,customer:data.prefix+' Client',start_date:first,end_date:last,site_name:'Exhibition Hall',workers_per_day:'2',billing_model:i?'per_worker':'fixed',fixed_amount:i?'':'5000',wage_rate:'100',client_rate:'150',agreement:'Event staffing agreement',customer_type:'company',client_contact_name:'Ayesha Malik',client_email:'client@example.invalid',client_phone:'+966501234567',client_country:'Saudi Arabia',client_address_line1:'12 Exhibition Road',client_city:'Riyadh',client_default_currency:'USD'}));
   const csv=cell=>'"'+String(cell??'').replaceAll('"','""')+'"';
   const content=[headers.events.join(','),...rows.map(row=>headers.events.map(k=>csv(row[k])).join(','))].join('\n');
   const file={name:'event-plans.csv',mimeType:'text/csv',buffer:Buffer.from(content)};
   await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();
   await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/2 create/);
   assert.match(await dialog.locator('.pp-import-preview').innerText(),/Create client: .* with contact and address/);
+  assert.match(await dialog.locator('.pp-import-preview').innerText(),/client_rate is unused/);
   const count=()=>page.evaluate(async company=>(await frappe.db.get_list('Project',{filters:{company},fields:['name'],limit:100})).length,data.company);
   assert.equal(await count(),0);
   const primary=dialog.getByRole('button',{name:'Import records',exact:true}),check=dialog.locator('.modal-footer input[data-fieldname=confirmed]');
@@ -42,6 +43,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.screenshot({path:path.join(out,'event-import-review-mobile.png'),fullPage:true});
   await check.check();await primary.click();await dialog.getByText('Import saved',{exact:true}).waitFor();
   assert.match(await dialog.locator('.pp-condition-success').innerText(),/2 created, 0 updated, 0 skipped/);assert.equal(await count(),2);
+  const plans=await page.evaluate(async company=>await frappe.db.get_list('PP Event Plan',{filters:{company},fields:['name','event_name','client_rate','wage_rate','contract_terms'],order_by:'event_name',limit:10}),data.company);
+  assert.deepEqual(plans.map(p=>Number(p.client_rate)),[0,150]);assert(plans.every(p=>Number(p.wage_rate)===100));
   const clients=await page.evaluate(async customer=>await frappe.db.get_list('Customer',{filters:{customer_name:customer},fields:['name','customer_primary_contact','customer_primary_address','default_currency'],limit:10}),data.prefix+' Client');
   assert.equal(clients.length,1);assert(clients[0].customer_primary_contact);assert(clients[0].customer_primary_address);assert.equal(clients[0].default_currency,'USD');
   await dialog.getByRole('button',{name:'Import another file',exact:true}).click();await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();

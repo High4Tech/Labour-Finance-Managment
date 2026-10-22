@@ -189,11 +189,49 @@ class SetupImportTests(unittest.TestCase):
 
     def test_event_invalid_details_are_caught_before_creating_a_client(self):
         for changes in [dict(workers_per_day='501'),dict(start_date='10/22/2026'),
-                dict(billing_model='Fixed',fixed_amount='1000',client_rate='150'),
                 dict(client_phone='+966501234567')]:
             row=self.event_row(**changes);preview=self.preview('events',[row])
             self.assertFalse(preview['valid'],preview)
             self.assertFalse(frappe.db.exists('Customer',{'customer_name':row['customer']}))
+
+    def test_spreadsheet_event_labels_and_unused_fixed_rates_save_correctly(self):
+        rows=[self.event_row(external_id=f'event-label-{i}',customer_type=client_type,billing_model=model,
+            fixed_amount='5000' if model.strip().casefold() in ('fixed','fixed-price') else '',client_rate='150')
+            for i,(client_type,model) in enumerate([('company','fixed'),('company','per_worker'),
+                ('individual','fixed'),(' Business ','PER-WORKER'),('PERSON','fixed-price')])]
+        preview=self.preview('events',rows);self.assertTrue(preview['valid'],preview)
+        self.assertTrue(any('client_rate is unused' in note for note in preview['rows'][0]['notes']))
+        saved=imports.apply(preview['token'])
+        for index,result in enumerate(saved['rows']):
+            plan=frappe.get_doc('PP Event Plan',result['document']);terms=frappe.get_doc('PP Contract Terms',plan.contract_terms)
+            self.assertEqual(terms.billing_model,'Daily' if index in (1,3) else 'Fixed')
+            self.assertEqual(float(plan.client_rate),150 if index in (1,3) else 0)
+            self.assertEqual(float(plan.wage_rate),100)
+            if terms.billing_model=='Fixed':self.assertEqual(float(terms.fixed_amount),5000)
+            client=frappe.db.get_value('Project',plan.project,'customer')
+            self.assertEqual(frappe.db.get_value('Customer',client,'customer_type'),'Individual' if index in (2,4) else 'Company')
+        self.assertEqual(self.apply('events',rows)['skipped'],5)
+
+    def test_client_types_are_normalized_and_invalid_labels_show_the_value(self):
+        row=dict(external_id='client-label',customer='',customer_name='Label client '+uuid.uuid4().hex[:8],customer_type='individual')
+        result=self.apply('clients',[row]);name=result['rows'][0]['document']
+        self.assertEqual(frappe.db.get_value('Customer',name,'customer_type'),'Individual')
+        row.update(customer=name,customer_type='')
+        self.apply('clients',[row]);self.assertEqual(frappe.db.get_value('Customer',name,'customer_type'),'Individual')
+        bad=self.preview('events',[self.event_row(customer_type='wedding')]);self.assertFalse(bad['valid'])
+        self.assertIn('wedding',bad['rows'][0]['error']);self.assertIn('Company or Individual',bad['rows'][0]['error'])
+        bad=self.preview('events',[self.event_row(billing_model='per guest')]);self.assertFalse(bad['valid'])
+        self.assertIn('per guest',bad['rows'][0]['error'])
+
+    def test_other_template_choice_labels_ignore_capitalization(self):
+        worker=self.employee();worker.update(gender='male',status='active')
+        result=self.apply('employees',[worker]);name=result['rows'][0]['document']
+        self.assertEqual(frappe.db.get_value('Employee',name,'gender'),'Male')
+        self.assertEqual(frappe.db.get_value('Employee',name,'status'),'Active')
+        row=dict(external_id='vehicle-label',license_plate='LABEL-'+uuid.uuid4().hex[:8],make='Toyota',model='Cargo van',
+            crew_seats='0',cargo_capacity='10',cargo_uom='M3',fuel_type='diesel',status='ACTIVE')
+        result=self.apply('vehicles',[row]);doc=frappe.get_doc('Vehicle',result['rows'][0]['document'])
+        self.assertEqual(doc.fuel_type,'Diesel');self.assertEqual(doc.pp_cargo_uom,'m³')
 
     def test_reference_download_includes_approved_sources_and_account_names(self):
         self.apply('work',[self.work()])
