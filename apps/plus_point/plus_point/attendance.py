@@ -152,7 +152,62 @@ def detail(name):
             locked=bool(doc.docstatus or previous and previous.status=='Approved')))
     return dict(name=doc.name,project=event.name,event=plan.event_name if plan else event.project_name,
         plan=plan.name if plan else None,site=location.site_name,date=str(doc.work_date),required=required,
-        currency=frappe.db.get_value('Company',event.company,'default_currency'),approved=doc.docstatus==1,rows=rows)
+        currency=frappe.db.get_value('Company',event.company,'default_currency'),approved=doc.docstatus==1,can_correct=doc.docstatus==1 and 'System Manager' in frappe.get_roles(),rows=rows)
+
+
+@frappe.whitelist(methods=['POST'])
+def correct_marks(name,marks,reason):
+    """Explicit owner correction with native versions, frozen rates and invoice adjustments."""
+    require_customer()
+    if 'System Manager' not in frappe.get_roles():frappe.throw('Only the company administrator can correct approved attendance.',frappe.PermissionError)
+    reason=str(reason or '').strip()
+    if not reason or len(reason)>1000:frappe.throw('Enter a correction reason of up to 1,000 characters.')
+    preview=linked('PP Daily Register',name)
+    from plus_point.budget import lock_project
+    lock_project(preview.project)
+    doc=frappe.get_doc('PP Daily Register',name,for_update=True);doc.check_permission('write')
+    if doc.docstatus!=1:frappe.throw('Use Save draft or Approve for an unposted register.')
+    data=frappe.parse_json(marks);entries={r.name:r for r in doc.entries}
+    if not isinstance(data,list) or len(data)!=len(entries) or len({r.get('id') for r in data})!=len(entries):frappe.throw('Reload the complete attendance roster.')
+    if any(r.get('id') not in entries or r.get('status') not in ('Present','Absent','Half day') for r in data):frappe.throw('Choose Present, Absent or Half day for every worker.')
+    frappe.db.savepoint('pp_correct_attendance');previous_flag=frappe.flags.get('pp_attendance_correction');adjustments=[];changes=[]
+    try:
+        for mark in sorted(data,key=lambda r:entries[r['id']].employee):
+            line=entries[mark['id']]
+            if line.attendance_status==mark['status']:continue
+            work=linked('PP Work Entry',line.work_entry);work.check_permission('write')
+            if work.assignment!=line.assignment or work.project!=doc.project:frappe.throw('The attendance source changed. Reload before correcting.')
+            old_amount=money(work.billable_amount);old_state=line.attendance_status
+            source=linked('Sales Invoice',work.sales_invoice) if work.sales_invoice else None
+            if source and source.docstatus==1 and not work.get('pp_invoice_amount_snapshot'):work.pp_invoice_amount_snapshot=old_amount
+            frappe.flags.pp_attendance_correction=work.name
+            work.units=STATES[mark['status']];work.save()
+            if source and source.docstatus==0:
+                for item in source.items:
+                    if item.pp_source_type=='PP Work Entry' and item.pp_source_name==work.name:
+                        item.rate=float(money(Decimal(str(work.billable_amount))/Decimal(str(source.conversion_rate))))
+                        item.price_list_rate=item.rate;item.discount_percentage=0;item.discount_amount=0;item.margin_rate_or_amount=0
+                source.save()
+            elif source and source.docstatus==1:
+                delta=money(work.billable_amount)-old_amount
+                if delta:
+                    from plus_point.operations import service_item
+                    rate=Decimal(str(source.conversion_rate))
+                    adjustment=frappe.get_doc(dict(doctype='Sales Invoice',company=source.company,customer=source.customer,project=source.project,
+                        currency=source.currency,conversion_rate=source.conversion_rate,debit_to=source.debit_to,is_return=int(delta<0),
+                        pp_attendance_correction=work.name,remarks=f'Attendance correction to {source.name}: {reason}',
+                        items=[dict(item_code=service_item(),project=work.project,description=f'Attendance correction — {doc.work_date} — {frappe.db.get_value("Employee",line.employee,"employee_name")}',qty=-1 if delta<0 else 1,rate=float(money(abs(delta)/rate)))])).insert()
+                    adjustments.append(adjustment.name)
+            line.attendance_status=mark['status'];line.units=STATES[mark['status']]
+            change=f'{frappe.db.get_value("Employee",line.employee,"employee_name")}: {old_state} → {mark["status"]}'
+            changes.append(change);work.add_comment('Comment',frappe.utils.escape_html(f'Attendance correction: {change}. Reason: {reason}'))
+        if changes:
+            doc.flags.ignore_validate_update_after_submit=True;doc.save()
+            doc.add_comment('Comment',frappe.utils.escape_html('Attendance corrected. '+ '; '.join(changes)+'. Reason: '+reason))
+        return dict(name=doc.name,changed=len(changes),invoice_adjustments=adjustments)
+    except Exception:
+        frappe.db.rollback(save_point='pp_correct_attendance');raise
+    finally:frappe.flags.pp_attendance_correction=previous_flag
 
 
 @frappe.whitelist(methods=['POST'])

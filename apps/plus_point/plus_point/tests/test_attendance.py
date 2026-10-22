@@ -125,3 +125,45 @@ class AttendanceTests(unittest.TestCase):
         target=next(r for r in frappe.get_doc('PP Daily Register',name).entries if r.employee==self.people[2].name)
         frappe.delete_doc('PP Assignment',target.assignment)
         self.assertEqual(len(attendance.detail(name)['rows']),2)
+
+    def approved(self):
+        name=self.prepare();attendance.save_marks(name,self.marks(name),approve=1);return name
+
+    def test_administrator_correction_recalculates_wages_and_keeps_audit(self):
+        name=self.approved();marks=self.marks(name,{p.name:'Absent' for p in self.people})
+        result=attendance.correct_marks(name,marks,'Corrected after supervisor review')
+        self.assertEqual(result['changed'],2);self.assertEqual(project_summary(self.f.project.name)['labour_cost'],'0.00')
+        self.assertTrue(frappe.db.exists('Comment',{'reference_doctype':'PP Daily Register','reference_name':name,'comment_type':'Comment'}))
+        work=frappe.get_doc('PP Work Entry',{'assignment':self.f.assignment.name});work.units=1
+        with self.assertRaises(frappe.ValidationError):work.save()
+        self.assertEqual(frappe.db.get_value('PP Daily Register',name,'docstatus'),1)
+
+    def test_correction_requires_reason_complete_roster_and_administrator(self):
+        name=self.approved();marks=self.marks(name)
+        with self.assertRaises(frappe.ValidationError):attendance.correct_marks(name,marks,'')
+        with self.assertRaises(frappe.ValidationError):attendance.correct_marks(name,marks[:-1],'Missing roster')
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):attendance.correct_marks(name,marks,'Invalid caller')
+
+    def test_correction_budget_failure_rolls_back_marks_and_wages(self):
+        name=self.approved();project=frappe.get_doc('Project',self.f.project.name);project.update(dict(estimated_costing=2500,pp_enforce_spending_budget=1));project.save()
+        with self.assertRaises(frappe.ValidationError):attendance.correct_marks(name,self.marks(name,{p.name:'Present' for p in self.people}),'Over budget review')
+        self.assertEqual(project_summary(self.f.project.name)['labour_cost'],'2500.00')
+        self.assertEqual(next(r for r in attendance.detail(name)['rows'] if r['employee']==self.people[2].name)['status'],'Absent')
+
+    def test_draft_daily_invoice_tracks_corrected_attendance(self):
+        from plus_point.billing import create_invoice
+        name=self.approved();invoice=create_invoice(self.f.terms.name,self.f.item.name)['name']
+        attendance.correct_marks(name,self.marks(name,{p.name:'Absent' for p in self.people}),'No attendance confirmed')
+        self.assertEqual(frappe.db.get_value('Sales Invoice',invoice,'grand_total'),0)
+
+    def test_posted_daily_invoice_is_preserved_with_reviewable_adjustments(self):
+        from plus_point.billing import create_invoice,validate_invoice
+        name=self.approved();invoice=frappe.get_doc('Sales Invoice',create_invoice(self.f.terms.name,self.f.item.name)['name']);invoice.submit()
+        result=attendance.correct_marks(name,self.marks(name,{p.name:'Absent' for p in self.people}),'Client attendance reconciliation')
+        self.assertEqual(len(result['invoice_adjustments']),2);self.assertEqual(frappe.db.get_value('Sales Invoice',invoice.name,'grand_total'),3750)
+        for adjustment in result['invoice_adjustments']:
+            doc=frappe.get_doc('Sales Invoice',adjustment);self.assertEqual(doc.docstatus,0);self.assertTrue(doc.is_return);self.assertLess(doc.grand_total,0)
+        validate_invoice(frappe.get_doc('Sales Invoice',invoice.name))
+        attendance.correct_marks(name,self.marks(name),'Restored after signed register review')
+        self.assertEqual(project_summary(self.f.project.name)['labour_cost'],'2500.00')

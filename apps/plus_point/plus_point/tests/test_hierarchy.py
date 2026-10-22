@@ -89,6 +89,7 @@ class HierarchyTests(unittest.TestCase):
         self.assertEqual(frappe.db.count('PP Assignment',{'project':doc.project}),0)
     def test_manual_selection_refuses_wrong_category_and_labels_extra(self):
         name=self.event();doc=frappe.get_doc('PP Event Plan',name);row=doc.staffing[0]
+        frappe.db.set_value('Employee',self.f.employee.name,'designation','Electrician')
         with self.assertRaises(frappe.ValidationError):op.assign_crew(name,row.name,[self.f.employee.name])
         other=insert('Employee',first_name='Bilal Event Manager',gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active',designation=self.role)
         op.assign_crew(name,row.name,[self.worker.name,other.name])
@@ -184,3 +185,41 @@ class HierarchyTests(unittest.TestCase):
     def test_guest_cannot_use_hierarchy(self):
         frappe.set_user('Guest')
         with self.assertRaises(frappe.PermissionError):op.catalogue()
+
+    def test_new_worker_and_venue_are_created_in_the_event_workspace(self):
+        from plus_point import experience
+        name=self.event();doc=frappe.get_doc('PP Event Plan',name)
+        worker=experience.add_worker(name,dict(first_name='Sana',last_name='Malik',gender='Female',date_of_birth='1991-01-01',date_of_joining=today(),designation=self.role))
+        self.assertEqual(frappe.db.get_value('Employee',worker['name'],'company'),self.f.company.name)
+        self.assertFalse(frappe.db.get_value('Employee',worker['name'],'user_id'))
+        venue=experience.save_venue(name,dict(site_name='Second stage',country='Pakistan',city='Karachi',address_line1='12 Stage Road',designation=self.role,workers_required=1,wage_rate=900,client_rate=1400))
+        self.assertEqual(frappe.db.get_value('PP Site',venue['site'],'project'),doc.project)
+        self.assertEqual(len(frappe.get_doc('PP Event Plan',name).staffing),2)
+
+    def test_blank_worker_category_is_visible_and_can_be_assigned_atomically(self):
+        name=self.event();doc=frappe.get_doc('PP Event Plan',name)
+        employee=insert('Employee',first_name='Uncategorised Crew',gender='Female',date_of_birth='1991-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active')
+        person=next(r for r in op.available_crew(name,doc.staffing[0].name)['rows'] if r['name']==employee.name)
+        self.assertTrue(person['eligible'])
+        with self.assertRaises(frappe.ValidationError):op.assign_crew(name,doc.staffing[0].name,[employee.name,'missing-worker'])
+        self.assertFalse(frappe.db.get_value('Employee',employee.name,'designation'))
+        op.assign_crew(name,doc.staffing[0].name,[employee.name])
+        self.assertEqual(frappe.db.get_value('Employee',employee.name,'designation'),self.role)
+
+    def test_all_document_date_ranges_are_rejected_before_save(self):
+        from plus_point.input_rules import validate_document
+        project=frappe.get_doc('Project',self.f.project.name);project.expected_start_date=today();project.expected_end_date=add_days(today(),-1)
+        with self.assertRaises(frappe.ValidationError):validate_document(project)
+        doc=frappe.get_doc('PP Event Plan',self.event());doc.staffing[0].end_date=add_days(today(),-1)
+        with self.assertRaises(frappe.ValidationError):validate_document(doc)
+
+    def test_branded_invoice_preview_pdf_and_branding_are_company_scoped(self):
+        from plus_point import experience
+        a=self.agreement(fixed=True);saved=op.save_milestone(a['name'],dict(milestone_title='Accepted stage',due_date=today(),amount=1000,status='Approved'));name=saved['sales_invoice']
+        experience.save_branding(dict(email='events@example.invalid',phone='+923001234567',address='12 Festival Road',tax_id='EVENT-123'))
+        html=experience.invoice_preview(name)['html'];self.assertIn(self.f.company.name,html);self.assertIn('12 Festival Road',html);self.assertIn('Accepted stage',html)
+        import base64
+        self.assertTrue(base64.b64decode(experience.pdf_data(name)['content']).startswith(b'%PDF'))
+        frappe.set_user('Guest')
+        for call in (lambda:experience.invoice_preview(name),lambda:experience.pdf_data(name),lambda:experience.save_branding(dict(email='other@example.invalid'))):
+            with self.assertRaises(frappe.PermissionError):call()

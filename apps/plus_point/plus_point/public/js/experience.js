@@ -1,0 +1,54 @@
+/* Shared product controls. Native lists retain filters, selection, sorting and views. */
+(()=>{
+ frappe.provide('plus_point');const esc=v=>frappe.utils.escape_html(String(v??''));let queued=false,bar,lastSummary=0,summaryBusy=false,started=false;
+ plus_point.reveal_control=control=>{const node=control?.$wrapper?.get(0),panel=node?.closest('[role=tabpanel]');if(panel?.hidden)document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`)?.click();control?.set_focus?.();};
+ const ranges=[['start_date','end_date'],['effective_start','effective_end'],['from_date','to_date'],['expected_start_date','expected_end_date'],['posting_date','due_date'],['date_of_birth','date_of_joining']];
+ plus_point.validate_dates=layout=>{
+  let valid=true;const read=k=>layout.get_value?layout.get_value(k):layout.doc?.[k];
+  for(const [a,b] of ranges){const field=layout.fields_dict?.[b],first=read(a),last=read(b);if(!field)continue;const bad=first&&last&&String(last)<String(first);let hint=field.$wrapper.find('.pp-date-error');if(!hint.length)hint=$('<span class="pp-date-error" role="alert"></span>').appendTo(field.$wrapper);hint.text(bad?__('Must be on or after {0}.',[first]):'');field.$input?.attr('aria-invalid',String(!!bad));field.$input?.get(0)?.setCustomValidity(bad?hint.text():'');if(bad){if(valid)plus_point.reveal_control(field);valid=false;}}
+  for(const field of Object.values(layout.fields_dict||{}))if(field.df.fieldtype==='Table')for(const row of field.get_value()||[])for(const [a,b] of ranges)if(row[a]&&row[b]&&row[b]<row[a]){frappe.show_alert({message:__('Row {0}: end date must be on or after start date.',[row.idx]),indicator:'red'});valid=false;}
+  return valid;
+ };
+ plus_point.bind_date_ranges=layout=>{for(const pair of ranges)for(const key of pair){const field=layout.fields_dict?.[key];if(!field||field.__pp_date_bound)continue;field.__pp_date_bound=true;const original=field.df.onchange;field.df.onchange=async(...args)=>{await original?.(...args);plus_point.validate_dates(layout);};}};
+ const enhance=plus_point.enhance_selectors;plus_point.enhance_selectors=layout=>{enhance?.(layout);plus_point.bind_date_ranges(layout);};
+ const validate=plus_point.validate_inputs;plus_point.validate_inputs=layout=>{const a=validate?.(layout)!==false,b=plus_point.validate_dates(layout);return a&&b;};
+ function guidance(){
+  document.querySelectorAll('.help-box:not([data-pp-info]),.pp-op-heading>div>p:not([data-pp-info]),.pp-op-section>p:not([data-pp-info]),.pp-event-plan-panel>p:not([data-pp-info])').forEach(note=>{
+   if(note.closest('.pp-onboarding-shell,.pp-onboarding-pane')||note.matches('.pp-onboarding-errors')||!note.textContent.trim())return;
+   const control=note.closest('.frappe-control'),label=control?.querySelector('.control-label')||note.closest('.pp-op-heading')?.querySelector('h2'),target=label||note;
+   const info=document.createElement('span');info.className='pp-info';const button=document.createElement('button');button.type='button';button.className='pp-info-trigger';button.textContent='i';button.setAttribute('aria-label',__('More information'));button.setAttribute('aria-expanded','false');const body=document.createElement('span');body.className='pp-info-body';body.role='note';body.hidden=true;body.textContent=note.textContent.trim();info.append(button,body);button.onclick=e=>{e.stopPropagation();body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));};info.onkeydown=e=>{if(e.key==='Escape'){body.hidden=true;button.setAttribute('aria-expanded','false');button.focus();}};
+   note.dataset.ppInfo='true';note.hidden=true;if(label?.tagName==='H2'){target.after(info);target.style.display='inline';}else if(label)target.append(info);else note.after(info);
+  });
+ }
+ document.addEventListener('click',e=>document.querySelectorAll('.pp-info').forEach(info=>{if(!info.contains(e.target)){info.querySelector('.pp-info-body').hidden=true;info.querySelector('button').setAttribute('aria-expanded','false');}}));
+ function lists(){
+  if(frappe.boot.plus_point?.is_platform)return;const list=window.cur_list;if(frappe.get_route()[0]!=='List'||!list)return;
+  const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
+  list.settings.get_form_link=doc=>mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
+  if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)&&!list.fields.includes('project'))list.fields.push('project');
+  list.make_new_doc=()=>frappe.set_route(mode,{record:'new'});
+  plus_point.form_rpc('operations.catalogue').then(data=>{const projects=[...new Set(data.agreements.map(a=>a.project))];list.filter_area.add([[list.doctype,'project','in',projects.join(',')||'__none__']]);list.render_list?.();}).catch(()=>{});
+ }
+ async function totals(force=false){
+  if(!bar||!frappe.boot.plus_point.company_identity?.name||summaryBusy||!force&&Date.now()-lastSummary<30000||frappe.boot.plus_point.is_platform)return;
+  summaryBusy=true;try{const data=await plus_point.form_rpc('dashboard.overview');lastSummary=Date.now();bar.querySelector('.pp-top-totals').innerHTML=[['Revenue',data.earned_revenue],['Profit',data.contribution],['Outstanding',data.client_balance]].map(([label,n])=>`<span><small>${esc(__(label))}</small><strong>${esc(new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(n)||0))} ${esc(data.currency)}</strong></span>`).join('');}catch{}finally{summaryBusy=false;}
+ }
+ function shell(){
+  if(!frappe.boot.plus_point)return;const body=document.getElementById('body');if(!body)return;
+  if(!bar?.isConnected){bar=document.createElement('div');bar.className='pp-global-bar';bar.innerHTML=`<div class="pp-top-totals" aria-label="${esc(__('Company financial totals'))}"></div><div class="pp-top-controls"><span class="pp-top-appearance"></span><button type="button" class="btn btn-default pp-global-help">${esc(__('Help and support'))}</button><button type="button" class="btn btn-default pp-language" aria-disabled="true">${esc(__('Language'))}</button></div>`;body.prepend(bar);bar.querySelector('.pp-global-help').onclick=()=>{const help=[...document.querySelectorAll('.pp-top-help')].find(b=>b.closest('.page-container')?.style.display!=='none');if(help)help.click();else frappe.msgprint({title:__('Help and support'),message:__('Use the information icons beside fields for help. Contact your software provider for account or billing support.')});};bar.querySelector('.pp-language').onclick=()=>frappe.show_alert({message:__('Language selection is coming soon.'),indicator:'blue'});}
+  const appearance=document.querySelector('.pp-theme-toggle');if(appearance&&!bar.contains(appearance))bar.querySelector('.pp-top-appearance').append(appearance);
+  const overview=/\/desk\/(plus-point|high4tech)\/?$/.test(location.pathname);bar.querySelector('.pp-top-totals').hidden=overview||frappe.boot.plus_point.is_platform;
+  if(!overview)totals();
+  const context=frappe.boot.plus_point;
+  document.querySelectorAll('.body-sidebar a[href*="pp-onboarding"]').forEach(a=>{if(context.onboarding_complete)a.closest('.sidebar-item-container,.sidebar-item')?.remove();});
+  if(context.onboarding_required&&frappe.get_route()[0]!=='pp-onboarding')frappe.set_route('pp-onboarding');
+  document.body.classList.toggle('pp-onboarding-required',!!context.onboarding_required);
+ }
+ function update(){queued=false;guidance();lists();shell();}
+ function schedule(){if(queued)return;queued=true;requestAnimationFrame(update);}
+ $(document).on('form-refresh.pp-experience',(_e,frm)=>{plus_point.bind_date_ranges(frm);schedule();});
+ document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()[0]!=='List'||frappe.get_route()[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);
+ document.addEventListener('pp:data-changed',()=>totals(true));document.addEventListener('pp:onboarding',schedule);
+ const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});frappe.router.on('change',schedule);schedule();};
+ $(document).on('app_ready.pp-experience',start);if(frappe.app?.sidebar)start();
+})();

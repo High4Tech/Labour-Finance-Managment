@@ -11,6 +11,10 @@ def boot_context(bootinfo):
         'home': '/desk/high4tech' if platform else '/desk/plus-point',
         'navigation': navigation,
     }
+    if not platform:
+        from plus_point.event_setup import current
+        state=current()
+        bootinfo.plus_point.update(onboarding_required=bool(state.get('required') and not state.get('skipped') and state.get('step')!='done'),onboarding_complete=bool(state.get('skipped') or state.get('step')=='done'))
     from plus_point.event_setup import companies as workspace_companies
     companies=frappe.get_list('Company',fields=['name','company_name'],order_by='name',limit_page_length=0) if platform else workspace_companies()
     default=frappe.defaults.get_user_default('Company')

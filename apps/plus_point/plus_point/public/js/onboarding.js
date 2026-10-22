@@ -74,7 +74,8 @@
         'Warehouse':['Warehouses','Add warehouse'],'Stock Reconciliation':['Warehouse balances','Update warehouse balances'],
         'PP Vehicle Booking':['Vehicle assignments','Assign vehicle'],'PP Equipment Booking':['Event equipment','Reserve equipment'],
         'PP Assignment': ['Worker assignments', 'Assign workers'],
-        'PP Contract Terms': ['Client billing', 'Add billing terms'],
+        'PP Contract Terms': ['Client agreements', 'New agreement'],
+        'Sales Invoice': ['Billing and finances', 'Open agreement billing'],
         'PP Daily Register': ['Attendance registers', 'Create register'],
         'PP Work Entry': ['Wages earned', 'Add work entry'],
         'PP Milestone': ['Fixed contract milestones', 'Add milestone'],
@@ -341,12 +342,13 @@
             const identity=frappe.boot.plus_point.company_identity;
             const title=plus_point.dashboard_company||identity?.title||__('Your event company');
             const footer=document.querySelector('.body-sidebar .dropdown-navbar-user');
-            if(footer&&!footer.dataset.ppCompanyMenu){
-                const clone=footer.cloneNode(true);clone.dataset.ppCompanyMenu='1';footer.replaceWith(clone);
+            const setupMenu=String(!frappe.boot.plus_point.onboarding_complete);
+            if(footer&&footer.dataset.ppCompanyMenu!==setupMenu){
+                const clone=footer.cloneNode(true);clone.dataset.ppCompanyMenu=setupMenu;footer.replaceWith(clone);
                 clone.querySelector('.sidebar-user-button')?.setAttribute('aria-label',__('Company menu'));
                 new frappe.ui.Dropdown({trigger:$(clone),side:'top',align:'start',options:[{group:'',options:[
                     {name:'company',label:__('Your company'),onclick:()=>{const name=plus_point.dashboard_company||identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();}},
-                    {name:'setup',label:__('Guided company setup'),onclick:()=>plus_point.open_setup()},
+                    ...(!frappe.boot.plus_point.onboarding_complete?[{name:'setup',label:__('Guided company setup'),onclick:()=>plus_point.open_setup()}]:[]),
                     {name:'logout',label:__('Sign out'),onclick:()=>frappe.app.logout()}]}]});
             }
             const names=document.querySelectorAll('.sidebar-user-button .avatar-name-email span');
@@ -386,6 +388,8 @@
             }
             const primary=(key,label,handler)=>{if(page?.btn_primary?.attr('data-pp-event-action')!==key){page.set_primary_action({label:__(label)},handler,'plus');page.btn_primary.attr('data-pp-event-action',key);}};
             if(!platform()&&['Project','PP Event Plan'].includes(route[1]))primary('plan','Plan an event',()=>plus_point.open_event_wizard());
+            if(!platform()&&route[1]==='PP Contract Terms')primary('agreement','New agreement',()=>frappe.set_route('pp-agreements',{record:'new'}));
+            if(!platform()&&route[1]==='Sales Invoice')primary('billing','Open agreement billing',()=>frappe.set_route('pp-client-billing',{record:'new'}));
             if(!platform()&&!serviceItems&&['Customer','Vehicle','Item','Warehouse'].includes(route[1]))primary('resource',action,()=>plus_point.open_resource({Customer:'clients',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses'}[route[1]],()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Assignment')primary('crew','Assign workers',()=>plus_point.assign_workers({},()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Daily Register'){

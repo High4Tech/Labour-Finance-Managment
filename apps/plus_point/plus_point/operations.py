@@ -174,7 +174,7 @@ def save_agreement(values,name=None):
 def agreement(name):
     doc=terms_doc(name);project=linked('Project',doc.project);contract=linked('Contract',doc.contract)
     from plus_point.clients import details
-    result=doc.as_dict();result.update(client_company=project.company,scope=contract.contract_terms,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
+    result=doc.as_dict();result.update(has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=contract.contract_terms,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
         files=frappe.get_list('File',filters={'attached_to_doctype':'Contract','attached_to_name':contract.name},fields=['name','file_name','file_url'],limit_page_length=0),
         venues=frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name','country','city','address_line1'],order_by='site_name',limit_page_length=0),
         milestones=frappe.get_list('PP Milestone',filters={'contract_terms':name},fields=['name','milestone_title','due_date','amount','status','sales_invoice'],order_by='due_date,name',limit_page_length=0))
@@ -289,8 +289,10 @@ def available_crew(name,requirement):
         fields=['name','employee','end_date'],limit_page_length=0)
         if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
     roles={r.name:r.designation for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','designation'],limit_page_length=0)}
-    result['rows']=[dict(r,designation=roles.get(r['name']) or '',assigned=r['name'] in assigned,
-        assignment=assigned.get(r['name'])) for r in result['rows'] if not row.designation or roles.get(r['name'])==row.designation]
+    for r in result['rows']:
+        role=roles.get(r['name']) or '';eligible=not row.designation or not role or role==row.designation
+        r.update(designation=role,assigned=r['name'] in assigned,assignment=assigned.get(r['name']),eligible=eligible)
+        if not eligible and not r['assigned']:r.update(available=False,reason=f'Category: {role}. This position needs {row.designation}.')
     return result
 
 
@@ -302,18 +304,25 @@ def assign_crew(name,requirement,employees):
     row=next((r for r in doc.staffing if r.name==requirement),None)
     if not row:frappe.throw('Reload the site requirements.')
     names=selection(frappe.parse_json(employees))
-    for employee in names:
-        worker=linked('Employee',employee,doc.company)
-        if row.designation and worker.designation!=row.designation:frappe.throw('Select workers in the required category.')
-    from plus_point.budget import lock_project
-    lock_project(doc.project)
-    existing={r.employee for r in frappe.get_list('PP Assignment',filters={'project':doc.project,'site':row.site,
-        'start_date':['<=',row.end_date]},fields=['employee','end_date'],limit_page_length=0)
-        if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
-    names=[n for n in names if n not in existing]
-    result=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,row.wage_rate or doc.wage_rate,row.client_rate or doc.client_rate,names) if names else dict(created=0)
-    frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not r['missing'] for r in coverage(doc))))
-    return result
+    frappe.db.savepoint('pp_manual_crew')
+    try:
+        for employee in names:
+            worker=linked('Employee',employee,doc.company)
+            if row.designation and worker.designation and worker.designation!=row.designation:frappe.throw('Select workers in the required category.')
+            if row.designation and not worker.designation:
+                worker.designation=row.designation;worker.save()
+        from plus_point.budget import lock_project
+        lock_project(doc.project)
+        existing={r.employee for r in frappe.get_list('PP Assignment',filters={'project':doc.project,'site':row.site,
+            'start_date':['<=',row.end_date]},fields=['employee','end_date'],limit_page_length=0)
+            if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
+        names=[n for n in names if n not in existing]
+        result=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,row.wage_rate or doc.wage_rate,row.client_rate or doc.client_rate,names) if names else dict(created=0)
+        for assignment in result.get('assignments',[]):frappe.db.set_value('PP Assignment',assignment,'pp_event_plan',name)
+        frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not r['missing'] for r in coverage(doc))))
+        return result
+    except Exception:
+        frappe.db.rollback(save_point='pp_manual_crew');raise
 
 
 @frappe.whitelist(methods=['POST'])
@@ -457,7 +466,7 @@ def update_invoice(name,values):
 @frappe.whitelist()
 def invoice(name):
     business=company();doc=linked('Sales Invoice',name);linked('Project',doc.project,business.name)
-    return dict(name=doc.name,docstatus=doc.docstatus,due_date=doc.due_date,remarks=doc.remarks,currency=doc.currency,exchange_rate=doc.conversion_rate,
+    return dict(name=doc.name,project=doc.project,docstatus=doc.docstatus,due_date=doc.due_date,remarks=doc.remarks,currency=doc.currency,exchange_rate=doc.conversion_rate,
         items=[dict(name=r.name,description=r.description,rate=r.rate,qty=r.qty,amount=r.amount,locked=bool(r.get('pp_source_name'))) for r in doc.items])
 
 
@@ -477,7 +486,7 @@ def email_options(name):
 def invoice_pdf_content(doc):
     doc.check_permission('print')
     from frappe.utils.pdf import get_pdf
-    html=frappe.get_print('Sales Invoice',doc.name,print_format='Standard',doc=doc)
+    html=frappe.get_print('Sales Invoice',doc.name,print_format='PLUS POINT Branded Invoice',doc=doc)
     options={}
     # Chromium resolves *.localhost on Windows; wkhtmltopdf inside Linux does not.
     # Rebase this local render only, retaining the tenant Host for public assets.

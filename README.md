@@ -48,7 +48,7 @@ For event setup and planning, start with [Event operations](EVENT_OPERATIONS.md)
 6. From terms, select **Prepare client invoice** with a native non-stock service Item. Review and submit the ERPNext Sales Invoice. Use native Payment Entries for receipts.
 7. Link submitted employee Payment Entries with `PP Wage Settlement` to distinguish paid wages from earnings.
 
-Approved work and historical allocation identities/rates stay locked. Close the old assignment without excluding any saved work, then use a new dated assignment for changed rates or deployment. Same-site dates cannot overlap. Audited attendance correction workflows remain a production release requirement.
+Approved work and historical allocation identities/rates stay locked. Close the old assignment without excluding any saved work, then use a new dated assignment for changed rates or deployment. Same-site dates cannot overlap. Company administrators can correct an approved attendance register with a required reason. Corrections keep native versions/comments, update wage totals and draft work invoices, and create reviewable debit/credit drafts for already issued work invoices. Issued invoice amounts and historical allocation rates stay unchanged.
 
 A separate project **Spending budget** can warn at 80% and stop new approved wages or posted project expenses above 100%. Enable **Stop spending above budget** on the Project to activate it. Existing projects are not assigned guessed limits. Dashboards/forms provide warning, blocked, success, error/retry and empty/setup states with next actions. See [spending guidance](USER_GUIDE.md#spending-limits-and-next-actions).
 
@@ -73,3 +73,14 @@ python -m unittest discover -s apps/plus_point/plus_point/tests -p test_register
 The live script tests actual login, authenticated REST CRUD, anonymous rejection, frontend HTML and 60 authenticated concurrent reads. It rotates the local Administrator API token, keeps it only in memory and deletes its temporary ToDo. Database regression fixtures roll back. Synthetic HTTP harness tests are not ERPNext evidence.
 
 After initial setup, Docker starts the app server and platform worker with their container and restarts them after a process failure. The app service reports healthy only when its HTTP endpoint answers. Closing the preview tab does not stop the app; reopen the link above. Stop deliberately with `docker compose stop`; resume with `docker compose up -d --wait` or the launcher. Containers deliberately stopped remain stopped when Docker restarts. Do not delete volumes without backups. Source is in `apps/plus_point`; dependencies and site/database data live in Docker volumes. Original foundation documents are preserved in `docs/archive`. Older Bash/disposable-demo scripts are historical helpers; `compose.yaml` and `scripts/start-local.ps1` are the supported setup.
+
+
+### Event screens and invoice branding
+
+Client agreements, Event plans and Billing and finances use native Desk lists (filters, sorting, checkboxes and views). Open a record to use its top tabs. Event venue cards combine agreed headcount, assigned names, category wages and coverage. Choose workers shows the current roster and supports creating a worker; Add venue and Add crew category keep event editing in place. Timeline views support Week, Month and Year.
+
+Billing → Invoice branding stores the subscribing company's logo, address, contact and tax details. Invoice preview uses the **PLUS POINT Branded Invoice** print format. Download PDF fetches a JSON response and creates a browser Blob; Print / Save as PDF remains available independently. Outgoing email still requires a configured native Email Account and an explicit Send action.
+
+The shared toolbar contains Appearance, Help and support, a Language placeholder, and company financial totals outside the overview. Required first setup gates navigation; finishing or intentionally skipping setup removes its sidebar entry.
+
+Run `node scripts/browser-experience.cjs` with Playwright and Google Chrome installed for the complete isolated QA flow. It creates an exact temporary company on `qa.localhost`, exercises native lists, tab navigation, date errors, workers, venues, PDF download/print, attendance corrections and mobile dark mode, then restores the previous workspace. Database suites `run_hierarchy`, `run_attendance`, `run_operations`, `run_events`, and `run_currency_billing` roll back business fixtures.

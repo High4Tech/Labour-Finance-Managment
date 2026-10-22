@@ -39,8 +39,13 @@ class PPWorkEntry(Document):
         # A query-only duplicate check races under concurrent HTTP submissions.
         frappe.db.get_value("Employee", self.employee, "name", for_update=True)
         old = self.get_doc_before_save()
-        if old and old.status == "Approved":
+        correction=frappe.flags.get('pp_attendance_correction')==self.name and 'System Manager' in frappe.get_roles()
+        if self.get('pp_invoice_amount_snapshot') and (not old or self.pp_invoice_amount_snapshot!=old.get('pp_invoice_amount_snapshot')) and not correction:
+            frappe.throw('The invoiced amount snapshot is managed by attendance corrections.')
+        if old and old.status == "Approved" and not correction:
             frappe.throw("Approved work entries are immutable; post an audited correction instead")
+        if correction and (not old or getdate(self.work_date)!=getdate(old.work_date) or self.status!='Approved'):
+            frappe.throw('Corrections preserve the work date and approved status.')
         if self.status not in {"Draft", "Approved"}:
             frappe.throw("Invalid work entry status")
         if self.status == "Approved" and "System Manager" not in frappe.get_roles():

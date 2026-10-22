@@ -39,6 +39,8 @@ def local_defaults():
 def after_migrate():
     refresh_record_permissions()
     ensure_event_archive_field()
+    from plus_point.experience import install as install_experience
+    install_experience()
     before_install()
     from plus_point.operations import EVENT_ROLES,ensure_event_role
     for title in EVENT_ROLES:ensure_event_role(title)

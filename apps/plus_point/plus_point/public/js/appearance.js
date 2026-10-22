@@ -29,7 +29,7 @@
         document.body.classList.add('pp-ui');
         const footer = document.querySelector('.body-sidebar-bottom');
         if (!footer) return;
-        let button = footer.querySelector('.pp-theme-toggle');
+        let button = document.querySelector('.pp-theme-toggle');
         if (!button) {
             button = document.createElement('button');
             button.type = 'button'; button.className = 'btn btn-default pp-theme-toggle';

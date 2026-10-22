@@ -11,29 +11,29 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/appearance.js?v=20261022-shared-interface-3",
+app_include_js = ["/assets/plus_point/js/appearance.js?v=20261023-experience-2",
                   "/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/forms.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/attendance.js?v=20261022-list-finance-6",
-                  "/assets/plus_point/js/worker_profile.js?v=20261022-list-finance-6",
+                  "/assets/plus_point/js/attendance.js?v=20261023-experience-2",
+                  "/assets/plus_point/js/worker_profile.js?v=20261023-experience-2",
                   "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/dashboard.js?v=20261022-list-finance-6",
-                  "/assets/plus_point/js/activity.js?v=20261022-list-finance-6",
+                  "/assets/plus_point/js/dashboard.js?v=20261023-experience-2",
+                  "/assets/plus_point/js/activity.js?v=20261023-experience-2",
                   "/assets/plus_point/js/crew.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/events.js?v=20261022-list-finance-6",
-                  "/assets/plus_point/js/sections.js?v=20261022-list-finance-6",
+                  "/assets/plus_point/js/events.js?v=20261023-experience-2",
+                  "/assets/plus_point/js/sections.js?v=20261023-experience-2",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/imports.js?v=20261022-list-finance-6",
+                  "/assets/plus_point/js/imports.js?v=20261023-experience-2",
                   "/assets/plus_point/js/setup_flow.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/event_setup.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/onboarding.js?v=20261022-list-finance-6"]
+                  "/assets/plus_point/js/event_setup.js?v=20261023-experience-2",
+                  "/assets/plus_point/js/onboarding.js?v=20261023-experience-2"]
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
-                   "/assets/plus_point/css/interface.css?v=20261022-shared-interface-3"]
-app_include_css += ["/assets/plus_point/css/attendance.css?v=20261022-list-finance-6"]
-app_include_js += ["/assets/plus_point/js/operations.js?v=20261022-list-finance-6"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=20261022-list-finance-6"]
+                   "/assets/plus_point/css/interface.css?v=20261023-experience-2"]
+app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-experience-2"]
+app_include_js += ["/assets/plus_point/js/operations.js?v=20261023-experience-2"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=20261023-experience-2"]
 scheduler_events = {"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -79,3 +79,6 @@ add_to_apps_screen = [
         "sequence_id": 14,
     }
 ]
+
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261023-experience-2"]
+app_include_css += ["/assets/plus_point/css/experience.css?v=20261023-experience-2"]

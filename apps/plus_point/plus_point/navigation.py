@@ -6,7 +6,7 @@ CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
     ('Inventory and transport', [('Page:pp-inventory','Warehouse availability'),('Item','Inventory items'),('Warehouse','Warehouses'),
         ('Vehicle','Vehicles'),('PP Vehicle Booking','Vehicle assignments'),('PP Equipment Booking','Event equipment'),('Stock Reconciliation','Warehouse balances')]),
-    ('Clients and billing', [('Page:pp-agreements', 'Client agreements'), ('Page:pp-event-plans','Event plans'),('Page:pp-client-billing', 'Billing and finances')]),
+    ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
                            ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
     ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
@@ -37,7 +37,10 @@ def product_navigation(platform):
     groups = [(label,dict(groups)[label]) for label in ordered]
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
-    if not platform:items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))
+    if not platform:
+        from plus_point.event_setup import current
+        state=current()
+        if state.get('step')!='done' and not state.get('skipped'):items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))
     doctypes, reports = set(COMMON_DEPENDENCIES), set()
     for label, entries in groups:
         visible = []

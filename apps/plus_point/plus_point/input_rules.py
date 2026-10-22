@@ -37,6 +37,7 @@ SUPPORTED={'Employee','Customer','Contact','Address','Vehicle','Item','Warehouse
 
 
 def validate_document(doc,method=None):
+    validate_date_ranges(doc)
     if doc.doctype not in SUPPORTED or frappe.flags.in_install or frappe.flags.in_migrate:return
     old=doc.get_doc_before_save()
     for row in [doc]+[child for df in doc.meta.get_table_fields() for child in doc.get(df.fieldname,[])]:
@@ -47,3 +48,13 @@ def validate_document(doc,method=None):
             if previous and df.fieldname in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS and previous.get(df.fieldname)==row.get(df.fieldname):continue
             if df.fieldname in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS or doc.doctype.startswith('PP ') and df.fieldtype in ('Int','Float','Currency','Percent'):
                 check(df.fieldname,row.get(df.fieldname),df.fieldtype,df.label)
+
+
+def validate_date_ranges(doc):
+    if frappe.flags.in_install or frappe.flags.in_migrate:return
+    from frappe.utils import getdate,get_datetime
+    for row in [doc]+[child for df in doc.meta.get_table_fields() for child in doc.get(df.fieldname,[])]:
+        for first,last in [('start_date','end_date'),('effective_start','effective_end'),('from_date','to_date'),('expected_start_date','expected_end_date'),('posting_date','due_date'),('date_of_birth','date_of_joining')]:
+            a,b=row.meta.get_field(first),row.meta.get_field(last)
+            if a and b and a.fieldtype in ('Date','Datetime') and b.fieldtype in ('Date','Datetime') and row.get(first) and row.get(last) and (get_datetime(row.get(last)) if b.fieldtype=='Datetime' else getdate(row.get(last)))<(get_datetime(row.get(first)) if a.fieldtype=='Datetime' else getdate(row.get(first))):
+                frappe.throw(f'{b.label} cannot be before {a.label}'+(f' (row {row.idx})' if row.get('parent') else '')+'.')

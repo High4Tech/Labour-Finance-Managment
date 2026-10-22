@@ -123,7 +123,7 @@ def validate_invoice(doc, method=None):
         terms = frappe.get_doc('PP Contract Terms', source.contract_terms)
         project = frappe.get_doc('Project', terms.project)
         customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
-        expected = source.billable_amount if key[0] == 'PP Work Entry' else source.amount
+        expected = (source.get('pp_invoice_amount_snapshot') or source.billable_amount) if key[0] == 'PP Work Entry' else source.amount
         if (doc.project != project.name or row.project != project.name or doc.company != project.company
                 or doc.customer != customer or doc.is_return):
             frappe.throw('Invoice must match the source customer, project and company')
@@ -159,5 +159,6 @@ def release_invoice(doc, method=None):
     for row in doc.items:
         if row.get('pp_source_name') and frappe.db.get_value(row.pp_source_type, row.pp_source_name, 'sales_invoice') == doc.name:
             frappe.db.set_value(row.pp_source_type, row.pp_source_name, 'sales_invoice', None)
+            if row.pp_source_type=='PP Work Entry':frappe.db.set_value('PP Work Entry',row.pp_source_name,'pp_invoice_amount_snapshot',0)
             if row.pp_source_type == 'PP Milestone':
                 frappe.db.set_value('PP Milestone', row.pp_source_name, 'status', 'Approved')
