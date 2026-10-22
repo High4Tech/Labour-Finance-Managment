@@ -42,11 +42,16 @@ def browser_fixture(action,run_id):
     for row in work:frappe.delete_doc('PP Work Entry',row.name)
     receipts=frappe.get_all('PP Import Record',filters={'company':prefix},fields=['name','kind','external_id','document_type','document_name'])
     for receipt in receipts:
-        if (receipt.kind!='employees' or receipt.document_type!='Employee'
-                or not re.fullmatch('UX-'+run_id+r'-\d+',receipt.external_id)
-                or frappe.db.get_value('Employee',receipt.document_name,'company')!=prefix):
+        worker=(receipt.kind=='employees' and receipt.document_type=='Employee'
+                and re.fullmatch('UX-'+run_id+r'-\d+',receipt.external_id)
+                and frappe.db.get_value('Employee',receipt.document_name,'company')==prefix)
+        event=(receipt.kind=='events' and receipt.document_type=='PP Event Plan'
+                and re.fullmatch('EVT-'+run_id+r'-\d+',receipt.external_id)
+                and frappe.db.get_value('PP Event Plan',receipt.document_name,'company')==prefix)
+        if not (worker or event):
             raise RuntimeError('Unrecognized imported fixture; automatic cleanup refused')
-    # Exact disposable, nonfinancial employee receipts only. Production receipts remain immutable.
+    # Exact disposable, nonfinancial worker/event receipts only. Production
+    # receipts remain immutable; the recorded-history check above still applies.
     for receipt in receipts:frappe.db.delete('PP Import Record',{'name':receipt.name})
     if projects:
         for doctype in ('PP Vehicle Booking','PP Equipment Booking','PP Assignment','PP Event Plan','PP Contract Terms','PP Site','Project'):

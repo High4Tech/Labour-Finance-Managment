@@ -48,7 +48,7 @@ Draft work, draft attendance/milestones and unused records can be deleted. Appro
 
 ## Import employees and existing finances
 
-Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import workers from a template** in guided setup. Select your company and import type, then **Download template**. **Download reference IDs** provides the existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. It also includes warehouses, stock items, vehicles and event sites. The reference download is capped at 1,000 records per supporting type; use native lists to find additional IDs.
+Choose **Import** beside the top **Add** action on the relevant employee/finance list, or **Import workers from a template** in guided setup. Select your company and import type, then **Download template**. **Download reference IDs** provides all visible existing projects, assignments, billing terms, employees, suppliers, customers, service items, cash/bank ledgers and unpaid client invoices. It also includes warehouses, stock items, vehicles, event sites and approved unbilled work/milestone sources. Related profile fields accept exact, unique display names as well as IDs. Duplicate names need an ID. Missing dependencies have row-specific instructions rather than being silently created as financial history.
 
 Clients, Event sites, Event plans/projects, Vehicles, Inventory items, Warehouses and Warehouse balances use the same template/review flow; see [event templates](EVENT_OPERATIONS.md#import-templates). Warehouse balances are absolute native stock/value counts, not cash received.
 

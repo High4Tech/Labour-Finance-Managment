@@ -15,10 +15,15 @@ SCHEMAS={
 }
 TARGETS=dict(clients='Customer',event_sites='PP Site',vehicles='Vehicle',inventory_items='Item',warehouses='Warehouse',stock_balances='Stock Reconciliation',events='PP Event Plan')
 PROFILES={'clients','event_sites','vehicles','inventory_items'}
+LEGACY_SCHEMAS={key:list(value) for key,value in SCHEMAS.items()}
+from plus_point.import_links import CLIENT_FIELDS
+SCHEMAS['clients'] += CLIENT_FIELDS
+SCHEMAS['events'] += ['customer_name','customer_type'] + ['client_'+key for key in CLIENT_FIELDS]
+PROFILES.add('warehouses')
 
 
 def target(kind,row):
-    key={'clients':'customer','event_sites':'site','vehicles':'license_plate','inventory_items':'item_code'}.get(kind)
+    key={'clients':'customer','event_sites':'site','vehicles':'license_plate','inventory_items':'item_code','warehouses':'_warehouse'}.get(kind)
     return row.get(key) if key else None
 
 
@@ -32,6 +37,8 @@ def validate(kind,company,row):
     if kind=='clients':
         required(row,'customer_name')
         if row['customer_type'] not in ('Company','Individual'):frappe.throw('customer_type must be Company or Individual')
+        from plus_point.import_links import client_values,validate_client
+        validate_client(client_values(row))
     elif kind=='event_sites':
         required(row,'site_name');linked('Project',required(row,'project'),company)
     elif kind=='vehicles':
@@ -53,15 +60,20 @@ def validate(kind,company,row):
         if positive(row['quantity'],'Counted quantity',allow_zero=True)<reserved_peak(item.name,warehouse.name,frappe.utils.today(),'9999-12-30'):
             frappe.throw('Quantity is below event reservations. Review bookings first.')
     elif kind=='events':
-        linked('Customer',required(row,'customer'));span(required(row,'start_date'),required(row,'end_date'))
+        if not row.get('_new_client'):linked('Customer',required(row,'customer'))
+        row_date(row,'start_date',historical=False);row_date(row,'end_date',historical=False)
+        span(required(row,'start_date'),required(row,'end_date'))
         for key in ('event_name','site_name','agreement'):required(row,key)
         if row['billing_model'] not in ('Daily','Fixed'):frappe.throw('billing_model must be Daily or Fixed')
-        positive(row['workers_per_day'],'Workers per day',whole=True);positive(row['wage_rate'],'Daily wage')
+        if positive(row['workers_per_day'],'Workers per day',whole=True)>500:frappe.throw('Use at most 500 workers per site per day')
+        positive(row['wage_rate'],'Daily wage')
         positive(row['client_rate'],'Client daily rate',allow_zero=row['billing_model']=='Fixed')
+        if row['billing_model']=='Fixed' and positive(row['client_rate'],'Client daily rate',allow_zero=True)!=0:frappe.throw('Fixed contracts use milestones; set client_rate to zero')
         if row['billing_model']=='Fixed' and positive(row['fixed_amount'],'Fixed client price')<=0:frappe.throw('Enter a fixed contract price')
     name=target(kind,row)
     if name and frappe.db.exists(TARGETS[kind],name):
-        doc=linked(TARGETS[kind],name,company if kind=='vehicles' else None);doc.check_permission('write')
+        doc=linked(TARGETS[kind],name,company if kind in ('vehicles','warehouses') else None);doc.check_permission('write')
+        if kind=='warehouses' and (doc.is_group or doc.disabled):frappe.throw('Choose an active leaf warehouse')
         if kind=='event_sites':linked('Project',doc.project,company)
         if kind=='inventory_items' and not doc.is_stock_item:frappe.throw('This code belongs to a billing service. Use a new inventory item code.')
         if kind=='vehicles':
@@ -74,7 +86,7 @@ def validate(kind,company,row):
     if kind=='stock_balances':
         from plus_point.finance import money
         value=str(money(positive(row['quantity'],'Counted quantity',allow_zero=True)*positive(row['valuation_rate'],'Value per unit',allow_zero=bool(row.get('allow_zero_valuation_rate')))))
-    return dict(label=row.get('customer_name') or row.get('site_name') or row.get('event_name') or row.get('item_name') or row.get('license_plate') or row.get('warehouse_name') or row.get('item_code'),amount=value)
+    return dict(label=row.get('event_name') or row.get('customer_name') or row.get('site_name') or row.get('item_name') or row.get('license_plate') or row.get('warehouse_name') or row.get('item_code'),amount=value)
 
 
 def save(kind,company,row,document=None):
@@ -82,7 +94,14 @@ def save(kind,company,row,document=None):
     name=document or target(kind,row)
     exists=bool(name and frappe.db.exists(TARGETS[kind],name))
     doc=frappe.get_doc(TARGETS[kind],name) if exists else frappe.new_doc(TARGETS[kind])
-    if kind=='clients':doc.update(dict(customer_name=row['customer_name'],customer_type=row['customer_type'],customer_group='Commercial',territory='All Territories'))
+    if kind=='clients':
+        from plus_point.import_links import client_values,validate_client
+        values=client_values(row)
+        if validate_client(values):
+            from plus_point.clients import save as save_client
+            return save_client(values,doc.name if exists else None)
+        doc.update(dict(customer_name=row['customer_name'],customer_type=row['customer_type'],customer_group=doc.customer_group or 'Commercial',territory=doc.territory or 'All Territories'))
+        if row.get('default_currency'):doc.default_currency=row['default_currency']
     elif kind=='event_sites':doc.update(dict(site_name=row['site_name'],project=row['project'],address=row['address'],is_active=int(row['status']=='Active')))
     elif kind=='vehicles':
         doc.update(dict(license_plate=row['license_plate'],make=row['make'],model=row['model'],company=company,
@@ -95,7 +114,7 @@ def save(kind,company,row,document=None):
         doc.update(dict(item_code=row['item_code'],item_name=row['item_name'],stock_uom=row['stock_uom'],is_stock_item=1,
             disabled=int(row['status']=='Inactive'),item_group='Event Equipment'))
     elif kind=='warehouses':
-        parent=frappe.db.get_value('Warehouse',{'company':company,'is_group':1},'name')
+        parent=doc.parent_warehouse if exists else frappe.db.get_value('Warehouse',{'company':company,'is_group':1},'name')
         doc.update(dict(warehouse_name=row['warehouse_name'],company=company,is_group=0,parent_warehouse=parent))
     elif kind=='stock_balances':
         from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_difference_account
@@ -105,6 +124,20 @@ def save(kind,company,row,document=None):
         doc.insert();doc.submit();return doc
     elif kind=='events':
         from plus_point.events import create_event
+        if row.get('_new_client'):
+            from plus_point.import_links import find,validate_client
+            values=row['_new_client']
+            # Multiple events may share one new client. Reuse the first saved
+            # profile; never overwrite an existing profile from an event row.
+            customer=find('Customer',values['customer_name'],company,'customer',optional=True)
+            if not customer:
+                if validate_client(values):
+                    from plus_point.clients import create
+                    customer=create(values).name
+                else:
+                    client=frappe.get_doc(dict(doctype='Customer',customer_name=values['customer_name'],customer_type=values['customer_type'],customer_group='Commercial',territory='All Territories',default_currency=values.get('default_currency') or None)).insert()
+                    customer=client.name
+            row=dict(row,customer=customer)
         result=create_event(company,row['customer'],row['event_name'],row['start_date'],row['end_date'],row['agreement'],
             row['billing_model'],row['wage_rate'],row['client_rate'] or 0,row['fixed_amount'] or 0,
             sites=[dict(site_name=row['site_name'],phase='Event',start_date=row['start_date'],end_date=row['end_date'],workers_required=int(positive(row['workers_per_day'],'Workers per day',whole=True)))])

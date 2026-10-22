@@ -68,6 +68,154 @@ class SetupImportTests(unittest.TestCase):
         return dict(external_id='invoice-001',date=today(),project=self.f.project.name,customer=self.f.customer.name,
             item_code=self.f.item.name,amount='3000',source_type='PP Work Entry',source_name='import:work-001',description='Historical client charge')
 
+    def event_row(self, **changes):
+        from frappe.utils import add_days
+        return dict(external_id='event-001',event_name='Imported event '+uuid.uuid4().hex[:8],customer='New Event Client '+uuid.uuid4().hex[:8],
+            start_date=add_days(today(),2),end_date=add_days(today(),3),site_name='Exhibition Hall',workers_per_day='2',
+            billing_model='Daily',fixed_amount='0',wage_rate='100',client_rate='150',agreement='Event staffing agreement')|changes
+
+    def test_fifteen_legacy_events_create_missing_clients_without_preview_writes(self):
+        from plus_point.event_imports import LEGACY_SCHEMAS
+        rows=[self.event_row(external_id=f'EVT-{i}',customer=f'New Import Client {uuid.uuid4().hex[:8]}') for i in range(15)]
+        stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=LEGACY_SCHEMAS['events']);writer.writeheader();writer.writerows(rows)
+        count=frappe.db.count('Customer')
+        preview=imports.preview('events',self.f.company.name,'old-events.csv',base64.b64encode(stream.getvalue().encode()).decode())
+        self.tokens.append(preview['token']);self.assertTrue(preview['valid'],preview)
+        self.assertEqual(frappe.db.count('Customer'),count)
+        self.assertTrue(all('Create client:' in r['notes'][0] for r in preview['rows']))
+        saved=imports.apply(preview['token']);self.assertEqual(saved['created'],15)
+        self.assertEqual(frappe.db.count('Customer'),count+15)
+        for result,row in zip(saved['rows'],rows):
+            plan=frappe.get_doc('PP Event Plan',result['document'])
+            customer=frappe.db.get_value('Project',plan.project,'customer')
+            self.assertEqual(frappe.db.get_value('Customer',customer,'customer_name'),row['customer'])
+            self.assertFalse(frappe.db.exists('PP Assignment',{'project':plan.project}))
+            self.assertFalse(frappe.db.exists('PP Work Entry',{'project':plan.project}))
+        self.assertEqual(self.apply('events',rows)['skipped'],15)
+
+    def test_shared_new_event_client_full_profile_and_conflicting_rows(self):
+        row=self.event_row(client_contact_name='Ayesha Malik',client_email='client@example.invalid',client_phone='+966501234567',
+            client_country='Saudi Arabia',client_city='Riyadh',client_address_line1='12 Exhibition Road',client_default_currency='USD')
+        second=dict(row,external_id='event-002',event_name='Second '+row['event_name'])
+        conflict=dict(second,client_email='different@example.invalid')
+        self.assertFalse(self.preview('events',[row,conflict])['valid'])
+        count=frappe.db.count('Customer');saved=self.apply('events',[row,second])
+        self.assertEqual(frappe.db.count('Customer'),count+1)
+        customer=frappe.get_doc('Customer',frappe.db.get_value('Project',frappe.db.get_value('PP Event Plan',saved['rows'][0]['document'],'project'),'customer'))
+        self.assertTrue(customer.customer_primary_contact);self.assertTrue(customer.customer_primary_address)
+        self.assertEqual(customer.default_currency,'USD')
+        self.assertEqual(frappe.db.get_value('Address',customer.customer_primary_address,'city'),'Riyadh')
+
+    def test_event_dependency_rolls_back_when_a_later_native_save_fails(self):
+        from unittest.mock import patch
+        from plus_point import event_imports
+        rows=[self.event_row(),self.event_row(external_id='event-002')]
+        preview=self.preview('events',rows);self.assertTrue(preview['valid'],preview)
+        count=frappe.db.count('Customer');save=event_imports.save;calls=[]
+        def failing(*args,**kwargs):
+            calls.append(True)
+            if len(calls)==2:frappe.throw('Simulated second-row validation failure')
+            return save(*args,**kwargs)
+        with patch.object(event_imports,'save',side_effect=failing):
+            with self.assertRaises(frappe.ValidationError):imports.apply(preview['token'])
+        self.assertEqual(frappe.db.count('Customer'),count)
+        self.assertFalse(frappe.db.exists('PP Import Record',imports.record_key(self.f.company.name,'events',rows[0]['external_id'])))
+
+    def test_clients_complete_profile_name_updates_and_legacy_preserves_contact(self):
+        row=dict(external_id='client-001',customer='',customer_name='Imported Company '+uuid.uuid4().hex[:8],customer_type='Company',
+            contact_name='Sana Malik',email='sana@example.invalid',phone='+923001234567',country='Pakistan',city='Lahore',address_line1='10 Hall Road')
+        saved=self.apply('clients',[row]);name=saved['rows'][0]['document'];contact=frappe.db.get_value('Customer',name,'customer_primary_contact')
+        second=dict(row,external_id='client-002',customer=row['customer_name'],phone='+923009999999')
+        self.assertEqual(self.apply('clients',[second])['updated'],1)
+        from plus_point.event_imports import LEGACY_SCHEMAS
+        stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=LEGACY_SCHEMAS['clients']);writer.writeheader()
+        writer.writerow(dict(external_id='client-003',customer=name,customer_name=row['customer_name'],customer_type='Company'))
+        preview=imports.preview('clients',self.f.company.name,'legacy.csv',base64.b64encode(stream.getvalue().encode()).decode())
+        self.tokens.append(preview['token']);self.assertTrue(preview['valid'],preview);imports.apply(preview['token'])
+        self.assertEqual(frappe.db.get_value('Customer',name,'customer_primary_contact'),contact)
+
+    def test_every_catalog_type_and_stock_names_replay(self):
+        company=self.f.company.name
+        warehouse='Import warehouse '+uuid.uuid4().hex[:8]
+        rows={
+            'warehouses':dict(external_id='warehouse-001',warehouse_name=warehouse),
+            'inventory_items':dict(external_id='item-001',item_code='IMPORT-'+uuid.uuid4().hex[:8],item_name='Imported event chairs',stock_uom='Nos',status='Active'),
+            'vehicles':dict(external_id='vehicle-001',license_plate='IMPORT-'+uuid.uuid4().hex[:8],make='Toyota',model='Crew van',crew_seats='10',cargo_capacity='0',cargo_uom='units',fuel_type='Diesel',status='Active'),
+            'event_sites':dict(external_id='site-001',site='',site_name='Imported venue',project=self.f.project.project_name,address='10 Hall Road',status='Active'),
+        }
+        docs={}
+        for kind,row in rows.items():
+            docs[kind]=self.apply(kind,[row])['rows'][0]['document']
+            self.assertEqual(self.apply(kind,[row])['skipped'],1,kind)
+        self.assertEqual(self.apply('warehouses',[dict(rows['warehouses'],external_id='warehouse-002')])['updated'],1)
+        stock=dict(external_id='stock-001',date=today(),item_code=rows['inventory_items']['item_name'],warehouse=warehouse,quantity='10',valuation_rate='100')
+        saved=self.apply('stock_balances',[stock]);self.assertEqual(frappe.db.get_value('Stock Reconciliation',saved['rows'][0]['document'],'docstatus'),1)
+        self.assertEqual(self.apply('stock_balances',[stock])['skipped'],1)
+        self.assertEqual(frappe.db.get_value('Bin',{'item_code':docs['inventory_items'],'warehouse':docs['warehouses']},'actual_qty'),10)
+
+    def test_financial_templates_accept_names_and_import_ids_without_inventing_sources(self):
+        project='Event project label '+uuid.uuid4().hex[:8];customer='Client display label '+uuid.uuid4().hex[:8];service='Event service label '+uuid.uuid4().hex[:8]
+        frappe.db.set_value('Project',self.f.project.name,'project_name',project)
+        frappe.db.set_value('Customer',self.f.customer.name,'customer_name',customer)
+        frappe.db.set_value('Item',self.f.item.name,'item_name',service)
+        self.apply('work',[self.work()])
+        invoice=self.invoice()|dict(project=project,customer=customer,item_code=service)
+        self.apply('invoices',[invoice])
+        bank=frappe.db.get_value('Account',self.f.company.default_cash_account,'account_name')
+        self.apply('receipts',[dict(external_id='receipt-001',date=today(),invoice='import:invoice-001',amount='500',bank_account=bank)])
+        self.apply('worker_payments',[dict(external_id='payment-001',date=today(),project=project,employee=self.f.employee.employee_name,amount='500',bank_account=bank)])
+        supplier=insert('Supplier',supplier_name='Import supplier '+uuid.uuid4().hex[:8],supplier_group='All Supplier Groups',supplier_type='Company')
+        label='Supplier display label '+uuid.uuid4().hex[:8];frappe.db.set_value('Supplier',supplier.name,'supplier_name',label)
+        self.apply('expenses',[dict(external_id='expense-001',date=today(),project=project,supplier=label,item_code=service,amount='200',description='Historical cost')])
+        bad=self.preview('worker_payments',[dict(external_id='missing-worker',date=today(),project=project,employee='Missing Worker',amount='100',bank_account=bank)])
+        self.assertFalse(bad['valid']);self.assertIn('Import employees first',bad['rows'][0]['error'])
+        self.assertFalse(frappe.db.exists('Employee',{'employee_name':'Missing Worker'}))
+
+    def test_ambiguous_labels_and_foreign_company_ids_are_refused(self):
+        from plus_point.import_links import find
+        employee=insert('Employee',first_name=self.f.employee.first_name,gender='Male',date_of_birth='1991-01-01',date_of_joining='2020-01-01',status='Active',company=self.f.company.name)
+        with self.assertRaises(frappe.ValidationError):find('Employee',employee.employee_name,self.f.company.name,'employee')
+        other=fixture('Other import company '+uuid.uuid4().hex[:6])
+        for doctype,value in [('Employee',other.employee.name),('Project',other.project.name),('Account',other.company.default_cash_account),('PP Site',other.site.name)]:
+            with self.assertRaises(frappe.ValidationError,msg=doctype):find(doctype,value,self.f.company.name)
+
+    def test_event_project_import_reference_and_missing_reference_instructions(self):
+        event=self.apply('events',[self.event_row(customer=self.f.customer.customer_name)])
+        site=dict(external_id='site-001',site='',site_name='Another venue',project='import:event-001',address='Hall Road',status='Active')
+        saved=self.apply('event_sites',[site]);project=frappe.db.get_value('PP Event Plan',event['rows'][0]['document'],'project')
+        self.assertEqual(frappe.db.get_value('PP Site',saved['rows'][0]['document'],'project'),project)
+        site['external_id']='site-002';site['project']='import:missing-event'
+        bad=self.preview('event_sites',[site]);self.assertFalse(bad['valid']);self.assertIn('Import the events template first',bad['rows'][0]['error'])
+
+    def test_event_invalid_details_are_caught_before_creating_a_client(self):
+        for changes in [dict(workers_per_day='501'),dict(start_date='10/22/2026'),
+                dict(billing_model='Fixed',fixed_amount='1000',client_rate='150'),
+                dict(client_phone='+966501234567')]:
+            row=self.event_row(**changes);preview=self.preview('events',[row])
+            self.assertFalse(preview['valid'],preview)
+            self.assertFalse(frappe.db.exists('Customer',{'customer_name':row['customer']}))
+
+    def test_reference_download_includes_approved_sources_and_account_names(self):
+        self.apply('work',[self.work()])
+        original=dict(frappe.response)
+        try:
+            imports.references(self.f.company.name)
+            content=frappe.response['filecontent'].decode('utf-8-sig')
+            self.assertIn('PP Work Entry',content);self.assertIn(self.f.assignment.name,content)
+            self.assertIn(self.f.company.default_cash_account,content)
+        finally:
+            frappe.response.clear();frappe.response.update(original)
+
+    def test_changed_name_match_requires_a_fresh_review(self):
+        row=self.event_row(customer=self.f.customer.name)
+        # A planned new dependency appeared after preview. Do not silently
+        # replace the approved creation with a different existing profile.
+        row['customer']='New client after preview '+uuid.uuid4().hex[:8]
+        preview=self.preview('events',[row]);self.assertTrue(preview['valid'],preview)
+        insert('Customer',customer_name=row['customer'],customer_type='Company',customer_group='Commercial',territory='All Territories')
+        with self.assertRaises(frappe.ValidationError):imports.apply(preview['token'])
+        self.assertFalse(frappe.db.exists('PP Import Record',imports.record_key(self.f.company.name,'events',row['external_id'])))
+
     def test_employee_preview_create_update_and_replay(self):
         row = self.employee()
         count = frappe.db.count('Employee')

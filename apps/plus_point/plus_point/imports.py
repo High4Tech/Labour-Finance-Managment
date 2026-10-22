@@ -46,6 +46,14 @@ def record_key(company, kind, external_id):
     return digest([company, kind, external_id])
 
 
+def content_digest(kind, row):
+    # Adding empty contact columns to an old event/client file is not a change
+    # to a posted event. Preserve the original hash for legacy files.
+    from plus_point.event_imports import LEGACY_SCHEMAS
+    legacy=LEGACY_SCHEMAS.get(kind)
+    return digest({key:value for key,value in row.items() if not legacy or key in legacy or value})
+
+
 def guard(kind, company):
     require_customer()
     if kind not in SCHEMAS:
@@ -97,7 +105,9 @@ def parse_file(filename, content, kind):
     headers = [str(value).strip() for value in rows.pop(0)]
     while headers and not headers[-1]:
         headers.pop()
-    if headers != SCHEMAS[kind] and not (kind == 'employees' and headers == LEGACY_EMPLOYEE_COLUMNS):
+    from plus_point.event_imports import LEGACY_SCHEMAS
+    legacy = LEGACY_EMPLOYEE_COLUMNS if kind=='employees' else LEGACY_SCHEMAS.get(kind)
+    if headers != SCHEMAS[kind] and headers != legacy:
         frappe.throw('Column headers must match the selected template in the same order. Download a fresh template.')
     if not rows or len(rows) > MAX_ROWS:
         frappe.throw('Add between 1 and 200 data rows. Blank rows between records are not allowed.')
@@ -170,7 +180,7 @@ def validate_row(kind, company, row):
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,79}', required(row, 'external_id')):
         frappe.throw('external_id must be 1–80 letters, digits, dots, underscores or hyphens')
     for key, value in row.items():
-        if value[:1] in ('=', '@', '+') and not (key in ('cell_number','emergency_phone_number') and re.fullmatch(r'\+\d[\d ()-]*', value)):
+        if isinstance(value,str) and value[:1] in ('=', '@', '+') and not (key in ('cell_number','emergency_phone_number','phone','client_phone') and re.fullmatch(r'\+\d[\d ()-]*', value)):
             frappe.throw(f'{key}: replace formulas with plain values')
     if kind in EVENT_SCHEMAS:
         from plus_point.event_imports import validate
@@ -253,8 +263,10 @@ def validate_row(kind, company, row):
 
 
 def prepare(kind, company, rows):
-    results, seen, targets = [], set(), set()
-    for number, row in enumerate(rows, 2):
+    from plus_point.import_links import normalize
+    results, seen, targets, clients = [], set(), set(), {}
+    for number, original in enumerate(rows, 2):
+        row=dict(original)
         result = dict(row=number, external_id=row.get('external_id', ''), action='Create', doctype=TARGETS[kind])
         message_count = len(frappe.message_log)
         try:
@@ -263,6 +275,11 @@ def prepare(kind, company, rows):
             seen.add(row['external_id'])
             previous = frappe.db.get_value('PP Import Record', record_key(company, kind, row['external_id']),
                 ['document_name', 'content_hash', 'document_type'], as_dict=True)
+            # Financial replays use their immutable receipt. New records and
+            # profile edits resolve spreadsheet labels before validation.
+            if not previous or kind in EVENT_PROFILES or kind=='employees':
+                row,notes=normalize(kind,company,row)
+                if notes:result['notes']=notes
             if previous:
                 if not frappe.db.exists(previous.document_type, previous.document_name):
                     frappe.throw('The earlier imported record is missing. Ask your administrator to review its import history.')
@@ -274,16 +291,16 @@ def prepare(kind, company, rows):
                     current=catalog_target(kind,row)
                     if current and current!=previous.document_name:frappe.throw('external_id is already linked to a different catalog record')
                     target.check_permission('write')
-                    if kind=='vehicles' and target.company!=company:frappe.throw('Vehicle must belong to the selected company')
+                    if kind in ('vehicles','warehouses') and target.company!=company:frappe.throw('Record must belong to the selected company')
                     if kind=='event_sites':linked('Project',target.project,company)
-                    result['action']='Update' if previous.content_hash!=digest(row) else 'Skip'
+                    result['action']='Update' if previous.content_hash!=content_digest(kind,original) else 'Skip'
                 elif kind == 'employees':
                     current = employee_target(company, row)
                     if current and current != previous.document_name:
                         frappe.throw('external_id is already linked to a different employee')
                     linked('Employee', previous.document_name, company).check_permission('write')
-                    result['action'] = 'Update' if previous.content_hash != digest(row) else 'Skip'
-                elif previous.content_hash != digest(row):
+                    result['action'] = 'Update' if previous.content_hash != content_digest(kind,original) else 'Skip'
+                elif previous.content_hash != content_digest(kind,original):
                     frappe.throw('This external_id was already posted with different data. Correct/cancel the original record before importing a replacement with a new ID.')
                 else:
                     result['action'] = 'Skip'
@@ -303,9 +320,15 @@ def prepare(kind, company, rows):
                 results.append(result)
                 continue
             details = validate_row(kind, company, row)
+            if row.get('_new_client'):
+                values=row['_new_client'];identity=values['customer_name'].casefold()
+                if identity in clients and clients[identity]!=values:
+                    frappe.throw('This new client has conflicting details in this file. Use the same client details on each event row.')
+                clients[identity]=values
             if kind in EVENT_PROFILES or kind=='stock_balances':
                 from plus_point.event_imports import target as catalog_target
-                target_key=(kind,catalog_target(kind,row) or row.get('customer_name')) if kind!='stock_balances' else (kind,row['item_code'],row['warehouse'])
+                target_key=(kind,catalog_target(kind,row) or row.get('customer_name') or row.get('site_name') or row.get('warehouse_name')) if kind!='stock_balances' else (kind,row['item_code'],row['warehouse'])
+                if kind=='event_sites':target_key=target_key+(row['project'],)
                 if target_key in targets:frappe.throw('The same catalog record or warehouse/item balance is targeted twice in this file')
                 targets.add(target_key)
             if kind == 'employees' and result.get('document'):
@@ -317,6 +340,7 @@ def prepare(kind, company, rows):
                 if identity in targets:frappe.throw('The same new worker appears twice in this file. Keep one row per person.')
                 targets.add(identity)
             result.update(details)
+            result['resolution']=digest([row,result.get('document'),details])
         except (frappe.ValidationError, frappe.PermissionError, frappe.DoesNotExistError, ValueError) as exc:
             result.update(action='Fix', error=frappe.utils.strip_html(str(exc)))
             del frappe.message_log[message_count:]
@@ -340,13 +364,17 @@ def references(company):
     names = [p.name for p in projects]
     result = []
     def add(doctype, fields, filters=None):
-        for row in frappe.get_list(doctype, fields=fields, filters=filters or {}, limit_page_length=1000):
-            result.append([doctype, row[fields[0]], row.get(fields[1], '') if len(fields)>1 else ''])
+        for row in frappe.get_list(doctype, fields=fields, filters=filters or {}, order_by='name', limit_page_length=0):
+            result.append([doctype, row[fields[0]], ' · '.join(str(row.get(field) or '') for field in fields[1:])])
     result.extend(['Project',p.name,p.project_name] for p in projects)
     add('Employee',['name','employee_name'],{'company':company})
     for doctype, fields in [('PP Assignment',['name','employee']),('PP Contract Terms',['name','billing_model'])]:
         if names:
             add(doctype,fields,{'project':['in',names]})
+    if names:
+        add('PP Work Entry',['name','employee','work_date'],{'project':['in',names],'status':'Approved','sales_invoice':['is','not set']})
+        terms=frappe.get_list('PP Contract Terms',filters={'project':['in',names]},pluck='name',limit_page_length=0)
+        if terms:add('PP Milestone',['name','milestone_title'],{'contract_terms':['in',terms],'status':'Approved','sales_invoice':['is','not set']})
     add('Customer',['name','customer_name'])
     add('Supplier',['name','supplier_name'])
     add('Item',['name','item_name'],{'is_stock_item':0,'disabled':0})
@@ -354,7 +382,7 @@ def references(company):
     add('Warehouse',['name','warehouse_name'],{'company':company,'is_group':0,'disabled':0})
     add('Vehicle',['name','model'],{'company':company})
     if names:add('PP Site',['name','site_name'],{'project':['in',names]})
-    add('Account',['name','account_type'],{'company':company,'is_group':0,'account_type':['in',['Bank','Cash']]})
+    add('Account',['name','account_name','account_type'],{'company':company,'is_group':0,'account_type':['in',['Bank','Cash']]})
     add('Sales Invoice',['name','customer'],{'company':company,'docstatus':1,'outstanding_amount':['>',0]})
     output = io.StringIO(newline='')
     writer = csv.writer(output)
@@ -384,7 +412,9 @@ def preview(kind, company, filename, content):
     token = secrets.token_urlsafe(32)
     valid = not any(row.get('error') for row in results) and not any(row['blocked'] for row in budgets)
     if valid:
-        frappe.cache.set_value('pp-import:' + token, dict(user=frappe.session.user, company=company, kind=kind, rows=rows), expires_in_sec=1200)
+        frappe.cache.set_value('pp-import:' + token, dict(user=frappe.session.user, company=company, kind=kind, rows=rows,
+            resolutions=[row.get('resolution') for row in results]), expires_in_sec=1200)
+    for row in results:row.pop('resolution',None)
     return dict(rows=results, budgets=budgets, token=token if valid else None, currency=company_doc.default_currency,
                 valid=valid, total=str(money(sum((as_decimal(row.get('amount') or 0) for row in results if row['action'] != 'Skip'), Decimal(0)))))
 
@@ -454,14 +484,20 @@ def apply(token):
     results = prepare(kind, company_name, rows)
     if any(row.get('error') for row in results):
         frappe.throw('Records changed since the preview. Upload again to review the current errors.')
+    resolutions=payload.get('resolutions')
+    if resolutions is None or any(row['action']!='Skip' and row.get('resolution')!=expected for row,expected in zip(results,resolutions)):
+        frappe.throw('A linked record changed since your review. Review the file again to confirm the current matches and new profiles.')
+    for row in results:row.pop('resolution',None)
     from plus_point.budget import lock_project
     for project in sorted({r['project'] for r in results if r.get('project')}):
         lock_project(project)
     frappe.db.savepoint('pp_import_apply')
     try:
-        for row, result in zip(rows, results):
+        from plus_point.import_links import normalize
+        for original, result in zip(rows, results):
             if result['action'] == 'Skip':
                 continue
+            row,_=normalize(kind,company_name,original)
             if kind in EVENT_SCHEMAS:
                 from plus_point.event_imports import save as save_catalog
                 doc=save_catalog(kind,company_name,row,result.get('document'))
@@ -478,12 +514,12 @@ def apply(token):
             # This internal receipt is immutable through Desk/REST. Normal target
             # document insert/save/submit permissions and hooks are never bypassed.
             if frappe.db.exists('PP Import Record', key):
-                frappe.db.set_value('PP Import Record', key, 'content_hash', digest(row))
+                frappe.db.set_value('PP Import Record', key, 'content_hash', content_digest(kind,original))
             else:
                 frappe.flags.pp_import_record = True
                 try:
                     frappe.get_doc(dict(doctype='PP Import Record', name=key, company=company_name, kind=kind,
-                        external_id=row['external_id'], content_hash=digest(row), document_type=doc.doctype,
+                        external_id=row['external_id'], content_hash=content_digest(kind,original), document_type=doc.doctype,
                         document_name=doc.name)).insert(ignore_permissions=True)
                 finally:
                     frappe.flags.pp_import_record = False
