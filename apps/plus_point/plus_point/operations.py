@@ -236,7 +236,7 @@ def save_agreement(values,name=None):
 def agreement(name):
     doc=terms_doc(name);project=linked('Project',doc.project);contract=linked('Contract',doc.contract)
     from plus_point.clients import details
-    result=doc.as_dict();result.update(has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=contract.contract_terms,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
+    result=doc.as_dict();result.update(archived=bool(project.get('pp_archived')),has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=contract.contract_terms,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
         files=frappe.get_list('File',filters={'attached_to_doctype':'Contract','attached_to_name':contract.name},fields=['name','file_name','file_url'],limit_page_length=0),
         venues=frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name','country','city','address_line1'],order_by='site_name',limit_page_length=0),
         milestones=frappe.get_list('PP Milestone',filters={'contract_terms':name},fields=['name','milestone_title','due_date','amount','status','sales_invoice'],order_by='due_date,name',limit_page_length=0))
@@ -272,7 +272,7 @@ def plan(name):
         person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '')
     project=linked('Project',doc.project)
     result['allocations']=allocations;result['coverage']=coverage(doc)
-    result.update(budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)
+    result.update(archived=bool(project.get('pp_archived')),budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)
     result['reservations']=[]
     for kind,label in [('PP Vehicle Booking','vehicle'),('PP Equipment Booking','item')]:
         for row in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['name',label,'site','start_date','end_date'],limit_page_length=0):

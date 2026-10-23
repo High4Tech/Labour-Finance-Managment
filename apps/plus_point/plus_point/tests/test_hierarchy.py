@@ -179,6 +179,8 @@ class HierarchyTests(unittest.TestCase):
         project=frappe.get_doc('Project',a['project']);project.pp_archived=1;project.save()
         self.assertNotIn(a['name'],[r.name for r in op.catalogue()['agreements']])
         self.assertNotIn(name,[r.name for r in op.catalogue()['plans']])
+        self.assertTrue(op.plan(name)['archived'])
+        self.assertTrue(op.agreement(a['name'])['archived'])
         self.assertTrue(frappe.db.exists('PP Work Entry',work.name))
         from plus_point.worker_profile import overview
         self.assertEqual(overview(self.worker.name)['earned'],'0.00')

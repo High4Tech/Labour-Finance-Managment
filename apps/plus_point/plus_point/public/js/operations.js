@@ -82,9 +82,10 @@
     if(params.has('project'))record=(mode==='pp-event-plans'?catalogue.plans:catalogue.agreements).find(r=>r.project===params.get('project'))?.name;
     if(mode==='pp-agreements'&&params.has('client'))record=catalogue.agreements.find(r=>r.customer===params.get('client'))?.name;
     if(mode==='pp-client-billing'&&params.get('invoice')&&!record){const invoice=await rpc('invoice',{name:params.get('invoice')});record=catalogue.agreements.find(r=>r.project===invoice.project)?.name;}
-    const rows=mode==='pp-event-plans'?catalogue.plans:catalogue.agreements;
     const creating=record==='new'||mode==='pp-event-plans'&&(params.has('agreement')||params.has('project')&&!record);
-    const missing=record&&!creating&&!rows.some(r=>r.name===record);if(creating||missing)record=null;
+    // The catalogue supplies active planning choices, not record access. Native
+    // lists also contain historical records; their scoped API checks access.
+    if(creating)record=null;
     root.innerHTML=`<div class="pp-op-layout"><main class="pp-op-main"><div class="pp-op-message" role="status" hidden></div><div class="pp-op-content"></div></main><aside class="pp-op-activity" hidden></aside></div>`;
     page.clear_primary_action();page.clear_secondary_action();
     if(mode==='pp-agreements')page.set_primary_action(__('New agreement'),()=>frappe.set_route(mode,{record:'new'}),'add');
@@ -99,7 +100,6 @@
      else if(record)await billingView(record);else{content().innerHTML=section('Choose agreement','<div class="pp-billing-choice"></div>'+button('Open billing','btn-primary','data-open-billing'));const choice=form(content().querySelector('.pp-billing-choice'),[field('Select','agreement','Agreement',{options:catalogue.agreements.map(r=>({value:r.name,label:r.title+' / '+r.client})),reqd:1})]);content().querySelector('[data-open-billing]').onclick=()=>frappe.set_route(mode,{record:choice.get_value('agreement')});}
      if(token!==sequence)return;finishView();
     }
-    if(missing){message(root,__('That record is no longer available in this section. Choose a record from the list.'));root.querySelector('.pp-op-message').className='pp-op-message pp-op-notice';}
     if(record)await activityRail(mode==='pp-event-plans'?'PP Event Plan':'PP Contract Terms',record);
     await Promise.all([...root.querySelectorAll('[data-pp-form]')].map(node=>node.pp_form?.pp_ready));
     root.dataset.ready='true';
@@ -130,7 +130,7 @@
    const data=name?await rpc('agreement',{name}):{};if(generation!==sequence)return;const venues=Object.fromEntries((data.venues||[]).map(r=>[r.name,r])),area=content();
    let currency=data.agreement_currency||catalogue.invoice_currency||catalogue.currency,rate=Number(data.agreement_rate)||1,currencyPending=Promise.resolve(),staffing;
    const roles=[...new Set([...catalogue.designations,...(data.staffing||[]).map(r=>r.designation).filter(Boolean)])].sort((a,b)=>a.localeCompare(b));
-   area.innerHTML=`<header class="pp-op-heading"><div><h2>${esc(data.agreement_title||__('New client agreement'))}</h2>${data.pp_reference?`<span class="pp-reference">${esc(data.pp_reference)}</span>`:''}</div></header>
+   area.innerHTML=`<header class="pp-op-heading"><div><h2>${esc(data.agreement_title||__('New client agreement'))}</h2>${data.archived?'<span class="pp-op-badge">'+esc(__('Archived'))+'</span>':''}${data.pp_reference?`<span class="pp-reference">${esc(data.pp_reference)}</span>`:''}</div></header>
     ${section('Client details','<div class="pp-op-client-choice"></div><div class="pp-op-client-fields"></div>')}
     ${section('Agreement details','<div class="pp-op-details"></div><div class="pp-agreement-conditions"></div>')}
     ${section('Pricing and milestones','<div class="pp-op-terms"></div>'+(name?'<div class="pp-op-milestones"></div><div class="pp-new-milestones"></div>':'<div class="pp-new-milestones"></div>'))}
@@ -176,7 +176,7 @@
   }
   async function eventView(name){
    let data=await rpc('plan',{name});const area=content(),eventCurrency=data.agreement.agreement_currency||data.agreement.currency,eventRate=Number(data.agreement.agreement_rate)||1;root.dataset.currency=eventCurrency;
-   area.innerHTML=`<header class="pp-op-heading"><div><h2>${esc(data.event_name)}</h2>${data.pp_reference?`<span class="pp-reference">${esc(data.pp_reference)}</span>`:''}<div class="pp-event-facts"><span>${esc(data.start_date)} – ${esc(data.end_date)}</span><span>${esc(data.agreement.client.title)}</span><a href="/desk/pp-agreements?record=${encodeURIComponent(data.contract_terms)}">${esc(__('Client agreement'))}</a></div></div><div class="pp-op-actions">${button('Auto-select available crew','btn-primary','data-auto-crew')}<a class="btn btn-default" href="/desk/pp-client-billing?record=${encodeURIComponent(data.contract_terms)}">${esc(__('Billing and finances'))}</a></div></header>
+   area.innerHTML=`<header class="pp-op-heading"><div><h2>${esc(data.event_name)}</h2>${data.archived?'<span class="pp-op-badge">'+esc(__('Archived'))+'</span>':''}${data.pp_reference?`<span class="pp-reference">${esc(data.pp_reference)}</span>`:''}<div class="pp-event-facts"><span>${esc(data.start_date)} – ${esc(data.end_date)}</span><span>${esc(data.agreement.client.title)}</span><a href="/desk/pp-agreements?record=${encodeURIComponent(data.contract_terms)}">${esc(__('Client agreement'))}</a></div></div><div class="pp-op-actions">${button('Auto-select available crew','btn-primary','data-auto-crew')}<a class="btn btn-default" href="/desk/pp-client-billing?record=${encodeURIComponent(data.contract_terms)}">${esc(__('Billing and finances'))}</a></div></header>
     ${section('Event information','<div class="pp-op-project-fields"></div>'+button('Save project information','btn-primary','data-save-project'))}
     ${section('Venues and crew',`<div class="pp-venue-board"></div>${button('Add venue','btn-default','data-add-venue')}<div class="pp-op-extra-form" hidden></div><div class="pp-op-crew-picker" hidden></div><div class="pp-op-transfer"></div>`)}
     ${section('Event timeline','<div class="pp-op-timeline"></div>')}
@@ -282,12 +282,12 @@
  $(document).on('form-refresh.pp-record-rail',(_e,frm)=>{if(!frappe.boot.plus_point?.is_platform){for(const df of frm.meta.fields)if(df.fieldtype==='Link'&&df.options==='Company'){frm.set_df_property(df.fieldname,'hidden',1);if(frm.is_new()&&!frm.doc[df.fieldname])frm.set_value(df.fieldname,frappe.boot.plus_point?.company_identity?.name);}if(frm.doctype==='Employee')rpc('catalogue').then(data=>frm.set_query('designation',()=>({filters:{name:['in',[...data.designations,frm.doc.designation].filter(Boolean)]}}))).catch(()=>{});}setTimeout(()=>rail(frm),150);});
  let workerRefresh=0;
  async function workerList(){
-  const route=frappe.get_route();if(route[0]!=='List'||route[1]!=='Employee'||frappe.boot.plus_point?.is_platform)return;
+  const route=frappe.get_route()||[];if(route[0]!=='List'||route[1]!=='Employee'||frappe.boot.plus_point?.is_platform)return;
   const view=window.cur_list;if(!view||Date.now()-workerRefresh<3000)return;workerRefresh=Date.now();
   try{const states=await rpc('worker_states');view.__pp_states=states;view.settings.get_indicator=doc=>{if(doc.status&&doc.status!=='Active')return [__(doc.status),'grey',''];const state=states[doc.name]||'Available';return [__(state),state==='Available'?'green':state==='Assigned'?'orange':'blue',''];};view.render_list?.();}catch{workerRefresh=0;}
  }
  const ready=()=>{
-  let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(window.cur_frm&&frappe.get_route()[0]==='Form')rail(cur_frm);workerList();},200);}).observe(document.body,{childList:true,subtree:true});
+  let timer;new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{if(window.cur_frm&&frappe.get_route()?.[0]==='Form')rail(cur_frm);workerList();},200);}).observe(document.body,{childList:true,subtree:true});
   plus_point.open_event_wizard=()=>frappe.set_route('pp-event-plans',{record:'new'});if(!frappe.boot.plus_point?.is_platform)plus_point.assign_workers=(defaults={})=>frappe.set_route('pp-event-plans',defaults.project?{project:defaults.project}:{});
  };
  if(frappe.boot)ready();else $(document).on('app_ready.pp-operations',ready);

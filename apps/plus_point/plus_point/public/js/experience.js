@@ -21,7 +21,7 @@
   });
  }
  function lists(){
-  if(frappe.boot.plus_point?.is_platform)return;const list=window.cur_list;if(frappe.get_route()[0]!=='List'||!list?.filter_area?.filter_list||!Array.isArray(list.data)||list.doctype!==frappe.get_route()[1])return;
+  if(frappe.boot.plus_point?.is_platform)return;const list=window.cur_list;if(frappe.get_route()?.[0]!=='List'||!list?.filter_area?.filter_list||!Array.isArray(list.data)||list.doctype!==frappe.get_route()?.[1])return;
   const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
   list.settings.get_form_link=doc=>mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
   if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)&&!list.fields.includes('project'))list.fields.push('project');
@@ -40,13 +40,13 @@
   bar.querySelector('.pp-app-currency-label').hidden=!!frappe.boot.plus_point.is_platform;totals();
   const context=frappe.boot.plus_point;
   document.querySelectorAll('.body-sidebar a[href*="pp-onboarding"]').forEach(a=>{if(context.onboarding_complete)a.closest('.sidebar-item-container,.sidebar-item')?.remove();});
-  if(context.onboarding_required&&frappe.get_route()[0]!=='pp-onboarding')frappe.set_route('pp-onboarding');
+  if(context.onboarding_required&&frappe.get_route()?.[0]!=='pp-onboarding')frappe.set_route('pp-onboarding');
   document.body.classList.toggle('pp-onboarding-required',!!context.onboarding_required);
  }
  function update(){queued=false;guidance();lists();shell();document.querySelectorAll('.pp-register-table').forEach(table=>{const labels=[...table.querySelectorAll('thead th')].map(c=>c.textContent||__('Actions'));table.querySelectorAll('tbody>tr').forEach(row=>[...row.children].forEach((cell,i)=>{if(!cell.dataset.label)cell.dataset.label=labels[i]||__('Actions');}));});}
  function schedule(){if(queued)return;queued=true;requestAnimationFrame(update);}
  $(document).on('form-refresh.pp-experience',(_e,frm)=>{plus_point.bind_date_ranges(frm);schedule();});
- document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()[0]!=='List'||frappe.get_route()[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);
+ document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()?.[0]!=='List'||frappe.get_route()?.[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);
  document.addEventListener('pp:data-changed',()=>totals(true));document.addEventListener('pp:onboarding',schedule);
  const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});frappe.router.on('change',schedule);schedule();};
  $(document).on('app_ready.pp-experience',start);if(frappe.app?.sidebar)start();
