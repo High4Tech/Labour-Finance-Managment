@@ -47,6 +47,33 @@ class HierarchyTests(unittest.TestCase):
         self.assertFalse(result['disbursed']);self.assertEqual(b.balances(worker.name)['loan_outstanding'],'0.00')
         with self.assertRaises(frappe.ValidationError):frappe.get_doc('PP Worker Loan',result['name']).submit()
 
+    def test_finance_hub_keeps_drafts_out_of_money_and_scopes_loan_details(self):
+        from plus_point import benefits as b, finance_hub as hub
+        worker=frappe.get_doc('Employee',self.worker.name);worker.pp_loan_allowed=1;worker.save()
+        name=b.grant_loan(worker.name,500,10,today(),'Unpaid draft')['name']
+        summary=hub.summary(self.f.company.name)
+        self.assertEqual(summary['drafts'],'500.00')
+        self.assertEqual(summary['advanced'],'0')
+        self.assertEqual(summary['outstanding'],'0')
+        row=hub.loan_states([name])[0]
+        self.assertEqual(row.loan_status,'Draft · unpaid');self.assertEqual(row.outstanding,'0')
+        self.assertEqual(row.worker_name,worker.employee_name)
+        self.assertEqual(hub.loan_detail(name)['worker']['name'],worker.name)
+        with self.assertRaises(frappe.ValidationError):hub.loan_states([name]*201)
+        with self.assertRaises(frappe.PermissionError):hub.summary('Not this business')
+        with patch('plus_point.finance_hub.company_scope',return_value=frappe._dict(name='Other business')):
+            self.assertEqual(hub.loan_states([name]),[])
+            with self.assertRaises(frappe.ValidationError):hub.loan_detail(name)
+
+    def test_finance_navigation_consolidates_reports_without_removing_ledgers(self):
+        from plus_point.navigation import product_navigation
+        nav=product_navigation(False);labels=[r['label'] for r in nav['items']]
+        self.assertNotIn('Accounts',labels);self.assertNotIn('Business reports',labels)
+        self.assertNotIn('Expense claims',labels);self.assertNotIn('Wages earned',labels)
+        self.assertIn('Worker loans',labels);self.assertIn('Expenses',labels)
+        self.assertIn('Account',nav['doctypes']);self.assertIn('Expense Claim',nav['doctypes'])
+        self.assertIn('PLUS POINT Worker Statement',nav['reports'])
+
     def test_worker_loan_recovery_posts_native_ledger_and_prevents_double_recovery(self):
         from plus_point import benefits as b
         worker=frappe.get_doc('Employee',self.worker.name);worker.pp_loan_allowed=1;worker.save()
@@ -57,8 +84,13 @@ class HierarchyTests(unittest.TestCase):
         payment=insert('Payment Entry',payment_type='Pay',company=worker.company,party_type='Employee',party=worker.name,paid_from=company.default_cash_account,paid_to=company.default_receivable_account,paid_amount=500,received_amount=500,source_exchange_rate=1,target_exchange_rate=1,reference_no='Worker loan QA',reference_date=today());payment.submit()
         loan=b.grant_loan(worker.name,500,10,today(),'Transport advance',payment.name)
         self.assertTrue(loan['disbursed']);self.assertEqual(b.balances(worker.name)['proposed_deduction'],'100.00')
+        from plus_point import finance_hub as hub
+        self.assertEqual(hub.summary(self.f.company.name)['advanced'],'500.00')
         recovery=b.apply_deduction(loan['name'],a['project'],today())
         self.assertEqual(recovery['amount'],'100.00');self.assertEqual(b.balances(worker.name)['loan_outstanding'],'400.00')
+        self.assertEqual(hub.summary(self.f.company.name)['recovered'],'100.00')
+        self.assertEqual(hub.summary(self.f.company.name)['outstanding'],'400.00')
+        self.assertEqual(hub.loan_states([loan['name']])[0].outstanding,'400.00')
         self.assertTrue(frappe.db.exists('GL Entry',{'voucher_no':recovery['journal'],'is_cancelled':0}))
         from plus_point.worker_profile import overview
         state=overview(worker.name);self.assertEqual(state['outstanding'],'1000.00');self.assertEqual(state['outstanding_after_loan'],'900.00')

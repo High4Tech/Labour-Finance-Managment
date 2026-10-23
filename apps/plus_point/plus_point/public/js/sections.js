@@ -2,6 +2,7 @@
 (() => {
     frappe.provide('plus_point');
     const esc=value=>frappe.utils.escape_html(String(value??''));
+    let sectionWrapper;
     const num=value=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(value)||0);
     const orderError=message=>frappe.msgprint({title:__('Order not saved'),message,
         primary_action:{label:__('Close'),action:()=>frappe.hide_msgprint()}});
@@ -64,8 +65,12 @@
         });
     };
     plus_point.mount_section=async wrapper=>{
+        sectionWrapper=wrapper;
         const root=wrapper.pp_section_root;if(!root)return;
-        const section=new URL(location.href).searchParams.get('section')||frappe.route_options?.section||frappe.boot.plus_point.navigation.groups[0];
+        let section=new URL(location.href).searchParams.get('section')||frappe.route_options?.section||frappe.boot.plus_point.navigation.groups[0];
+        if(section==='Business reports'&&!frappe.boot.plus_point.is_platform)section='Payments and costs';
+        if(wrapper.__pp_section_loading===section)return;
+        wrapper.__pp_section_loading=section;
         const sequence=wrapper.__pp_section_seq=(wrapper.__pp_section_seq||0)+1;
         delete root.dataset.ready;delete root.dataset.section;
         wrapper.page.set_title(__(section));root.innerHTML=`<p role="status">${esc(__('Loading section overview…'))}</p>`;
@@ -91,15 +96,20 @@
             root.innerHTML=`<div class="pp-section-intro"><p>${esc(__('Your section at a glance. Choose a work list below to continue.'))}</p>${data.is_platform?`<label>${esc(__('Company'))}<select class="form-control pp-section-company">${data.companies.map(c=>`<option value="${esc(c.name)}" ${c.name===data.company?'selected':''}>${esc(c.company_name||c.name)}</option>`).join('')}</select></label>`:''}</div>
                 <dl class="pp-dashboard-metrics">${metrics.map(([label,value,currency])=>`<div class="pp-dashboard-metric"><dt>${esc(__(label))}</dt><dd>${esc(num(value))}${currency?`<small>${esc(currency)}</small>`:''}</dd></div>`).join('')}</dl>
                 <section class="pp-section-worklists"><h2>${esc(__('Work lists'))}</h2>${data.links.map(link=>`<a class="pp-section-list" href="${esc(link.path)}"><span>${esc(__(link.title))}</span><strong>${link.count===null?esc(__(link.is_report===false?'Open availability':'Open report')):esc(num(link.count))}</strong><span aria-hidden="true">›</span></a>`).join('')}</section>
+                ${data.loans?.enabled?`<section class="pp-finance-loans"><h2>${esc(__('Worker loans'))}</h2><dl class="pp-dashboard-metrics">${[['Money advanced',data.loans.advanced],['Recovered',data.loans.recovered],['Loan balance',data.loans.outstanding],['Unpaid drafts',data.loans.drafts]].map(([title,value])=>`<div class="pp-dashboard-metric"><dt>${esc(__(title))}</dt><dd>${esc(num(value))}<small>${esc(data.loans.currency)}</small></dd></div>`).join('')}</dl><p class="text-muted">${esc(__('Draft loans are unpaid. Only recorded disbursements and posted recoveries affect the loan balance.'))}</p><div class="pp-actions"><button class="btn btn-primary" type="button" data-new-loan>${esc(__('Assign loan'))}</button><a class="btn btn-default" href="/desk/pp-worker-loan/view/list">${esc(__('Manage loans'))}</a></div></section>`:''}
+                ${data.related_links?.length?`<section class="pp-section-worklists"><h2>${esc(__('Related costs'))}</h2>${data.related_links.map(link=>`<a class="pp-section-list" href="${esc(link.path)}"><span>${esc(__(link.title))}</span><span aria-hidden="true">›</span></a>`).join('')}</section>`:''}
+                ${data.report_links?.length?`<section class="pp-section-worklists"><h2>${esc(__('Reports'))}</h2>${data.report_links.map(link=>`<a class="pp-section-list" href="${esc(link.path)}"><span>${esc(__(link.title))}</span><span aria-hidden="true">›</span></a>`).join('')}</section>`:''}
                 <p class="pp-activity-note">${esc(__('Record counts include drafts. Financial totals use approved work and posted records. Shared setup records may cover the whole business.'))}</p>
                 <a class="pp-section-back" href="${frappe.boot.plus_point.home}">${esc(__('Back to overview and charts'))}</a>`;
             if(root.querySelector('select'))root.querySelector('select').onchange=event=>{plus_point.dashboard_company=event.target.value;plus_point.mount_section(wrapper);};
+            root.querySelector('[data-new-loan]')?.addEventListener('click',()=>plus_point.new_worker_loan(()=>plus_point.mount_section(wrapper)));
+            wrapper.page.set_secondary_action(__('Refresh'),()=>plus_point.mount_section(wrapper),'refresh');
             root.dataset.section=section;root.dataset.ready='true';
         }catch{
             root.innerHTML=`<div class="pp-condition pp-condition-error"><div><h3>${esc(__('Section could not load'))}</h3><p>${esc(__('Retry to load the current figures. Your work lists remain in the sidebar.'))}</p></div><button class="btn btn-default">${esc(__('Try again'))}</button></div>`;
             root.querySelector('button').onclick=()=>plus_point.mount_section(wrapper);
-        }
+        }finally{if(sequence===wrapper.__pp_section_seq)wrapper.__pp_section_loading=null;}
     };
-    const watch=()=>frappe.router.on('change',()=>{if(frappe.get_route()[0]==='pp-section'){const wrapper=frappe.container?.page;if(wrapper?.pp_section_root)plus_point.mount_section(wrapper);}});
+    const watch=()=>frappe.router.on('change',()=>{const wrapper=sectionWrapper;if(frappe.get_route()[0]==='pp-section'){const active=frappe.container?.page;if(active?.pp_section_root)plus_point.mount_section(active);}else if(wrapper?.pp_section_root){wrapper.__pp_section_seq=(wrapper.__pp_section_seq||0)+1;wrapper.__pp_section_loading=null;wrapper.pp_section_root.replaceChildren();delete wrapper.pp_section_root.dataset.ready;}});
     if(frappe.router)watch();else $(document).on('app_ready.pp-sections',watch);
 })();

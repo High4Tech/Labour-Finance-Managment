@@ -6,12 +6,10 @@ CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
     ('Inventory and transport', [('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
     ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
-    ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
-                           ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
-    ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
-                          ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
+    ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans'),
+                           ('Payment Entry', 'Receipts and payments'), ('Purchase Invoice', 'Expenses')]),
     ('Business setup', [('Item', 'Billing items'),
-                        ('Supplier', 'Suppliers'), ('Account', 'Accounts'), ('PP Work Entry', 'Wages earned')]),
+                        ('Supplier', 'Suppliers')]),
 ]
 PLATFORM_GROUPS = [
     ('PLUS POINT customers', [('PP Signup Request', 'Signup approvals'), ('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
@@ -70,8 +68,12 @@ def product_navigation(platform):
             items.extend(visible)
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
-        doctypes.update(['Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
+        # Supporting ledgers and reimbursements remain available from their
+        # workflow, without duplicating the same task in the sidebar.
+        doctypes.update(['Account','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
+                         'Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
+        reports.update(['PLUS POINT Project Finances','PLUS POINT Worker Statement'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
                 pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)
 

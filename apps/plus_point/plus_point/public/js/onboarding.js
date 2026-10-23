@@ -80,6 +80,10 @@
         'PP Work Entry': ['Wages earned', 'Add work entry'],
         'PP Milestone': ['Fixed contract milestones', 'Add milestone'],
         'PP Wage Settlement': ['Worker payments', 'Record payment'],
+        'PP Worker Loan':['Worker loans','Assign loan'],
+        'Payment Entry':['Receipts and payments','Record payment'],
+        'Purchase Invoice':['Expenses','Record expense'],
+        'Expense Claim':['Worker reimbursements','Record reimbursement'],
     };
     const platformLists = {
         'PP Signup Request':['Signup approvals','Review signup'],
@@ -394,6 +398,7 @@
             if(!platform()&&route[1]==='Sales Invoice')primary('billing','Open agreement billing',()=>frappe.set_route('pp-client-billing',{record:'new'}));
             if(!platform()&&!serviceItems&&['Customer','Vehicle','Item','Warehouse'].includes(route[1]))primary('resource',action,()=>plus_point.open_resource({Customer:'clients',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses'}[route[1]],()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Assignment')primary('crew','Assign workers',()=>plus_point.assign_workers({},()=>listview.refresh()));
+            if(!platform()&&route[1]==='PP Worker Loan')primary('loan','Assign loan',()=>plus_point.new_worker_loan(()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Daily Register'){
                 primary('attendance','Create register',()=>plus_point.open_attendance_picker());
                 if(!listview.__pp_ensured){listview.__pp_ensured=true;plus_point.form_rpc('attendance.ensure_today',{}).then(data=>{if(data.created)listview.refresh();}).catch(()=>{listview.__pp_ensured=false;});}

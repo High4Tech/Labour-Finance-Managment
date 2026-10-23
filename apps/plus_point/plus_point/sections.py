@@ -7,6 +7,9 @@ from plus_point.navigation import CUSTOMER_GROUPS, PLATFORM_GROUPS
 
 @frappe.whitelist()
 def overview(section,company=None):
+    # Old bookmarks continue into the consolidated finance workspace.
+    if section=='Business reports' and not frappe.conf.get('pp_control_plane'):
+        section='Payments and costs'
     from plus_point.dashboard import overview as dashboard
     data=dashboard(company)
     groups=PLATFORM_GROUPS if data['is_platform'] else CUSTOMER_GROUPS
@@ -50,7 +53,7 @@ def overview(section,company=None):
         else:
             count=0
         query=urlencode({key:json.dumps(value) if isinstance(value,list) else value for key,value in filters.items()}) if company else ''
-        path='/desk/'+frappe.scrub(target).replace('_','-')+('?' + query if query else '')
+        path='/desk/'+frappe.scrub(target).replace('_','-')+('/view/list' if section=='Payments and costs' and not data['is_platform'] else ('?' + query if query else ''))
         links.append(dict(title=title,doctype=target,path=path,count=count))
     if section=='Inventory and transport' and not data['is_platform']:
         counts={row['title']:row['count'] for row in links}
@@ -62,5 +65,15 @@ def overview(section,company=None):
                         fields=[{'COUNT':'name','as':'total'}],limit_page_length=1,order_by=None)
                     reservations+=int(rows[0].total if rows else 0)
         data['resources']=dict(items=frappe.db.count('Item',{'is_stock_item':1,'disabled':0}),warehouses=frappe.db.count('Warehouse',{'company':company,'is_group':0}),vehicles=frappe.db.count('Vehicle',{'company':company}),reservations=reservations)
+    if section=='Payments and costs' and not data['is_platform']:
+        from plus_point.finance_hub import summary
+        data['loans']=summary(company) if company else dict(enabled=False)
+        data['related_links']=[]
+        if frappe.has_permission('Expense Claim','read'):
+            data['related_links'].append(dict(title='Worker reimbursements',path='/desk/expense-claim/view/list'))
+        data['report_links']=[]
+        for name,title in [('PLUS POINT Project Finances','Event finances'),('PLUS POINT Worker Statement','Worker statements')]:
+            if frappe.get_doc('Report',name).is_permitted():
+                data['report_links'].append(dict(title=title,path='/desk/query-report/'+quote(name)))
     data.update(section=section,links=links)
     return data

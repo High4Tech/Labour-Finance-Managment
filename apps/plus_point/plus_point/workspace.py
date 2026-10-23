@@ -68,6 +68,14 @@ def vehicle_query(user=None):
     return resource_query('Vehicle')
 
 
+def loan_query(user=None):
+    return resource_query('PP Worker Loan')
+
+
+def recovery_query(user=None):
+    return resource_query('PP Loan Recovery')
+
+
 def resource_query(doctype):
     if frappe.conf.get('pp_control_plane') or fixture_context():return ''
     name=company()

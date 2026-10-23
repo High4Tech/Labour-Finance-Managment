@@ -1,0 +1,9 @@
+.pp-finance-loans,.pp-loan-summary{margin:24px 0;padding:0 16px 24px;border-bottom:1px solid var(--border-color)}
+.pp-finance-loans h2,.pp-loan-summary h2{font-size:var(--text-xl);margin:0 0 16px}
+.pp-loan-summary h3,.pp-finance-month h3{font-size:var(--text-base);font-weight:600;margin:20px 0 12px}
+.pp-finance-month{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:24px}
+.pp-finance-month label{display:flex;align-items:center;gap:12px;margin:0}
+.pp-finance-month input{width:170px}
+.pp-loan-list-balance{color:var(--text-muted);font-size:var(--text-sm);margin-right:16px;white-space:nowrap}
+.pp-loan-summary .pp-actions,.pp-finance-loans .pp-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+@media(max-width:767px){.pp-loan-list-balance{display:none}.pp-loan-summary{padding:0 4px 20px}.pp-finance-month{align-items:flex-start}}
