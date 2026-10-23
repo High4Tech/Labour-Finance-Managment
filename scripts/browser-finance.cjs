@@ -24,7 +24,7 @@ const crypto=require('node:crypto'),{execFileSync}=require('node:child_process')
   await page.waitForFunction(()=>window.cur_list?.doctype==='PP Worker Loan'&&!!cur_list.list_view_settings&&!!cur_list.page?.main,{},{timeout:15000});
   const nav=await page.evaluate(()=>frappe.boot.plus_point.navigation);
   const labels=nav.items.map(r=>r.label);
-  assert(!labels.includes('Business reports'));assert(!labels.includes('Accounts'));assert(labels.includes('Worker loans'));
+  assert(labels.includes('Business reports'));assert(!labels.includes('Business setup'));assert(!labels.includes('Accounts'));assert(labels.includes('Worker loans'));
   await page.evaluate(async employee=>frappe.db.set_value('Employee',employee,{pp_loan_allowed:1,pp_loan_wait_months:0,pp_loan_deduction_percent:10}),data.worker);
   await page.locator('.page-container:visible .primary-action').click();
   await page.locator('.modal:visible').last().getByRole('heading',{name:'Assign worker loan',exact:true}).waitFor();
@@ -59,7 +59,9 @@ const crypto=require('node:crypto'),{execFileSync}=require('node:child_process')
   await go('pp-section',{section:'Payments and costs'});
   const hub=page.locator('.page-container:visible .pp-section-home[data-ready=true]');await hub.waitFor();
   assert.deepEqual(await hub.locator('.pp-section-worklists').first().locator('a span:first-child').allTextContents(),['Worker payments','Worker loans','Receipts and payments','Expenses']);
-  await hub.getByText('Event finances',{exact:true}).waitFor();await hub.getByText('Worker statements',{exact:true}).waitFor();
+  await go('pp-section',{section:'Business reports'});await hub.waitFor();
+  await hub.getByText('Project finances',{exact:true}).waitFor();await hub.getByText('Worker statement',{exact:true}).waitFor();
+  await go('pp-section',{section:'Payments and costs'});await hub.waitFor();
   await hub.getByText('Worker reimbursements',{exact:true}).click();
   await page.waitForFunction(()=>window.cur_list?.doctype==='Expense Claim'&&frappe.get_route()[0]==='List');
   await page.locator('.page-container:visible').getByRole('button',{name:'Supplier expenses',exact:true}).click();

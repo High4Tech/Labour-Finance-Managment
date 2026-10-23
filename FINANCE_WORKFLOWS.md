@@ -5,14 +5,13 @@ Receipts and payments, and Expenses. These use the same selection, filtering,
 sorting and record actions as the employee list. No status/date filters are
 automatically applied by the finance shortcuts.
 
-The section overview groups the event finances and worker statements under
-Reports. Worker reimbursements are reachable from the overview and the Expenses
+Business reports remains a dedicated sidebar section with its overview,
+Project finances and Worker statement. Worker reimbursements are reachable from the payments overview and the Expenses
 list; supplier invoices and employee reimbursements keep their distinct native
-approval and accounting records. Old Business reports overview bookmarks open
-the consolidated section.
+approval and accounting records.
 
-Business setup contains Billing items and Suppliers. Accounts and Wages earned
-are supporting records, rather than sidebar tasks. Hiding these links does not
+The entire Business setup section is removed from customer navigation. Billing
+items, suppliers, accounts and wages earned remain supporting records. Hiding these links does not
 remove the chart of accounts, earnings or historical financial records. The
 separate High4Tech software administration navigation is unchanged.
 

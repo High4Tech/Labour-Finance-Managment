@@ -8,8 +8,8 @@ CUSTOMER_GROUPS = [
     ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans'),
                            ('Payment Entry', 'Receipts and payments'), ('Purchase Invoice', 'Expenses')]),
-    ('Business setup', [('Item', 'Billing items'),
-                        ('Supplier', 'Suppliers')]),
+    ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
+                          ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
 ]
 PLATFORM_GROUPS = [
     ('PLUS POINT customers', [('PP Signup Request', 'Signup approvals'), ('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
@@ -70,7 +70,7 @@ def product_navigation(platform):
     if not platform:
         # Supporting ledgers and reimbursements remain available from their
         # workflow, without duplicating the same task in the sidebar.
-        doctypes.update(['Account','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
+        doctypes.update(['Account','Supplier','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
                          'Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
         reports.update(['PLUS POINT Project Finances','PLUS POINT Worker Statement'])

@@ -68,7 +68,6 @@
         sectionWrapper=wrapper;
         const root=wrapper.pp_section_root;if(!root)return;
         let section=new URL(location.href).searchParams.get('section')||frappe.route_options?.section||frappe.boot.plus_point.navigation.groups[0];
-        if(section==='Business reports'&&!frappe.boot.plus_point.is_platform)section='Payments and costs';
         if(wrapper.__pp_section_loading===section)return;
         wrapper.__pp_section_loading=section;
         const sequence=wrapper.__pp_section_seq=(wrapper.__pp_section_seq||0)+1;
