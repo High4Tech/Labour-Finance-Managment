@@ -1,0 +1,56 @@
+#page-query-report.pp-business-report .page-form {
+    --pp-report-input-height:36px;
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;
+    padding:16px 20px;margin:0;border-bottom:1px solid var(--border-color);
+}
+#page-query-report.pp-business-report .page-form>.frappe-control {
+    width:auto;max-width:none;min-width:0;padding:0;margin:0;position:relative;
+}
+.pp-business-report .pp-report-filter-label {display:block;margin:0 0 6px;font-size:12px;line-height:18px;font-weight:500;color:var(--text-muted)}
+.pp-business-report .page-form .placeholder{display:none!important}
+.pp-business-report .page-form .select-icon{display:none!important}
+.pp-business-report .page-form select.form-control{appearance:auto;background-image:none}
+.pp-business-report .page-form .form-control {height:36px;min-height:36px;width:100%}
+#page-query-report.pp-business-report.pp-worker-statement .page-form{grid-template-columns:repeat(6,minmax(0,1fr))}
+#page-query-report.pp-business-report.pp-worker-statement .page-form>.frappe-control{grid-column:span 2}
+#page-query-report.pp-business-report.pp-worker-statement .page-form>:is([data-fieldname=customer],[data-fieldname=project],[data-fieldname=from_date],[data-fieldname=to_date]){grid-column:span 3}
+.pp-business-report .pp-report-message{margin:0!important;padding:12px 20px 0}
+.pp-business-report .pp-report-message>p{margin:0 0 6px;font-size:13px;line-height:20px}
+.pp-business-report .report-summary {
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;
+    margin:12px 20px 20px;padding:16px 0;border-radius:0;background:transparent;
+}
+.pp-business-report .report-summary .summary-item {min-width:0;max-width:none;height:auto;margin:0;padding:0 12px 0 0}
+.pp-business-report .report-summary .summary-label {text-align:left;white-space:normal;line-height:18px}
+.pp-business-report .report-summary .summary-value,
+.pp-business-report .report-summary .summary-value div {text-align:left;white-space:normal;line-height:26px;overflow-wrap:anywhere}
+.pp-business-report .report-summary .summary-value {padding:8px 0 0;font-size:21px}
+.pp-business-report .report-summary .summary-value.blue {color:var(--text-color)}
+.pp-business-report .report-wrapper {max-width:100%;overflow:hidden;padding:0 20px 16px}
+.pp-business-report .datatable {max-width:100%;border:1px solid var(--border-color);border-radius:8px}
+.pp-business-report .dt-scrollable {
+    height:var(--pp-report-body-height,280px)!important;min-height:88px;max-height:62vh;
+    overflow:auto!important;scrollbar-gutter:stable;
+}
+.pp-business-report .dt-header .dt-row,.pp-business-report .dt-cell--header{height:44px!important}
+.pp-business-report .dt-scrollable::-webkit-scrollbar{height:12px;width:12px}
+.pp-business-report .dt-scrollable::-webkit-scrollbar-track{background:var(--control-bg)}
+.pp-business-report .dt-scrollable::-webkit-scrollbar-thumb{background:var(--gray-400,#a8afb5);border:2px solid var(--control-bg);border-radius:8px}
+.pp-business-report .dt-cell--header .dt-cell__content {white-space:normal;line-height:17px;font-weight:600;padding-block:5px}
+.pp-business-report .dt-scrollable:focus-visible {outline:2px solid var(--pp-accent);outline-offset:-2px}
+.pp-business-report .pp-report-notes {margin:4px 0 8px}
+.pp-business-report .pp-report-notes>summary {padding:4px 0}
+.pp-business-report .report-footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 20px}
+@media(min-width:1700px){#page-query-report.pp-business-report .page-form{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1100px){#page-query-report.pp-business-report .page-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:767px){
+    #page-query-report.pp-business-report .page-form{--pp-report-input-height:44px;padding:14px 12px;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    #page-query-report.pp-business-report.pp-worker-statement .page-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #page-query-report.pp-business-report.pp-worker-statement .page-form>.frappe-control{grid-column:span 1}
+    #page-query-report.pp-business-report.pp-worker-statement .page-form>[data-fieldname=project]{grid-column:span 2}
+    .pp-business-report .report-summary{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px;padding:12px 0}
+    .pp-business-report .report-wrapper{padding:0 12px 12px}
+    .pp-business-report .page-form .form-control{height:44px;min-height:44px}
+    .pp-business-report .dt-scrollable{max-height:55vh}
+    .pp-business-report .pp-report-message{padding:12px 12px 0}
+}

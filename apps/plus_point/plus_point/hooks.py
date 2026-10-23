@@ -98,3 +98,5 @@ app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261023-finance-3
 app_include_js += ["/assets/plus_point/js/resources.js?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/finance_hub.js?v=20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/finance_hub.css?v=20261023-finance-3"]
+app_include_js += ["/assets/plus_point/js/business_reports.js?v=20261023-report-layout-2"]
+app_include_css += ["/assets/plus_point/css/business_reports.css?v=20261023-report-layout-2"]
