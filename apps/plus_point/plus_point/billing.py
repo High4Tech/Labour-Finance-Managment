@@ -14,7 +14,7 @@ def default_currency(company,customer=None):
 def invoice_options(contract_terms):
     require_customer();terms=linked('PP Contract Terms',contract_terms);project=linked('Project',terms.project)
     customer=frappe.db.get_value('Contract',terms.contract,'party_name')
-    return dict(currency=default_currency(project.company,customer),base_currency=terms.currency,company=project.company)
+    return dict(currency=terms.get('pp_agreement_currency') or default_currency(project.company,customer),base_currency=terms.currency,company=project.company,exchange_rate=terms.get('pp_agreement_rate') if terms.get('pp_agreement_currency') else None)
 
 
 @frappe.whitelist()
@@ -65,9 +65,9 @@ def create_invoice(contract_terms, item_code=None, from_date=None, to_date=None,
         from plus_point.operations import service_item
         item_code=terms.billing_item or service_item()
     customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
-    currency=invoice_currency or default_currency(project.company,customer)
+    currency=invoice_currency or terms.get('pp_agreement_currency') or default_currency(project.company,customer)
     linked('Currency',currency);frappe.db.set_value('Currency',currency,'enabled',1)
-    try:rate=Decimal(str(exchange_rate)) if exchange_rate not in (None,'') else Decimal(quote(project.company,currency)['rate'])
+    try:rate=Decimal(str(exchange_rate)) if exchange_rate not in (None,'') else Decimal(str(terms.get('pp_agreement_rate'))) if currency==terms.get('pp_agreement_currency') and terms.get('pp_agreement_rate') else Decimal(quote(project.company,currency)['rate'])
     except (ValueError,ArithmeticError):frappe.throw('Enter a positive exchange rate.')
     if not rate.is_finite() or rate<=0:frappe.throw('Enter a positive exchange rate.')
     if currency==terms.currency:rate=Decimal(1)

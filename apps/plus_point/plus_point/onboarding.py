@@ -10,6 +10,7 @@ def boot_context(bootinfo):
         'is_platform': platform,
         'home': '/desk/high4tech' if platform else '/desk/plus-point',
         'navigation': navigation,
+        'display_currency':frappe.defaults.get_user_default('pp_display_currency') or '',
     }
     if not platform:
         from plus_point.event_setup import current

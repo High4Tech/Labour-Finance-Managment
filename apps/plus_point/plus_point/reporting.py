@@ -83,6 +83,16 @@ def project_finances(filters=None):
     for project in projects:
         summary = project_summary(project.name)
         rows.append(dict(summary, customer=project.customer, status=project.status))
+    own=frappe.db.get_value('PP Contract Terms',{'project':filters.project},['pp_agreement_currency','pp_agreement_rate'],as_dict=True) if filters.project else None
+    target=(own.pp_agreement_currency or currency) if own else filters.get('display_currency') or frappe.defaults.get_user_default('pp_display_currency')
+    if target and target!=currency:
+        from plus_point.billing import quote
+        rate=Decimal(str(own.pp_agreement_rate)) if own and own.pp_agreement_rate else Decimal(str(quote(filters.company,target)['rate']))
+        for row in rows:
+            for key in ('fixed_contract_value','earned_revenue','labour_cost','wages_paid','wages_outstanding','invoiced_gross','cash_collected_gross','client_outstanding_gross','other_project_costs','operational_profit','gross_contribution_before_other_costs','invoiced_net','settled_against_invoices_gross'):
+                row[key]=str(money(Decimal(str(row[key]))/rate))
+            row['currency']=target
+        currency=target
     columns = base_columns + [_column(key, label) for key, label in [
         ('fixed_contract_value', 'Fixed contract value'), ('earned_revenue', 'Revenue earned'),
         ('labour_cost', 'Wages earned'), ('wages_paid', 'Wages paid'),

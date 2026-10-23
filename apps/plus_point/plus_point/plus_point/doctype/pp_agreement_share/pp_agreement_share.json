@@ -1,0 +1,100 @@
+{
+  "doctype": "DocType",
+  "name": "PP Agreement Share",
+  "module": "PLUS POINT",
+  "autoname": "format:SIGN-{YYYY}-{#####}",
+  "track_changes": 1,
+  "field_order": [
+    "contract_terms",
+    "token_hash",
+    "expires",
+    "status",
+    "snapshot",
+    "digest",
+    "recipient",
+    "signed_by",
+    "signed_email",
+    "signed_on",
+    "signature"
+  ],
+  "fields": [
+    {
+      "fieldname": "contract_terms",
+      "label": "Agreement",
+      "fieldtype": "Link",
+      "options": "PP Contract Terms",
+      "reqd": 1
+    },
+    {
+      "fieldname": "token_hash",
+      "label": "Token hash",
+      "fieldtype": "Data",
+      "hidden": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "expires",
+      "label": "Expires",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Pending\nSigned\nRevoked",
+      "default": "Pending"
+    },
+    {
+      "fieldname": "snapshot",
+      "label": "Agreement snapshot",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "digest",
+      "label": "Snapshot SHA-256",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "recipient",
+      "label": "Client email",
+      "fieldtype": "Data",
+      "options": "Email"
+    },
+    {
+      "fieldname": "signed_by",
+      "label": "Signed by",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "signed_email",
+      "label": "Signer email",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "signed_on",
+      "label": "Signed on",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "signature",
+      "label": "Signature",
+      "fieldtype": "Attach Image",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1
+    }
+  ]
+}

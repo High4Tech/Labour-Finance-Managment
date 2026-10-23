@@ -213,3 +213,18 @@ Choose transport purpose before entering capacity. Crew vehicles ask for crew se
 In onboarding, tick available workers in the crew list. Your choices appear as tags; use each tag’s remove button to deselect. Search names, IDs or phone numbers. Import workers brings in a sheet and refreshes availability; Add worker creates another profile inside the same screen. Availability uses the inclusive event dates, active status and joining/leaving dates, and excludes any overlapping site/project allocation.
 
 The same selection appears under event-plan Choose crew and the normal Assign workers action on Worker assignments. Assign workers is also available from worker lists/profiles and event sites. The event planner uses only the chosen pool and shows any shortage; it never fills the gap using unchecked workers. Daily staffing controls how many selected workers each phase needs. Onboarding starts with your selection count for its first venue. Saving a manual multi-worker assignment creates all selected allocations together or saves none. Availability is checked again when saving. These actions create allocations and may prepare today's unmarked register. They do not approve attendance or create earned wages.
+
+
+## Agreement pricing, sites and client signatures
+
+Open **Client agreements** for the searchable list, then open an agreement. Use the top tabs for client details, agreement pricing, sites/crew, payment milestones, and sending/signing. Names remain the main choices; the smaller Tracking ID is a stable reference for search and support.
+
+Choose the agreement currency under **Agreement and pricing**. Review its exchange rate (company accounting currency per one agreement-currency unit). All site wages, Daily client rates, fixed prices and milestones in this editor use that agreement currency. New agreements can override the client's suggested currency. Once allocations or financial activity exist, saved currency/rate changes are protected; individual invoices can still have their own reviewed currency/rate.
+
+Under **Sites and crew**, choose **Add site / crew category**, fill the row and save it, or use **Save agreement** to include the row currently being edited. Daily agreements require both wages and the separate client rate. Allocated baseline rows stay protected; new site/category rows save into the agreement and its event. Use the event for additional crew and dated worker moves.
+
+Fixed agreements can have payment milestones while being created. After saving, **Edit / approve** records milestone acceptance; automatic invoicing creates a draft if enabled. Review and submit the draft in Billing and finances. Extra invoices use the agreement currency and rate. PDF downloads are prepared within the browser.
+
+Under **Send and sign**, create a private link and copy it or email it. Links expire after seven days. Creating another link or changing the agreement/milestones revokes pending links. Clients see a frozen version of scope, sites, headcounts, client pricing and milestones. They enter their name/email, confirm acceptance and may draw a signature. The signed snapshot and signature stay in the signing history, and the company receives an in-app notification. This records client acceptance; it is not an external identity verification service. Email delivery requires an outgoing Email Account; copying the link remains available.
+
+The top-bar currency converts company-wide totals and the unfiltered financial report, and is saved for the user. Opening a specific agreement, event or project report keeps its own currency. Conversion does not rewrite transactions. Worker lists include **Open profile** and **Edit contact**; other lists have actions suited to their records.

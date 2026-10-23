@@ -138,8 +138,8 @@
                     ${data.company ? (data.is_platform ? platform(data) : customer(data,Number(root.dataset.range)||14)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/pp-onboarding">${esc(__('Set up my business'))}</a></div>`}
                     <p class="pp-dashboard-updated" role="status">${esc(__('Updated just now. Refresh to see the latest records.'))}</p>`;
                 root.querySelector('.pp-dashboard-company').addEventListener('change',event=>load(event.target.value));
-                root.querySelector('.pp-dashboard-currency').addEventListener('change',event=>load(data.company,event.target.value));
-                root.querySelector('.pp-dashboard-refresh').addEventListener('click',()=>load(root.querySelector('.pp-dashboard-company').value));
+                root.querySelector('.pp-dashboard-currency').addEventListener('change',async event=>{await plus_point.form_rpc('workflows.display_currency',{currency:event.target.value});frappe.boot.plus_point.display_currency=event.target.value;document.dispatchEvent(new Event('pp:display-currency'));});
+                root.querySelector('.pp-dashboard-refresh').addEventListener('click',()=>load(root.querySelector('.pp-dashboard-company').value,frappe.boot.plus_point.display_currency));
                 root.querySelector('.pp-retry-fx')?.addEventListener('click',()=>load(data.company,data.fx.requested));
                 root.querySelector('.pp-open-updates').addEventListener('click',()=>{const inbox=root.querySelector('.pp-action-inbox');inbox?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});inbox?.focus({preventScroll:true});});
                 root.querySelector('.pp-mark-updates')?.addEventListener('click',async event=>{event.target.disabled=true;try{await frappe.call({method:'plus_point.dashboard.mark_updates_read',type:'POST',args:{company:data.company}});data.notifications.forEach(row=>row.read=true);draw();}finally{event.target.disabled=false;}});
@@ -164,6 +164,6 @@
             }
         }
         root.innerHTML=`<p role="status">${esc(__('Loading your dashboard…'))}</p>`;
-        load(plus_point.dashboard_company);
+        document.addEventListener('pp:display-currency',()=>{if(root.isConnected)load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);});load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
     };
 })();

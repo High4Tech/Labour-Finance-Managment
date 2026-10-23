@@ -223,3 +223,71 @@ class HierarchyTests(unittest.TestCase):
         frappe.set_user('Guest')
         for call in (lambda:experience.invoice_preview(name),lambda:experience.pdf_data(name),lambda:experience.save_branding(dict(email='other@example.invalid'))):
             with self.assertRaises(frappe.PermissionError):call()
+
+    def test_allocated_agreement_can_append_site_without_rewriting_existing_crew(self):
+        a=self.agreement();name=self.event(a);op.auto_assign(name);before=op.plan(name)
+        values=dict(staffing=[dict(r.as_dict(),site_name=next(v.site_name for v in op.agreement(a['name'])['venues'] if v.name==r.site)) for r in frappe.get_doc('PP Contract Terms',a['name']).staffing])
+        values['staffing'].append(dict(site_name='Garden stage',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=2,wage_rate=900,client_rate=1300))
+        op.save_agreement(values,a['name']);after=op.plan(name)
+        self.assertEqual(len(after['staffing']),2);self.assertEqual(after['allocations'],before['allocations'])
+        self.assertEqual(frappe.db.count('PP Site',{'project':a['project']}),2)
+
+    def test_agreement_currency_converts_storage_and_new_milestones_atomically(self):
+        values=dict(customer=self.f.customer.name,agreement_title='USD fixed agreement',scope='Stage setup',billing_model='Fixed',agreement_currency='USD',agreement_rate=280,fixed_amount=100,status='Active',effective_start=today(),effective_end=add_days(today(),4),auto_invoice=1,staffing=[dict(site_name='Main USD stage',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=5,client_rate=0)],milestones=[dict(milestone_title='Deposit',amount=20,status='Planned',due_date=today())])
+        a=op.save_agreement(values);saved=op.agreement(a['name'])
+        self.assertEqual(saved['currency'],'PKR');self.assertEqual(saved['agreement_currency'],'USD');self.assertEqual(saved['fixed_amount'],28000)
+        self.assertEqual(saved['staffing'][0].wage_rate,1400);self.assertEqual(saved['milestones'][0].amount,5600)
+        self.assertEqual(values['staffing'][0]['wage_rate'],5)
+        saved_milestone=saved['milestones'][0];op.save_milestone(a['name'],dict(milestone_title=saved_milestone.milestone_title,amount=5600,due_date=today(),status='Approved'),saved_milestone.name)
+        from plus_point.billing import create_invoice
+        invoice=frappe.get_doc('Sales Invoice',frappe.db.get_value('PP Milestone',saved_milestone.name,'sales_invoice'))
+        self.assertEqual(invoice.currency,'USD');self.assertEqual(invoice.grand_total,20)
+        with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(agreement_currency='EUR',agreement_rate=300),a['name'])
+
+    def test_references_are_readable_stable_and_not_user_supplied_keys(self):
+        a=self.agreement();doc=frappe.get_doc('PP Contract Terms',a['name']);self.assertRegex(doc.pp_reference,r'^AGR-20[0-9]{2}-[0-9]{5}$')
+        reference=doc.pp_reference;doc.agreement_title='Named agreement';doc.save();self.assertEqual(doc.pp_reference,reference)
+        doc.pp_reference='AGR-FAKE'
+        with self.assertRaises(frappe.ValidationError):doc.save()
+        plan=frappe.get_doc('PP Event Plan',self.event(a));self.assertTrue(plan.pp_reference.startswith('EVT-'))
+
+    def test_signing_link_expiration_revocation_and_guest_acceptance(self):
+        from plus_point import signing
+        a=self.agreement(fixed=True);link=signing.create_link(a['name'])
+        from urllib.parse import urlparse,parse_qs
+        token=parse_qs(urlparse(link['url']).query)['token'][0]
+        second=signing.create_link(a['name']);second_token=parse_qs(urlparse(second['url']).query)['token'][0]
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):signing.review(token)
+        html=signing.review(second_token)['html'];self.assertIn('Full event agreement',html);self.assertNotIn('Daily wage',html);self.assertNotIn('1000.00',html)
+        with self.assertRaises(frappe.ValidationError):signing.accept(second_token,'Ayesha Malik','client@example.invalid',0)
+        result=signing.accept(second_token,'Ayesha Malik','client@example.invalid',1)
+        self.assertTrue(result['signed']);self.assertEqual(signing.review(second_token)['status'],'Signed')
+        with self.assertRaises(frappe.ValidationError):signing.accept(second_token,'Ayesha Malik','client@example.invalid',1)
+        frappe.set_user('Administrator');self.assertTrue(frappe.db.get_value('Contract',a['contract'] if 'contract' in a else frappe.db.get_value('PP Contract Terms',a['name'],'contract'),'is_signed'))
+        self.assertTrue(frappe.db.exists('Notification Log',{'document_type':'PP Contract Terms','document_name':a['name']}))
+        with self.assertRaises(frappe.ValidationError):frappe.delete_doc('PP Agreement Share',result['reference'])
+
+    def test_changed_agreement_revokes_unsigned_link_and_expired_link_is_denied(self):
+        from plus_point import signing
+        from urllib.parse import urlparse,parse_qs
+        a=self.agreement();link=signing.create_link(a['name']);token=parse_qs(urlparse(link['url']).query)['token'][0]
+        op.save_agreement(dict(scope='Updated client scope'),a['name'])
+        with self.assertRaises(frappe.PermissionError):signing.review(token)
+        link=signing.create_link(a['name']);token=parse_qs(urlparse(link['url']).query)['token'][0]
+        frappe.db.set_value('PP Agreement Share',link['name'],'expires',add_days(today(),-1))
+        with self.assertRaises(frappe.PermissionError):signing.review(token)
+
+    def test_app_reporting_currency_changes_aggregate_report_only(self):
+        from plus_point.workflows import display_currency
+        from plus_point.reporting import project_finances
+        a=self.agreement(fixed=True);op.save_milestone(a['name'],dict(milestone_title='Accepted',due_date=today(),amount=2800,status='Approved'))
+        display_currency('USD')
+        with patch('plus_point.billing.quote',return_value=dict(rate='280')):
+            report=project_finances(dict(company=self.f.company.name));row=next(r for r in report[1] if r['project']==a['project']);self.assertEqual(row['currency'],'USD');self.assertEqual(row['earned_revenue'],'10.00')
+        project=project_finances(dict(company=self.f.company.name,project=a['project']));self.assertEqual(project[1][0]['currency'],'PKR')
+
+    def test_extra_charge_uses_explicit_agreement_invoice_currency(self):
+        a=self.agreement();created=op.extra_invoice(a['name'],self.f.item.name,'Additional stage setup',10,invoice_currency='USD',exchange_rate=280)
+        doc=frappe.get_doc('Sales Invoice',created['name'])
+        self.assertEqual(doc.currency,'USD');self.assertEqual(doc.grand_total,10);self.assertEqual(doc.base_grand_total,2800)

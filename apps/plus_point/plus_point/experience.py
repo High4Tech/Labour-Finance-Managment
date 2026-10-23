@@ -42,6 +42,9 @@ def add_worker(plan,values):
 
 
 def install():
+    from plus_point.workflows import install as install_workflows
+    install_workflows()
+    frappe.reload_doc("plus_point","doctype","pp_agreement_share")
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     create_custom_fields({
         'PP Work Entry':[dict(fieldname='pp_invoice_amount_snapshot',label='Original invoiced amount',fieldtype='Currency',read_only=1,hidden=1)],
@@ -90,3 +93,15 @@ def pdf_data(name):
     from plus_point.operations import invoice,invoice_pdf_content
     invoice(name);doc=linked('Sales Invoice',name)
     return dict(filename=name+'.pdf',content=base64.b64encode(invoice_pdf_content(doc)).decode(),mime='application/pdf')
+
+
+@frappe.whitelist(methods=['POST'])
+def update_worker_contact(employee,values):
+    business=company();doc=linked('Employee',employee,business.name);doc.check_permission('write')
+    values=frappe.parse_json(values) or {}
+    from plus_point.input_rules import check
+    if 'cell_number' in values:check('cell_number',values['cell_number']);doc.cell_number=values['cell_number']
+    if 'personal_email' in values:
+        if values['personal_email']:frappe.utils.validate_email_address(values['personal_email'],throw=True)
+        doc.personal_email=values['personal_email']
+    doc.save();return dict(name=doc.name)

@@ -1,5 +1,12 @@
 # Development changelog
 
+## 2026-10-23 — Agreement pricing, site editing, signing and record actions
+
+Agreements now have explicit currencies and agreed exchange rates, visible Daily client rates, and editable site/crew forms instead of fragile last-cell grids. New sites append into allocated events while existing allocations retain their rates and history. Fixed agreements support milestones before and after saving; approved milestones generate drafts in the agreement currency. Extra client charges use that currency too. Aggregate reporting has a saved top-bar currency preference; individual agreements, events and project reports retain their own currency.
+
+Added expiring client review links with frozen client-visible snapshots, explicit acceptance, optional drawn signatures, immutable signed history and owner notifications. Sending links uses configured native outgoing email. Sidebar icons, aligned compact info controls, responsive crew cards and contextual list actions replace generic comments/likes. Readable tracking references are generated and searchable without renaming underlying records or changing name-based selection.
+
+
 ## 2026-10-21 — Complete choices, faster forms and draft deletion
 
 Shared native record pickers now fetch all permission-filtered pages, handle smaller query caps, sort displayed names A–Z, show totals and use centered SVG arrows. Installed currencies are selectable before enabling; event timeline selectors and inventory listings no longer silently stop at their former caps. Available crew lists show all eligible workers. Added shared input restrictions and server/import name, phone, code and numeric validation while retaining legitimate international formats and business punctuation. Saved event details prefill assignment/reservation forms, client context carries into event creation, and onboarding can reuse the client’s saved address explicitly. Added confirmed record/list deletion through native permissions/link guards, atomic batches and native draft-delete permissions. Approved work/milestones and posted history remain protected; client cleanup is described in the confirmation. No existing customer records were removed by implementation or verification.
