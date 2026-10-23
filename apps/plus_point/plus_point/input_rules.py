@@ -33,7 +33,7 @@ def check(fieldname,value,fieldtype=None,label=None):
 
 SUPPORTED={'Employee','Customer','Contact','Address','Vehicle','Item','Warehouse','Project','Contract',
     'PP Site','PP Assignment','PP Contract Terms','PP Event Plan','PP Work Entry','PP Daily Register',
-    'PP Milestone','PP Vehicle Booking','PP Equipment Booking','PP Wage Settlement'}
+    'PP Worker Loan','PP Worker Leave','PP Loan Recovery','PP Milestone','PP Vehicle Booking','PP Equipment Booking','PP Wage Settlement'}
 
 
 def validate_document(doc,method=None):

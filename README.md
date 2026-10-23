@@ -84,3 +84,7 @@ Billing → Invoice branding stores the subscribing company's logo, address, con
 The shared toolbar contains Appearance, Help and support, a Language placeholder, and company financial totals outside the overview. Required first setup gates navigation; finishing or intentionally skipping setup removes its sidebar entry.
 
 Run `node scripts/browser-experience.cjs` with Playwright and Google Chrome installed for the complete isolated QA flow. It creates an exact temporary company on `qa.localhost`, exercises native lists, tab navigation, date errors, workers, venues, PDF download/print, attendance corrections and mobile dark mode, then restores the previous workspace. Database suites `run_hierarchy`, `run_attendance`, `run_operations`, `run_events`, and `run_currency_billing` roll back business fixtures.
+
+### Agreement revisions and worker benefits
+
+Agreements use Client details, Agreement details, Pricing and milestones, Sites and crew, and Send and sign. Sites contain editable category tables; Fixed pricing hides wage columns. Currency changes preserve accounting value and issued invoices. Worker profiles include activation, Salary and leaves, dated leave, eligibility-checked loans, accounting-backed loan recovery, and worker-specific event assignment with explicit extra crew. See [worker benefits and revision workflow](WORKER_BENEFITS.md). Run `node scripts/browser-worker-flows.cjs` for the new isolated QA flow.

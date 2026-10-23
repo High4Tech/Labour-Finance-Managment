@@ -33,6 +33,8 @@ def roster(site,day):
         if row.end_date and getdate(row.end_date)<day:continue
         worker=linked('Employee',row.employee)
         if worker.status!='Active' or worker.date_of_joining and getdate(worker.date_of_joining)>day or worker.relieving_date and getdate(worker.relieving_date)<day:continue
+        from plus_point.benefits import leave_units
+        if leave_units(worker.name,day)>=1:continue
         result.append(row)
     return result
 

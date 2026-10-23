@@ -18,11 +18,13 @@ class PPContractTerms(Document):
                 return getdate(value) if value else None
             return value
         if old and any(normalized(self, k) != normalized(old, k) for k in
-                       ("contract", "project", "billing_model", "fixed_amount", "currency", "effective_start", "effective_end")):
+                       ("contract", "project", "billing_model", "currency")):
             if (frappe.db.exists("PP Work Entry", {"contract_terms": self.name}) or
-                frappe.db.exists("PP Milestone", {"contract_terms": self.name}) or
-                frappe.db.exists("PP Assignment", {"contract_terms": self.name})):
+                frappe.db.exists("PP Milestone", {"contract_terms": self.name})):
                 frappe.throw("Billing terms cannot change after work entries or milestones exist")
+        if self.billing_model=='Fixed' and not self.is_new():
+            approved=sum(float(r.amount) for r in frappe.get_all('PP Milestone',filters={'contract_terms':self.name,'status':'Approved'},fields=['amount']))
+            if float(self.fixed_amount or 0)<approved:frappe.throw('Fixed value cannot be less than approved milestones.')
         if self.billing_model not in {"Daily", "Fixed"}:
             frappe.throw("Billing model must be Daily or Fixed")
         if self.effective_end and getdate(self.effective_end) < getdate(self.effective_start):

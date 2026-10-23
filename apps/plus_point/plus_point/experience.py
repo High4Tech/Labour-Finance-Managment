@@ -46,6 +46,8 @@ def install():
     install_workflows()
     from plus_point.people import install as install_people
     install_people()
+    from plus_point.benefits import install as install_benefits
+    install_benefits()
     frappe.reload_doc("plus_point","doctype","pp_agreement_share")
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     create_custom_fields({

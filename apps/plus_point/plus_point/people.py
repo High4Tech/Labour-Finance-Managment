@@ -36,6 +36,8 @@ def work_options(employee=None):
 
 def validate_worker(doc,method=None):
     if frappe.conf.get('pp_control_plane'):return
+    from plus_point.benefits import validate_worker_settings
+    validate_worker_settings(doc)
     old=doc.get_doc_before_save()
     if doc.reports_to and (not old or old.reports_to!=doc.reports_to):
         manager=linked('Employee',doc.reports_to)

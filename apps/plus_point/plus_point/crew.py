@@ -35,9 +35,11 @@ def roster(company,start_date,end_date,lock=False):
             AND (end_date IS NULL OR end_date>=%(first)s)''' + (' FOR UPDATE' if lock else ''),
             dict(names=names,first=first,last=last))
         booked={r[0] for r in rows}
+    from plus_point.benefits import installed
+    on_leave=set(frappe.get_list('PP Worker Leave',filters={'employee':['in',names or ['']],'leave_date':['between',[first,last]],'docstatus':1},pluck='employee',limit_page_length=0)) if installed() else set()
     result=[]
     for person in people:
-        reason=('Booked for overlapping dates' if person.name in booked else
+        reason=('Approved leave overlaps these dates' if person.name in on_leave else 'Booked for overlapping dates' if person.name in booked else
             'Joining date is after the event starts' if person.date_of_joining and getdate(person.date_of_joining)>first else
             'Employment ends before the event finishes' if person.relieving_date and getdate(person.relieving_date)<last else '')
         result.append(dict(name=person.name,worker=person.employee_name,phone=person.cell_number or '',available=not reason,reason=reason,image=person.image or ''))

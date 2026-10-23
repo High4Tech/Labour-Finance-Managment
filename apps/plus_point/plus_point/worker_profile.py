@@ -35,10 +35,13 @@ def overview(employee,days=91):
     dates={r.name:str(r.work_date) for r in registers}
     draft=frappe.get_all('PP Register Line',filters={'parent':['in',list(dates) or ['']],'parenttype':'PP Daily Register','employee':employee},fields=['parent','attendance_status'])
     pending_dates={dates[r.parent] for r in draft if r.attendance_status not in ('Not marked','',None)}
+    from plus_point.benefits import leave_map
+    leaves=leave_map([employee],start,end)
     calendar=[]
     for offset in range(days):
         day=str(add_days(start,offset));units=totals.get(day)
         state=('Present' if units>=1 else 'Half day' if units>0 else 'Absent') if units is not None else 'Pending approval' if day in pending_dates else 'Not marked' if day in expected else 'No scheduled work'
+        if units is None and (employee,day) in leaves:state='Full day leave' if leaves[(employee,day)]==1 else 'Half day leave'
         calendar.append(dict(date=day,status=state,units=str(units) if units is not None else None))
     full=sum(value>=1 for value in totals.values());half=sum(0<value<1 for value in totals.values());absent=sum(value==0 for value in totals.values())
     longest=current=0
@@ -50,8 +53,10 @@ def overview(employee,days=91):
         start=str(r.start_date),end=str(r.end_date or ''),wage_rate=str(money(r.wage_rate))) for r in allocations if projects[r.project].status=='Open' and (not r.end_date or getdate(r.end_date)>=end)]
     history=[dict(name=r.name,date=str(r.work_date),event=projects[r.project].project_name,site=sites.get(r.site,r.site),
         status='Present' if Decimal(str(r.units))==1 else 'Half day' if Decimal(str(r.units))>0 else 'Absent',amount=str(money(r.wage_amount))) for r in work[:20]]
+    from plus_point.benefits import balances
+    benefits=balances(employee)
     assigned=any(getdate(r['start'])<=end for r in assignments)
-    return dict(image=worker.image or '',allocation_status='Assigned' if assigned else 'Scheduled' if assignments else 'Available',employee=employee,title=worker.employee_name,designation=worker.designation or '',department=worker.department or '',
+    return dict(benefits=benefits,outstanding_after_loan=str(money(earned-paid-Decimal(benefits['recovered']))),image=worker.image or '',allocation_status='Assigned' if assigned else 'Scheduled' if assignments else 'Available',employee=employee,title=worker.employee_name,reference=worker.get('pp_reference') or employee,designation=worker.designation or '',department=worker.department or '',
         company=company.company_name,company_id=company.name,currency=company.default_currency,status=worker.status,
         phone=worker.cell_number or '',email=worker.personal_email or '',joining=str(worker.date_of_joining or ''),
         full_days=full,half_days=half,absent_days=absent,paid_days=str(sum(totals.values(),Decimal(0))),

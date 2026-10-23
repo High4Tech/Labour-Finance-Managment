@@ -1,0 +1,89 @@
+{
+  "doctype": "DocType",
+  "name": "PP Loan Recovery",
+  "module": "PLUS POINT",
+  "autoname": "format:REC-{YYYY}-{#####}",
+  "track_changes": 1,
+  "is_submittable": 1,
+  "field_order": [
+    "employee",
+    "company",
+    "loan",
+    "project",
+    "month",
+    "amount",
+    "journal_entry",
+    "recovery_key"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee",
+      "label": "Worker",
+      "fieldtype": "Link",
+      "options": "Employee",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1
+    },
+    {
+      "fieldname": "loan",
+      "label": "Loan",
+      "fieldtype": "Link",
+      "options": "PP Worker Loan",
+      "reqd": 1
+    },
+    {
+      "fieldname": "project",
+      "label": "Event project",
+      "fieldtype": "Link",
+      "options": "Project",
+      "reqd": 1
+    },
+    {
+      "fieldname": "month",
+      "label": "Wage month",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "amount",
+      "label": "Recovered amount",
+      "fieldtype": "Currency",
+      "reqd": 1
+    },
+    {
+      "fieldname": "journal_entry",
+      "label": "Accounting journal",
+      "fieldtype": "Link",
+      "options": "Journal Entry",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "recovery_key",
+      "label": "Monthly recovery key",
+      "fieldtype": "Data",
+      "unique": 1,
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

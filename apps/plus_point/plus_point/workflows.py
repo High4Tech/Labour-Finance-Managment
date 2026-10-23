@@ -25,6 +25,7 @@ def install():
         references[dt]=[dict(fieldname='pp_reference',label='Tracking ID',fieldtype='Data',read_only=1,no_copy=1,search_index=1,in_standard_filter=1,insert_after=anchor)]
     create_custom_fields(references)
     create_custom_fields({'PP Contract Terms':[
+        dict(fieldname='pp_conditions',label='Agreement conditions',fieldtype='Long Text'),
         dict(fieldname='pp_agreement_currency',label='Agreement currency',fieldtype='Link',options='Currency'),
         dict(fieldname='pp_agreement_rate',label='Accounting currency per agreement unit',fieldtype='Float',precision=9)]})
     for dt,prefix in REFERENCES.items():
@@ -41,8 +42,6 @@ def rate_values(business,values,old=None):
     frappe.get_doc('Currency',currency).check_permission('read')
     from plus_point.events import positive
     rate=Decimal(1) if currency==business.default_currency else positive(v.get('agreement_rate'),'Agreement exchange rate')
-    if old and (old.get('pp_agreement_currency') or old.currency,Decimal(str(old.get('pp_agreement_rate') or 1)))!=(currency,rate):
-        if any(frappe.db.exists(dt,{'contract_terms':old.name}) for dt in ['PP Assignment','PP Work Entry','PP Milestone']):frappe.throw('This agreement already has activity. Its saved currency and exchange rate are fixed; choose another invoice currency when billing.')
     if 'fixed_amount' in v:v.fixed_amount=float(money(Decimal(str(v.fixed_amount or 0))*rate))
     for row in v.get('staffing',[]):
         for key in ['wage_rate','client_rate']:row[key]=float(money(Decimal(str(row.get(key) or 0))*rate))

@@ -1,0 +1,86 @@
+{
+  "doctype": "DocType",
+  "name": "PP Worker Loan",
+  "module": "PLUS POINT",
+  "autoname": "format:LOAN-{YYYY}-{#####}",
+  "track_changes": 1,
+  "is_submittable": 1,
+  "field_order": [
+    "employee",
+    "company",
+    "loan_date",
+    "currency",
+    "amount",
+    "deduction_percent",
+    "reason",
+    "payment_entry"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee",
+      "label": "Worker",
+      "fieldtype": "Link",
+      "options": "Employee",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1
+    },
+    {
+      "fieldname": "loan_date",
+      "label": "Disbursement date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "currency",
+      "label": "Currency",
+      "fieldtype": "Link",
+      "options": "Currency",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount",
+      "label": "Loan amount",
+      "fieldtype": "Currency",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "deduction_percent",
+      "label": "Monthly deduction (%)",
+      "fieldtype": "Percent",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reason",
+      "label": "Purpose and repayment terms",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "payment_entry",
+      "label": "Disbursement payment",
+      "fieldtype": "Link",
+      "options": "Payment Entry"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

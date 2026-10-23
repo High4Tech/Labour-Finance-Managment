@@ -100,7 +100,7 @@ def validate_agreement(doc):
         if getdate(row.start_date)<getdate(doc.effective_start) or doc.effective_end and getdate(row.end_date)>getdate(doc.effective_end):frappe.throw('Staffing dates must fall within the agreement dates.')
         positive(row.workers_required,'Workers per day',whole=True)
         if row.workers_required>500:frappe.throw('Use at most 500 workers per role/site/day.')
-        positive(row.wage_rate,'Daily wage');positive(row.client_rate,'Client rate',allow_zero=doc.billing_model=='Fixed')
+        positive(row.wage_rate,'Daily wage',allow_zero=doc.billing_model=='Fixed');positive(row.client_rate,'Client rate',allow_zero=doc.billing_model=='Fixed')
         if doc.billing_model=='Fixed' and money(row.client_rate):frappe.throw('Fixed agreements use milestones rather than worker-day client charges.')
         key=(row.site,row.designation)
         for previous in doc.staffing:
@@ -109,11 +109,6 @@ def validate_agreement(doc):
         seen.add(key)
     from plus_point.people import validate_capacity
     validate_capacity(doc)
-    old=doc.get_doc_before_save()
-    fields=('site','designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')
-    signature=lambda d:[tuple(str(money(r.get(f) or 0)) if f in ('wage_rate','client_rate') else str(int(r.get(f) or 0)) if f=='workers_required' else str(r.get(f) or '') for f in fields) for r in d.get('staffing',[])]
-    if old and signature(doc)[:len(old.staffing)]!=signature(old) and frappe.db.exists('PP Assignment',{'contract_terms':doc.name}):
-        frappe.throw('This agreement has allocations. Keep contracted staffing as the baseline; manage additional crew and dated transfers in Event plans.')
     if doc.get('auto_invoice') and not doc.get('billing_item'):frappe.throw('Choose a billing service item for automatic milestone invoices.')
 
 
@@ -143,13 +138,24 @@ def save_agreement(values,name=None):
         if values.get('client') and (name or values.get('customer')):
             from plus_point.clients import save
             save(values.client,customer)
-        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count'):
+        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions'):
             if key in values:doc.set(key,values[key])
+        if 'pp_conditions' in values:
+            conditions=frappe.parse_json(values.pp_conditions or '[]')
+            if not isinstance(conditions,list) or len(conditions)>100 or any(not isinstance(c,str) or len(c)>5000 for c in conditions):frappe.throw('Use at most 100 text conditions of 5,000 characters each.')
+            if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('The agreement conditions update is awaiting installation approval. Save conditions after the app update is installed.')
+            doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
             contract.check_permission('write');contract.contract_terms=values.scope;contract.save()
         if 'staffing' in values:
+            if 'sites' in values and (not isinstance(values.sites,list) or len(values.sites)>12 or any(not isinstance(v,str) or len(v)>140 for v in values.sites)):frappe.throw('Use at most 12 named sites in an agreement.')
             locations={r.site_name:r.name for r in frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name'],limit_page_length=0)}
+            for title in values.get('sites',[]):
+                title=str(title).strip()
+                if not title:frappe.throw('Enter each site name.')
+                if title not in locations:
+                    venue=frappe.get_doc(dict(doctype='PP Site',project=project.name,site_name=title,is_active=1)).insert();locations[title]=venue.name
             rows=[]
             for raw in values.staffing:
                 raw=frappe._dict(raw);site=raw.get('site')
@@ -165,6 +171,11 @@ def save_agreement(values,name=None):
                         venue=frappe.get_doc(dict(doctype='PP Site',project=project.name,site_name=title,is_active=1,
                             **{key:raw.get(key) for key in ('country','state','city','address_line1','address_line2','postal_code','latitude','longitude')})).insert()
                         site=locations[title]=venue.name
+                if any(raw.get(key) for key in ('country','city','address_line1')):
+                    venue=linked('PP Site',site);venue.check_permission('write')
+                    for key in ('country','city','address_line1','state','address_line2','postal_code'):
+                        if raw.get(key) is not None:venue.set(key,raw[key])
+                    venue.save()
                 rows.append(dict(site=site,**{key:raw.get(key) for key in ('designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')}))
             if not rows:frappe.throw('Add at least one venue and worker category.')
             doc.set('staffing',rows)
@@ -177,17 +188,43 @@ def save_agreement(values,name=None):
             plan=frappe.get_doc('PP Event Plan',plan_name)
             keys=('site','designation','start_date','end_date','phase')
             signature=lambda r:tuple(str(r.get(k) or '') for k in keys)
-            existing={signature(r) for r in plan.staffing}
-            if not frappe.db.exists('PP Assignment',{'project':doc.project}):
-                previous=doc.get_doc_before_save();baseline={signature(r) for r in previous.staffing} if previous else set()
-                extras=[{k:r.get(k) for k in keys+('workers_required','wage_rate','client_rate')} for r in plan.staffing if signature(r) not in baseline]
-                plan.set('staffing',extras);existing={signature(r) for r in plan.staffing}
-            for row in doc.staffing:
-                if signature(row) not in existing:plan.append('staffing',{k:row.get(k) for k in keys+('workers_required','wage_rate','client_rate')})
-            if not frappe.db.exists('PP Assignment',{'project':doc.project}):
-                plan.start_date=min(r.start_date for r in plan.staffing);plan.end_date=max(r.end_date for r in plan.staffing)
-                plan.wage_rate=doc.staffing[0].wage_rate;plan.client_rate=doc.staffing[0].client_rate
+            previous=doc.get_doc_before_save();baseline={signature(r) for r in previous.staffing} if previous else set()
+            extras=[{k:r.get(k) for k in keys+('workers_required','wage_rate','client_rate')} for r in plan.staffing if signature(r) not in baseline]
+            rows=[{k:r.get(k) for k in keys+('workers_required','wage_rate','client_rate')} for r in doc.staffing]
+            # Keep removed but deployed positions as explicit event extras. Existing
+            # attendance and worker pay agreements never disappear with a client edit.
+            for old in previous.staffing if previous else []:
+                if signature(old) not in {signature(r) for r in doc.staffing} and frappe.db.exists('PP Assignment',{'contract_terms':doc.name,'site':old.site}):
+                    extras.append({k:old.get(k) for k in keys+('workers_required','wage_rate','client_rate')})
+            known={signature(r) for r in rows}
+            for row in extras:
+                if signature(row) not in known:rows.append(row);known.add(signature(row))
+            # Fixed client prices do not define payroll. Zero-wage requirements
+            # inherit an existing plan payroll rate until a worker is assigned.
+            for row in rows:
+                if not row['wage_rate']:row['wage_rate']=plan.wage_rate
+                if doc.billing_model=='Fixed':row['client_rate']=0
+            plan.set('staffing',rows)
+            plan.start_date=min(getdate(r['start_date']) for r in rows);plan.end_date=max(getdate(r['end_date']) for r in rows)
+            plan.wage_rate=rows[0]['wage_rate'];plan.client_rate=rows[0]['client_rate']
             plan.save()
+            for allocation in frappe.get_list('PP Assignment',filters={'contract_terms':doc.name},fields=['name','site','employee'],limit_page_length=0):
+                if frappe.db.exists('PP Work Entry',{'assignment':allocation.name}):continue
+                # Only unused allocations adopt revised rates; a work entry is an
+                # immutable payroll snapshot, even before approval.
+                assignment=linked('PP Assignment',allocation.name)
+                role=frappe.db.get_value('Employee',allocation.employee,'designation')
+                match=next((r for r in doc.staffing if r.site==allocation.site and r.designation==role and getdate(r.start_date)<=getdate(assignment.start_date) and getdate(r.end_date)>=getdate(assignment.end_date or r.end_date)),None)
+                if match and match.wage_rate:assignment.wage_rate=match.wage_rate
+                if doc.billing_model=='Fixed':assignment.client_rate=0
+                elif match:assignment.client_rate=match.client_rate
+                assignment.save()
+        if 'sites' in values:
+            retained=set(values.sites)|{frappe.db.get_value('PP Site',r.site,'site_name') for r in doc.staffing}
+            for venue in frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name'],limit_page_length=0):
+                if venue.site_name in retained:continue
+                if any(frappe.db.exists(dt,{'site':venue.name}) for dt in ['PP Assignment','PP Work Entry','PP Daily Register','PP Vehicle Booking','PP Equipment Booking']):continue
+                frappe.delete_doc('PP Site',venue.name)
         for row in values.get('milestones',[]):
             if str(row.get('milestone_title') or '').strip():save_milestone(doc.name,row)
         return dict(name=doc.name,project=project.name)
@@ -262,6 +299,8 @@ def coverage(doc):
     sites={r.name:r.site_name for r in frappe.get_list('PP Site',filters={'project':doc.project},fields=['name','site_name'],limit_page_length=0)}
     rows=[]
     from plus_point.events import span
+    from plus_point.benefits import leave_map
+    leaves=leave_map([r.employee for r in assignments],doc.start_date,doc.end_date)
     for day in span(doc.start_date,doc.end_date):
         required=defaultdict(int);actual=defaultdict(int);planned=defaultdict(int)
         for r in baseline:
@@ -272,7 +311,7 @@ def coverage(doc):
             if getdate(r.start_date)<=getdate(day)<=getdate(r.end_date or doc.end_date):
                 key=(r.site,roles.get(r.employee) or '')
                 if (r.site,'') in required:key=(r.site,'')
-                actual[key]+=1
+                actual[key]+=float(max(Decimal(0),1-leaves.get((r.employee,day),Decimal(0))))
         for key in sorted(set(required)|set(actual)|set(planned)):
             wanted=required[key];count=actual[key];target=planned[key]
             rows.append(dict(date=day,site=key[0],venue=sites.get(key[0],key[0]),designation=key[1] or 'All crew',required=wanted,planned=target,assigned=count,planned_extra=max(0,target-wanted),extra=max(0,count-wanted),missing=max(0,target-count)))
@@ -345,7 +384,12 @@ def assign_crew(name,requirement,employees):
             'start_date':['<=',row.end_date]},fields=['employee','end_date'],limit_page_length=0)
             if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
         names=[n for n in names if n not in existing]
-        result=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,row.wage_rate or doc.wage_rate,row.client_rate or doc.client_rate,names) if names else dict(created=0)
+        from plus_point.benefits import wage
+        result=dict(created=0,assignments=[])
+        for employee in names:
+            worker=linked('Employee',employee,doc.company);pay=row.wage_rate or doc.wage_rate or wage(worker)
+            if not pay:frappe.throw(f'Set salary for {worker.employee_name} before assigning fixed-price work.')
+            added=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,pay,row.client_rate or doc.client_rate,[employee]);result['created']+=added['created'];result['assignments']+=added.get('assignments',[])
         for assignment in result.get('assignments',[]):frappe.db.set_value('PP Assignment',assignment,'pp_event_plan',name)
         frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not r['missing'] for r in coverage(doc))))
         return result

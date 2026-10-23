@@ -132,6 +132,12 @@ def hierarchy_browser_fixture(action,run_id):
     backup=Path(frappe.get_site_path('private','backups','pp-event-browser-'+run_id+'.json'))
     if action!='end' or not backup.exists() or not frappe.db.exists('Company',prefix):raise RuntimeError('Exact disposable hierarchy fixture required')
     if frappe.db.exists('GL Entry',{'company':prefix}):raise RuntimeError('Posted financial history; cleanup refused')
+    for dt in ['PP Worker Loan','PP Worker Leave']:
+        for row in frappe.get_all(dt,filters={'company':prefix},fields=['name','docstatus']):
+            if dt=='PP Worker Loan' and row.docstatus:raise RuntimeError('Disbursed loan history; cleanup refused')
+            doc=frappe.get_doc(dt,row.name)
+            if doc.docstatus==1:doc.cancel()
+            frappe.delete_doc(dt,row.name)
     invoices=frappe.get_all('Sales Invoice',filters={'company':prefix},fields=['name','docstatus'])
     if any(r.docstatus for r in invoices):raise RuntimeError('Submitted invoices; cleanup refused')
     for row in invoices:frappe.delete_doc('Sales Invoice',row.name)

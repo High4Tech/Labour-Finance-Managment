@@ -55,7 +55,7 @@ def validate_plan(doc):
     days=span(doc.start_date,doc.end_date)
     if terms.effective_start and getdate(days[0])<getdate(terms.effective_start) or terms.effective_end and getdate(days[-1])>getdate(terms.effective_end):
         frappe.throw('Event dates must be inside the client billing agreement')
-    positive(doc.wage_rate,'Daily crew wage')
+    positive(doc.wage_rate,'Daily crew wage',allow_zero=terms.billing_model=='Fixed')
     positive(doc.client_rate,'Client rate',allow_zero=terms.billing_model=='Fixed')
     if terms.billing_model=='Fixed' and as_decimal(doc.client_rate or 0)!=0:
         frappe.throw('Fixed contracts use milestones, not worker-day client charges')
@@ -71,7 +71,7 @@ def validate_plan(doc):
             frappe.throw('Staffing phases must be within the event dates')
         if row.get('designation'):
             linked('Designation',row.designation)
-            positive(row.wage_rate or doc.wage_rate,'Category daily wage')
+            positive(row.wage_rate or doc.wage_rate,'Category daily wage',allow_zero=terms.billing_model=='Fixed')
             positive(row.client_rate or doc.client_rate,'Category client rate',allow_zero=terms.billing_model=='Fixed')
             if terms.billing_model=='Fixed' and as_decimal(row.client_rate or 0)!=0:frappe.throw('Fixed staffing categories cannot have worker-day client charges')
         count=positive(row.workers_required,'Workers per day',whole=True)
@@ -91,10 +91,7 @@ def validate_plan(doc):
         if old and int(doc.crew_allocated or 0)!=int(old.crew_allocated or 0):
             frappe.throw('Use the crew allocation or release action to change deployment status')
         if old and (old.crew_allocated or frappe.db.exists('PP Assignment',{'pp_event_plan':doc.name})):
-            keys=('project','contract_terms','start_date','end_date','wage_rate','client_rate','selected_crew')
-            rows=lambda d:[(r.site,str(r.start_date),str(r.end_date),r.phase,r.get('designation'),r.get('wage_rate'),r.get('client_rate')) for r in d.staffing]
-            if any(str(doc.get(k))!=str(old.get(k)) for k in keys) or rows(doc)[:len(old.staffing)]!=rows(old) or len(doc.staffing)<len(old.staffing):
-                frappe.throw('Release unused crew before changing this plan. Recorded attendance keeps its original plan locked.')
+            if (doc.project,doc.contract_terms)!=(old.project,old.contract_terms):frappe.throw('A deployed plan must retain its project and agreement.')
 
 
 def validate_vehicle(doc,method=None):
@@ -210,10 +207,12 @@ def crew_proposal(doc,lock=False):
         if not row.end_date or getdate(row.end_date)>=getdate(doc.start_date):
             busy[row.employee].append((getdate(row.start_date),getdate(row.end_date or '9999-12-31')))
             commitments[row.employee].append(row)
+    from plus_point.benefits import installed
+    leaves=frappe.get_list('PP Worker Leave',filters={'employee':['in',[p.name for p in people] or ['']],'docstatus':1,'leave_date':['between',[doc.start_date,doc.end_date]]},fields=['employee','leave_date'],limit_page_length=0) if installed() else []
     proposal,shortages=[],[];existing_coverage=0
     for phase in sorted(doc.staffing,key=lambda r:(str(r.start_date),str(r.end_date),r.site)):
         first,last=getdate(phase.start_date),getdate(phase.end_date)
-        eligible=[p for p in people if (not phase.get('designation') or p.designation==phase.designation) and (not p.date_of_joining or getdate(p.date_of_joining)<=first) and (not p.relieving_date or getdate(p.relieving_date)>=last)]
+        eligible=[p for p in people if not any(r.employee==p.name and first<=getdate(r.leave_date)<=last for r in leaves) and (not phase.get('designation') or p.designation==phase.designation) and (not p.date_of_joining or getdate(p.date_of_joining)<=first) and (not p.relieving_date or getdate(p.relieving_date)>=last)]
         covered=[p for p in eligible if any(r.project==doc.project and r.site==phase.site and getdate(r.start_date)<=first and getdate(r.end_date or '9999-12-31')>=last for r in commitments[p.name])
             and not any(r.site!=phase.site and getdate(r.start_date)<=last and getdate(r.end_date or '9999-12-31')>=first for r in commitments[p.name])]
         need=max(0,int(phase.workers_required)-len(covered));existing_coverage+=min(len(covered),int(phase.workers_required))
@@ -221,7 +220,10 @@ def crew_proposal(doc,lock=False):
         chosen=candidates[:need]
         if len(chosen)<need:shortages.append(dict(site=phase.site,from_date=str(first),to_date=str(last),missing=need-len(chosen),designation=phase.get('designation') or 'All crew'))
         for person in chosen:
-            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),wage_rate=phase.get('wage_rate') or doc.wage_rate,client_rate=phase.get('client_rate') or doc.client_rate))
+            from plus_point.benefits import wage
+            payroll=phase.get('wage_rate') or doc.wage_rate or wage(frappe.get_doc('Employee',person.name))
+            if not payroll:frappe.throw(f'Set salary for {person.employee_name} before assigning fixed-price work.')
+            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),wage_rate=payroll,client_rate=phase.get('client_rate') or doc.client_rate))
             busy[person.name].append((first,last))
     if len(proposal)>1000:frappe.throw('Split this event into smaller plans (maximum 1,000 generated assignments)')
     return dict(assignments=proposal,shortages=shortages,existing_coverage=existing_coverage)
@@ -290,12 +292,14 @@ def timeline(plan):
         and status='Approved' and work_date between %s and %s group by site,work_date''',(doc.project,days[0],days[-1]),as_dict=True)
     actual={(r.site,str(r.work_date)):str(r.units) for r in actual}
     labels={r.name:r.site_name for r in frappe.get_list('PP Site',filters={'name':['in',sites]},fields=['name','site_name'],limit_page_length=0)}
+    from plus_point.benefits import leave_map
+    leaves=leave_map([r.employee for r in assignments],doc.start_date,doc.end_date)
     output=[]
     for site in sites:
         cells=[]
         for day in days:
             required=sum(int(r.workers_required) for r in doc.staffing if r.site==site and str(getdate(r.start_date))<=day<=str(getdate(r.end_date)))
-            assigned=len({r.employee for r in assignments if r.site==site and str(r.start_date)<=day and (not r.end_date or str(r.end_date)>=day)})
+            assigned=sum(float(1-leaves.get((employee,day),0)) for employee in {r.employee for r in assignments if r.site==site and str(r.start_date)<=day and (not r.end_date or str(r.end_date)>=day)})
             cells.append(dict(date=day,required=required,assigned=assigned,actual=actual.get((site,day),'0')))
         output.append(dict(site=site,title=labels.get(site,site),days=cells,worker_days=sum(c['required'] for c in cells)))
     return dict(plan=doc.name,title=doc.event_name,project=doc.project,company=doc.company,start=days[0],end=days[-1],

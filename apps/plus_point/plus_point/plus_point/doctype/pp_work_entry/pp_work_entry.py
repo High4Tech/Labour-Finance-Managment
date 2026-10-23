@@ -38,6 +38,8 @@ class PPWorkEntry(Document):
         # Serialize all postings for an employee, including postings on different sites.
         # A query-only duplicate check races under concurrent HTTP submissions.
         frappe.db.get_value("Employee", self.employee, "name", for_update=True)
+        from plus_point.benefits import leave_units
+        if day_units(self.units)+leave_units(self.employee,self.work_date)>1:frappe.throw('Attendance exceeds the worker’s available day after approved leave.')
         old = self.get_doc_before_save()
         correction=frappe.flags.get('pp_attendance_correction')==self.name and 'System Manager' in frappe.get_roles()
         if self.get('pp_invoice_amount_snapshot') and (not old or self.pp_invoice_amount_snapshot!=old.get('pp_invoice_amount_snapshot')) and not correction:

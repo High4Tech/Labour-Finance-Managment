@@ -8,6 +8,105 @@ from plus_point import operations as op
 
 
 class HierarchyTests(unittest.TestCase):
+    def test_sites_without_crew_are_saved_and_unused_removed_sites_can_be_deleted(self):
+        a=self.agreement()
+        saved=op.agreement(a['name']);rows=[dict(r) for r in saved['staffing']]
+        op.save_agreement(dict(staffing=rows,sites=['Main venue','Side entrance']),a['name'])
+        self.assertEqual({r.site_name for r in op.agreement(a['name'])['venues']},{'Main venue','Side entrance'})
+        op.save_agreement(dict(staffing=rows,sites=['Main venue']),a['name'])
+        self.assertEqual(len(op.agreement(a['name'])['venues']),1)
+
+    def test_worker_activation_salary_and_fixed_payroll(self):
+        from plus_point import benefits as b
+        worker=frappe.get_doc('Employee',self.worker.name);worker.status='Inactive';worker.pp_salary_basis='Monthly';worker.pp_salary_amount=30000;worker.save()
+        self.assertEqual(str(b.wage(worker)),'1000.00');b.activate(worker.name)
+        a=self.agreement(fixed=True);doc=frappe.get_doc('PP Contract Terms',a['name']);doc.staffing[0].wage_rate=0;doc.save()
+        name=self.event(a);op.auto_assign(name)
+        self.assertEqual(frappe.db.get_value('PP Assignment',{'project':a['project']},'wage_rate'),1000)
+
+    def test_worker_leave_allowance_half_day_and_attendance(self):
+        from plus_point import benefits as b
+        worker=frappe.get_doc('Employee',self.worker.name);worker.pp_leaves_per_month=1;worker.save()
+        name=self.event();op.auto_assign(name)
+        b.grant_leave(worker.name,today(),'Half day','Family appointment')
+        with self.assertRaises(frappe.ValidationError):b.grant_leave(worker.name,today(),'Full day','Duplicate')
+        assignment=frappe.db.get_value('PP Assignment',{'project':frappe.get_doc('PP Event Plan',name).project},'name')
+        with self.assertRaises(frappe.ValidationError):insert('PP Work Entry',assignment=assignment,work_date=today(),units=1,status='Draft')
+        work=insert('PP Work Entry',assignment=assignment,work_date=today(),units=.5,status='Draft');work.status='Approved';work.save()
+        with self.assertRaises(frappe.ValidationError):b.grant_leave(worker.name,add_days(today(),1),'Full day','Above allowance')
+        self.assertEqual(b.balances(worker.name)['leaves'][0].units,.5)
+
+    def test_worker_loan_waiting_period_and_unpaid_draft(self):
+        from plus_point import benefits as b
+        worker=frappe.get_doc('Employee',self.worker.name)
+        with self.assertRaises(frappe.ValidationError):b.grant_loan(worker.name,500,10,today(),'Transport')
+        worker.pp_loan_allowed=1;worker.pp_loan_wait_months=2;worker.date_of_joining=today();worker.save()
+        self.assertFalse(b.eligibility(worker)['eligible'])
+        worker.date_of_joining='2020-01-01';worker.save()
+        result=b.grant_loan(worker.name,500,10,today(),'Transport')
+        self.assertFalse(result['disbursed']);self.assertEqual(b.balances(worker.name)['loan_outstanding'],'0.00')
+        with self.assertRaises(frappe.ValidationError):frappe.get_doc('PP Worker Loan',result['name']).submit()
+
+    def test_worker_loan_recovery_posts_native_ledger_and_prevents_double_recovery(self):
+        from plus_point import benefits as b
+        worker=frappe.get_doc('Employee',self.worker.name);worker.pp_loan_allowed=1;worker.save()
+        a=self.agreement();name=self.event(a);op.auto_assign(name)
+        assignment=frappe.db.get_value('PP Assignment',{'project':a['project'],'employee':worker.name},'name')
+        work=insert('PP Work Entry',assignment=assignment,work_date=today(),units=1,status='Draft');work.status='Approved';work.save()
+        company=frappe.get_doc('Company',worker.company)
+        payment=insert('Payment Entry',payment_type='Pay',company=worker.company,party_type='Employee',party=worker.name,paid_from=company.default_cash_account,paid_to=company.default_receivable_account,paid_amount=500,received_amount=500,source_exchange_rate=1,target_exchange_rate=1,reference_no='Worker loan QA',reference_date=today());payment.submit()
+        loan=b.grant_loan(worker.name,500,10,today(),'Transport advance',payment.name)
+        self.assertTrue(loan['disbursed']);self.assertEqual(b.balances(worker.name)['proposed_deduction'],'100.00')
+        recovery=b.apply_deduction(loan['name'],a['project'],today())
+        self.assertEqual(recovery['amount'],'100.00');self.assertEqual(b.balances(worker.name)['loan_outstanding'],'400.00')
+        self.assertTrue(frappe.db.exists('GL Entry',{'voucher_no':recovery['journal'],'is_cancelled':0}))
+        from plus_point.worker_profile import overview
+        state=overview(worker.name);self.assertEqual(state['outstanding'],'1000.00');self.assertEqual(state['outstanding_after_loan'],'900.00')
+        from plus_point.api import project_summary
+        self.assertEqual(project_summary(a['project'])['wages_outstanding'],'900.00')
+        from plus_point.reporting import worker_statement_report
+        report=worker_statement_report(dict(company=worker.company,employee=worker.name,project=a['project']))
+        self.assertEqual(str(report[1][-1]['balance']),'900.00')
+        self.assertEqual(str(report[1][-1]['loan_recovery']),'100.00')
+        with self.assertRaises(frappe.ValidationError):b.apply_deduction(loan['name'],a['project'],today())
+        with self.assertRaises(frappe.ValidationError):payment.cancel()
+        with self.assertRaises(frappe.ValidationError):frappe.get_doc('Journal Entry',recovery['journal']).cancel()
+        with self.assertRaises(frappe.ValidationError):frappe.get_doc('PP Worker Loan',loan['name']).cancel()
+        frappe.get_doc('PP Loan Recovery',recovery['name']).cancel()
+        self.assertEqual(frappe.db.get_value('Journal Entry',recovery['journal'],'docstatus'),2)
+        self.assertEqual(b.balances(worker.name)['loan_outstanding'],'500.00')
+        self.assertEqual(b.apply_deduction(loan['name'],a['project'],today())['amount'],'100.00')
+
+    def test_worker_event_assignment_requires_explicit_extra_and_preserves_agreement(self):
+        from plus_point import benefits as b
+        a=self.agreement();name=self.event(a)
+        options=b.event_positions(self.worker.name,name);self.assertEqual(len(options['positions']),1)
+        b.assign_event(self.worker.name,name,position=options['positions'][0]['name'])
+        with self.assertRaises(frappe.ValidationError):b.assign_event(self.worker.name,name,position=options['positions'][0]['name'])
+        other=insert('Employee',first_name='Extra Manager',gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active',designation=self.role)
+        self.assertEqual(b.event_positions(other.name,name)['positions'],[])
+        with self.assertRaises(frappe.ValidationError):b.assign_event(other.name,name)
+        site=options['sites'][0]['name'];b.assign_event(other.name,name,extra=True,site=site,wage_rate=900,client_rate=1400)
+        self.assertEqual(frappe.get_doc('PP Contract Terms',a['name']).staffing[0].workers_required,1)
+        self.assertEqual(frappe.get_doc('PP Event Plan',name).staffing[0].workers_required,2)
+
+    def test_used_agreement_revisions_update_plan_keep_pay_history_and_conditions(self):
+        a=self.agreement();name=self.event(a);op.auto_assign(name)
+        allocation=frappe.get_doc('PP Assignment',{'project':a['project'],'employee':self.worker.name})
+        work=insert('PP Work Entry',assignment=allocation.name,work_date=today(),units=1,status='Draft');work.status='Approved';work.save()
+        doc=op.agreement(a['name']);rows=[dict(r,site_name='Main venue') for r in doc['staffing']];rows[0]['workers_required']=2;rows[0]['wage_rate']=1200
+        op.save_agreement(dict(staffing=rows,pp_conditions='["Stage access by 08:00", "Client provides power"]'),a['name'])
+        self.assertEqual(frappe.get_doc('PP Event Plan',name).staffing[0].workers_required,2)
+        self.assertEqual(frappe.get_doc('PP Assignment',allocation.name).wage_rate,1000)
+        self.assertEqual(frappe.get_doc('PP Work Entry',work.name).wage_amount,1000)
+        from plus_point.signing import snapshot
+        self.assertIn('Client provides power',snapshot(a['name']))
+        rows.append(dict(site_name='Second stage',designation=self.role,start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=1000,client_rate=1500,phase='Event'))
+        op.save_agreement(dict(staffing=rows,pp_future_crew_count=1),a['name'])
+        op.save_agreement(dict(staffing=rows[1:]),a['name'])
+        self.assertEqual(len(frappe.get_doc('PP Contract Terms',a['name']).staffing),1)
+        self.assertEqual(len(frappe.get_doc('PP Event Plan',name).staffing),2)
+
     @classmethod
     def setUpClass(cls):
         frappe.set_user('Administrator');cls.previous=frappe.flags.get('pp_test_entitlement');frappe.flags.pp_test_entitlement={'valid_until':'2099-12-31'}
@@ -243,7 +342,10 @@ class HierarchyTests(unittest.TestCase):
         from plus_point.billing import create_invoice
         invoice=frappe.get_doc('Sales Invoice',frappe.db.get_value('PP Milestone',saved_milestone.name,'sales_invoice'))
         self.assertEqual(invoice.currency,'USD');self.assertEqual(invoice.grand_total,20)
-        with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(agreement_currency='EUR',agreement_rate=300),a['name'])
+        op.save_agreement(dict(agreement_currency='EUR',agreement_rate=300),a['name'])
+        self.assertEqual(op.agreement(a['name'])['agreement_currency'],'EUR')
+        self.assertEqual(frappe.db.get_value('Sales Invoice',invoice.name,'currency'),'USD')
+        self.assertEqual(frappe.db.get_value('PP Contract Terms',a['name'],'fixed_amount'),28000)
 
     def test_references_are_readable_stable_and_not_user_supplied_keys(self):
         a=self.agreement();doc=frappe.get_doc('PP Contract Terms',a['name']);self.assertRegex(doc.pp_reference,r'^AGR-20[0-9]{2}-[0-9]{5}$')

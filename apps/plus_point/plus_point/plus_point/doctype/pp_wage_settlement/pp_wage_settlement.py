@@ -17,6 +17,8 @@ class PPWageSettlement(Document):
                 or payment.project != self.project or payment.paid_from_account_currency != currency
                 or payment.paid_to_account_currency != currency):
             frappe.throw('Link a submitted employee payment in the project, company and company currency')
+        from plus_point.benefits import installed
+        if installed() and frappe.db.exists('PP Worker Loan',{'payment_entry':payment.name,'docstatus':1}):frappe.throw('A loan payment cannot also settle wages.')
         self.amount = float(money(payment.paid_amount))
         if money(self.amount) <= 0:
             frappe.throw('Settlement amount must be positive')
@@ -29,7 +31,8 @@ class PPWageSettlement(Document):
                 (self.employee, self.project, self.name), as_dict=True)
             earned = sum((money(row.wage_amount) for row in earnings), Decimal(0))
             paid = sum((money(row.amount) for row in settled), Decimal(0))
-            if paid + money(self.amount) > earned:
+            from plus_point.benefits import recovered
+            if paid + money(self.amount) + recovered(self.employee,self.project) > earned:
                 frappe.throw('Settlement exceeds approved outstanding wages')
 
 

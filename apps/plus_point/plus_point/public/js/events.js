@@ -87,7 +87,7 @@
  $(document).on('form-refresh.pp-event-resource',(_event,frm)=>{
   if(frappe.boot.plus_point?.is_platform)return;
   if(frm.doctype==='Employee')frm.set_df_property('user_id','hidden',1);
-  if(frm.doctype==='Employee'&&!frm.is_new())frm.add_custom_button(__('Assign workers'),()=>plus_point.assign_workers({employees:[frm.doc.name]}));
+  if(frm.doctype==='Employee'&&!frm.is_new())frm.add_custom_button(__('Assign to an event'),()=>plus_point.worker_assign?plus_point.worker_assign(frm,()=>frm.reload_doc()):frappe.msgprint(__('The worker assignment update is awaiting installation. Refresh after the update is installed.')));
   if(frm.doctype==='PP Assignment'&&frm.is_new())frm.add_custom_button(__('Assign multiple workers'),()=>plus_point.assign_workers({project:frm.doc.project,site:frm.doc.site,start:frm.doc.start_date,end:frm.doc.end_date}));
   if(frm.doctype==='PP Site'&&!frm.is_new())frm.add_custom_button(__('Assign workers'),()=>plus_point.assign_workers({project:frm.doc.project,site:frm.doc.name}));
   if(frm.doctype==='Vehicle')for(const name of ['employee','insurance_details','additional_details','vehicle_value','acquisition_date','location','last_odometer','chassis_no'])frm.set_df_property(name,'hidden',1);

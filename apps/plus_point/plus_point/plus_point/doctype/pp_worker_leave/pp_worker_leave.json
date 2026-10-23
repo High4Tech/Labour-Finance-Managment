@@ -1,0 +1,72 @@
+{
+  "doctype": "DocType",
+  "name": "PP Worker Leave",
+  "module": "PLUS POINT",
+  "autoname": "format:LV-{YYYY}-{#####}",
+  "track_changes": 1,
+  "is_submittable": 1,
+  "field_order": [
+    "employee",
+    "company",
+    "leave_date",
+    "leave_type",
+    "units",
+    "reason"
+  ],
+  "fields": [
+    {
+      "fieldname": "employee",
+      "label": "Worker",
+      "fieldtype": "Link",
+      "options": "Employee",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1
+    },
+    {
+      "fieldname": "leave_date",
+      "label": "Leave date",
+      "fieldtype": "Date",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "leave_type",
+      "label": "Leave type",
+      "fieldtype": "Select",
+      "options": "Full day\nHalf day",
+      "reqd": 1
+    },
+    {
+      "fieldname": "units",
+      "label": "Days",
+      "fieldtype": "Float",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reason",
+      "label": "Reason",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 1,
+      "cancel": 1,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

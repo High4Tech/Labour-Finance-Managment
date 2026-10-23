@@ -194,20 +194,22 @@ def worker_statement_report(filters=None):
                    direct_client_earnings=money(row.billable_amount)) for row in entries]
     ledger += [dict(date=dates[row.payment_entry], kind='Payment', settlement=row.name, payment_entry=row.payment_entry,
                     project=row.project, wages_earned=Decimal(0), wages_paid=money(row.amount)) for row in settlements]
-    ledger.sort(key=lambda row: (getdate(row['date']), row['kind'] != 'Work', row.get('work_entry', row.get('settlement'))))
-    opening = sum((row['wages_earned'] - row['wages_paid'] for row in ledger if start and getdate(row['date']) < start), Decimal(0))
+    recoveries=frappe.get_list('PP Loan Recovery',filters={'employee':filters.employee,'project':['in',names],'docstatus':1},fields=['name','project','amount','journal_entry'],limit_page_length=0) if names and frappe.db.exists('DocType','PP Loan Recovery') else []
+    ledger += [dict(date=frappe.db.get_value('Journal Entry',r.journal_entry,'posting_date'),kind='Loan recovery',loan_recovery_record=r.name,journal_entry=r.journal_entry,project=r.project,wages_earned=Decimal(0),wages_paid=Decimal(0),loan_recovery=money(r.amount)) for r in recoveries]
+    ledger.sort(key=lambda row: (getdate(row['date']), row['kind'] != 'Work', row.get('work_entry') or row.get('settlement') or row.get('loan_recovery_record')))
+    opening = sum((row['wages_earned'] - row['wages_paid'] - row.get('loan_recovery',Decimal(0)) for row in ledger if start and getdate(row['date']) < start), Decimal(0))
     balance, rows = opening, []
     for row in ledger:
         day = getdate(row['date'])
         if (start and day < start) or (end and day > end):
             continue
-        balance += row['wages_earned'] - row['wages_paid']
+        balance += row['wages_earned'] - row['wages_paid'] - row.get('loan_recovery',Decimal(0))
         rows.append(dict(row, balance=money(balance), currency=currency, customer=project_clients[row['project']]))
     columns = [_column('date', 'Date', 'Date', width=110), _column('kind', 'Record', 'Data', width=95),
         _column('customer', 'Client company', 'Link', 'Customer', 170), _column('project', 'Project', 'Link', 'Project', 180),
         _column('site', 'Work site', 'Link', 'PP Site', 160), _column('units', 'Days worked', 'Float', width=115),
         _column('wage_rate', 'Daily wage'), _column('wages_earned', 'Wages earned'), _column('wages_paid', 'Wages paid'),
-        _column('balance', 'Wage balance'), _column('direct_client_earnings', 'Daily client earnings'),
+        _column('loan_recovery','Loan recovered'), _column('loan_recovery_record','Loan recovery','Link','PP Loan Recovery',160), _column('journal_entry','Recovery journal','Link','Journal Entry',170), _column('balance', 'Wage balance'), _column('direct_client_earnings', 'Daily client earnings'),
         _column('work_entry', 'Work entry', 'Link', 'PP Work Entry', 190),
         _column('payment_entry', 'Payment', 'Link', 'Payment Entry', 190),
         _column('settlement', 'Wage settlement', 'Link', 'PP Wage Settlement', 190),
@@ -217,7 +219,7 @@ def worker_statement_report(filters=None):
         _card('Wages earned in period', sum((row['wages_earned'] for row in rows), Decimal(0)), currency),
         _card('Wages paid in period', sum((row['wages_paid'] for row in rows), Decimal(0)), currency),
         _card('Closing wage balance', money(balance), currency)]
-    message = _note('Approved work and settled payments, with opening and closing wage balances. Advances and unallocated payments are excluded.',
+    message = _note('Approved work and settled payments, with opening and closing wage balances. Recorded loan recoveries reduce the wage balance; unpaid drafts and unallocated payments are excluded.',
         'Approved work and submitted wage settlements only. Payment dates come from the native employee Payment Entry. '
         'Unallocated payments and advances are excluded. Opening balance includes earlier records in the selected company/client/project scope. '
         'Daily client earnings are zero for fixed contracts; fixed milestone revenue is not allocated to individual workers. '
