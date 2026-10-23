@@ -93,4 +93,4 @@ app_include_css += ["/assets/plus_point/css/people.css?v=20261023-resources-2"]
 
 app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261023-resources-2"]
 
-app_include_js += ["/assets/plus_point/js/resources.js?v=20261023-resources-2"]
+app_include_js += ["/assets/plus_point/js/resources.js?v=20261023-resources-cache-3"]

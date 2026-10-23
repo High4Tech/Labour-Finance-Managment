@@ -1,6 +1,14 @@
 /* Shared resource lists, detail tabs and booking dialogs. No background polling. */
 (()=>{
  frappe.provide('plus_point');
+ // Desk persists Page scripts separately from versioned app assets. Retire the
+ // previous warehouse screen without clearing saved forms or user preferences.
+ try{
+  const key='_page:pp-inventory',cached=localStorage.getItem(key);
+  if(cached){const docs=JSON.parse(cached),page=Array.isArray(docs)?docs.find(d=>d.name==='pp-inventory'):null;
+   if(!page||!String(page.script||page.__script||'').includes('plus_point.mount_resource_page'))localStorage.removeItem(key);
+  }
+ }catch{try{localStorage.removeItem('_page:pp-inventory');}catch{}}
  const esc=v=>frappe.utils.escape_html(String(v??'')),rpc=(method,args={})=>plus_point.form_rpc('resources.'+method,args),num=v=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(v)||0);
  const field=(fieldtype,fieldname,label,extra={})=>({fieldtype,fieldname,label:__(label),...(fieldtype==='Link'?{only_select:true}:{}),...extra});
  const btn=(label,attrs='',primary=false)=>`<button type="button" class="btn ${primary?'btn-primary':'btn-default'}" ${attrs}>${esc(__(label))}</button>`;
