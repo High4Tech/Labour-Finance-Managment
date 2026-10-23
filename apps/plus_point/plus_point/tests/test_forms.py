@@ -117,7 +117,40 @@ class FormTests(unittest.TestCase):
         rows=record_actions.review_many('Customer',[free.name,self.f.customer.name])['records']
         self.assertFalse(next(r for r in rows if r['name']==free.name)['blocked'])
         self.assertIn('Used by',next(r for r in rows if r['name']==self.f.customer.name)['blocked'])
+        dependency=next(r for r in rows if r['name']==self.f.customer.name)['dependency']
+        self.assertIsNotNone(dependency);self.assertNotEqual((dependency['doctype'],dependency['name']),('Customer',self.f.customer.name))
         self.assertTrue(frappe.db.exists('Customer',free.name))
+
+    def import_receipt(self,doc,kind):
+        previous=frappe.flags.get('pp_import_record');frappe.flags.pp_import_record=True
+        try:return insert('PP Import Record',company=self.f.company.name,kind=kind,external_id='delete-'+uuid.uuid4().hex[:12],document_type=doc.doctype,document_name=doc.name,content_hash='a'*64)
+        finally:frappe.flags.pp_import_record=previous
+
+    def test_imported_unused_event_can_be_deleted_without_deleting_its_receipt(self):
+        plan=insert('PP Event Plan',event_name='Imported deletable event',project=self.f.project.name,contract_terms=self.f.terms.name,start_date=today(),end_date=today(),wage_rate=2000,client_rate=3000,staffing=[dict(site=self.f.site.name,phase='Event',start_date=today(),end_date=today(),workers_required=1)])
+        receipt=self.import_receipt(plan,'events');before=frappe.get_doc('PP Import Record',receipt.name).as_dict()
+        self.assertFalse(record_actions.review(plan.doctype,plan.name)['blocked'])
+        record_actions.remove(plan.doctype,plan.name)
+        self.assertFalse(frappe.db.exists(plan.doctype,plan.name))
+        self.assertEqual(frappe.get_doc('PP Import Record',receipt.name).as_dict(),before)
+        with self.assertRaises(frappe.PermissionError):frappe.delete_doc('PP Import Record',receipt.name)
+
+    def test_native_imported_worker_deletion_and_real_dependencies_remain_guarded(self):
+        worker=insert('Employee',first_name='Unused imported worker',gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active')
+        receipt=self.import_receipt(worker,'employees')
+        self.assertFalse(record_actions.review('Employee',worker.name)['blocked'])
+        frappe.delete_doc('Employee',worker.name)
+        self.assertTrue(frappe.db.exists('PP Import Record',receipt.name))
+        self.import_receipt(self.f.employee,'employees')
+        self.assertTrue(record_actions.review('Employee',self.f.employee.name)['blocked'])
+        with self.assertRaises(frappe.LinkExistsError):record_actions.remove('Employee',self.f.employee.name)
+
+    def test_import_receipt_does_not_weaken_approved_work_protection(self):
+        work=insert('PP Work Entry',assignment=self.f.assignment.name,work_date=today(),units=1,status='Draft');work.status='Approved';work.save()
+        receipt=self.import_receipt(work,'work')
+        with self.assertRaises(frappe.ValidationError):record_actions.remove('PP Work Entry',work.name)
+        with self.assertRaises(frappe.ValidationError):frappe.delete_doc('PP Work Entry',work.name)
+        self.assertTrue(frappe.db.exists('PP Import Record',receipt.name))
     def test_delete_requires_native_permission_and_valid_selection(self):
         with self.assertRaises(frappe.ValidationError):record_actions.remove_many('Customer',[])
         with self.assertRaises(frappe.ValidationError):record_actions.remove_many('Customer',[self.f.customer.name]*2)

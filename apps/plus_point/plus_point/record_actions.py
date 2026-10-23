@@ -29,7 +29,7 @@ def protected(doc):
 @frappe.whitelist()
 def review(doctype,name):
     doc=document(doctype,name)
-    blocked=protected(doc)
+    blocked=protected(doc);dependency=None
     if not blocked:
         from frappe.model.delete_doc import get_linked_docs, get_dynamic_linked_docs
         links=get_linked_docs(doc)+get_dynamic_linked_docs(doc)
@@ -39,10 +39,13 @@ def review(doctype,name):
         links=[row for row in links if row['reference_doctype'] not in cleanup]
         if links:
             link=links[0]
-            blocked=f"Used by {link['reference_doctype']} {link['reference_docname']}. Remove the unused linked record first; stock movements and posted financial records must be retained."
+            reference=frappe.get_doc(link['reference_doctype'],link['reference_docname'])
+            title=reference.get_title() if reference.has_permission('read') else link['reference_doctype']
+            blocked=f"Used by {link['reference_doctype']}: {title}. Remove the unused linked record first; stock movements and posted financial records must be retained."
+            if reference.has_permission('read'):dependency=dict(doctype=reference.doctype,name=reference.name,title=title)
     title=doc.get_title()
     if doctype=='PP Work Entry':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.work_date} · {doc.status}"
-    return dict(doctype=doctype,name=name,title=title,blocked=blocked,
+    return dict(doctype=doctype,name=name,title=title,blocked=blocked,dependency=dependency,
         message='Deleting a client also removes its unshared contact and address records. Shared profiles remain.' if doctype=='Customer'
         else 'Linked records and permissions are checked again before deletion.')
 
@@ -73,8 +76,8 @@ def remove_many(doctype,names):
         if reason:frappe.throw(reason)
     frappe.db.savepoint('pp_remove_records')
     try:
-        # No force, ignore_links or permission bypass. Native controllers,
-        # submitted history, import receipts and dependencies stay authoritative.
+        # Native controllers, submitted history and operational link checks run
+        # normally. The audit-only import receipts remain intact via the hook.
         for name in names:frappe.delete_doc(doctype,name)
     except Exception:
         frappe.db.rollback(save_point='pp_remove_records');raise

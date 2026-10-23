@@ -254,6 +254,19 @@ class SetupImportTests(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):imports.apply(preview['token'])
         self.assertFalse(frappe.db.exists('PP Import Record',imports.record_key(self.f.company.name,'events',row['external_id'])))
 
+    def test_deleted_imported_event_keeps_receipt_and_cannot_be_silently_replayed(self):
+        from plus_point import record_actions
+        row=self.event_row(customer=self.f.customer.name)
+        created=self.apply('events',[row])['rows'][0]['document']
+        receipt=imports.record_key(self.f.company.name,'events',row['external_id'])
+        self.assertFalse(record_actions.review('PP Event Plan',created)['blocked'])
+        record_actions.remove('PP Event Plan',created)
+        self.assertTrue(frappe.db.exists('PP Import Record',receipt))
+        self.assertFalse(frappe.db.exists('PP Event Plan',created))
+        preview=self.preview('events',[row]);self.assertFalse(preview['valid'])
+        self.assertIn('deleted',preview['rows'][0]['error'])
+        self.assertFalse(frappe.db.exists('PP Event Plan',created))
+
     def test_employee_preview_create_update_and_replay(self):
         row = self.employee()
         count = frappe.db.count('Employee')

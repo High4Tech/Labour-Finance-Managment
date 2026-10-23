@@ -5,6 +5,10 @@ app_description = "Event operations, crew and finance extension for ERPNext and 
 app_email = "support@high4tech.com"
 app_license = "MIT"
 required_apps = ["frappe/erpnext", "frappe/hrms"]
+# Receipts preserve source IDs and hashes after an unused target is deleted.
+# They are audit references, not operational dependencies. Replay checks still
+# reject a missing target; submitted documents and all other links stay guarded.
+ignore_links_on_delete = ["PP Import Record"]
 after_install = "plus_point.install.after_install"
 after_migrate = "plus_point.install.after_migrate"
 before_install = "plus_point.install.before_install"
@@ -13,7 +17,7 @@ web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
 app_include_js = ["/assets/plus_point/js/runtime.js?v=20261023-finance-3","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/forms.js?v=20261023-agreement-flow-1",
+                  "/assets/plus_point/js/forms.js?v=20261023-import-delete-1",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/worker_profile.js?v=20261023-finance-3",
                   "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",

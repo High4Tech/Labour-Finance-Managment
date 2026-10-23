@@ -48,10 +48,10 @@ def browser_fixture(action,run_id):
     for receipt in receipts:
         worker=(receipt.kind=='employees' and receipt.document_type=='Employee'
                 and re.fullmatch('UX-'+run_id+r'-\d+',receipt.external_id)
-                and frappe.db.get_value('Employee',receipt.document_name,'company')==prefix)
+                and (not frappe.db.exists('Employee',receipt.document_name) or frappe.db.get_value('Employee',receipt.document_name,'company')==prefix))
         event=(receipt.kind=='events' and receipt.document_type=='PP Event Plan'
                 and re.fullmatch('EVT-'+run_id+r'-\d+',receipt.external_id)
-                and frappe.db.get_value('PP Event Plan',receipt.document_name,'company')==prefix)
+                and (not frappe.db.exists('PP Event Plan',receipt.document_name) or frappe.db.get_value('PP Event Plan',receipt.document_name,'company')==prefix))
         if not (worker or event):
             raise RuntimeError('Unrecognized imported fixture; automatic cleanup refused')
     # Exact disposable, nonfinancial worker/event receipts only. Production

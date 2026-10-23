@@ -287,6 +287,8 @@ def prepare(kind, company, rows):
                 if notes:result['notes']=notes
             if previous:
                 if not frappe.db.exists(previous.document_type, previous.document_name):
+                    if kind in EVENT_PROFILES or kind in ('employees','events'):
+                        frappe.throw('This imported record was deleted. Its import history is retained. Use a new source ID to add an intended replacement.')
                     frappe.throw('The earlier imported record is missing. Ask your administrator to review its import history.')
                 target = linked(previous.document_type, previous.document_name)
                 if target.docstatus == 2 or (kind == 'work' and target.status != 'Approved'):
