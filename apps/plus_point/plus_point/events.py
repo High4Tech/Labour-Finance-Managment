@@ -365,8 +365,12 @@ def save_resource(kind,company,values):
     if kind=='vehicles' and raw.get('purpose') in ('Crew','Inventory'):
         if raw['purpose']=='Crew':raw.update(cargo_capacity=0,cargo_uom='units')
         else:raw['crew_seats']=0
+    if kind=='warehouses':
+        from plus_point.resources import ensure_ownership
+        ensure_ownership(raw.get('warehouse_type') or 'Owned')
     row={key:str(raw.get(key) if raw.get(key) is not None else '') for key in SCHEMAS[kind]}
     validate(kind,company,row);doc=save(kind,company,row)
+    if kind=='warehouses':doc.warehouse_type=raw.get('warehouse_type') or 'Owned';doc.save()
     return dict(doctype=doc.doctype,name=doc.name)
 
 

@@ -60,6 +60,26 @@ def company_permission(doc,user=None,permission_type=None):
     return True
 
 
+def warehouse_query(user=None):
+    return resource_query('Warehouse')
+
+
+def vehicle_query(user=None):
+    return resource_query('Vehicle')
+
+
+def resource_query(doctype):
+    if frappe.conf.get('pp_control_plane') or fixture_context():return ''
+    name=company()
+    return f'`tab{doctype}`.company='+frappe.db.escape(name) if name else '1=0'
+
+
+def resource_permission(doc,user=None,permission_type=None):
+    if frappe.conf.get('pp_control_plane') or fixture_context() or doc.is_new():return True
+    bound=company()
+    return doc.company==bound if bound else False
+
+
 def draft():
     raw=frappe.db.get_single_value(SETTINGS,'onboarding_state')
     return json.loads(raw) if raw else None

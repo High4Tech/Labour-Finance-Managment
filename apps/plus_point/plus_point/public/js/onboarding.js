@@ -70,7 +70,7 @@
         'Customer':['Clients','Add client'],
         'PP Site': ['Event sites', 'Add event site'],
         'PP Event Plan':['Event plans','Plan an event'], 'Project':['Event projects','Plan an event'],
-        'Vehicle':['Event vehicles','Add vehicle'],'Item':['Inventory items','Add inventory item'],
+        'Vehicle':['Vehicles','Add vehicle'],'Item':['Inventory items','Add inventory item'],
         'Warehouse':['Warehouses','Add warehouse'],'Stock Reconciliation':['Warehouse balances','Update warehouse balances'],
         'PP Vehicle Booking':['Vehicle assignments','Assign vehicle'],'PP Equipment Booking':['Event equipment','Reserve equipment'],
         'PP Assignment': ['Worker assignments', 'Assign workers'],
@@ -364,7 +364,8 @@
             window.location.replace(home());
             return;
         }
-        if(!platform()&&['Vehicle','Warehouse'].includes(route[1])&&['List','Tree','Form'].includes(route[0])&&!String(route[2]||'').startsWith('new-')){frappe.set_route('pp-inventory',{view:route[1]==='Vehicle'?'vehicles':'warehouses',...(route[0]==='Form'&&route[2]?{record:route[2]}:{})});return;}
+        if(!platform()&&['Vehicle','Warehouse'].includes(route[1])&&route[0]==='Form'&&!String(route[2]||'').startsWith('new-')){frappe.set_route('pp-inventory',{view:route[1]==='Vehicle'?'vehicles':'warehouses',...(route[0]==='Form'&&route[2]?{record:route[2]}:{})});return;}
+        if(!platform()&&route[1]==='Warehouse'&&(route[0]==='Tree'||route[0]==='List'&&route[2]==='Tree')){frappe.set_route('List','Warehouse','List');return;}
         if(!platform()&&route[0]==='List'&&route[1]==='Company'){const name=frappe.boot.plus_point?.company_identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();return;}
         const active = frappe.container?.page;
         if (!active || !$(active).is(':visible')) return;

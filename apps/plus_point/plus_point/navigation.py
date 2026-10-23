@@ -4,7 +4,7 @@ import json
 
 CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
-    ('Inventory and transport', [('Page:pp-inventory','Warehouses'),('Page:pp-inventory','Vehicles')]),
+    ('Inventory and transport', [('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
     ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
                            ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),

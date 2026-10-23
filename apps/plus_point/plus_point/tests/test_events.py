@@ -46,6 +46,37 @@ class EventTests(unittest.TestCase):
         reconciliation=save('stock_balances',self.f.company.name,dict(date=today(),item_code=item.name,warehouse=warehouse,quantity=str(qty),valuation_rate='100'))
         return item,warehouse,reconciliation
 
+    @patch('plus_point.resources.company')
+    def test_inline_stock_updates_keep_valuation_and_reject_stale_or_partial_batches(self,business):
+        from plus_point import resources
+        business.return_value=self.f.company
+        item,warehouse,_=self.equipment(12)
+        result=resources.update_stock(warehouse,[dict(item=item.name,quantity=15,expected_quantity=12)])
+        doc=frappe.get_doc('Stock Reconciliation',result['name'])
+        self.assertEqual(doc.items[0].valuation_rate,100)
+        self.assertEqual(str(doc.posting_date),today());self.assertEqual(doc.docstatus,1)
+        self.assertTrue(result['updated_at'])
+        with self.assertRaises(frappe.ValidationError):resources.update_stock(warehouse,[dict(item=item.name,quantity=16,expected_quantity=12)])
+        second=insert('Item',item_code='QA-ZERO-'+uuid.uuid4().hex[:6],item_name='Quantity only equipment',item_group='Services',stock_uom='Nos',is_stock_item=1)
+        resources.attach_item(warehouse,second.name)
+        with self.assertRaises(frappe.ValidationError):resources.update_stock(warehouse,[dict(item=item.name,quantity=18,expected_quantity=15),dict(item=second.name,quantity=-1,expected_quantity=0)])
+        self.assertEqual(frappe.db.get_value('Bin',{'item_code':item.name,'warehouse':warehouse},'actual_qty'),15)
+        saved=resources.update_stock(warehouse,[dict(item=item.name,quantity=18,expected_quantity=15),dict(item=second.name,quantity=4,expected_quantity=0)])
+        self.assertEqual(saved['updated'],2)
+        doc=frappe.get_doc('Stock Reconciliation',saved['name']);self.assertEqual(len(doc.items),2)
+        self.assertEqual(next(r.valuation_rate for r in doc.items if r.item_code==second.name),0)
+
+    @patch('plus_point.resources.company')
+    def test_inline_stock_cannot_reduce_future_reservations_and_ownership_is_native(self,business):
+        from plus_point import resources
+        business.return_value=self.f.company
+        item,warehouse,_=self.equipment(12);event=self.event()
+        resources.save_booking(event['project'],'equipment',self.booking(event,item=item.name,warehouse=warehouse,quantity=8))
+        with self.assertRaises(frappe.ValidationError):resources.update_stock(warehouse,[dict(item=item.name,quantity=7,expected_quantity=12)])
+        resources.update_profile('warehouses',warehouse,{'warehouse_type':'Rented'})
+        self.assertEqual(frappe.db.get_value('Warehouse',warehouse,'warehouse_type'),'Rented')
+        with self.assertRaises(frappe.ValidationError):resources.update_profile('warehouses',warehouse,{'warehouse_type':'Other company'})
+
     @patch("plus_point.resources.company")
     def test_composed_resources_share_reservations_and_vehicle_status(self,business):
         business.return_value=self.f.company

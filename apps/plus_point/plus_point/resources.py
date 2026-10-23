@@ -2,10 +2,11 @@
 from collections import defaultdict
 from decimal import Decimal
 import frappe
-from frappe.utils import today, getdate, add_days, cint
+from frappe.utils import today, getdate, add_days, cint, now_datetime
 from plus_point.setup_flow import linked
 from plus_point.operations import company
-from plus_point.events import span, stock_available
+from plus_point.events import span, positive
+from plus_point.benefits import atomic
 
 KINDS={'vehicle':'PP Vehicle Booking','equipment':'PP Equipment Booking'}
 
@@ -49,16 +50,16 @@ def overview(view='warehouses',name=None,start_date=None,end_date=None,offset=0)
     if view!='warehouses':frappe.throw('Choose Warehouses or Vehicles.')
     filters={'company':business.name,'is_group':0}
     if name:filters['name']=linked('Warehouse',name,business.name).name
-    warehouses=frappe.get_list('Warehouse',filters=filters,fields=['name','warehouse_name','disabled','pp_reference'],order_by='warehouse_name',limit_start=offset,limit_page_length=51)
+    warehouses=frappe.get_list('Warehouse',filters=filters,fields=['name','warehouse_name','warehouse_type','disabled','pp_reference'],order_by='warehouse_name',limit_start=offset,limit_page_length=51)
     stock=warehouse_stock(name,start_date,end_date) if name else []
-    history=frappe.get_list('Stock Ledger Entry',filters={'company':business.name,'warehouse':name,'is_cancelled':0},fields=['posting_date','item_code','actual_qty','qty_after_transaction','valuation_rate','voucher_type','voucher_no'],order_by='posting_date desc,posting_time desc,creation desc',limit_page_length=50) if name else []
+    history=frappe.get_list('Stock Ledger Entry',filters={'company':business.name,'warehouse':name,'is_cancelled':0},fields=['posting_date','posting_time','creation','owner','item_code','actual_qty','qty_after_transaction','valuation_rate','voucher_type','voucher_no'],order_by='posting_date desc,posting_time desc,creation desc',limit_page_length=50) if name else []
     return dict(rows=warehouses[:50],more=len(warehouses)>50,stock=stock,history=history,bookings=booking_rows(warehouse=name) if name else [],start=start_date,end=end_date)
 
 @frappe.whitelist()
 def warehouse_stock(warehouse,start_date=None,end_date=None):
     linked('Warehouse',warehouse,company().name);start_date=start_date or today();end_date=end_date or start_date;span(start_date,end_date)
     # Fetch each dataset once, then sweep reservation dates per item in memory.
-    bins=frappe.get_list('Bin',filters={'warehouse':warehouse},fields=['item_code','actual_qty','valuation_rate'],limit_page_length=500)
+    bins=frappe.get_list('Bin',filters={'warehouse':warehouse},fields=['item_code','actual_qty','valuation_rate','modified'],limit_page_length=500)
     items={r.name:r for r in frappe.get_list('Item',filters={'name':['in',[b.item_code for b in bins] or ['']],'is_stock_item':1},fields=['name','item_name','stock_uom','disabled'],limit_page_length=500)}
     bookings=frappe.get_list('PP Equipment Booking',filters={'warehouse':warehouse,'status':'Planned','start_date':['<=',end_date],'end_date':['>=',start_date]},fields=['item','quantity','start_date','end_date'],limit_page_length=0)
     changes=defaultdict(lambda:defaultdict(Decimal))
@@ -71,7 +72,7 @@ def warehouse_stock(warehouse,start_date=None,end_date=None):
         if not item:continue
         current=peak=Decimal(0)
         for day in sorted(changes[row.item_code]):current+=changes[row.item_code][day];peak=max(peak,current)
-        result.append(dict(name=item.name,title=item.item_name,uom=item.stock_uom,disabled=item.disabled,on_hand=row.actual_qty,reserved=float(peak),available=float(Decimal(str(row.actual_qty))-peak),valuation_rate=row.valuation_rate))
+        result.append(dict(name=item.name,title=item.item_name,uom=item.stock_uom,disabled=item.disabled,on_hand=row.actual_qty,reserved=float(peak),available=float(Decimal(str(row.actual_qty))-peak),valuation_rate=row.valuation_rate,updated_at=row.modified))
     return sorted(result,key=lambda r:r['title'].casefold())
 
 @frappe.whitelist(methods=['POST'])
@@ -99,7 +100,9 @@ def update_profile(view,name,values):
     doc=linked(doctype,name,business.name);doc.check_permission('write')
     if doctype=='Warehouse' and cint(v.get('disabled')) and frappe.db.exists('PP Equipment Booking',{'warehouse':name,'status':'Planned','end_date':['>=',today()]}):
         frappe.throw('Cancel or move upcoming equipment reservations before deactivating this warehouse.')
-    fields=['make','model','pp_event_enabled','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom'] if doctype=='Vehicle' else ['disabled']
+    if doctype=='Warehouse' and v.get('warehouse_type'):
+        ensure_ownership(v.warehouse_type)
+    fields=['make','model','pp_event_enabled','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom'] if doctype=='Vehicle' else ['disabled','warehouse_type']
     doc.update({k:v[k] for k in fields if k in v});doc.save();return dict(name=doc.name)
 
 @frappe.whitelist(methods=['POST'])
@@ -111,3 +114,68 @@ def count_stock(warehouse,item,quantity,valuation_rate,date):
     validate('stock_balances',business.name,row)
     doc=save('stock_balances',business.name,row)
     return dict(name=doc.name)
+
+
+def ensure_ownership(value):
+    if value not in ('Owned','Rented'):frappe.throw('Choose Owned or Rented for warehouse ownership.')
+    if not frappe.db.exists('Warehouse Type',value):
+        frappe.get_doc(dict(doctype='Warehouse Type',name=value,description=value+' warehouse')).insert()
+
+
+@frappe.whitelist()
+def list_states(view,names):
+    values=frappe.parse_json(names) or []
+    if not isinstance(values,list) or len(values)>200:frappe.throw('Review at most 200 records at a time.')
+    business=company()
+    if view=='warehouses':
+        return frappe.get_list('Warehouse',filters={'company':business.name,'name':['in',values or ['']]},fields=['name','warehouse_name','warehouse_type','disabled','is_group'],limit_page_length=200)
+    if view!='vehicles':frappe.throw('Choose Warehouses or Vehicles.')
+    rows=frappe.get_list('Vehicle',filters={'company':business.name,'name':['in',values or ['']]},fields=['name','make','model','pp_crew_seats','pp_cargo_capacity','pp_event_enabled'],limit_page_length=200)
+    bookings=frappe.get_list('PP Vehicle Booking',filters={'company':business.name,'vehicle':['in',[r.name for r in rows] or ['']],'status':'Planned','start_date':['<=',today()],'end_date':['>=',today()]},pluck='vehicle',limit_page_length=0)
+    for row in rows:row['availability']='Inactive' if not row.pp_event_enabled else 'Assigned' if row.name in bookings else 'Available'
+    return rows
+
+
+@frappe.whitelist(methods=['POST'])
+@atomic
+def update_stock(warehouse,rows):
+    """Absolute quantities, one native posting, existing unit values and server time."""
+    business=company();location=linked('Warehouse',warehouse,business.name);location.check_permission('write')
+    frappe.has_permission('Stock Reconciliation','create',throw=True);frappe.has_permission('Stock Reconciliation','submit',throw=True)
+    if location.disabled or location.is_group:frappe.throw('Choose an active storage warehouse.')
+    changes=frappe.parse_json(rows) or []
+    if not isinstance(changes,list) or not 1<=len(changes)<=200:frappe.throw('Save 1–200 quantity changes together.')
+    if any(not isinstance(r,dict) or not r.get('item') for r in changes):frappe.throw('Choose an item for each quantity.')
+    if len({r['item'] for r in changes})!=len(changes):frappe.throw('Each item can appear only once.')
+    frappe.db.get_value('Warehouse',warehouse,'name',for_update=True)
+    items=[]
+    from plus_point.events import reserved_peak
+    for row in sorted(changes,key=lambda r:r['item']):
+        item=linked('Item',row['item'])
+        if item.disabled or not item.is_stock_item or item.has_serial_no or item.has_batch_no:frappe.throw('Choose active equipment without serial or batch tracking.')
+        quantity=positive(row.get('quantity'),'Quantity',whole=bool(frappe.db.get_value('UOM',item.stock_uom,'must_be_whole_number')),allow_zero=True)
+        current=frappe.db.sql('select actual_qty,valuation_rate from tabBin where item_code=%s and warehouse=%s for update',(item.name,warehouse),as_dict=True)
+        actual=Decimal(str(current[0].actual_qty)) if current else Decimal(0)
+        if row.get('expected_quantity') is None or Decimal(str(row['expected_quantity']))!=actual:
+            frappe.throw(f'{item.item_name} changed since you opened this list. Refresh before saving.')
+        if quantity<reserved_peak(item.name,warehouse,today(),'9999-12-30'):frappe.throw(f'{item.item_name}: quantity cannot be below equipment reserved for events.')
+        if quantity==actual:continue
+        rate=Decimal(str(current[0].valuation_rate or 0)) if current else Decimal(0)
+        items.append(dict(item_code=item.name,warehouse=warehouse,qty=float(quantity),valuation_rate=float(rate),allow_zero_valuation_rate=int(rate==0)))
+    stamp=now_datetime()
+    if not items:return dict(updated=0,updated_at=str(stamp))
+    from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_difference_account
+    purpose='Stock Reconciliation' if frappe.db.exists('Stock Ledger Entry',{'company':business.name}) else 'Opening Stock'
+    doc=frappe.get_doc(dict(doctype='Stock Reconciliation',company=business.name,purpose=purpose,
+        expense_account=get_difference_account(purpose,business.name),posting_date=stamp.date(),posting_time=stamp.time(),set_posting_time=1,items=items,remarks='Warehouse list quantity update'))
+    doc.insert();doc.submit()
+    return dict(name=doc.name,updated=len(items),updated_at=str(stamp))
+
+
+@frappe.whitelist(methods=['POST'])
+def attach_item(warehouse,item):
+    location=linked('Warehouse',warehouse,company().name);location.check_permission('write');equipment=linked('Item',item)
+    if location.disabled or location.is_group or equipment.disabled or not equipment.is_stock_item:frappe.throw('Choose active equipment and a storage warehouse.')
+    from erpnext.stock.utils import get_bin
+    get_bin(item,warehouse)
+    return dict(name=item)

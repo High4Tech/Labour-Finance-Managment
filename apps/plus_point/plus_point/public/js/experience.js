@@ -22,6 +22,7 @@
  }
  function lists(){
   if(frappe.boot.plus_point?.is_platform)return;const list=window.cur_list;if(frappe.get_route()?.[0]!=='List'||!list?.filter_area?.filter_list||!Array.isArray(list.data)||list.doctype!==frappe.get_route()?.[1])return;
+  if(['Vehicle','Warehouse'].includes(list.doctype)){list.settings.get_form_link=doc=>list.doctype==='Warehouse'&&doc.is_group?'/desk/warehouse/view/list?parent_warehouse='+encodeURIComponent(doc.name):'/desk/pp-inventory?view='+(list.doctype==='Vehicle'?'vehicles':'warehouses')+'&record='+encodeURIComponent(doc.name);list.make_new_doc=()=>plus_point.open_resource(list.doctype==='Vehicle'?'vehicles':'warehouses',()=>list.refresh());return;}
   const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
   list.settings.get_form_link=doc=>mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
   if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)&&!list.fields.includes('project'))list.fields.push('project');
