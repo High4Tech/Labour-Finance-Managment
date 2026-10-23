@@ -31,7 +31,7 @@
   dialog.$wrapper.one('hidden.bs.modal',()=>{if(marker.isConnected){marker.replaceWith(target);target.hidden=true;}target.dispatchEvent(new Event('pp:popup-closed'));if(active?.dialog===dialog)active=null;dialog.$wrapper.remove();});
   dialog.show();return dialog;
  };
- frappe.router.on('change',()=>{plus_point.close_action_popup();if(info){info.node.remove();info=null;}});
+ frappe.router.on('change',()=>{if(window.cur_frm?.doctype==='Employee'&&!cur_frm.is_dirty()){cur_frm.__pp_worker_edit=false;cur_frm.__pp_worker_groups=null;}plus_point.close_action_popup();if(info){info.node.remove();info=null;}});
  const listDefaults=frappe.views.ListView.prototype.setup_defaults;
  frappe.views.ListView.prototype.setup_defaults=function(...args){const result=listDefaults.apply(this,args);return Promise.resolve(result).then(()=>{if(!frappe.boot.plus_point?.is_platform&&!Array.isArray(this.view_user_settings.filters))this.filters=[];});};
 

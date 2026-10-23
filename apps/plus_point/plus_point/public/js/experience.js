@@ -47,7 +47,7 @@
  function schedule(){if(queued)return;queued=true;requestAnimationFrame(update);}
  $(document).on('form-refresh.pp-experience',(_e,frm)=>{plus_point.bind_date_ranges(frm);schedule();});
  document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()?.[0]!=='List'||frappe.get_route()?.[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);
- document.addEventListener('pp:data-changed',()=>totals(true));document.addEventListener('pp:onboarding',schedule);
- const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});frappe.router.on('change',schedule);schedule();};
+ let totalsTimer;document.addEventListener('pp:data-changed',()=>{clearTimeout(totalsTimer);totalsTimer=setTimeout(()=>totals(true),400);});document.addEventListener('pp:onboarding',schedule);
+ const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;plus_point.watch_ui('experience',update);frappe.router.on('change',schedule);schedule();};
  $(document).on('app_ready.pp-experience',start);if(frappe.app?.sidebar)start();
 })();

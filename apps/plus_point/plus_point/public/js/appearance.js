@@ -58,7 +58,7 @@
     function start() {
         if(started || !frappe.boot?.plus_point)return;
         started=true;render();
-        new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+        plus_point.watch_ui('appearance',render);
         new MutationObserver(schedule).observe(root,{attributes:true,attributeFilter:['data-theme','data-theme-mode']});
         frappe.router.on('change',schedule);
     }

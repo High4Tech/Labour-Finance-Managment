@@ -4,8 +4,7 @@ import json
 
 CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
-    ('Inventory and transport', [('Page:pp-inventory','Warehouse availability'),('Item','Inventory items'),('Warehouse','Warehouses'),
-        ('Vehicle','Vehicles'),('PP Vehicle Booking','Vehicle assignments'),('PP Equipment Booking','Event equipment'),('Stock Reconciliation','Warehouse balances')]),
+    ('Inventory and transport', [('Page:pp-inventory','Warehouses'),('Page:pp-inventory','Vehicles')]),
     ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('Payment Entry', 'Receipts and payments'),
                            ('Purchase Invoice', 'Project expenses'), ('Expense Claim', 'Expense claims')]),
@@ -46,7 +45,7 @@ def product_navigation(platform):
         visible = []
         for name, title in entries:
             if name.startswith('Page:'):
-                visible.append(dict(type='Link',link_type='Page',link_to=name[5:],label=title,child=1,is_default_module=1));continue
+                visible.append(dict(type='Link',link_type='Page',link_to=name[5:],label=title,child=1,is_default_module=1,**({'route_options':json.dumps({'view':'vehicles' if title=='Vehicles' else 'warehouses'})} if name=='Page:pp-inventory' else {})));continue
             is_report = name.startswith('Report:')
             target = name.removeprefix('Report:')
             if is_report:
@@ -71,7 +70,7 @@ def product_navigation(platform):
             items.extend(visible)
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
-        doctypes.update(['Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
+        doctypes.update(['Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
                 pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)

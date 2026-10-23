@@ -21,7 +21,7 @@ def overview(section,company=None):
     tenants=frappe.get_list('PP Tenant',filters={'subscription':['in',subscriptions]},pluck='name',limit_page_length=0) if subscriptions else []
     for target,title in dict(groups)[section]:
         if target.startswith('Page:'):
-            links.append(dict(title=title,doctype=None,path='/desk/'+target[5:],count=None,is_report=False));continue
+            links.append(dict(title=title,doctype=None,path='/desk/'+target[5:]+(('?view=vehicles' if title=='Vehicles' else '?view=warehouses') if target=='Page:pp-inventory' else ''),count=None,is_report=False));continue
         if target.startswith('Report:'):
             name=target[7:]
             if frappe.get_doc('Report',name).is_permitted():
@@ -61,7 +61,6 @@ def overview(section,company=None):
                     rows=frappe.get_list(target,filters={'company':company,'status':'Planned','end_date':['>=',frappe.utils.today()]},
                         fields=[{'COUNT':'name','as':'total'}],limit_page_length=1,order_by=None)
                     reservations+=int(rows[0].total if rows else 0)
-        data['resources']=dict(items=counts.get('Inventory items',0),warehouses=counts.get('Warehouses',0),
-            vehicles=counts.get('Vehicles',0),reservations=reservations)
+        data['resources']=dict(items=frappe.db.count('Item',{'is_stock_item':1,'disabled':0}),warehouses=frappe.db.count('Warehouse',{'company':company,'is_group':0}),vehicles=frappe.db.count('Vehicle',{'company':company}),reservations=reservations)
     data.update(section=section,links=links)
     return data

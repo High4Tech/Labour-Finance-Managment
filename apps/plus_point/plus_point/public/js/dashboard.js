@@ -164,6 +164,6 @@
             }
         }
         root.innerHTML=`<p role="status">${esc(__('Loading your dashboard…'))}</p>`;
-        document.addEventListener('pp:display-currency',()=>{if(root.isConnected)load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);});load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
+        if(root.ppCurrencyHandler)document.removeEventListener('pp:display-currency',root.ppCurrencyHandler);root.ppCurrencyHandler=()=>{if(root.isConnected&&$(root).is(':visible'))load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);};document.addEventListener('pp:display-currency',root.ppCurrencyHandler);load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
     };
 })();

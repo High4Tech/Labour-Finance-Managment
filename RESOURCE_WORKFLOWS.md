@@ -1,0 +1,13 @@
+# Inventory, transport and page lifecycle
+
+The sidebar has two resource lists: **Warehouses** and **Vehicles**. Inventory items, counted balances and the latest 50 posted stock entries live inside each warehouse. Vehicles combine their profile, availability and assignment history. Existing booking and stock documents remain the underlying audit records.
+
+**Agreement → Sites and crew → Transport and inventory** is optional, after saving the agreement and its sites. Select vehicles, or choose a warehouse first and then equipment with availability for the booking dates. The same reservations appear in **Event plan → Transport and equipment**. Creating a plan includes the resource reservation date range. Edit and cancel reservations in either place; cancellation releases capacity. Vehicle deactivation is blocked while future bookings remain. Warehouse deactivation is blocked while future equipment reservations remain. Current signing links are revoked when reservations change; signed snapshots retain their original content.
+
+Counted stock is posted through the warehouse's **Record counted stock** dialog. It uses ERPNext Stock Reconciliation and its permissions, values and reservation safeguards. Catalog entries alone create no stock. Resource lists use 50-row pages; reservation history is bounded to 200 records per resource type, and warehouse inventory to 500 stock lines. Reservations and balances are requested fresh when opened or saved, not cached in the browser.
+
+One shared UI observer coalesces changes for 120 milliseconds. It disconnects while applying enhancements, so its own DOM writes cannot recursively trigger it. Eight consecutive rapid passes stop further automatic enhancement until input, navigation or an explicit data-change event. Hidden browser tabs pause enhancements. There is no resource polling loop. Global financial updates coalesce after saves; hidden dashboards do not reload on currency changes.
+
+Agreement and event screens load once per entry, invalidate stale requests and release their custom form contents on departure. Reopening a record begins on its first tab; in-place refreshes retain the current tab. Native unsaved worker forms remain protected by the framework. Clean worker profiles reopen on their overview. Framework page shells remain reusable; no duplicate application history or form cache is introduced.
+
+Verification: rollback backend event tests, `node scripts/browser-resources.cjs` for shared reservations, vehicle statuses, stock UI, salary tabs, repeated navigation, hidden-form cleanup, idle request limits and mobile layout; `node scripts/browser-worker-flows.cjs` for salary saving, activation, leave and loan workflows.

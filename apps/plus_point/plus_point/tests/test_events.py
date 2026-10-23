@@ -1,5 +1,6 @@
 """Real event/date/resource/stock integration, with every fixture rolled back."""
 import base64,csv,io,json,unittest,uuid
+from unittest.mock import patch
 from decimal import Decimal
 import frappe
 from frappe.utils import today,add_days
@@ -44,6 +45,54 @@ class EventTests(unittest.TestCase):
         from plus_point.event_imports import save
         reconciliation=save('stock_balances',self.f.company.name,dict(date=today(),item_code=item.name,warehouse=warehouse,quantity=str(qty),valuation_rate='100'))
         return item,warehouse,reconciliation
+
+    @patch("plus_point.resources.company")
+    def test_composed_resources_share_reservations_and_vehicle_status(self,business):
+        business.return_value=self.f.company
+        from plus_point import resources
+        frappe.db.set_single_value('PP Workspace Settings','company',self.f.company.name)
+        event=self.event();plan=frappe.get_doc('PP Event Plan',event['plan']);vehicle=self.vehicle()
+        values=self.booking(event,vehicle=vehicle.name,purpose='Crew',crew_count=2)
+        result=resources.save_booking(event['project'],'vehicle',values)
+        data=resources.overview('vehicles',vehicle.name,plan.start_date,plan.end_date)
+        self.assertEqual(data['rows'][0].status,'Assigned')
+        self.assertEqual(resources.project_resources(event['project'])['rows'][0].name,result['name'])
+        with self.assertRaises(frappe.ValidationError):resources.update_profile('vehicles',vehicle.name,{'pp_event_enabled':0})
+        resources.save_booking(event['project'],'vehicle',{'status':'Cancelled'},result['name'])
+        self.assertEqual(resources.overview('vehicles',vehicle.name,plan.start_date,plan.end_date)['rows'][0].status,'Available')
+        resources.update_profile('vehicles',vehicle.name,{'pp_event_enabled':0})
+        self.assertEqual(resources.overview('vehicles',vehicle.name)['rows'][0].status,'Inactive')
+
+    @patch("plus_point.resources.company")
+    def test_warehouse_composition_and_reservation_bounds(self,business):
+        business.return_value=self.f.company
+        from plus_point import resources
+        frappe.db.set_single_value('PP Workspace Settings','company',self.f.company.name)
+        event=self.event();plan=frappe.get_doc('PP Event Plan',event['plan']);item,warehouse,_=self.equipment(12)
+        values=self.booking(event,item=item.name,warehouse=warehouse,quantity=7)
+        booking=resources.save_booking(event['project'],'equipment',values)
+        data=resources.overview('warehouses',warehouse,plan.start_date,plan.end_date)
+        stock=next(r for r in data['stock'] if r['name']==item.name)
+        self.assertEqual((stock['on_hand'],stock['reserved'],stock['available']),(12,7,5))
+        with self.assertRaises(frappe.ValidationError):resources.save_booking(event['project'],'equipment',dict(values,quantity=6))
+        with self.assertRaises(frappe.ValidationError):resources.save_booking(event['project'],'equipment',dict(values,start_date=add_days(plan.start_date,-1)),booking['name'])
+        resources.save_booking(event['project'],'equipment',{'status':'Cancelled'},booking['name'])
+        self.assertEqual(next(r for r in resources.warehouse_stock(warehouse,plan.start_date,plan.end_date) if r['name']==item.name)['available'],12)
+        counted=resources.count_stock(warehouse,item.name,14,100,today())
+        self.assertEqual(frappe.db.get_value('Stock Reconciliation',counted['name'],'docstatus'),1)
+        self.assertEqual(next(r for r in resources.warehouse_stock(warehouse) if r['name']==item.name)['on_hand'],14)
+        self.assertTrue(resources.overview('warehouses',warehouse)['history'])
+
+    @patch("plus_point.resources.company")
+    def test_optional_resources_can_be_added_before_event_plan(self,business):
+        business.return_value=self.f.company
+        from plus_point import resources
+        frappe.db.set_single_value('PP Workspace Settings','company',self.f.company.name)
+        vehicle=self.vehicle();args=dict(site=self.f.site.name,vehicle=vehicle.name,purpose='Crew',crew_count=1,start_date=today(),end_date=today(),status='Planned')
+        saved=resources.save_booking(self.f.project.name,'vehicle',args)
+        self.assertTrue(saved['name'])
+        self.assertFalse(frappe.db.exists('PP Event Plan',{'project':self.f.project.name}))
+        with self.assertRaises(frappe.ValidationError):resources.save_booking(self.f.project.name,'vehicle',dict(args,start_date='1900-01-01'))
 
     def booking(self,result,**values):
         plan=frappe.get_doc('PP Event Plan',result['plan'])

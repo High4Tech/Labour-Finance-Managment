@@ -255,8 +255,12 @@ def create_plan(contract_terms,event_name,notes=None):
     if not doc.staffing:frappe.throw('Add venue and worker-category requirements in the agreement first.')
     if not str(event_name or '').strip():frappe.throw('Enter the event name.')
     rows=[{key:r.get(key) for key in ('site','phase','start_date','end_date','workers_required','designation','wage_rate','client_rate')} for r in doc.staffing]
+    starts=[getdate(r['start_date']) for r in rows];ends=[getdate(r['end_date']) for r in rows]
+    for kind in ('PP Vehicle Booking','PP Equipment Booking'):
+        for reservation in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['start_date','end_date'],limit_page_length=0):
+            starts.append(getdate(reservation.start_date));ends.append(getdate(reservation.end_date))
     plan=frappe.get_doc(dict(doctype='PP Event Plan',event_name=event_name,project=doc.project,company=company().name,
-        contract_terms=doc.name,start_date=min(r['start_date'] for r in rows),end_date=max(r['end_date'] for r in rows),
+        contract_terms=doc.name,start_date=min(starts),end_date=max(ends),
         wage_rate=rows[0]['wage_rate'],client_rate=rows[0]['client_rate'],staffing=rows,notes=notes or '')).insert()
     return dict(name=plan.name,existing=False)
 
