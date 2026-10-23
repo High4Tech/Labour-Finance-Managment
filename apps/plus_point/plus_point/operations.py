@@ -82,7 +82,7 @@ def catalogue():
     clients={r.name:r.customer_name for r in frappe.get_list('Customer',filters={'disabled':0},fields=['name','customer_name'],order_by='customer_name,name',limit_page_length=0)}
     for row in terms:row.update(title=row.agreement_title or projects[row.project].project_name,customer=projects[row.project].customer,client=clients.get(projects[row.project].customer,''))
     plans=frappe.get_list('PP Event Plan',filters={'company':business.name,'project':['in',list(projects) or ['']]},fields=['name','event_name','contract_terms','project','start_date','end_date','crew_allocated','pp_reference'],order_by='start_date desc,event_name',limit_page_length=0)
-    return dict(currency=business.default_currency,country=business.country,agreements=terms,plans=plans,
+    return dict(currency=business.default_currency,invoice_currency=business.pp_invoice_currency or business.default_currency,country=business.country,agreements=terms,plans=plans,
         clients=[dict(name=k,title=v) for k,v in clients.items()],
         designations=event_roles(),
         items=frappe.get_list('Item',filters={'is_stock_item':0,'disabled':0},fields=['name','item_name'],order_by='item_name,name',limit_page_length=0))
@@ -107,6 +107,8 @@ def validate_agreement(doc):
             if previous==row:break
             if (previous.site,previous.designation)==key and getdate(previous.start_date)<=getdate(row.end_date) and getdate(previous.end_date)>=getdate(row.start_date):frappe.throw('Combine overlapping requirements for the same venue and role.')
         seen.add(key)
+    from plus_point.people import validate_capacity
+    validate_capacity(doc)
     old=doc.get_doc_before_save()
     fields=('site','designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')
     signature=lambda d:[tuple(str(money(r.get(f) or 0)) if f in ('wage_rate','client_rate') else str(int(r.get(f) or 0)) if f=='workers_required' else str(r.get(f) or '') for f in fields) for r in d.get('staffing',[])]
@@ -141,7 +143,7 @@ def save_agreement(values,name=None):
         if values.get('client') and (name or values.get('customer')):
             from plus_point.clients import save
             save(values.client,customer)
-        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate'):
+        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count'):
             if key in values:doc.set(key,values[key])
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
@@ -230,7 +232,7 @@ def plan(name):
     workers={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','employee_name','designation','image'],limit_page_length=0)}
     allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate'],order_by='start_date,employee',limit_page_length=0)
     for row in allocations:
-        person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '')
+        person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '')
     project=linked('Project',doc.project)
     result['allocations']=allocations;result['coverage']=coverage(doc)
     result.update(budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)

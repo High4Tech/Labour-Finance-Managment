@@ -228,3 +228,16 @@ Fixed agreements can have payment milestones while being created. After saving, 
 Under **Send and sign**, create a private link and copy it or email it. Links expire after seven days. Creating another link or changing the agreement/milestones revokes pending links. Clients see a frozen version of scope, sites, headcounts, client pricing and milestones. They enter their name/email, confirm acceptance and may draw a signature. The signed snapshot and signature stay in the signing history, and the company receives an in-app notification. This records client acceptance; it is not an external identity verification service. Email delivery requires an outgoing Email Account; copying the link remains available.
 
 The top-bar currency converts company-wide totals and the unfiltered financial report, and is saved for the user. Opening a specific agreement, event or project report keeps its own currency. Conversion does not rewrite transactions. Worker lists include **Open profile** and **Edit contact**; other lists have actions suited to their records.
+
+
+## Focused worker and staffing forms
+
+Worker profiles open with an operational overview. **Edit profile** uses three tabs: Overview, Work details and Contact. New workers use the same fields. The header and crew selections show the saved photo or the first two name initials. Photos remain optional and are added after saving a profile; import templates do not require them. Work details offers event departments, relevant worker categories and active management/senior staff for Reports to.
+
+Action forms for site crew, categories, worker selection/moves, milestones and invoices open in dismissible dialogs. Starting another action replaces the previous action dialog. Cancel closes the action without saving it. Notifications include a close button; information icons open above tables and tab bars.
+
+The agreement currency is selected under **Agreement and pricing**, not in the client details tab. New agreements suggest the business invoice preference, and pricing controls use the chosen currency. Used agreements retain their historical rate/currency; invoices can use a separately reviewed payment currency.
+
+Agreed crew counts are compared with all active company workers, including people already booked elsewhere. The staffing dialog also shows how many are free for the selected dates. If demand exceeds the existing crew, choose **Add maximum** to reduce it or **Add crew later** and enter the additional number. This saves a staffing commitment, not fictitious worker profiles or duplicate assignments. Concurrent site/category demand is counted once per date rather than adding disjoint phases together.
+
+Lists no longer receive automatic status or project filters. Filters chosen explicitly by the user remain native and editable. Retired app-added company/active-project filters are removed once when this update is installed.

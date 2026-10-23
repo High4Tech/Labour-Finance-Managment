@@ -1,5 +1,9 @@
 # Development changelog
 
+## 2026-10-23 — Focused worker forms and action dialogs
+
+Simplified worker editing/creation into Overview, Work details and Contact, with department-dependent event categories and same-company active senior reporting. Added reusable photo/initial capsules, optional profile photos, single action dialogs, dismissible notifications, unclipped help overlays, differentiated sidebar headings/hover grips and readable calendar cells. Removed automatic native status/active-project filters and retired previous app filter preferences once. Currency selection now belongs only to agreement pricing, with the business invoice preference suggested for new agreements. Crew planning distinguishes total registered staff from date availability, caps simultaneous demand unless a future-crew quantity is explicitly recorded, and offers maximum/later choices. Milestone saves preserve other agreement form inputs.
+
 ## 2026-10-23 — Agreement pricing, site editing, signing and record actions
 
 Agreements now have explicit currencies and agreed exchange rates, visible Daily client rates, and editable site/crew forms instead of fragile last-cell grids. New sites append into allocated events while existing allocations retain their rates and history. Fixed agreements support milestones before and after saving; approved milestones generate drafts in the agreement currency. Extra client charges use that currency too. Aggregate reporting has a saved top-bar currency preference; individual agreements, events and project reports retain their own currency.

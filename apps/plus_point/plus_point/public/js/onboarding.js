@@ -394,7 +394,6 @@
             if(!platform()&&route[1]==='PP Assignment')primary('crew','Assign workers',()=>plus_point.assign_workers({},()=>listview.refresh()));
             if(!platform()&&route[1]==='PP Daily Register'){
                 primary('attendance','Create register',()=>plus_point.open_attendance_picker());
-                if(!listview.__pp_active_events){listview.__pp_active_events=true;plus_point.form_rpc('operations.catalogue',{}).then(data=>listview.filter_area.add([['PP Daily Register','project','in',[...new Set(data.agreements.map(r=>r.project))].join(',')||'__no_active_events__']])).catch(()=>{listview.__pp_active_events=false;});}
                 if(!listview.__pp_ensured){listview.__pp_ensured=true;plus_point.form_rpc('attendance.ensure_today',{}).then(data=>{if(data.created)listview.refresh();}).catch(()=>{listview.__pp_ensured=false;});}
             }
             if(serviceItems)page?.btn_primary?.removeAttr('data-pp-event-action');

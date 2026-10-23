@@ -18,7 +18,12 @@ def protect_reference(doc,method=None):
 def install():
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-    create_custom_fields({dt:[dict(fieldname='pp_reference',label='Tracking ID',fieldtype='Data',read_only=1,no_copy=1,search_index=1,in_standard_filter=1)] for dt in REFERENCES})
+    references={}
+    for dt in REFERENCES:
+        meta=frappe.get_meta(dt)
+        anchor=meta.title_field if meta.get_field(meta.title_field or '') else next((f.fieldname for f in meta.fields if f.fieldname!='pp_reference' and f.fieldtype not in ('Tab Break','Section Break','Column Break','HTML','Button')),None)
+        references[dt]=[dict(fieldname='pp_reference',label='Tracking ID',fieldtype='Data',read_only=1,no_copy=1,search_index=1,in_standard_filter=1,insert_after=anchor)]
+    create_custom_fields(references)
     create_custom_fields({'PP Contract Terms':[
         dict(fieldname='pp_agreement_currency',label='Agreement currency',fieldtype='Link',options='Currency'),
         dict(fieldname='pp_agreement_rate',label='Accounting currency per agreement unit',fieldtype='Float',precision=9)]})

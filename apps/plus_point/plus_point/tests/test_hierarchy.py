@@ -228,6 +228,7 @@ class HierarchyTests(unittest.TestCase):
         a=self.agreement();name=self.event(a);op.auto_assign(name);before=op.plan(name)
         values=dict(staffing=[dict(r.as_dict(),site_name=next(v.site_name for v in op.agreement(a['name'])['venues'] if v.name==r.site)) for r in frappe.get_doc('PP Contract Terms',a['name']).staffing])
         values['staffing'].append(dict(site_name='Garden stage',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=2,wage_rate=900,client_rate=1300))
+        values['pp_future_crew_count']=1
         op.save_agreement(values,a['name']);after=op.plan(name)
         self.assertEqual(len(after['staffing']),2);self.assertEqual(after['allocations'],before['allocations'])
         self.assertEqual(frappe.db.count('PP Site',{'project':a['project']}),2)
@@ -291,3 +292,26 @@ class HierarchyTests(unittest.TestCase):
         a=self.agreement();created=op.extra_invoice(a['name'],self.f.item.name,'Additional stage setup',10,invoice_currency='USD',exchange_rate=280)
         doc=frappe.get_doc('Sales Invoice',created['name'])
         self.assertEqual(doc.currency,'USD');self.assertEqual(doc.grand_total,10);self.assertEqual(doc.base_grand_total,2800)
+
+    def test_crew_capacity_counts_booked_people_but_requires_explicit_future_workers(self):
+        from plus_point.people import capacity
+        a=self.agreement();name=self.event(a);op.auto_assign(name)
+        cap=capacity(today(),add_days(today(),4),[dict(start_date=today(),end_date=add_days(today(),4),workers_required=1)])
+        self.assertGreater(cap['total'],cap['available'])
+        terms=frappe.get_doc('PP Contract Terms',a['name']);rows=[r.as_dict() for r in terms.staffing]
+        rows.append(dict(site_name='Other stage',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=cap['total']+1,wage_rate=1000,client_rate=1500))
+        with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(staffing=rows),a['name'])
+        self.assertEqual(len(frappe.get_doc('PP Contract Terms',a['name']).staffing),1)
+        op.save_agreement(dict(staffing=rows,pp_future_crew_count=2),a['name'])
+        self.assertEqual(frappe.db.get_value('PP Contract Terms',a['name'],'pp_future_crew_count'),2)
+
+    def test_worker_department_roles_and_senior_reporting_are_validated(self):
+        from plus_point.people import work_options
+        options=work_options(self.worker.name);technical=next(r['value'] for r in options['departments'] if r['label']=='Technical production')
+        self.assertIn('Electrician',options['roles'][technical]);self.assertNotIn('Event manager',options['roles'][technical])
+        self.assertNotIn(self.worker.name,[r['value'] for r in options['managers']])
+        person=frappe.get_doc('Employee',frappe.db.get_value('Employee',{'company':self.f.company.name,'name':['!=',self.worker.name]},'name'));person.reports_to=self.worker.name;person.save()
+        person.department=technical;person.designation='Event manager'
+        with self.assertRaises(frappe.ValidationError):person.save()
+        person.department=None;person.designation=None;person.reports_to=person.name
+        with self.assertRaises(frappe.ValidationError):person.save()

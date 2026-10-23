@@ -18,13 +18,13 @@ def roster(company,start_date,end_date,lock=False):
     from plus_point.events import span
     span(start_date,end_date);first,last=getdate(start_date),getdate(end_date)
     people=frappe.get_list('Employee',filters={'company':company,'status':'Active'},
-        fields=['name','employee_name','cell_number','date_of_joining','relieving_date'],order_by='employee_name,name',limit_page_length=2001)
+        fields=['name','employee_name','cell_number','date_of_joining','relieving_date','image'],order_by='employee_name,name',limit_page_length=2001)
     if len(people)>2000:frappe.throw('Use at most 2,000 active workers in this workspace.')
     names=sorted(p.name for p in people)
     if lock:
         fresh=[]
         for name in names:
-            person=frappe.db.get_value('Employee',name,['name','employee_name','cell_number','date_of_joining','relieving_date','company','status'],as_dict=True,for_update=True)
+            person=frappe.db.get_value('Employee',name,['name','employee_name','cell_number','date_of_joining','relieving_date','image','company','status'],as_dict=True,for_update=True)
             if person and person.company==company and person.status=='Active':fresh.append(person)
         people=fresh
     booked=set()
@@ -40,7 +40,7 @@ def roster(company,start_date,end_date,lock=False):
         reason=('Booked for overlapping dates' if person.name in booked else
             'Joining date is after the event starts' if person.date_of_joining and getdate(person.date_of_joining)>first else
             'Employment ends before the event finishes' if person.relieving_date and getdate(person.relieving_date)<last else '')
-        result.append(dict(name=person.name,worker=person.employee_name,phone=person.cell_number or '',available=not reason,reason=reason))
+        result.append(dict(name=person.name,worker=person.employee_name,phone=person.cell_number or '',available=not reason,reason=reason,image=person.image or ''))
     return result
 
 

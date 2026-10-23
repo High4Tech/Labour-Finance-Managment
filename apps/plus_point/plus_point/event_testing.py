@@ -78,6 +78,7 @@ def browser_fixture(action,run_id):
         if removed:
             for row in removed:doc.remove(row)
             doc.save()
+    for department in frappe.get_all('Department',filters={'company':prefix},pluck='name',order_by='lft desc'):frappe.delete_doc('Department',department)
     if frappe.db.exists('Company',prefix):frappe.delete_doc('Company',prefix)
     for key,value in saved['defaults'].items():frappe.defaults.set_user_default(key,value)
     for code,enabled in saved.get('currencies',{}).items():frappe.db.set_value('Currency',code,'enabled',enabled)
