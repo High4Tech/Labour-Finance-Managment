@@ -84,4 +84,21 @@ class PPWorkEntry(Document):
         if sum((day_units(e.units) for e in existing), Decimal(0)) + units > Decimal("1"):
             frappe.throw("Worker cannot have more than one total working day across sites")
         self.wage_amount, self.billable_amount = map(float, daily_amounts(self.wage_rate, self.client_rate, units))
+        if correction and as_decimal(self.wage_amount) < as_decimal(old.wage_amount):
+            from plus_point.finance import money
+            from plus_point.benefits import installed
+            # Current locking reads include a payment/recovery committed while
+            # this transaction was waiting for the shared employee lock.
+            other = frappe.db.sql('''SELECT wage_amount FROM `tabPP Work Entry`
+                WHERE employee=%s AND project=%s AND status='Approved' AND name!=%s FOR UPDATE''',
+                (self.employee,self.project,self.name),as_dict=True)
+            earned = money(self.wage_amount) + sum((money(row.wage_amount) for row in other), Decimal(0))
+            settled=frappe.db.sql('''SELECT amount FROM `tabPP Wage Settlement`
+                WHERE employee=%s AND project=%s AND docstatus=1 FOR UPDATE''',(self.employee,self.project),as_dict=True)
+            recoveries=frappe.db.sql('''SELECT amount FROM `tabPP Loan Recovery`
+                WHERE employee=%s AND project=%s AND docstatus=1 FOR UPDATE''',(self.employee,self.project),as_dict=True) if installed() else []
+            committed = sum((money(row.amount) for row in settled+recoveries),Decimal(0))
+            if earned < committed:
+                frappe.throw(f'This correction would reduce approved wages to {earned}, below the {committed} already paid or recovered. '
+                    'Cancel or reverse the linked wage settlement and loan recovery first, then retry the attendance correction. No attendance or payment was changed.')
         enforce(self)

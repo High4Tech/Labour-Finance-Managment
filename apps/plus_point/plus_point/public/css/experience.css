@@ -23,3 +23,11 @@
 
 .pp-op-section>.pp-info{float:right}.pp-op-heading h2>.pp-info{font-size:12px;vertical-align:middle}
 @media(max-width:767px){.pp-top-controls{display:grid;grid-template-columns:1fr 1.2fr .8fr;gap:6px}.pp-top-controls .btn{max-width:100%;width:100%;font-size:11px!important;padding:0 7px!important;gap:5px!important;white-space:nowrap}.pp-top-appearance{min-width:0}.pp-theme-value{display:none}.pp-top-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pp-top-totals>span{display:flex;flex-direction:column;align-items:flex-start;gap:3px}.pp-top-totals strong{font-size:12px}.pp-global-bar{padding:8px 12px}.pp-top-appearance .pp-theme-symbol{display:none}.pp-register-correction{align-items:stretch;flex-direction:column}}
+
+/* Validation stays beneath its own field and grows with the corrective message. */
+.pp-ui .frappe-control .pp-input-hint,.pp-ui .frappe-control .pp-date-error{position:static!important;display:block;max-height:none!important;overflow:visible!important;min-height:0!important;margin:6px 0 0!important;line-height:1.45!important;white-space:normal;overflow-wrap:anywhere}
+.pp-ui .pp-input-hint:empty,.pp-ui .pp-date-error:empty{display:none!important}
+.pp-ui [aria-invalid=true]{border-color:var(--red-600)!important}
+
+.pp-ui .pp-stock-grid .pp-input-hint{display:block;position:static;margin-top:6px;font-size:11px;line-height:1.45;color:var(--red-600);white-space:normal}
+.pp-ui .pp-stock-rows .list-row{height:auto;min-height:64px}

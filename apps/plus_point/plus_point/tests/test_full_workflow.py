@@ -26,9 +26,9 @@ class FullWorkflowTests(unittest.TestCase):
         worker.designation='Event crew';worker.pp_salary_basis='Daily';worker.pp_salary_amount=200;worker.pp_leaves_per_month=2
         worker.update(settings);worker.save();return worker
 
-    def agreement(self,quantity=1,fixed=False):
+    def agreement(self,quantity=1,fixed=False,title='Complete lifecycle'):
         first=add_days(today(),-2);last=today()
-        return operations.save_agreement(dict(customer=self.f.customer.name,agreement_title='Complete lifecycle',scope='Crew, transport and equipment',billing_model='Fixed' if fixed else 'Daily',agreement_currency='PKR',fixed_amount=1000 if fixed else 0,status='Active',effective_start=first,effective_end=last,auto_invoice=0,staffing=[dict(site_name='Main stage',designation='Event crew',phase='Event',start_date=first,end_date=last,workers_required=quantity,wage_rate=200,client_rate=0 if fixed else 350)],transport_requirements=[dict(vehicle_type='Crew van',quantity=1,site_name='Main stage',start_date=first,end_date=last)]))
+        return operations.save_agreement(dict(customer=self.f.customer.name,agreement_title=title,scope='Crew, transport and equipment',allow_past_dates=1,billing_model='Fixed' if fixed else 'Daily',agreement_currency='PKR',fixed_amount=1000 if fixed else 0,status='Active',effective_start=first,effective_end=last,auto_invoice=0,staffing=[dict(site_name='Main stage',designation='Event crew',phase='Event',start_date=first,end_date=last,workers_required=quantity,wage_rate=200,client_rate=0 if fixed else 350)],transport_requirements=[dict(vehicle_type='Crew van',quantity=1,site_name='Main stage',start_date=first,end_date=last)]))
 
     def payment(self,worker,amount,account,project=None):
         doc=insert('Payment Entry',payment_type='Pay',company=self.f.company.name,party_type='Employee',party=worker,project=project,paid_from=self.f.company.default_cash_account,paid_to=account,paid_amount=amount,received_amount=amount,source_exchange_rate=1,target_exchange_rate=1,reference_no='Full lifecycle audit',reference_date=today());doc.submit();return doc

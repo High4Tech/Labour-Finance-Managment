@@ -37,6 +37,16 @@ def review(doctype,name):
         # Stock ledgers, reservations and financial records are never ignored.
         cleanup={'Item':{'Bin','Item Price'},'Warehouse':{'Bin'},'Customer':{'Address','Contact'}}.get(doctype,set())
         links=[row for row in links if row['reference_doctype'] not in cleanup]
+        if doctype=='Sales Invoice' and doc.docstatus==0:
+            released={(r.pp_source_type,r.pp_source_name) for r in doc.items
+                if r.get('pp_source_type') in ('PP Work Entry','PP Milestone') and r.get('pp_source_name')}
+            links=[r for r in links if (r['reference_doctype'],r['reference_docname']) not in released]
+        if doctype=='PP Contract Terms':
+            def unsigned_link(row):
+                if row['reference_doctype']!='PP Agreement Share':return False
+                share=frappe.get_doc('PP Agreement Share',row['reference_docname'])
+                return share.contract_terms==name and share.status!='Signed' and share.has_permission('delete')
+            links=[row for row in links if not unsigned_link(row)]
         if links:
             link=links[0]
             reference=frappe.get_doc(link['reference_doctype'],link['reference_docname'])
@@ -47,6 +57,8 @@ def review(doctype,name):
     if doctype=='PP Work Entry':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.work_date} · {doc.status}"
     return dict(doctype=doctype,name=name,title=title,blocked=blocked,dependency=dependency,
         message='Deleting a client also removes its unshared contact and address records. Shared profiles remain.' if doctype=='Customer'
+        else 'Unused unsigned signing links are removed with this agreement. Signed evidence is retained.' if doctype=='PP Contract Terms'
+        else 'Active events automatically recreate today’s attendance draft. Close the agreement to stop new drafts; approved history is retained.' if doctype=='PP Daily Register'
         else 'Linked records and permissions are checked again before deletion.')
 
 

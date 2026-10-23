@@ -19,8 +19,8 @@ def check(fieldname,value,fieldtype=None,label=None):
     text=str(value);label=label or fieldname.replace('_',' ').capitalize()
     if fieldname in PERSON_FIELDS and not person(text):
         frappe.throw(f'{label}: use letters, spaces, apostrophes, hyphens or periods; no numbers or other symbols.')
-    if fieldname in PHONE_FIELDS and (not re.fullmatch(r'\+?[0-9 ()-]{3,40}',text) or not any(c.isdigit() for c in text)):
-        frappe.throw(f'{label}: use digits and optional +, spaces, parentheses or hyphens (up to 40 characters).')
+    if fieldname in PHONE_FIELDS and (not re.fullmatch(r'\+?[0-9 ()-]{3,40}',text) or not 7<=len(re.sub(r'\D','',text))<=15):
+        frappe.throw(f'{label}: enter 7–15 digits with optional +, spaces, parentheses or hyphens.')
     if fieldname in CODE_FIELDS and any(not(c.isalnum() or c in ' ./_-') for c in text):
         frappe.throw(f'{label}: use letters, numbers, spaces, periods, slashes, underscores or hyphens.')
     if fieldtype in ('Int','Float','Currency','Percent'):
@@ -46,13 +46,15 @@ def validate_document(doc,method=None):
             # Keep existing legacy names readable/editable; validate a name/phone
             # when it is newly supplied or changed, never silently rewrite it.
             if previous and df.fieldname in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS and previous.get(df.fieldname)==row.get(df.fieldname):continue
-            if df.fieldname in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS or doc.doctype.startswith('PP ') and df.fieldtype in ('Int','Float','Currency','Percent'):
+            if df.fieldname in PERSON_FIELDS|PHONE_FIELDS|CODE_FIELDS or (doc.doctype.startswith('PP ') or df.fieldname.startswith('pp_')) and df.fieldtype in ('Int','Float','Currency','Percent'):
                 check(df.fieldname,row.get(df.fieldname),df.fieldtype,df.label)
 
 
 def validate_date_ranges(doc):
     if frappe.flags.in_install or frappe.flags.in_migrate:return
     from frappe.utils import getdate,get_datetime
+    if doc.doctype=='Employee' and doc.get('date_of_birth') and getdate(doc.date_of_birth)>getdate():
+        frappe.throw('Date of birth cannot be in the future. Choose today or an earlier date.')
     for row in [doc]+[child for df in doc.meta.get_table_fields() for child in doc.get(df.fieldname,[])]:
         for first,last in [('start_date','end_date'),('effective_start','effective_end'),('from_date','to_date'),('expected_start_date','expected_end_date'),('posting_date','due_date'),('date_of_birth','date_of_joining')]:
             a,b=row.meta.get_field(first),row.meta.get_field(last)

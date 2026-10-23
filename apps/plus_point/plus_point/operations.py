@@ -115,6 +115,10 @@ def validate_agreement(doc):
 @frappe.whitelist(methods=['POST'])
 def save_agreement(values,name=None):
     business=company();values=frappe._dict(frappe.parse_json(values) or {})
+    if values.get('effective_start') and getdate(values.effective_start)<getdate(today()):
+        changed=not name or getdate(terms_doc(name).effective_start)!=getdate(values.effective_start)
+        if changed and str(values.get('allow_past_dates') or '').lower() not in ('1','true'):
+            frappe.throw('Upcoming work must start today or later. Enable Record past work in Agreement details only when entering historical work.')
     from plus_point.workflows import rate_values
     values=rate_values(business,values,terms_doc(name) if name else None)
     frappe.db.savepoint('pp_agreement_save')

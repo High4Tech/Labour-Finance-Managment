@@ -1,6 +1,12 @@
 /* One bounded UI observer. Enhancements cannot observe their own DOM writes. */
 (()=>{
  frappe.provide('plus_point');
+ plus_point.render_table=(labels,rows)=>{
+  const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
+  template.innerHTML=`<div class="pp-op-table-scroll"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  template.content.querySelectorAll('tbody>tr').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';}));
+  return template.innerHTML;
+ };
  const watchers=new Map();let timer,observer,running=false,bursts=0,lastRun=0;
  const stats=plus_point.runtime_stats={passes:0,suppressed:0,watchers:0};
  function schedule(){if(document.hidden||timer||running)return;timer=setTimeout(flush,120);}

@@ -3,13 +3,22 @@
  frappe.provide('plus_point');const esc=v=>frappe.utils.escape_html(String(v??''));let queued=false,bar,lastSummary=0,summaryBusy=false,started=false;
  plus_point.reveal_control=control=>{const node=control?.$wrapper?.get(0),panel=node?.closest('[role=tabpanel]');if(panel?.hidden)document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`)?.click();control?.set_focus?.();};
  const ranges=[['start_date','end_date'],['effective_start','effective_end'],['from_date','to_date'],['expected_start_date','expected_end_date'],['posting_date','due_date'],['date_of_birth','date_of_joining']];
+ const dateOptions=frappe.ui.form.ControlDate.prototype.set_date_options;
+ frappe.ui.form.ControlDate.prototype.set_date_options=function(){dateOptions.call(this);for(const key of ['minDate','maxDate'])if(typeof this.datepicker_options[key]==='string')this.datepicker_options[key]=frappe.datetime.str_to_obj(this.datepicker_options[key]);};
  plus_point.validate_dates=layout=>{
   let valid=true;const read=k=>layout.get_value?layout.get_value(k):layout.doc?.[k];
-  for(const [a,b] of ranges){const field=layout.fields_dict?.[b],first=read(a),last=read(b);if(!field)continue;const bad=first&&last&&String(last)<String(first);let hint=field.$wrapper.find('.pp-date-error');if(!hint.length)hint=$('<span class="pp-date-error" role="alert"></span>').appendTo(field.$wrapper);hint.text(bad?__('Must be on or after {0}.',[first]):'');field.$input?.attr('aria-invalid',String(!!bad));field.$input?.get(0)?.setCustomValidity(bad?hint.text():'');if(bad){if(valid)plus_point.reveal_control(field);valid=false;}}
+  for(const field of Object.values(layout.fields_dict||{})){
+   if(field.df.fieldtype!=='Date'||field.df.hidden)continue;
+   const iso=v=>v instanceof Date?frappe.datetime.obj_to_str(v):String(v),first=ranges.find(([,b])=>b===field.df.fieldname)?.[0],start=first&&read(first),value=read(field.df.fieldname),limits=[field.df.min_date,start].filter(Boolean).map(iso).sort(),min=limits.at(-1),max=field.df.max_date?iso(field.df.max_date):null;
+   if(field.datepicker){field.datepicker.update('minDate',min?frappe.datetime.str_to_obj(min):false);field.datepicker.update('maxDate',max?frappe.datetime.str_to_obj(max):false);}
+   const bad=value&&((min&&value<min)||(max&&value>max));
+   plus_point.field_error(field,bad?(min&&value<min?__('Choose {0} or a later date.',[min]):__('Choose {0} or an earlier date.',[max])):'','date');
+   if(bad){if(valid)plus_point.reveal_control(field);valid=false;}
+  }
   for(const field of Object.values(layout.fields_dict||{}))if(field.df.fieldtype==='Table')for(const row of field.get_value()||[])for(const [a,b] of ranges)if(row[a]&&row[b]&&row[b]<row[a]){frappe.show_alert({message:__('Row {0}: end date must be on or after start date.',[row.idx]),indicator:'red'});valid=false;}
   return valid;
  };
- plus_point.bind_date_ranges=layout=>{for(const pair of ranges)for(const key of pair){const field=layout.fields_dict?.[key];if(!field||field.__pp_date_bound)continue;field.__pp_date_bound=true;const original=field.df.onchange;field.df.onchange=async(...args)=>{await original?.(...args);plus_point.validate_dates(layout);};}};
+ plus_point.bind_date_ranges=layout=>{for(const field of Object.values(layout.fields_dict||{})){if(field.df.fieldtype!=='Date'||field.__pp_date_bound)continue;field.__pp_date_bound=true;const original=field.df.onchange;field.df.onchange=async(...args)=>{await original?.(...args);plus_point.validate_dates(layout);};field.$input?.on('change.pp-dates blur.pp-dates',()=>plus_point.validate_dates(layout));}plus_point.validate_dates(layout);};
  const enhance=plus_point.enhance_selectors;plus_point.enhance_selectors=layout=>{enhance?.(layout);plus_point.bind_date_ranges(layout);};
  const validate=plus_point.validate_inputs;plus_point.validate_inputs=layout=>{const a=validate?.(layout)!==false,b=plus_point.validate_dates(layout);return a&&b;};
  function guidance(){

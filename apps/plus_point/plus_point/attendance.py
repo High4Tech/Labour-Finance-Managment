@@ -39,6 +39,12 @@ def roster(site,day):
     return result
 
 
+def require_open_work(project,day):
+    terms=frappe.get_all('PP Contract Terms',filters={'project':project.name,'status':'Active','effective_start':['<=',day]},fields=['effective_end'])
+    if project.status!='Open' or not any(not row.effective_end or getdate(row.effective_end)>=day for row in terms):
+        frappe.throw('This event is closed or has no active agreement for this date. Reopen the agreement and event before preparing new attendance. Existing attendance history remains available.')
+
+
 @frappe.whitelist(methods=['POST'])
 def prepare(site,work_date,project=None,refresh=False):
     require_customer();frappe.has_permission('PP Daily Register','create',throw=True)
@@ -51,6 +57,7 @@ def prepare(site,work_date,project=None,refresh=False):
         fields=['name','docstatus'],order_by='docstatus desc,creation asc',limit_page_length=1)
     doc=linked('PP Daily Register',existing[0].name) if existing else frappe.new_doc('PP Daily Register')
     if existing and (doc.docstatus or not refresh):return dict(name=doc.name,workers=len(doc.entries),existing=True)
+    require_open_work(event,day)
     doc.check_permission('write' if existing else 'create')
     doc.update(dict(site=site,project=event.name,work_date=str(day)))
     assignments=roster(site,day);active={r.name:r for r in assignments}
@@ -90,7 +97,8 @@ def ensure_today(company=None):
         if not frappe.db.get_value('PP Site',site,'is_active'):continue
         try:
             # A paused site phase may still have a broader legacy allocation.
-            context(site,day)
+            _,project,_,_=context(site,day)
+            require_open_work(project,day)
         except frappe.ValidationError:
             frappe.clear_messages();continue
         result=prepare(site,str(day));created+=not result['existing']

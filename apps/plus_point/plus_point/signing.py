@@ -115,3 +115,12 @@ def invalidate(name):
 
 def milestone_changed(doc,method=None):
     invalidate(doc.contract_terms)
+
+
+def cleanup_unsigned(doc,method=None):
+    """Native agreement deletion releases only unsigned, permission-checked links."""
+    for name in frappe.get_all('PP Agreement Share',filters={'contract_terms':doc.name},pluck='name'):
+        share=frappe.get_doc('PP Agreement Share',name,for_update=True)
+        if share.status=='Signed':frappe.throw('Signed agreement evidence cannot be deleted.')
+        share.check_permission('delete')
+        frappe.delete_doc('PP Agreement Share',name)

@@ -1,6 +1,8 @@
 # Full workflow audit — 23 October 2026
 
-**Verdict: the normal operational flow passes, but four exceptional paths remain broken or incomplete. Fix the paid-attendance correction first.** This audit adds repeatable tests and evidence; it does not resolve the application findings below.
+**Historical baseline:** the findings below describe commit `11fe875`. The repairs and subsequent component checks are recorded in [the 24 October follow-up](COMPONENT_VALIDATION_AND_REPAIRS_2026-10-24.md).
+
+**Baseline verdict: the normal operational flow passed, with four exceptional paths requiring repair.** This audit adds repeatable tests and evidence; it does not resolve the application findings below.
 
 ## Scope and method
 
@@ -66,7 +68,7 @@ Whole-company purging and forced deletion of posted financial history were not a
 
 ## Confirmed exceptional-path findings
 
-Priority meanings: **P1** = financial correctness needs attention before relying on the affected workflow; **P2** = blocked action or inconsistent lifecycle behavior. All four findings remain **unresolved**.
+Priority meanings: **P1** = financial correctness needs attention before relying on the affected workflow; **P2** = blocked action or inconsistent lifecycle behavior. All four findings were **unresolved at this baseline**; see the 24 October follow-up for their repairs and regression results.
 
 ### QA-02 · P1 · Correcting already-paid attendance leaves inconsistent balances
 
