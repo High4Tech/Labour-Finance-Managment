@@ -50,11 +50,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.screenshot({path:path.join(out,'attendance-approved-desktop.png'),fullPage:true});
   await page.evaluate(name=>frappe.set_route('Form','Employee',name),people[0]);const profile=page.locator('.pp-worker-profile[data-ready=true]');await profile.waitFor();
   assert.equal(await profile.locator('.pp-worker-metrics article').first().locator('strong').innerText(),'1');
-  assert.match(await profile.locator('.pp-worker-finances').innerText(),/1,000 PKR/);
+  assert.match(await profile.locator('.pp-worker-finances').first().innerText(),/1,000 PKR/);
   assert.equal(await profile.locator('.pp-worker-day').count(),91);assert.equal(await profile.locator('.pp-day-present[data-date]').count(),1);
   assert.equal(await page.locator('.form-layout:visible').count(),0,'Worker should open on overview, not the long HR form');
-  await profile.getByRole('button',{name:'Edit profile',exact:true}).click();await page.locator('.form-layout:visible').waitFor();
-  await profile.getByRole('button',{name:'Back to overview',exact:true}).click();assert.equal(await page.locator('.form-layout:visible').count(),0);
+  await profile.getByRole('button',{name:'Edit profile',exact:true}).click();await page.locator('.pp-worker-edit-tabs:visible').waitFor();
+  await profile.getByRole('button',{name:'Back to overview',exact:true}).click();await profile.getByRole('button',{name:'Edit profile',exact:true}).waitFor();assert.equal(await page.locator('.form-layout:visible').count(),0);
   await profile.locator('.pp-worker-period').selectOption('366');await page.waitForFunction(()=>document.querySelectorAll('.pp-worker-day').length===366);
   const focus=profile.locator('.pp-worker-day').last();await focus.focus();await focus.press('ArrowLeft');assert.equal(await page.locator('.pp-worker-day[tabindex="0"]').count(),1);
   await page.screenshot({path:path.join(out,'worker-overview-desktop.png'),fullPage:true});
