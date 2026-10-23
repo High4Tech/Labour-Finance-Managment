@@ -138,6 +138,11 @@ def save_agreement(values,name=None):
         if values.get('client') and (name or values.get('customer')):
             from plus_point.clients import save
             save(values.client,customer)
+        previous_currency=doc.get('pp_agreement_currency') or doc.currency
+        previous_rate=Decimal(str(doc.get('pp_agreement_rate') or 1))
+        currency_changed=bool(name and values.get('pp_agreement_currency') and values.pp_agreement_currency!=previous_currency)
+        if currency_changed and (frappe.db.exists('PP Milestone',{'contract_terms':name,'status':['in',['Approved','Invoiced']]}) or frappe.db.exists('Sales Invoice',{'project':project.name,'docstatus':['!=',2]})):
+            frappe.throw('This agreement already has approved milestones or invoices. Create a new agreement to use a different currency and preserve its financial history.')
         for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions'):
             if key in values:doc.set(key,values[key])
         if 'pp_conditions' in values:
@@ -151,14 +156,16 @@ def save_agreement(values,name=None):
         if 'staffing' in values:
             if 'sites' in values and (not isinstance(values.sites,list) or len(values.sites)>12 or any(not isinstance(v,str) or len(v)>140 for v in values.sites)):frappe.throw('Use at most 12 named sites in an agreement.')
             locations={r.site_name:r.name for r in frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name'],limit_page_length=0)}
+            client_country=(values.get('client') or {}).get('country') or frappe.db.get_value('Address',frappe.db.get_value('Customer',customer,'customer_primary_address'),'country') or business.country
             for title in values.get('sites',[]):
                 title=str(title).strip()
                 if not title:frappe.throw('Enter each site name.')
                 if title not in locations:
-                    venue=frappe.get_doc(dict(doctype='PP Site',project=project.name,site_name=title,is_active=1)).insert();locations[title]=venue.name
+                    venue=frappe.get_doc(dict(doctype='PP Site',project=project.name,site_name=title,is_active=1,country=client_country)).insert();locations[title]=venue.name
             rows=[]
             for raw in values.staffing:
                 raw=frappe._dict(raw);site=raw.get('site')
+                if not raw.get('country'):raw.country=frappe.db.get_value('PP Site',site,'country') if site else client_country
                 if raw.get('designation'):ensure_event_role(raw.designation)
                 if site:
                     venue=linked('PP Site',site)
@@ -179,7 +186,19 @@ def save_agreement(values,name=None):
                 rows.append(dict(site=site,**{key:raw.get(key) for key in ('designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')}))
             if not rows:frappe.throw('Add at least one venue and worker category.')
             doc.set('staffing',rows)
+        if 'transport_requirements' in values:
+            from plus_point.resources import transport_requirements
+            site_names=frappe.get_list('PP Site',filters={'project':project.name},pluck='site_name',limit_page_length=0)
+            transport=transport_requirements(values.transport_requirements,doc.effective_start,doc.effective_end,site_names)
+            if transport and not doc.meta.has_field('pp_transport_requirements'):frappe.throw('Vehicle requirements are not installed on this site yet.')
+            doc.pp_transport_requirements=frappe.as_json(transport)
         doc.save()
+        if currency_changed:
+            # Planned milestone prices keep their entered numeric amounts when
+            # a draft agreement changes currency. Approved history is protected.
+            factor=Decimal(str(doc.pp_agreement_rate))/previous_rate
+            for row in frappe.get_list('PP Milestone',filters={'contract_terms':name,'status':'Planned'},fields=['name'],limit_page_length=0):
+                milestone=linked('PP Milestone',row.name);milestone.amount=money(Decimal(str(milestone.amount))*factor);milestone.save()
         if name:
             from plus_point.signing import invalidate
             invalidate(doc.name)

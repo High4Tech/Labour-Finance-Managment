@@ -4,7 +4,7 @@ from plus_point.setup_flow import require_customer
 
 SUPPORTED={'Employee','Customer','Contract','Project','PP Site','PP Assignment','PP Event Plan',
     'PP Contract Terms','PP Work Entry','PP Daily Register','PP Milestone','PP Vehicle Booking',
-    'PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim'}
+    'PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim','PP Worker Loan'}
 
 
 def document(doctype,name,lock=False):
@@ -29,9 +29,20 @@ def protected(doc):
 @frappe.whitelist()
 def review(doctype,name):
     doc=document(doctype,name)
+    blocked=protected(doc)
+    if not blocked:
+        from frappe.model.delete_doc import get_linked_docs, get_dynamic_linked_docs
+        links=get_linked_docs(doc)+get_dynamic_linked_docs(doc)
+        # Native on_trash removes these auxiliary rows before checking links.
+        # Stock ledgers, reservations and financial records are never ignored.
+        cleanup={'Item':{'Bin','Item Price'},'Warehouse':{'Bin'},'Customer':{'Address','Contact'}}.get(doctype,set())
+        links=[row for row in links if row['reference_doctype'] not in cleanup]
+        if links:
+            link=links[0]
+            blocked=f"Used by {link['reference_doctype']} {link['reference_docname']}. Remove the unused linked record first; stock movements and posted financial records must be retained."
     title=doc.get_title()
     if doctype=='PP Work Entry':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.work_date} · {doc.status}"
-    return dict(doctype=doctype,name=name,title=title,blocked=protected(doc),
+    return dict(doctype=doctype,name=name,title=title,blocked=blocked,
         message='Deleting a client also removes its unshared contact and address records. Shared profiles remain.' if doctype=='Customer'
         else 'Linked records and permissions are checked again before deletion.')
 

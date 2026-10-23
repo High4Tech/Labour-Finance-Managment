@@ -377,10 +377,35 @@ class HierarchyTests(unittest.TestCase):
         from plus_point.billing import create_invoice
         invoice=frappe.get_doc('Sales Invoice',frappe.db.get_value('PP Milestone',saved_milestone.name,'sales_invoice'))
         self.assertEqual(invoice.currency,'USD');self.assertEqual(invoice.grand_total,20)
-        op.save_agreement(dict(agreement_currency='EUR',agreement_rate=300),a['name'])
-        self.assertEqual(op.agreement(a['name'])['agreement_currency'],'EUR')
+        with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(agreement_currency='EUR',agreement_rate=300),a['name'])
+        self.assertEqual(op.agreement(a['name'])['agreement_currency'],'USD')
         self.assertEqual(frappe.db.get_value('Sales Invoice',invoice.name,'currency'),'USD')
         self.assertEqual(frappe.db.get_value('PP Contract Terms',a['name'],'fixed_amount'),28000)
+
+    def test_agreement_prices_need_no_manual_rate_and_keep_selected_currency_units(self):
+        values=dict(customer=self.f.customer.name,agreement_title='Automatic currency agreement',scope='Stage setup',billing_model='Fixed',agreement_currency='USD',fixed_amount=100,status='Active',effective_start=today(),effective_end=add_days(today(),4),auto_invoice=0,staffing=[dict(site_name='Currency stage',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=5,client_rate=0)],milestones=[dict(milestone_title='Deposit',amount=20,status='Planned',due_date=today())])
+        with patch('plus_point.billing.quote',return_value=dict(rate='280')) as quote:
+            a=op.save_agreement(values);quote.assert_called_once_with(self.f.company.name,'USD')
+        saved=op.agreement(a['name']);self.assertEqual(saved['fixed_amount']/saved['agreement_rate'],100)
+        self.assertEqual(saved['staffing'][0].wage_rate/saved['agreement_rate'],5)
+        with patch('plus_point.billing.quote',side_effect=AssertionError('Existing agreements must reuse their saved rate')):
+            op.save_agreement(dict(agreement_currency='USD',fixed_amount=100),a['name'])
+        with patch('plus_point.billing.quote',return_value=dict(rate='300')):
+            op.save_agreement(dict(agreement_currency='EUR',fixed_amount=100,staffing=values['staffing']),a['name'])
+        saved=op.agreement(a['name']);self.assertEqual(saved['agreement_currency'],'EUR')
+        self.assertEqual(saved['fixed_amount']/saved['agreement_rate'],100)
+        self.assertEqual(saved['staffing'][0].wage_rate/saved['agreement_rate'],5)
+        self.assertEqual(saved['milestones'][0].amount/saved['agreement_rate'],20)
+        self.assertEqual(values['staffing'][0]['wage_rate'],5)
+
+    def test_automatic_agreement_currency_failure_does_not_save_or_assume_one_to_one(self):
+        a=self.agreement();before=op.agreement(a['name'])
+        with patch('plus_point.billing.quote',side_effect=frappe.ValidationError('Unavailable')):
+            with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(agreement_currency='USD',fixed_amount=100),a['name'])
+        after=op.agreement(a['name']);self.assertEqual(after['agreement_currency'],before['agreement_currency'])
+        self.assertEqual(after['fixed_amount'],before['fixed_amount'])
+        with patch('plus_point.billing.quote',side_effect=AssertionError('Same currency needs no exchange service')):
+            op.save_agreement(dict(agreement_currency='PKR'),a['name'])
 
     def test_references_are_readable_stable_and_not_user_supplied_keys(self):
         a=self.agreement();doc=frappe.get_doc('PP Contract Terms',a['name']);self.assertRegex(doc.pp_reference,r'^AGR-20[0-9]{2}-[0-9]{5}$')
@@ -388,6 +413,25 @@ class HierarchyTests(unittest.TestCase):
         doc.pp_reference='AGR-FAKE'
         with self.assertRaises(frappe.ValidationError):doc.save()
         plan=frappe.get_doc('PP Event Plan',self.event(a));self.assertTrue(plan.pp_reference.startswith('EVT-'))
+
+    def test_optional_vehicle_quantities_persist_before_allocating_real_vehicles(self):
+        a=self.agreement();row=dict(vehicle_type='Crew van',quantity=3,site_name='Main venue',start_date=today(),end_date=add_days(today(),2))
+        op.save_agreement(dict(transport_requirements=[row]),a['name'])
+        saved=op.agreement(a['name']);requirements=frappe.parse_json(saved['pp_transport_requirements'])
+        self.assertEqual(requirements[0]['quantity'],3)
+        plan=op.plan(self.event(a));self.assertEqual(frappe.parse_json(plan['agreement']['pp_transport_requirements'])[0]['vehicle_type'],'Crew van')
+        self.assertFalse(frappe.db.exists('PP Vehicle Booking',{'project':a['project']}))
+        from plus_point.signing import snapshot
+        self.assertIn('3 × Crew van',snapshot(a['name']))
+        for bad in [dict(row,quantity=-1),dict(row,quantity=1.5),dict(row,end_date=add_days(today(),20)),dict(row,site_name='Different agreement')]:
+            with self.assertRaises(frappe.ValidationError):op.save_agreement(dict(transport_requirements=[bad]),a['name'])
+        self.assertEqual(frappe.parse_json(op.agreement(a['name'])['pp_transport_requirements']),requirements)
+
+    def test_country_is_inherited_and_unused_additional_hiring_is_cleared(self):
+        a=self.agreement();saved=op.agreement(a['name'])
+        self.assertEqual(saved['venues'][0].country,self.f.company.country)
+        op.save_agreement(dict(pp_future_crew_count=50),a['name'])
+        self.assertEqual(op.agreement(a['name'])['pp_future_crew_count'],0)
 
     def test_signing_link_expiration_revocation_and_guest_acceptance(self):
         from plus_point import signing

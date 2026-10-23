@@ -112,6 +112,12 @@ class FormTests(unittest.TestCase):
     def test_unlinked_customer_can_be_deleted(self):
         free=insert('Customer',customer_name='Unused customer QA '+uuid.uuid4().hex[:5],customer_type='Company',customer_group='Commercial',territory='All Territories')
         result=record_actions.remove_many('Customer',[free.name]);self.assertEqual(result['deleted'],[free.name])
+    def test_delete_preview_identifies_linked_records_before_confirmation(self):
+        free=insert('Customer',customer_name='Review unused QA '+uuid.uuid4().hex[:5],customer_type='Company',customer_group='Commercial',territory='All Territories')
+        rows=record_actions.review_many('Customer',[free.name,self.f.customer.name])['records']
+        self.assertFalse(next(r for r in rows if r['name']==free.name)['blocked'])
+        self.assertIn('Used by',next(r for r in rows if r['name']==self.f.customer.name)['blocked'])
+        self.assertTrue(frappe.db.exists('Customer',free.name))
     def test_delete_requires_native_permission_and_valid_selection(self):
         with self.assertRaises(frappe.ValidationError):record_actions.remove_many('Customer',[])
         with self.assertRaises(frappe.ValidationError):record_actions.remove_many('Customer',[self.f.customer.name]*2)
@@ -120,6 +126,7 @@ class FormTests(unittest.TestCase):
     def test_client_profile_cleanup_is_atomic_when_project_blocks_delete(self):
         from plus_point.clients import create
         client=create(dict(customer_name='Client cleanup QA '+uuid.uuid4().hex[:5],contact_name='Ayesha Malik',email='ayesha@example.invalid',country='Pakistan',city='Karachi',address_line1='12 Venue Road'))
+        self.assertFalse(record_actions.review('Customer',client.name)['blocked'])
         project=insert('Project',project_name='Client cleanup QA '+uuid.uuid4().hex[:5],company=self.f.company.name,customer=client.name)
         contact,address=client.customer_primary_contact,client.customer_primary_address
         self.assertIn('unshared',record_actions.review('Customer',client.name)['message'])

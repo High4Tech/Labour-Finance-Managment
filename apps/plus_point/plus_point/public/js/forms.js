@@ -66,18 +66,19 @@
   if(project){const original=project.df.onchange;project.df.onchange=async function(){await original?.call(this);await load(true);};}
   load(!!read(layout,'project'));
  };
- const removable=new Set(['Employee','Customer','Contract','Project','PP Site','PP Assignment','PP Event Plan','PP Contract Terms','PP Work Entry','PP Daily Register','PP Milestone','PP Vehicle Booking','PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim']);
+ const removable=new Set(['Employee','Customer','Contract','Project','PP Site','PP Assignment','PP Event Plan','PP Contract Terms','PP Work Entry','PP Daily Register','PP Milestone','PP Vehicle Booking','PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim','PP Worker Loan']);
  plus_point.delete_records=async(doctype,names,after)=>{
-  if(!names.length){frappe.container.page?.page?.set_indicator?.(__('Select records using the checkboxes first.'),'orange');return;}
+  if(!names.length){frappe.msgprint(__('Select records using the checkboxes first.'));return;}
   let review;try{review=await plus_point.form_rpc('record_actions.review_many',{doctype,names});}catch(error){frappe.msgprint(esc(error.message));return;}
-  const blocked=review.records.some(r=>r.blocked);
+  const eligible=review.records.filter(r=>!r.blocked).map(r=>r.name),blocked=!eligible.length;
   const dialog=new frappe.ui.Dialog({title:__(names.length===1?'Delete record':'Delete selected records'),fields:[
    {fieldtype:'HTML',fieldname:'summary',options:`<p>${esc(__('Review these records before deleting. Existing links and permissions are checked again. Approved work and posted financial history are protected.'))}</p>${doctype==='Customer'?`<p>${esc(__(review.records[0].message))}</p>`:''}<ul>${review.records.map(r=>`<li><strong>${esc(r.title||r.name)}</strong>${r.blocked?`<p>${esc(r.blocked)}</p>`:''} <a href="/desk/${frappe.router.slug(doctype)}/${encodeURIComponent(r.name)}">${esc(__('Review record'))}</a></li>`).join('')}</ul>`},
-   {fieldtype:'HTML',fieldname:'error'}],secondary_action_label:__('Cancel'),secondary_action(){dialog.hide();},primary_action_label:__('Delete'),async primary_action(){
-    dialog.disable_primary_action();try{await plus_point.form_rpc('record_actions.remove_many',{doctype,names});dialog.hide();after?.();}catch(error){dialog.fields_dict.error.$wrapper.empty().append($('<p class="text-danger" role="alert"></p>').text(error.message));}finally{if(!blocked)dialog.enable_primary_action();}
+   {fieldtype:'HTML',fieldname:'delete_error',label:' '}],secondary_action_label:__('Cancel'),secondary_action(){dialog.hide();},primary_action_label:eligible.length===names.length?__('Delete'):__('Delete {0} available',[eligible.length]),async primary_action(){
+    dialog.disable_primary_action();try{await plus_point.form_rpc('record_actions.remove_many',{doctype,names:eligible});dialog.hide();document.dispatchEvent(new Event('pp:data-changed'));await after?.();}catch(error){dialog.fields_dict.delete_error.$wrapper.empty().append($('<p class="text-danger" role="alert"></p>').text(error.message));}finally{if(!blocked)dialog.enable_primary_action();}
    }});
-  dialog.show();dialog.$wrapper.addClass('pp-delete-dialog');if(blocked)dialog.disable_primary_action();
+  dialog.show();dialog.$wrapper.addClass('pp-delete-dialog');dialog.$wrapper.one('hidden.bs.modal',()=>dialog.$wrapper.remove());if(blocked)dialog.disable_primary_action();
  };
+ plus_point.add_record_delete=(holder,doctype,name,after)=>{if(!holder||!name||holder.querySelector('[data-delete-record]')||!frappe.model.can_delete(doctype))return;const b=document.createElement('button');b.type='button';b.className='btn btn-default';b.dataset.deleteRecord='true';b.textContent=__('Delete');b.onclick=()=>plus_point.delete_records(doctype,[name],after);holder.append(b);};
  plus_point.enhance_record_list=list=>{
   if(!list?.page?.wrapper||frappe.boot.plus_point?.is_platform||!removable.has(list.doctype)||!frappe.model.can_delete(list.doctype)||$(list.page.wrapper).find('.pp-delete-selected').length)return;
   list.page.add_inner_button(__('Delete selected'),()=>plus_point.delete_records(list.doctype,list.get_checked_items().map(r=>r.name),()=>list.refresh())).addClass('pp-delete-selected');

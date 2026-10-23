@@ -16,6 +16,8 @@ def protect_reference(doc,method=None):
     if old and old.get('pp_reference') and doc.get('pp_reference')!=old.pp_reference:frappe.throw('Tracking IDs cannot be changed.')
 
 def install():
+    from plus_point.resources import install_agreement_transport
+    install_agreement_transport()
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     from frappe.custom.doctype.property_setter.property_setter import make_property_setter
     references={}
@@ -41,7 +43,16 @@ def rate_values(business,values,old=None):
     currency=v.agreement_currency
     frappe.get_doc('Currency',currency).check_permission('read')
     from plus_point.events import positive
-    rate=Decimal(1) if currency==business.default_currency else positive(v.get('agreement_rate'),'Agreement exchange rate')
+    if currency==business.default_currency:rate=Decimal(1)
+    elif v.get('agreement_rate') not in (None,''):rate=positive(v.agreement_rate,'Agreement exchange rate')
+    elif old and currency==(old.get('pp_agreement_currency') or old.currency):rate=positive(old.get('pp_agreement_rate') or 1,'Stored accounting rate')
+    else:
+        # Agreement forms accept amounts in their selected currency. Resolve the
+        # ledger boundary here; never ask the customer to price through AED.
+        from plus_point.billing import quote
+        try:rate=positive(quote(business.name,currency)['rate'],'Accounting rate')
+        except frappe.ValidationError:
+            frappe.throw('The selected currency could not be prepared for accounting. Please retry saving shortly. Your entered agreement prices have not changed.')
     if 'fixed_amount' in v:v.fixed_amount=float(money(Decimal(str(v.fixed_amount or 0))*rate))
     for row in v.get('staffing',[]):
         for key in ['wage_rate','client_rate']:row[key]=float(money(Decimal(str(row.get(key) or 0))*rate))

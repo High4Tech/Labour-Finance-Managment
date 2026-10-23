@@ -79,13 +79,14 @@ def validate_capacity(doc):
     """A booking is not a new employee. Existing overloaded baselines can be reviewed."""
     rows=doc.get('staffing') or [];required=peak(rows)
     future=cint(doc.get('pp_future_crew_count'))
-    if future<0:frappe.throw('Crew to add later cannot be negative.')
-    old=doc.get_doc_before_save()
-    if old and required<=peak(old.staffing):return
+    if future<0:frappe.throw('Additional hiring cannot be negative.')
     company=frappe.db.get_value('Project',doc.project,'company')
     total=frappe.db.count('Employee',{'company':company,'status':'Active'})
+    future=min(future,max(0,required-total));doc.pp_future_crew_count=future
+    old=doc.get_doc_before_save()
+    if old and required<=peak(old.staffing):return
     if required>total+future:
-        frappe.throw(f'This agreement needs {required} crew per day; your company has {total} active crew. Add the maximum existing crew or explicitly enter {required-total} crew to add later.')
+        frappe.throw(f'This agreement needs {required} crew per day; your company has {total} active crew. Use the existing crew maximum or confirm the {required-total} additional hires in the crew requirement.')
 
 def install():
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields

@@ -10,6 +10,32 @@ from plus_point.benefits import atomic
 
 KINDS={'vehicle':'PP Vehicle Booking','equipment':'PP Equipment Booking'}
 
+
+def install_agreement_transport():
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+    create_custom_fields({'PP Contract Terms':[dict(fieldname='pp_transport_requirements',label='Vehicle requirements',fieldtype='Long Text',hidden=1)]})
+
+
+def transport_requirements(values,start,end,sites):
+    rows=frappe.parse_json(values or '[]')
+    if not isinstance(rows,list) or len(rows)>30:frappe.throw('Use at most 30 vehicle requirements.')
+    result=[]
+    for row in rows:
+        if not isinstance(row,dict):frappe.throw('Enter a vehicle requirement.')
+        title=str(row.get('vehicle_type') or '').strip()
+        if not title or len(title)>140:frappe.throw('Enter a vehicle type of at most 140 characters.')
+        quantity=positive(row.get('quantity'),'Number of vehicles',whole=True)
+        if quantity>100:frappe.throw('Use at most 100 vehicles per requirement.')
+        first,last=row.get('start_date') or start,row.get('end_date') or end
+        span(first,last)
+        if getdate(first)<getdate(start) or getdate(last)>getdate(end):frappe.throw('Vehicle requirement dates must be within the agreement.')
+        site=str(row.get('site_name') or '').strip()
+        if site and site not in sites:frappe.throw('Choose a site in this agreement for the vehicles.')
+        notes=str(row.get('notes') or '').strip()
+        if len(notes)>1000:frappe.throw('Use at most 1,000 characters for vehicle notes.')
+        result.append(dict(vehicle_type=title,quantity=int(quantity),site_name=site,start_date=str(getdate(first)),end_date=str(getdate(last)),notes=notes))
+    return result
+
 def project_doc(project,write=False):
     business=company();doc=linked('Project',project,business.name)
     doc.check_permission('write' if write else 'read');return doc

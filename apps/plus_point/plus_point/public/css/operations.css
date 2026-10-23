@@ -1,4 +1,5 @@
 .pp-operations{padding:24px;color:var(--text-color)}
+.pp-ui .pp-op-capacity{max-width:none}.pp-op-capacity .pp-capacity-summary{max-width:none;margin:0 0 16px;line-height:1.6}.pp-agreement-transport{margin-bottom:24px}
 .pp-op-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
 .pp-op-index{position:sticky;top:76px;max-height:calc(100vh - 100px);overflow:auto;padding-right:12px;border-right:1px solid var(--border-color)}
 .pp-op-index>label{display:block;font-size:12px;color:var(--text-muted)}.pp-op-index input{margin-top:8px}
