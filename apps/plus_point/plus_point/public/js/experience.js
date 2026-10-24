@@ -10,7 +10,11 @@
   for(const field of Object.values(layout.fields_dict||{})){
    if(field.df.fieldtype!=='Date'||field.df.hidden)continue;
    const iso=v=>v instanceof Date?frappe.datetime.obj_to_str(v):String(v),first=ranges.find(([,b])=>b===field.df.fieldname)?.[0],start=first&&read(first),value=read(field.df.fieldname),limits=[field.df.min_date,start].filter(Boolean).map(iso).sort(),min=limits.at(-1),max=field.df.max_date?iso(field.df.max_date):null;
-   if(field.datepicker){field.datepicker.update('minDate',min?frappe.datetime.str_to_obj(min):false);field.datepicker.update('maxDate',max?frappe.datetime.str_to_obj(max):false);}
+   // Updating unchanged bounds rebuilds the calendar during input blur and loses the pending day/navigation click.
+   if(field.datepicker)for(const [key,bound] of [['minDate',min],['maxDate',max]]){
+    const current=field.datepicker.opts[key];
+    if((current?iso(current):null)!==(bound||null))field.datepicker.update(key,bound?frappe.datetime.str_to_obj(bound):false);
+   }
    const bad=value&&((min&&value<min)||(max&&value>max));
    plus_point.field_error(field,bad?(min&&value<min?__('Choose {0} or a later date.',[min]):__('Choose {0} or an earlier date.',[max])):'','date');
    if(bad){if(valid)plus_point.reveal_control(field);valid=false;}

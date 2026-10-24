@@ -89,7 +89,7 @@ add_to_apps_screen = [
     }
 ]
 
-app_include_js += ["/assets/plus_point/js/experience.js?v=20261024-component-validation-2"]
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261024-calendar-clicks-1"]
 app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-component-validation-2"]
 
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261023-finance-3"]

@@ -61,3 +61,17 @@ The first report-layout attempt timed out during Desk boot with no page script e
 - `.local/qa/final-validation-20261024.json` summarizes counts and the latest result for each browser journey. Detailed case evidence, logs and screenshots remain local and excluded from Git.
 
 No bank transfers or customer emails were sent. Ten-company sustained load and a full security/role audit remain outside this functional test run.
+
+## Calendar click regression and repair
+
+The user subsequently reported that calendar arrows and date cells did not respond. This was reproduced with a normal pointer click on the agreement end calendar. The earlier component checks covered a disabled past-day click and programmatic date changes, but missed normal enabled-day and navigation clicks.
+
+The shared date validation was unconditionally updating the date picker's bounds on input blur. That rebuilt its calendar between pointer down and click, discarding the interaction. Bounds now update only when their normalized date changes. Date order, agreement boundaries, past-date restrictions and corrective inline messages remain enforced.
+
+Fresh verification after this repair:
+
+- **10 calendar checks passed** using normal clicks: agreement start/end navigation and selection, forward/back navigation, vehicle dialog selection, dark mobile navigation/selection, worker past birth-date selection, year/month/day selection, and no page errors.
+- **26 component checks passed again**, including disabled past dates, invalid date order, agreement interval boundaries and future birth-date rejection.
+- Both disposable QA fixtures were restored. No customer records were changed by these tests.
+
+`scripts/browser-calendar.cjs` is now included in the default browser audit. Evidence is saved locally in `.local/qa/calendar-interactions-20261024.json` and `.local/qa/component-browser-20261024.json`. The shared asset version is refreshed so existing sites receive the repair.
