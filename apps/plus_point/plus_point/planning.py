@@ -60,20 +60,18 @@ def copy_site(customer, agreement, site, start_date, end_date, currency, exclude
     if venue.project!=source.project or not venue.is_active:frappe.throw('Choose an active site in the source agreement.')
     span(start_date,end_date)
     rows=[r for r in source.staffing if r.site==site]
-    if not rows:frappe.throw('This site has no crew plan to copy.')
-    first=min(getdate(r.start_date) for r in rows)
+    vehicles=[r for r in frappe.parse_json(source.get('pp_transport_requirements') or '[]') if not r.get('site_name') or r.get('site_name')==venue.site_name]
+    if not rows and not vehicles:frappe.throw('This site has no crew or vehicle requirements to copy.')
     from plus_point.workflows import rate_values
     rate=Decimal(str(rate_values(business,dict(agreement_currency=currency),terms_doc(exclude) if exclude else None).pp_agreement_rate))
     copied=[]
     for row in rows:
-        start=add_days(start_date,(getdate(row.start_date)-first).days)
-        end=add_days(start_date,(getdate(row.end_date)-first).days)
-        if getdate(end)>getdate(end_date):frappe.throw('This previous crew plan is longer than the new agreement. Extend the agreement end date, or add the site without importing crew.')
         copied.append(dict(site_name=venue.site_name,designation=row.designation,phase=row.phase,
-            start_date=str(start),end_date=str(end),workers_required=row.workers_required,wage_rate=0,
-            client_rate=float(money(Decimal(str(row.client_rate or 0))/rate)),
-            **{k:venue.get(k) for k in ('country','city','address_line1','state','address_line2','postal_code')}))
-    return dict(site_name=venue.site_name,rows=copied,source_currency=source.get('pp_agreement_currency') or source.currency)
+            start_date=str(getdate(start_date)),end_date=str(getdate(end_date)),workers_required=row.workers_required,wage_rate=0,
+            client_rate=float(money(Decimal(str(row.client_rate or 0))/rate))))
+    transport=[dict(vehicle_type=r['vehicle_type'],quantity=r['quantity'],site_name=venue.site_name,
+                    start_date=str(getdate(start_date)),end_date=str(getdate(end_date)),notes=r.get('notes') or '') for r in vehicles]
+    return dict(site_name=venue.site_name,rows=copied,transport_requirements=transport,source_currency=source.get('pp_agreement_currency') or source.currency)
 
 
 def pay_values(worker, basis=None, amount=None, fallback=0):

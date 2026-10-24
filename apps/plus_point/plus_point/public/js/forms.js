@@ -69,6 +69,12 @@
    input.on('blur.pp-rule',()=>feedback(error(control)));
   }
  };
+ // Quiet readiness checks must not mark untouched steps as invalid or move focus.
+ plus_point.inputs_complete=layout=>{
+  const controls=Object.values(layout.fields_dict||{});
+  for(const c of controls){if(c.df.hidden||c.df.read_only||['Section Break','Column Break','HTML','Button'].includes(c.df.fieldtype))continue;const value=c.get_value?.();if(c.df.reqd&&(value==null||value===''||Array.isArray(value)&&!value.length))return false;if(c.$input?.get(0)?.setCustomValidity&&error(c))return false;}
+  const f=layout.fields_dict||{};return !f.customer_name||!f.email||!f.phone||!!String(f.email.get_value()||f.phone.get_value()||'').trim();
+ };
  plus_point.validate_inputs=layout=>{
   const bad=[];for(const c of Object.values(layout.fields_dict||{})){
    if(!c.$input||!c.$input.get(0)?.setCustomValidity||c.df.hidden||c.df.read_only||c.$wrapper?.css('display')==='none')continue;

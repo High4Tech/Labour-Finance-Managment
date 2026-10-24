@@ -115,6 +115,7 @@ def validate_agreement(doc):
 @frappe.whitelist(methods=['POST'])
 def save_agreement(values,name=None):
     business=company();values=frappe._dict(frappe.parse_json(values) or {})
+    if values.get('scope') is not None and not frappe.utils.strip_html(values.scope).strip():values.scope=''
     if values.get('effective_start') and getdate(values.effective_start)<getdate(today()):
         changed=not name or getdate(terms_doc(name).effective_start)!=getdate(values.effective_start)
         if changed and str(values.get('allow_past_dates') or '').lower() not in ('1','true'):
@@ -267,7 +268,9 @@ def save_agreement(values,name=None):
 def agreement(name):
     doc=terms_doc(name);project=linked('Project',doc.project);contract=linked('Contract',doc.contract)
     from plus_point.clients import details
-    result=doc.as_dict();result.update(archived=bool(project.get('pp_archived')),has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=contract.contract_terms,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
+    scope=contract.contract_terms
+    if doc.status=='Draft' and scope==f'Draft: {doc.agreement_title}':scope=''
+    result=doc.as_dict();result.update(archived=bool(project.get('pp_archived')),has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=scope,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
         files=frappe.get_list('File',filters={'attached_to_doctype':'Contract','attached_to_name':contract.name},fields=['name','file_name','file_url'],limit_page_length=0),
         venues=frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name','country','city','address_line1'],order_by='site_name',limit_page_length=0),
         milestones=frappe.get_list('PP Milestone',filters={'contract_terms':name},fields=['name','milestone_title','due_date','amount','status','sales_invoice'],order_by='due_date,name',limit_page_length=0))

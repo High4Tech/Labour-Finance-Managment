@@ -111,7 +111,18 @@ class PlanningTests(unittest.TestCase):
         other=insert('Customer',customer_name=self.f.company.name+' Other',customer_type='Company',customer_group='Commercial',territory='All Territories')
         self.assertEqual(planning.recent_sites(other.name),[])
         with self.assertRaises(frappe.ValidationError):planning.copy_site(other.name,b['name'],source.staffing[0].site,start,end,'PKR')
-        with self.assertRaisesRegex(frappe.ValidationError,'longer'):planning.copy_site(self.f.customer.name,b['name'],source.staffing[0].site,start,start,'PKR')
+        one_day=planning.copy_site(self.f.customer.name,b['name'],source.staffing[0].site,start,start,'PKR')
+        self.assertTrue(all((r['start_date'],r['end_date'])==(start,start) for r in one_day['rows']))
+        self.assertNotIn('country',one_day['rows'][0])
+
+    def test_copied_vehicle_requirements_use_new_dates_without_bookings(self):
+        a=self.clean_agreement();source=frappe.get_doc('PP Contract Terms',a['name']);site=frappe.get_doc('PP Site',source.staffing[0].site)
+        op.save_agreement(dict(transport_requirements=[dict(vehicle_type='Crew van',quantity=2,site_name=site.site_name,start_date=str(source.effective_start),end_date=str(source.effective_end))]),a['name'])
+        first=add_days(today(),20);last=add_days(today(),21)
+        copied=planning.copy_site(self.f.customer.name,a['name'],site.name,first,last,'PKR')
+        self.assertEqual(copied['transport_requirements'],[dict(vehicle_type='Crew van',quantity=2,site_name=site.site_name,start_date=first,end_date=last,notes='')])
+        self.assertEqual(frappe.db.count('PP Vehicle Booking',{'project':source.project}),0)
+        self.assertEqual(frappe.db.count('PP Assignment',{'project':source.project}),0)
 
     def test_unused_event_can_detach_delete_and_choose_replacement(self):
         from plus_point.record_actions import review,remove
@@ -148,8 +159,9 @@ class PlanningTests(unittest.TestCase):
             events.context(frappe._dict(project=a['project'],site=site,start_date=today(),end_date=add_days(today(),1)))
 
     def test_draft_agreement_can_be_saved_before_crew_is_added(self):
-        created=op.save_agreement(dict(customer=self.f.customer.name,agreement_title='Draft planning',scope='',billing_model='Fixed',fixed_amount=0,status='Draft',effective_start=today(),effective_end=add_days(today(),4),staffing=[]))
+        created=op.save_agreement(dict(customer=self.f.customer.name,agreement_title='Draft planning',scope='<p><br></p>',billing_model='Fixed',fixed_amount=0,status='Draft',effective_start=today(),effective_end=add_days(today(),4),staffing=[]))
         self.assertEqual(frappe.get_doc('PP Contract Terms',created['name']).status,'Draft')
+        self.assertEqual(op.agreement(created['name'])['scope'],'')
         self.assertFalse(frappe.db.exists('PP Event Plan',{'project':created['project']}))
 
     def test_agreement_and_employee_import_templates_match_current_model(self):

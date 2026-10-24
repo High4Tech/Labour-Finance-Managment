@@ -217,11 +217,11 @@ The same selection appears under event-plan Choose crew and the normal Assign wo
 
 ## Agreement pricing, sites and client signatures
 
-Open **Client agreements** for the searchable list, then open an agreement. Use the top tabs for client details, agreement pricing, sites/crew, payment milestones, and sending/signing. Names remain the main choices; the smaller Tracking ID is a stable reference for search and support.
+Open **Client agreements** for the searchable list, then open or create an agreement. Follow Client details, Agreement details, Pricing and milestones, Sites and crew, then Send and sign. Use **Next** after completing each step and **Previous** to review without losing changes. The header has **Save draft** and **Import agreement**; **Save agreement** appears once the required details are complete. A draft needs a client, agreement name and valid dates, and can be finished later. Saving a completed draft with **Save agreement** activates it. Names remain the main choices; the smaller Tracking ID is a stable reference for search and support.
 
-Choose the agreement currency under **Agreement and pricing**. Review its exchange rate (company accounting currency per one agreement-currency unit). All site wages, Daily client rates, fixed prices and milestones in this editor use that agreement currency. New agreements can override the client's suggested currency. Once allocations or financial activity exist, saved currency/rate changes are protected; individual invoices can still have their own reviewed currency/rate.
+Choose the agreement currency under **Pricing and milestones**. Daily client rates, fixed prices and milestones use that currency. Worker wages are entered in the event plan, not the agreement. Accounting conversion is handled internally. New agreements can override the client's suggested currency. Once allocations or financial activity exist, saved currency/rate changes are protected; individual invoices can still have their own reviewed currency/rate.
 
-Under **Sites and crew**, choose **Add site / crew category**, fill the row and save it, or use **Save agreement** to include the row currently being edited. Daily agreements require both wages and the separate client rate. Allocated baseline rows stay protected; new site/category rows save into the agreement and its event. Use the event for additional crew and dated worker moves.
+Under **Sites and crew**, add a site, then its crew categories and headcounts. Daily agreements require a client rate; Fixed agreements have no per-worker price column. For a returning client, select a previous site and choose whether to copy its crew and vehicle requirements. The copy uses the current agreement dates, even if the previous plan was longer. It does not copy old dates, worker pay, assigned workers or booked vehicles. Edit the copied requirements before saving. Optional vehicle requirements stay with this agreement; assign actual vehicles in its event plan.
 
 Fixed agreements can have payment milestones while being created. After saving, **Edit / approve** records milestone acceptance; automatic invoicing creates a draft if enabled. Review and submit the draft in Billing and finances. Extra invoices use the agreement currency and rate. PDF downloads are prepared within the browser.
 
@@ -236,8 +236,11 @@ Worker profiles open with an operational overview. **Edit profile** uses three t
 
 Action forms for site crew, categories, worker selection/moves, milestones and invoices open in dismissible dialogs. Starting another action replaces the previous action dialog. Cancel closes the action without saving it. Notifications include a close button; information icons open above tables and tab bars.
 
-The agreement currency is selected under **Agreement and pricing**, not in the client details tab. New agreements suggest the business invoice preference, and pricing controls use the chosen currency. Used agreements retain their historical rate/currency; invoices can use a separately reviewed payment currency.
+The agreement currency is selected under **Pricing and milestones**, not in the client details tab. New agreements suggest the business invoice preference, and pricing controls use the chosen currency. Used agreements retain their historical rate/currency; invoices can use a separately reviewed payment currency.
 
 Agreed crew counts are compared with all active company workers, including people already booked elsewhere. The staffing dialog also shows how many are free for the selected dates. If demand exceeds the existing crew, choose **Add maximum** to reduce it or **Add crew later** and enter the additional number. This saves a staffing commitment, not fictitious worker profiles or duplicate assignments. Concurrent site/category demand is counted once per date rather than adding disjoint phases together.
 
 Lists no longer receive automatic status or project filters. Filters chosen explicitly by the user remain native and editable. Retired app-added company/active-project filters are removed once when this update is installed.
+
+
+Event planning uses the same Previous/Next layout. Choose an active agreement, review the copied requirements and create the plan. Continue through Event information, Venues and crew, Transport and equipment, and Event timeline. Next saves changes to notes and budget; crew and resource actions save immediately. Save event plan remains at the top for notes and budget.
