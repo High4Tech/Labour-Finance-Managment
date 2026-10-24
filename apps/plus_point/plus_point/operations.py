@@ -98,9 +98,9 @@ def validate_agreement(doc):
         if site.project!=project.name:frappe.throw('Agreement venues must belong to this event.')
         span(row.start_date,row.end_date)
         if getdate(row.start_date)<getdate(doc.effective_start) or doc.effective_end and getdate(row.end_date)>getdate(doc.effective_end):frappe.throw('Staffing dates must fall within the agreement dates.')
-        positive(row.workers_required,'Workers per day',whole=True)
+        row.workers_required=int(positive(row.workers_required,'Workers per day',whole=True))
         if row.workers_required>500:frappe.throw('Use at most 500 workers per role/site/day.')
-        positive(row.wage_rate,'Daily wage',allow_zero=doc.billing_model=='Fixed');positive(row.client_rate,'Client rate',allow_zero=doc.billing_model=='Fixed')
+        positive(row.wage_rate,'Daily wage',allow_zero=True);positive(row.client_rate,'Client rate',allow_zero=doc.billing_model=='Fixed')
         if doc.billing_model=='Fixed' and money(row.client_rate):frappe.throw('Fixed agreements use milestones rather than worker-day client charges.')
         key=(row.site,row.designation)
         for previous in doc.staffing:
@@ -125,6 +125,8 @@ def save_agreement(values,name=None):
     try:
         if name:
             doc=terms_doc(name,True);project=linked('Project',doc.project);contract=linked('Contract',doc.contract)
+            from plus_point.budget import lock_project
+            lock_project(project.name)
             customer=project.customer
             if values.get('customer') and values.customer!=customer:frappe.throw('The client of an existing agreement cannot change.')
         else:
@@ -156,7 +158,7 @@ def save_agreement(values,name=None):
             doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
-            contract.check_permission('write');contract.contract_terms=values.scope;contract.save()
+            contract.check_permission('write');contract.contract_terms=values.scope or (f'Draft: {doc.agreement_title}' if doc.status=='Draft' else values.scope);contract.save()
         if 'staffing' in values:
             if 'sites' in values and (not isinstance(values.sites,list) or len(values.sites)>12 or any(not isinstance(v,str) or len(v)>140 for v in values.sites)):frappe.throw('Use at most 12 named sites in an agreement.')
             locations={r.site_name:r.name for r in frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name'],limit_page_length=0)}
@@ -188,7 +190,7 @@ def save_agreement(values,name=None):
                         if raw.get(key) is not None:venue.set(key,raw[key])
                     venue.save()
                 rows.append(dict(site=site,**{key:raw.get(key) for key in ('designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')}))
-            if not rows:frappe.throw('Add at least one venue and worker category.')
+            if not rows and doc.status!='Draft':frappe.throw('Add at least one venue and worker category.')
             doc.set('staffing',rows)
         if 'transport_requirements' in values:
             from plus_point.resources import transport_requirements
@@ -196,7 +198,12 @@ def save_agreement(values,name=None):
             transport=transport_requirements(values.transport_requirements,doc.effective_start,doc.effective_end,site_names)
             if transport and not doc.meta.has_field('pp_transport_requirements'):frappe.throw('Vehicle requirements are not installed on this site yet.')
             doc.pp_transport_requirements=frappe.as_json(transport)
+        if doc.status=='Draft' and name and frappe.db.exists('PP Assignment',{'contract_terms':name}):frappe.throw('This agreement already has worker assignments. Keep it Active, or close completed work instead of changing it to Draft.')
         doc.save()
+        if name and doc.billing_model=='Fixed':
+            from plus_point.planning import cost_warning
+            warning=cost_warning(doc,[])
+            if warning and not frappe.utils.cint(values.get('confirm_over_budget')):frappe.throw(warning)
         if currency_changed:
             # Planned milestone prices keep their entered numeric amounts when
             # a draft agreement changes currency. Approved history is protected.
@@ -225,7 +232,8 @@ def save_agreement(values,name=None):
             # Fixed client prices do not define payroll. Zero-wage requirements
             # inherit an existing plan payroll rate until a worker is assigned.
             for row in rows:
-                if not row['wage_rate']:row['wage_rate']=plan.wage_rate
+                existing=next((r for r in plan.staffing if signature(r)==signature(row)),None)
+                row['wage_rate']=existing.wage_rate if existing else 0
                 if doc.billing_model=='Fixed':row['client_rate']=0
             plan.set('staffing',rows)
             plan.start_date=min(getdate(r['start_date']) for r in rows);plan.end_date=max(getdate(r['end_date']) for r in rows)
@@ -238,9 +246,9 @@ def save_agreement(values,name=None):
                 assignment=linked('PP Assignment',allocation.name)
                 role=frappe.db.get_value('Employee',allocation.employee,'designation')
                 match=next((r for r in doc.staffing if r.site==allocation.site and r.designation==role and getdate(r.start_date)<=getdate(assignment.start_date) and getdate(r.end_date)>=getdate(assignment.end_date or r.end_date)),None)
-                if match and match.wage_rate:assignment.wage_rate=match.wage_rate
                 if doc.billing_model=='Fixed':assignment.client_rate=0
                 elif match:assignment.client_rate=match.client_rate
+                assignment.pp_cost_override=frappe.utils.cint(values.get('confirm_over_budget'))
                 assignment.save()
         if 'sites' in values:
             retained=set(values.sites)|{frappe.db.get_value('PP Site',r.site,'site_name') for r in doc.staffing}
@@ -291,10 +299,12 @@ def create_plan(contract_terms,event_name,notes=None):
 @frappe.whitelist()
 def plan(name):
     from plus_point.events import plan_doc,timeline,crew_proposal
-    doc=plan_doc(name);terms_doc(doc.contract_terms)
+    doc=plan_doc(name)
+    if not doc.contract_terms:return dict(doc.as_dict(),unlinked=True)
+    terms_doc(doc.contract_terms)
     result=doc.as_dict();result.update(timeline=timeline(name),agreement=agreement(doc.contract_terms))
     workers={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','employee_name','designation','image'],limit_page_length=0)}
-    allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate'],order_by='start_date,employee',limit_page_length=0)
+    allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate','pp_pay_basis','pp_pay_amount'],order_by='start_date,employee',limit_page_length=0)
     for row in allocations:
         person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '')
     project=linked('Project',doc.project)
@@ -346,7 +356,7 @@ def coverage(doc):
 
 
 @frappe.whitelist(methods=['POST'])
-def auto_assign(name):
+def auto_assign(name,confirm_over_budget=0):
     from plus_point.events import plan_doc,crew_proposal,validate_plan
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
     from plus_point.budget import lock_project
@@ -359,9 +369,14 @@ def auto_assign(name):
         frappe.throw('Not enough available crew. '+detail+'. Add workers or revise the requirements.')
     frappe.db.savepoint('pp_auto_staff')
     try:
+        from plus_point.planning import cost_warning
+        warning=cost_warning(terms_doc(doc.contract_terms),proposal['assignments'])
+        if warning and not frappe.utils.cint(confirm_over_budget):frappe.throw(warning)
         for row in proposal['assignments']:
             frappe.get_doc(dict(doctype='PP Assignment',employee=row['employee'],project=doc.project,site=row['site'],contract_terms=doc.contract_terms,
-                start_date=row['start_date'],end_date=row['end_date'],wage_rate=row['wage_rate'],client_rate=row['client_rate'],pp_event_plan=name)).insert()
+                start_date=row['start_date'],end_date=row['end_date'],wage_rate=row['wage_rate'],client_rate=row['client_rate'],pp_event_plan=name,
+                pp_pay_basis=row.get('pp_pay_basis'),pp_pay_amount=row.get('pp_pay_amount'),
+                pp_cost_override=frappe.utils.cint(confirm_over_budget))).insert()
         frappe.db.set_value('PP Event Plan',name,'crew_allocated',1)
         return dict(created=len(proposal['assignments']))
     except Exception:
@@ -380,16 +395,18 @@ def available_crew(name,requirement):
         'project':doc.project,'site':row.site,'start_date':['<=',row.end_date]},
         fields=['name','employee','end_date'],limit_page_length=0)
         if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
-    roles={r.name:r.designation for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','designation'],limit_page_length=0)}
+    people={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','designation','pp_salary_basis','pp_salary_amount','pp_daily_rate','pp_monthly_rate'],limit_page_length=0)}
+    from plus_point.planning import worker_rates
     for r in result['rows']:
-        role=roles.get(r['name']) or '';eligible=not row.designation or not role or role==row.designation
+        person=people[r['name']];r.update(pay_rates=worker_rates(person),pay_basis=person.get('pp_salary_basis') or 'Daily')
+        role=person.designation or '';eligible=not row.designation or not role or role==row.designation
         r.update(designation=role,assigned=r['name'] in assigned,assignment=assigned.get(r['name']),eligible=eligible)
         if not eligible and not r['assigned']:r.update(available=False,reason=f'Category: {role}. This position needs {row.designation}.')
     return result
 
 
 @frappe.whitelist(methods=['POST'])
-def assign_crew(name,requirement,employees):
+def assign_crew(name,requirement,employees,payments=None,confirm_over_budget=0):
     from plus_point.events import plan_doc
     from plus_point.crew import assign,selection
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
@@ -400,6 +417,8 @@ def assign_crew(name,requirement,employees):
     try:
         from plus_point.budget import lock_project
         lock_project(doc.project)
+        doc.reload();row=next((r for r in doc.staffing if r.name==requirement),None)
+        if not row:frappe.throw('The crew requirement changed. Reload the event before assigning workers.')
         for employee in names:
             worker=linked('Employee',employee,doc.company)
             if row.designation and worker.designation and worker.designation!=row.designation:frappe.throw('Select workers in the required category.')
@@ -411,12 +430,13 @@ def assign_crew(name,requirement,employees):
             'start_date':['<=',row.end_date]},fields=['employee','end_date'],limit_page_length=0)
             if not r.end_date or getdate(r.end_date)>=getdate(row.start_date)}
         names=[n for n in names if n not in existing]
-        from plus_point.benefits import wage
+        from plus_point.planning import pay_preview
+        preview=pay_preview(name,requirement,names,payments) if names else dict(rows=[],warning='')
+        if preview['warning'] and not frappe.utils.cint(confirm_over_budget):frappe.throw(preview['warning'])
         result=dict(created=0,assignments=[])
-        for employee in names:
-            worker=linked('Employee',employee,doc.company);pay=row.wage_rate or doc.wage_rate or wage(worker)
-            if not pay:frappe.throw(f'Set salary for {worker.employee_name} before assigning fixed-price work.')
-            added=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,pay,row.client_rate or doc.client_rate,[employee]);result['created']+=added['created'];result['assignments']+=added.get('assignments',[])
+        for proposal in preview['rows']:
+            added=assign(doc.project,row.site,doc.contract_terms,row.start_date,row.end_date,proposal['wage_rate'],row.client_rate or doc.client_rate,[proposal['employee']],
+                pay_basis=proposal['pp_pay_basis'],pay_amount=proposal['pp_pay_amount'],confirm_over_budget=confirm_over_budget);result['created']+=added['created'];result['assignments']+=added.get('assignments',[])
         for assignment in result.get('assignments',[]):frappe.db.set_value('PP Assignment',assignment,'pp_event_plan',name)
         frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not r['missing'] for r in coverage(doc))))
         return result
@@ -445,7 +465,7 @@ def update_headcount(name,requirement,workers_required):
 
 
 @frappe.whitelist(methods=['POST'])
-def move_worker(assignment,effective_date,target_plan=None,site=None,end_date=None):
+def move_worker(assignment,effective_date,target_plan=None,site=None,end_date=None,confirm_over_budget=0):
     """End the old commitment before a new one; never rewrite attendance or rates."""
     business=company();old=linked('PP Assignment',assignment);old.check_permission('write');linked('Project',old.project,business.name)
     target=linked('PP Event Plan',target_plan) if target_plan else None
@@ -479,7 +499,8 @@ def move_worker(assignment,effective_date,target_plan=None,site=None,end_date=No
             from plus_point.crew import validate_selected
             validate_selected([old.employee],business.name,first,last,lock=True)
             new=frappe.get_doc(dict(doctype='PP Assignment',employee=old.employee,site=site,project=target.project,contract_terms=terms.name,
-                start_date=first,end_date=last,wage_rate=row.wage_rate or target.wage_rate,client_rate=(row.client_rate or target.client_rate) if terms.billing_model=='Daily' else 0,pp_event_plan=target.name)).insert()
+                start_date=first,end_date=last,wage_rate=old.wage_rate,pp_pay_basis=old.get('pp_pay_basis'),pp_pay_amount=old.get('pp_pay_amount'),
+                pp_cost_override=frappe.utils.cint(confirm_over_budget),client_rate=(row.client_rate or target.client_rate) if terms.billing_model=='Daily' else 0,pp_event_plan=target.name)).insert()
             return dict(name=new.name,transferred=True)
         return dict(transferred=False,released=True)
     except Exception:
@@ -657,7 +678,10 @@ def create_category(title):
 def activity_doc(doctype,name):
     if doctype=='PP Contract Terms':return terms_doc(name)
     if doctype=='PP Event Plan':
-        doc=linked(doctype,name);terms_doc(doc.contract_terms);return doc
+        from plus_point.events import plan_doc
+        doc=plan_doc(name)
+        if doc.contract_terms:terms_doc(doc.contract_terms)
+        return doc
     frappe.throw('Choose an agreement or event for comments.')
 
 

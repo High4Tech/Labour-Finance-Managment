@@ -57,7 +57,7 @@ def review(doctype,name):
     if doctype=='PP Work Entry':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.work_date} · {doc.status}"
     return dict(doctype=doctype,name=name,title=title,blocked=blocked,dependency=dependency,
         message='Deleting a client also removes its unshared contact and address records. Shared profiles remain.' if doctype=='Customer'
-        else 'Unused unsigned signing links are removed with this agreement. Signed evidence is retained.' if doctype=='PP Contract Terms'
+        else 'Open the linked event to change or remove its agreement. After removal/deletion, the unlinked event will not appear in finances until a replacement agreement is selected. Existing payroll and posted financial history must remain linked. Unused unsigned signing links are removed; signed evidence is retained.' if doctype=='PP Contract Terms'
         else 'Active events automatically recreate today’s attendance draft. Close the agreement to stop new drafts; approved history is retained.' if doctype=='PP Daily Register'
         else 'Linked records and permissions are checked again before deletion.')
 

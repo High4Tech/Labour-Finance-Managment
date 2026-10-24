@@ -37,7 +37,8 @@ def context(doc):
         if site.project!=project.name or (not site.is_active and doc.get('status')!='Cancelled'):
             frappe.throw('Choose an active event site in this project')
     span(doc.start_date,doc.end_date)
-    bounds=frappe.db.get_value('PP Event Plan',{'project':project.name},['start_date','end_date'],as_dict=True,for_update=True)
+    bounds=frappe.db.get_value('PP Event Plan',{'project':project.name},['start_date','end_date','contract_terms'],as_dict=True,for_update=True)
+    if bounds and not bounds.contract_terms and doc.get('status')!='Cancelled':frappe.throw('Select a replacement agreement for this event before assigning workers or resources.')
     if bounds and (getdate(doc.start_date)<getdate(bounds.start_date) or getdate(doc.end_date)>getdate(bounds.end_date)):
         frappe.throw('Resource dates must be inside the event plan')
     return project
@@ -46,6 +47,10 @@ def context(doc):
 def validate_plan(doc):
     require_customer();project=linked('Project',doc.project);linked('Company',project.company);doc.company=project.company
     if not doc.is_new():frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True)
+    if not doc.contract_terms:
+        from plus_point.planning import ensure_unused_event
+        ensure_unused_event(doc);span(doc.start_date,doc.end_date)
+        return
     terms=linked('PP Contract Terms',doc.contract_terms)
     if doc.get('selected_crew'):
         from plus_point.crew import selection
@@ -55,7 +60,7 @@ def validate_plan(doc):
     days=span(doc.start_date,doc.end_date)
     if terms.effective_start and getdate(days[0])<getdate(terms.effective_start) or terms.effective_end and getdate(days[-1])>getdate(terms.effective_end):
         frappe.throw('Event dates must be inside the client billing agreement')
-    positive(doc.wage_rate,'Daily crew wage',allow_zero=terms.billing_model=='Fixed')
+    positive(doc.wage_rate,'Daily crew wage',allow_zero=True)
     positive(doc.client_rate,'Client rate',allow_zero=terms.billing_model=='Fixed')
     if terms.billing_model=='Fixed' and as_decimal(doc.client_rate or 0)!=0:
         frappe.throw('Fixed contracts use milestones, not worker-day client charges')
@@ -71,7 +76,7 @@ def validate_plan(doc):
             frappe.throw('Staffing phases must be within the event dates')
         if row.get('designation'):
             linked('Designation',row.designation)
-            positive(row.wage_rate or doc.wage_rate,'Category daily wage',allow_zero=terms.billing_model=='Fixed')
+            positive(row.wage_rate or doc.wage_rate,'Category daily wage',allow_zero=True)
             positive(row.client_rate or doc.client_rate,'Category client rate',allow_zero=terms.billing_model=='Fixed')
             if terms.billing_model=='Fixed' and as_decimal(row.client_rate or 0)!=0:frappe.throw('Fixed staffing categories cannot have worker-day client charges')
         count=positive(row.workers_required,'Workers per day',whole=True)
@@ -220,10 +225,10 @@ def crew_proposal(doc,lock=False):
         chosen=candidates[:need]
         if len(chosen)<need:shortages.append(dict(site=phase.site,from_date=str(first),to_date=str(last),missing=need-len(chosen),designation=phase.get('designation') or 'All crew'))
         for person in chosen:
-            from plus_point.benefits import wage
-            payroll=phase.get('wage_rate') or doc.wage_rate or wage(frappe.get_doc('Employee',person.name))
-            if not payroll:frappe.throw(f'Set salary for {person.employee_name} before assigning fixed-price work.')
-            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),wage_rate=payroll,client_rate=phase.get('client_rate') or doc.client_rate))
+            from plus_point.planning import pay_values
+            worker=frappe.get_doc('Employee',person.name)
+            pay=pay_values(worker,worker.get('pp_salary_basis') or 'Daily',fallback=phase.get('wage_rate') or doc.wage_rate)
+            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),**pay,client_rate=phase.get('client_rate') or doc.client_rate))
             busy[person.name].append((first,last))
     if len(proposal)>1000:frappe.throw('Split this event into smaller plans (maximum 1,000 generated assignments)')
     return dict(assignments=proposal,shortages=shortages,existing_coverage=existing_coverage)

@@ -117,12 +117,13 @@ def normalize(kind, company, original):
         select('status',('Active','Inactive'))
     if kind=='employees' and row.get('gender'):
         select('gender',frappe.get_list('Gender',pluck='name',limit_page_length=0))
+    if kind=='employees' and row.get('pp_salary_basis'):select('pp_salary_basis',('Daily','Monthly'))
     if kind=='vehicles':
         select('fuel_type',('Petrol','Diesel','Natural Gas','Electric'))
         select('cargo_uom',('units','kg','m³'),{'m3':'m³','cubic metres':'m³','cubic meters':'m³'})
     if kind=='invoices' and row.get('source_type'):
         select('source_type',('PP Work Entry','PP Milestone'))
-    if kind=='events':
+    if kind in ('events','agreements'):
         select('billing_model',('Daily','Fixed'),{'per_worker':'Daily','per worker day':'Daily','fixed price':'Fixed'})
         if row['billing_model']=='Fixed':
             from plus_point.events import positive
@@ -152,8 +153,19 @@ def normalize(kind, company, original):
             frappe.throw('site must belong to the selected event project')
     elif kind == 'warehouses':
         row['_warehouse'] = find('Warehouse',row.get('warehouse_name'),company,'warehouse_name',optional=True) or ''
+        if 'warehouse_type' in row:select('warehouse_type',('Owned','Rented'),default='Owned')
+        if 'status' in row:select('status',('Active','Inactive'),default='Active')
     elif kind == 'stock_balances':
         ref('item_code','Item',filters={'is_stock_item':1});ref('warehouse','Warehouse')
+        if 'date' not in row:
+            current=frappe.db.get_value('Bin',{'item_code':row['item_code'],'warehouse':row['warehouse']},['actual_qty','valuation_rate'],as_dict=True)
+            row.update(date=frappe.utils.today(),valuation_rate=str(current.valuation_rate or 0) if current else '0',
+                allow_zero_valuation_rate=not current or not current.valuation_rate,_automatic_count=True,
+                _expected_quantity=str(current.actual_qty or 0) if current else '0')
+            notes.append('Absolute counted quantity; server date/time and existing unit value are retained automatically. Event reservations cannot be edited.')
+    elif kind == 'agreements':
+        ref('customer','Customer')
+        select('status',('Draft','Active'),default='Draft')
     elif kind == 'events':
         value = row.get('customer') or row.get('customer_name')
         if not value:frappe.throw('Enter customer: the client name or an existing Customer ID')

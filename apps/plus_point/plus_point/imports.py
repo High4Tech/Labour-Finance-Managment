@@ -31,6 +31,8 @@ EMPLOYEE_OPTIONAL_COLUMNS = ['middle_name', 'employee_number', 'personal_email',
 EMPLOYEE_PROFILE_COLUMNS=LEGACY_EMPLOYEE_COLUMNS+EMPLOYEE_OPTIONAL_COLUMNS
 EMPLOYEE_OPTIONAL_COLUMNS += ['designation']
 SCHEMAS['employees'] += EMPLOYEE_OPTIONAL_COLUMNS
+EMPLOYEE_PRE_PAY_COLUMNS=list(SCHEMAS['employees'])
+SCHEMAS['employees'] += ['pp_salary_basis','pp_daily_rate','pp_monthly_rate','pp_leaves_per_month','pp_loan_allowed','pp_loan_wait_months','pp_loan_deduction_percent']
 TARGETS = dict(employees='Employee', work='PP Work Entry', milestones='PP Milestone',
     expenses='Purchase Invoice', invoices='Sales Invoice', receipts='Payment Entry', worker_payments='PP Wage Settlement')
 MAX_ROWS = 200
@@ -51,7 +53,7 @@ def record_key(company, kind, external_id):
 def content_digest(kind, row):
     # Adding empty contact columns to an old event/client file is not a change
     # to a posted event. Preserve the original hash for legacy files.
-    from plus_point.event_imports import LEGACY_SCHEMAS
+    from plus_point.event_imports import LEGACY_SCHEMAS,PREVIOUS_SCHEMAS
     legacy=LEGACY_SCHEMAS.get(kind)
     return digest({key:value for key,value in row.items() if not legacy or key in legacy or value})
 
@@ -109,7 +111,8 @@ def parse_file(filename, content, kind):
         headers.pop()
     from plus_point.event_imports import LEGACY_SCHEMAS
     legacy = LEGACY_EMPLOYEE_COLUMNS if kind=='employees' else LEGACY_SCHEMAS.get(kind)
-    if headers != SCHEMAS[kind] and headers != legacy and not (kind=='employees' and headers==EMPLOYEE_PROFILE_COLUMNS):
+    from plus_point.event_imports import PREVIOUS_SCHEMAS
+    if headers != SCHEMAS[kind] and headers != legacy and headers!=PREVIOUS_SCHEMAS.get(kind) and not (kind=='employees' and headers in (EMPLOYEE_PROFILE_COLUMNS,EMPLOYEE_PRE_PAY_COLUMNS)):
         frappe.throw('Column headers must match the selected template in the same order. Download a fresh template.')
     if not rows or len(rows) > MAX_ROWS:
         frappe.throw('Add between 1 and 200 data rows. Blank rows between records are not allowed.')
@@ -204,6 +207,9 @@ def validate_row(kind, company, row):
             if len(row['designation'])>100 or '\n' in row['designation']:frappe.throw('Worker category must be a single line of up to 100 characters.')
             if not frappe.db.exists('Designation',row['designation']):frappe.has_permission('Designation','create',throw=True)
         if row.get('valid_upto'):row_date(row, 'valid_upto', historical=False)
+        from plus_point.benefits import validate_worker_settings
+        validate_worker_settings(frappe._dict(row))
+        if row.get('pp_salary_basis') and row['pp_salary_basis'] not in ('Daily','Monthly'):frappe.throw('Default event pay basis must be Daily or Monthly.')
         employee_target(company, row)
         return dict(label=f"{row['first_name']} {row['last_name']}".strip(), amount=None)
     if kind == 'work':

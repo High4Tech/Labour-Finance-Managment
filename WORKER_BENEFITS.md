@@ -1,6 +1,6 @@
 # Worker salary, leave and loan workflow
 
-Open a worker by name. **Edit profile → Salary and leaves** contains daily or monthly salary, monthly leave allowance, loan eligibility, waiting months from joining, and the usual recovery percentage. Monthly salary provides a payroll rate of salary ÷ 30 for approved work; entering salary settings does not post wages for unworked days. Existing recorded wage rates remain historical snapshots.
+Open a worker by name. **Edit profile → Salary and leaves** contains separate **Daily pay rate** and **Monthly pay rate**, a default event pay basis, monthly leave allowance, loan eligibility, waiting months from joining, and the usual recovery percentage. These are independent rates. When assigning an event, choose Daily or Monthly and the amount for that event. Monthly pay provides a rounded daily payroll rate of amount ÷ 30 for approved attendance; a half day earns half. Entering salary settings does not post wages for unworked days. Existing recorded wage rates remain historical snapshots.
 
 New workers default to Active. An inactive saved worker has **Activate worker** on the overview. Activation still observes the subscription limit and company permissions.
 
@@ -24,9 +24,17 @@ Submitted records are retained. Cancel recovery through its record to reverse it
 
 Agreement tabs are **Client details → Agreement details → Pricing and milestones → Sites and crew → Send and sign**. Conditions are repeatable rows included in the client signature snapshot. Agreement currency is chosen in pricing, independently of the client and the top-bar report currency. Changing display currency converts form amounts while preserving accounting value; historical invoices keep their own currency and rate.
 
-Each site contains a crew table. Fixed pricing hides wage/rate columns and uses the fixed agreement value plus milestones; payroll comes from existing payroll rates or worker salary settings. Daily pricing requires category payroll wages and client rates.
+Each site contains a crew table. Agreements contain client prices only. Fixed pricing hides rate columns and uses the fixed agreement value plus milestones; Daily pricing requires the category's client rate per worker-day. Event **Choose workers** offers a pay basis and amount for each selected person, with client pricing alongside. Unused allocations have **Edit pay**; attendance locks the pay snapshot. Legacy agreement payroll values are retained internally for compatibility with existing records, but the agreement editor does not ask for them.
 
-Editing targets updates the event plan and unused assignment rates. Saved attendance preserves its assignment/rate snapshots. Removing an agreement requirement that still has deployed workers keeps that deployment as extra event crew, visible against the revised agreement. It does not erase attendance or silently unassign people. Sites can be saved before their first crew row is added.
+Editing targets updates the event plan and unused assignment client rates, while preserving worker pay. Saved attendance preserves its assignment/rate snapshots. Removing an agreement requirement that still has deployed workers keeps that deployment as extra event crew, visible against the revised agreement. It does not erase attendance or silently unassign people. Sites can be saved before their first crew row is added.
+
+**Add site** suggests previous site plans for the selected client, newest agreement update first (up to 20 suggestions). Choose a site and keep **Copy this site's previous crew plan** checked to copy categories, headcount, client rates, location and relative dates. Uncheck it to add only the name. No workers, wages, assignments or attendance are copied. Imported rows remain editable. A plan longer than the new agreement is refused with guidance to extend the dates or add a clean site. Existing-site duplicates are refused rather than silently replacing edited rows.
+
+Pay above a Daily client rate requires an explicit confirmation. Fixed-price events compare all dated worker allocations with the fixed contract value before allowing an overrun. These are conservative labour projections, separate from actual profit, which still uses approved attendance and posted costs. The server rechecks the warning under the project's allocation lock. Declining creates no assignment.
+
+**Save agreement**, **Save draft** and **Import agreement** are in the agreement header. A draft can be saved before crew or scope is complete; a client, title, dates and billing model are still required by the underlying records. New agreement and event templates ask for client pricing, not worker wages; worker templates include both pay rates and benefit settings. Import instructions use an info button and retain preview/confirmation before saving. Older templates remain supported.
+
+An unused event has **Change agreement**. Removing its link shows **Agreement required** and excludes it from financial reports until an active replacement is selected. A replacement must belong to the same client and company and must not already have another event. It supplies its own site/crew plan and dates; the event name is preserved. Events with assignments, attendance, reservations or financial records cannot be detached or moved to another agreement: preserve their original history and close completed work instead. Deletion review explains this consequence before navigating to the linked event.
 
 ## Installation and verification
 

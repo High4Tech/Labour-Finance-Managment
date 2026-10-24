@@ -40,6 +40,8 @@ def roster(site,day):
 
 
 def require_open_work(project,day):
+    if frappe.db.exists('PP Event Plan',{'project':project.name,'contract_terms':['is','not set']}):
+        frappe.throw('Select a replacement agreement for this event before preparing attendance. Unlinked events are excluded from finances.')
     terms=frappe.get_all('PP Contract Terms',filters={'project':project.name,'status':'Active','effective_start':['<=',day]},fields=['effective_end'])
     if project.status!='Open' or not any(not row.effective_end or getdate(row.effective_end)>=day for row in terms):
         frappe.throw('This event is closed or has no active agreement for this date. Reopen the agreement and event before preparing new attendance. Existing attendance history remains available.')

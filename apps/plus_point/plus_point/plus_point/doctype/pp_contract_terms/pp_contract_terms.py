@@ -29,7 +29,7 @@ class PPContractTerms(Document):
             frappe.throw("Billing model must be Daily or Fixed")
         if self.effective_end and getdate(self.effective_end) < getdate(self.effective_start):
             frappe.throw("End date must not precede start date")
-        if self.billing_model == "Fixed" and as_decimal(self.fixed_amount or 0) <= 0:
+        if self.billing_model == "Fixed" and self.status!='Draft' and as_decimal(self.fixed_amount or 0) <= 0:
             frappe.throw("Fixed contracts require a positive fixed amount")
         if self.billing_model == "Daily" and as_decimal(self.fixed_amount or 0) != 0:
             frappe.throw("Daily contracts must not specify a fixed amount")

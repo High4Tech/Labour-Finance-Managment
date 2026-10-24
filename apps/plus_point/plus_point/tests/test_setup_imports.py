@@ -43,7 +43,10 @@ class SetupImportTests(unittest.TestCase):
 
     def preview(self, kind, rows, company=None):
         stream = io.StringIO(newline='')
-        writer = csv.DictWriter(stream, fieldnames=imports.SCHEMAS[kind])
+        from plus_point.event_imports import PREVIOUS_SCHEMAS
+        # Legacy payload tests keep their original columns; current template tests use the new schema.
+        legacy=kind in PREVIOUS_SCHEMAS and any(set(row)-set(imports.SCHEMAS[kind]) for row in rows)
+        writer = csv.DictWriter(stream, fieldnames=PREVIOUS_SCHEMAS[kind] if legacy else imports.SCHEMAS[kind])
         writer.writeheader()
         writer.writerows(rows)
         result = imports.preview(kind,company or self.f.company.name,'records.csv',
@@ -357,7 +360,7 @@ class SetupImportTests(unittest.TestCase):
     def test_xlsx_values_and_formula_rejection(self):
         from frappe.utils.xlsxutils import make_xlsx
         row=self.employee()
-        data=[imports.SCHEMAS['employees'],[row[k] for k in imports.SCHEMAS['employees']]]
+        data=[imports.SCHEMAS['employees'],[row.get(k,'') for k in imports.SCHEMAS['employees']]]
         content=base64.b64encode(make_xlsx(data,'Employees').getvalue()).decode()
         result=imports.preview('employees',self.f.company.name,'employees.xlsx',content)
         self.assertTrue(result['valid'],result)

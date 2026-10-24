@@ -39,15 +39,23 @@ def eligibility(worker, day=None):
 
 
 def validate_worker_settings(doc):
-    for field in ['pp_salary_amount','pp_leaves_per_month','pp_loan_wait_months']:
+    old=doc.get_doc_before_save() if callable(getattr(doc,'get_doc_before_save',None)) else None
+    if doc.get('pp_salary_amount') and (not old or doc.get('pp_salary_amount')!=old.get('pp_salary_amount')):
+        field='pp_monthly_rate' if doc.get('pp_salary_basis')=='Monthly' else 'pp_daily_rate'
+        if not doc.get(field) or old and doc.get(field)==old.get(field):doc.set(field,doc.pp_salary_amount)
+    for field in ['pp_salary_amount','pp_daily_rate','pp_monthly_rate','pp_leaves_per_month','pp_loan_wait_months']:
         if as_decimal(doc.get(field) or 0)<0:frappe.throw('Salary, leave allowance and loan waiting months cannot be negative.')
     if as_decimal(doc.get('pp_leaves_per_month') or 0)>31:frappe.throw('Use at most 31 leave days per month.')
     if not 0<=as_decimal(doc.get('pp_loan_deduction_percent') or 0)<=100:frappe.throw('Loan deduction must be between 0 and 100 percent.')
 
 
 def wage(worker):
-    amount=money(worker.get('pp_salary_amount') or 0)
-    return money(amount/Decimal(30)) if worker.get('pp_salary_basis')=='Monthly' else amount
+    from plus_point.planning import worker_rates
+    rates=worker_rates(worker)
+    if worker.get('pp_salary_basis')=='Monthly' and money(rates['monthly']):return money(Decimal(rates['monthly'])/30)
+    if money(rates['daily']):return money(rates['daily'])
+    if money(rates['monthly']):return money(Decimal(rates['monthly'])/30)
+    return money(0)
 
 
 @frappe.whitelist(methods=['POST'])
@@ -249,7 +257,7 @@ def install():
 def event_options(employee):
     worker=worker_doc(employee)
     plans=frappe.get_list('PP Event Plan',filters={'company':worker.company,'end_date':['>=',today()]},fields=['name','event_name','start_date','end_date','contract_terms'],order_by='start_date,event_name',limit_page_length=0)
-    return [p for p in plans if frappe.db.get_value('PP Contract Terms',p.contract_terms,'status')=='Active']
+    return [p for p in plans if p.contract_terms and frappe.db.get_value('PP Contract Terms',p.contract_terms,'status')=='Active']
 
 
 @frappe.whitelist()
@@ -264,18 +272,21 @@ def event_positions(employee,plan):
         if start>getdate(row.end_date) or row.designation!=worker.designation:continue
         free=min((d['missing'] for d in days if d['site']==row.site and d['designation']==row.designation and start<=getdate(d['date'])<=getdate(row.end_date)),default=0)
         if free>0:positions.append(dict(name=row.name,site=row.site,title=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(start),end=str(row.end_date),free=free))
-    return dict(positions=positions,sites=[dict(name=r.name,title=r.site_name) for r in frappe.get_list('PP Site',filters={'project':event.project,'is_active':1},fields=['name','site_name'],limit_page_length=0)],designation=worker.designation,default_wage=str(wage(worker)),fixed=frappe.db.get_value('PP Contract Terms',event.contract_terms,'billing_model')=='Fixed')
+    from plus_point.planning import worker_rates
+    for position in positions:
+        row=next(r for r in event.staffing if r.name==position['name']);position['client_rate']=row.client_rate or event.client_rate
+    return dict(positions=positions,sites=[dict(name=r.name,title=r.site_name) for r in frappe.get_list('PP Site',filters={'project':event.project,'is_active':1},fields=['name','site_name'],limit_page_length=0)],designation=worker.designation,default_wage=str(wage(worker)),pay_rates=worker_rates(worker),pay_basis=worker.get('pp_salary_basis') or 'Daily',fixed=frappe.db.get_value('PP Contract Terms',event.contract_terms,'billing_model')=='Fixed')
 
 
 @frappe.whitelist(methods=['POST'])
 @atomic
-def assign_event(employee,plan,position=None,extra=False,site=None,wage_rate=0,client_rate=0):
+def assign_event(employee,plan,position=None,extra=False,site=None,wage_rate=0,client_rate=0,basis=None,amount=None,confirm_over_budget=0):
     from plus_point.events import plan_doc
     from plus_point.operations import add_requirement,coverage
     from plus_point.crew import assign
     worker=worker_doc(employee,True);event=plan_doc(plan,True)
     from plus_point.budget import lock_project
-    lock_project(event.project);frappe.db.get_value('Employee',worker.name,'name',for_update=True)
+    lock_project(event.project);event.reload();frappe.db.get_value('Employee',worker.name,'name',for_update=True)
     if worker.company!=event.company:frappe.throw('Choose an event in this worker’s company.')
     if not worker.designation:frappe.throw('Set this worker’s category in Work details first.')
     if frappe.db.exists('PP Assignment',{'employee':worker.name,'project':event.project,'end_date':['>=',today()]}):frappe.throw('This worker is already assigned to this event.')
@@ -287,13 +298,15 @@ def assign_event(employee,plan,position=None,extra=False,site=None,wage_rate=0,c
     else:
         if not any(r['name']==site for r in options['sites']):frappe.throw('Choose a site in this event.')
         first=str(max(getdate(today()),getdate(event.start_date)));last=str(event.end_date);pay=money(wage_rate or wage(worker));charge=Decimal(0) if options['fixed'] else money(client_rate)
-    if pay<=0:frappe.throw('Set this worker’s salary, or enter a positive daily payroll wage.')
     if not options['fixed'] and charge<=0:frappe.throw('Enter a positive daily client rate for the extra crew.')
+    from plus_point.planning import pay_values
+    pay_data=pay_values(worker,basis,amount,pay);pay=money(pay_data['wage_rate'])
     if not choice:
         same=next((r for r in event.staffing if r.site==site and r.designation==worker.designation and getdate(r.start_date)<=getdate(last) and getdate(r.end_date)>=getdate(first)),None)
         if same:
             same.workers_required+=1;event.save()
         else:add_requirement(event.name,dict(site=site,designation=worker.designation,start_date=first,end_date=last,workers_required=1,wage_rate=float(pay),client_rate=float(charge),phase='Event'))
-    result=assign(event.project,site,event.contract_terms,first,last,float(pay),float(charge),[worker.name])
+    result=assign(event.project,site,event.contract_terms,first,last,float(pay),float(charge),[worker.name],
+        pay_basis=pay_data['pp_pay_basis'],pay_amount=pay_data['pp_pay_amount'],confirm_over_budget=confirm_over_budget)
     for name in result.get('assignments',[]):frappe.db.set_value('PP Assignment',name,'pp_event_plan',event.name)
     return dict(created=result['created'],extra=not bool(choice),event=event.event_name)

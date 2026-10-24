@@ -49,7 +49,7 @@
       "label": "Client billing agreement",
       "fieldtype": "Link",
       "options": "PP Contract Terms",
-      "reqd": 1
+      "description": "An unlinked event is excluded from finances. Select a replacement agreement before assigning workers or recording costs."
     },
     {
       "fieldname": "start_date",

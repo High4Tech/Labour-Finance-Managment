@@ -6,6 +6,8 @@ from plus_point.finance import as_decimal
 
 class PPAssignment(Document):
     def validate(self):
+        from plus_point.budget import lock_project
+        lock_project(self.project)
         if self.get('pp_event_plan'):
             plan=frappe.get_doc('PP Event Plan',self.pp_event_plan)
             plan.check_permission('read')
@@ -67,3 +69,5 @@ class PPAssignment(Document):
                                     self.end_date or '9999-12-31', self.start_date))
         if overlaps:
             frappe.throw('This worker already has an overlapping assignment at this site. Close it before adding a new dated rate or assignment.')
+        from plus_point.planning import validate_assignment
+        validate_assignment(self,terms)

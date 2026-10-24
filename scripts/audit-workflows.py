@@ -44,9 +44,11 @@ def main():
     frappe.init(site=site);frappe.connect()
     if not frappe.conf.get('allow_tests'):raise RuntimeError('Tests must be enabled')
     frappe.flags.in_test=True
-    names=['test_signup'] if site=='platform.localhost' else ['test_finance','test_register','test_operations','test_events','test_attendance','test_currency_billing','test_forms','test_hierarchy','test_setup_imports','test_full_workflow','test_component_validation']
+    names=['test_signup'] if site=='platform.localhost' else ['test_finance','test_register','test_operations','test_events','test_attendance','test_currency_billing','test_forms','test_hierarchy','test_setup_imports','test_full_workflow','test_component_validation','test_planning']
     if '--journey' in sys.argv:names=['test_full_workflow']
     if '--components' in sys.argv:names=['test_component_validation']
+    if '--planning' in sys.argv:names=['test_planning']
+    if '--planning-repairs' in sys.argv:names=['test_setup_imports','test_planning','test_attendance']
     started=time.monotonic()
     try:
         suite=unittest.defaultTestLoader.loadTestsFromNames(['plus_point.tests.'+name for name in names])

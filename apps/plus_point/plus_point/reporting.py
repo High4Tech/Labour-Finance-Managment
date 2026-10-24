@@ -68,7 +68,8 @@ def project_finances(filters=None):
     terms = frappe.get_list('PP Contract Terms', filters={'project': ['in', names]},
         fields=['name', 'project', 'contract', 'status', 'effective_start', 'effective_end'],
         limit_page_length=0) if names else []
-    contractor_projects = {row.project for row in terms}
+    unlinked_projects=set(frappe.get_list('PP Event Plan',filters={'project':['in',names or ['']],'contract_terms':['is','not set']},pluck='project',limit_page_length=0))
+    contractor_projects = {row.project for row in terms}-unlinked_projects
     projects = [row for row in projects if row.name in contractor_projects]
     names = [row.name for row in projects]
     terms_by_project = defaultdict(list)

@@ -23,7 +23,7 @@
   }
  }
  function hint(df){switch(rule(df)){case 'number':return df.fieldtype==='Int'?__('Use whole numbers only.'):__('Use numbers only.');case 'person':return __('Use letters, spaces, apostrophes, hyphens or periods.');case 'phone':return __('Enter 7–15 digits; +, spaces, parentheses and hyphens are allowed.');case 'email':return __('Enter an email such as name@example.com.');case 'code':return __('Use letters, numbers, spaces, periods, slashes, underscores or hyphens.');default:return '';}}
- const limits={workers_required:[1,500],pp_salary_amount:[0],pp_leaves_per_month:[0,31],pp_loan_wait_months:[0],pp_loan_deduction_percent:[0,100],latitude:[-90,90],longitude:[-180,180]};
+ const limits={workers_required:[1,500],pp_salary_amount:[0],pp_daily_rate:[0],pp_monthly_rate:[0],pp_pay_amount:[0],pp_leaves_per_month:[0,31],pp_loan_wait_months:[0],pp_loan_deduction_percent:[0,100],latitude:[-90,90],longitude:[-180,180]};
  let errorSequence=0;
  plus_point.field_error=(control,text,source='input')=>{
   if(!control?.$wrapper)return;control.pp_errors||={};control.pp_errors[source]=text||'';

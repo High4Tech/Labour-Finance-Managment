@@ -79,7 +79,7 @@ def save_selection(plan,employees):
 
 
 @frappe.whitelist(methods=['POST'])
-def assign(project,site,contract_terms,start_date,end_date,wage_rate,client_rate,employees):
+def assign(project,site,contract_terms,start_date,end_date,wage_rate,client_rate,employees,pay_basis=None,pay_amount=None,confirm_over_budget=0):
     """Bulk manual allocations share the exact same pool and conflict checks."""
     require_customer();project=linked('Project',project);linked('Company',project.company)
     venue=linked('PP Site',site);terms=linked('PP Contract Terms',contract_terms)
@@ -97,7 +97,8 @@ def assign(project,site,contract_terms,start_date,end_date,wage_rate,client_rate
         result=[]
         for name in names:
             doc=frappe.get_doc(dict(doctype='PP Assignment',employee=name,project=project.name,site=site,contract_terms=contract_terms,
-                start_date=start_date,end_date=end_date,wage_rate=wage_rate,client_rate=client_rate)).insert()
+                start_date=start_date,end_date=end_date,wage_rate=wage_rate,client_rate=client_rate,
+                pp_pay_basis=pay_basis,pp_pay_amount=pay_amount,pp_cost_override=frappe.utils.cint(confirm_over_budget))).insert()
             result.append(doc.name)
         return dict(created=len(result),assignments=result)
     except Exception:

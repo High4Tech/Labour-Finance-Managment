@@ -59,9 +59,11 @@
     },
     {
       "fieldname": "wage_rate",
-      "label": "Daily wage",
+      "label": "Legacy daily wage",
       "fieldtype": "Currency",
-      "reqd": 1
+      "hidden": 1,
+      "read_only": 1,
+      "default": "0"
     },
     {
       "fieldname": "client_rate",

@@ -55,3 +55,7 @@
 @media(max-width:767px){.pp-vehicle-profile{grid-template-columns:minmax(0,1fr)}.pp-stock-tools>input{max-width:none}.pp-stock-tools .pp-actions{width:100%}.pp-stock-tools .btn{flex:1}.pp-resource-page .pp-worker-heading>.pp-actions{width:100%}}
 
 .pp-resource-page .pp-worker-heading>.pp-person-heading{flex:1 1 260px;min-width:0}.pp-resource-page .pp-worker-heading>.pp-actions{flex:0 1 auto;max-width:100%;display:flex;flex-wrap:wrap;justify-content:flex-end}.pp-resource-page .pp-worker-heading>.pp-actions>.btn{flex-shrink:0;max-width:100%}
+
+.pp-recent-sites{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto}.pp-recent-sites button{text-align:left;white-space:normal}.pp-event-worker-option{border:1px solid var(--border-color);border-radius:8px;padding:10px;min-width:0}.pp-event-worker-option>label{border:0!important;padding:0!important}.pp-event-pay-fields{display:grid;grid-template-columns:minmax(90px,1fr) minmax(90px,1fr);gap:8px;margin-top:8px}.pp-event-pay-fields small{grid-column:1/-1;color:var(--text-muted)}
+
+.pp-agreement-top-actions{position:static;margin:0;padding:0;border:0;justify-content:flex-end;align-self:flex-start}.pp-op-heading:has(.pp-agreement-top-actions){gap:16px;flex-wrap:wrap}.pp-agreement-top-actions .btn{white-space:normal}

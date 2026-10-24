@@ -279,7 +279,7 @@ class HierarchyTests(unittest.TestCase):
         op.add_requirement(name,dict(site=venue.name,designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=800,client_rate=1200))
         old=frappe.db.get_value('PP Assignment',{'project':doc.project,'employee':self.worker.name},'name')
         moved=op.move_worker(old,add_days(today(),1),name,venue.name,add_days(today(),4))
-        self.assertEqual(frappe.db.get_value('PP Assignment',moved['name'],'wage_rate'),800)
+        self.assertEqual(frappe.db.get_value('PP Assignment',moved['name'],'wage_rate'),1000)
         self.assertEqual(frappe.db.get_value('PP Assignment',moved['name'],'site'),venue.name)
     def test_email_is_explicit_and_uses_generated_pdf(self):
         a=self.agreement();r=op.extra_invoice(a['name'],self.f.item.name,'Email test charge',500)

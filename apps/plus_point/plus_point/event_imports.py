@@ -19,6 +19,13 @@ LEGACY_SCHEMAS={key:list(value) for key,value in SCHEMAS.items()}
 from plus_point.import_links import CLIENT_FIELDS
 SCHEMAS['clients'] += CLIENT_FIELDS
 SCHEMAS['events'] += ['customer_name','customer_type'] + ['client_'+key for key in CLIENT_FIELDS]
+PREVIOUS_SCHEMAS={key:list(value) for key,value in SCHEMAS.items()}
+SCHEMAS['clients']=[key for key in SCHEMAS['clients'] if key!='default_currency']
+SCHEMAS['warehouses']=['external_id','warehouse_name','warehouse_type','status']
+SCHEMAS['stock_balances']=['external_id','item_code','warehouse','quantity']
+SCHEMAS['events']=[key for key in SCHEMAS['events'] if key not in ('wage_rate','client_default_currency')]+['designation','agreement_currency']
+SCHEMAS['agreements']=['external_id','agreement_title','customer','start_date','end_date','status','billing_model','agreement_currency','fixed_amount','scope','conditions','site_name','designation','workers_per_day','client_rate']
+TARGETS['agreements']='PP Contract Terms'
 PROFILES.add('warehouses')
 
 
@@ -29,7 +36,18 @@ def target(kind,row):
 
 def validate(kind,company,row):
     from plus_point.imports import required,row_date
-    if kind=='vehicles':
+    if kind=='agreements':
+        linked('Customer',required(row,'customer'))
+        for key in ('agreement_title','site_name','designation','scope','agreement_currency'):required(row,key)
+        linked('Currency',row['agreement_currency']);linked('Designation',row['designation'])
+        row_date(row,'start_date',historical=False);row_date(row,'end_date',historical=False);span(row['start_date'],row['end_date'])
+        if getdate(row['start_date'])<getdate(frappe.utils.today()):frappe.throw('Upcoming agreements must start today or later.')
+        if row.get('status') not in ('Draft','Active'):frappe.throw('Use Draft or Active status.')
+        if row.get('billing_model') not in ('Daily','Fixed'):frappe.throw('Choose Daily or Fixed billing.')
+        if positive(row.get('workers_per_day'),'Workers per day',whole=True)>500:frappe.throw('Use at most 500 workers per category.')
+        if row['billing_model']=='Daily':positive(row.get('client_rate'),'Client rate per day')
+        else:positive(row.get('fixed_amount'),'Fixed contract price')
+    elif kind=='vehicles':
         from plus_point.input_rules import check
         check('license_plate',row.get('license_plate'))
     if kind in ('event_sites','vehicles','inventory_items') and row['status'] not in ('Active','Inactive'):
@@ -48,7 +66,9 @@ def validate(kind,company,row):
     elif kind=='inventory_items':
         for key in ('item_code','item_name','stock_uom'):required(row,key)
         linked('UOM',row['stock_uom'])
-    elif kind=='warehouses':required(row,'warehouse_name')
+    elif kind=='warehouses':
+        required(row,'warehouse_name')
+        if row.get('warehouse_type') and row['warehouse_type'] not in ('Owned','Rented'):frappe.throw('Choose Owned or Rented warehouse_type.')
     elif kind=='stock_balances':
         row_date(row,'date');item=linked('Item',required(row,'item_code'));warehouse=linked('Warehouse',required(row,'warehouse'),company)
         if not item.is_stock_item or item.disabled or item.has_serial_no or item.has_batch_no or warehouse.is_group or warehouse.disabled:
@@ -63,9 +83,11 @@ def validate(kind,company,row):
         row_date(row,'start_date',historical=False);row_date(row,'end_date',historical=False)
         span(required(row,'start_date'),required(row,'end_date'))
         for key in ('event_name','site_name','agreement'):required(row,key)
+        if 'designation' in row:linked('Designation',required(row,'designation'))
+        if row.get('agreement_currency'):linked('Currency',row['agreement_currency'])
         if row['billing_model'] not in ('Daily','Fixed'):frappe.throw('billing_model must be Daily or Fixed')
         if positive(row['workers_per_day'],'Workers per day',whole=True)>500:frappe.throw('Use at most 500 workers per site per day')
-        positive(row['wage_rate'],'Daily wage')
+        positive(row.get('wage_rate'),'Daily wage',allow_zero=True)
         positive(row['client_rate'],'Client daily rate',allow_zero=row['billing_model']=='Fixed')
         if row['billing_model']=='Fixed' and positive(row['client_rate'],'Client daily rate',allow_zero=True)!=0:frappe.throw('Fixed contracts use milestones; set client_rate to zero')
         if row['billing_model']=='Fixed' and positive(row['fixed_amount'],'Fixed client price')<=0:frappe.throw('Enter a fixed contract price')
@@ -85,11 +107,21 @@ def validate(kind,company,row):
     if kind=='stock_balances':
         from plus_point.finance import money
         value=str(money(positive(row['quantity'],'Counted quantity',allow_zero=True)*positive(row['valuation_rate'],'Value per unit',allow_zero=bool(row.get('allow_zero_valuation_rate')))))
-    return dict(label=row.get('event_name') or row.get('customer_name') or row.get('site_name') or row.get('item_name') or row.get('license_plate') or row.get('warehouse_name') or row.get('item_code'),amount=value)
+    return dict(label=row.get('agreement_title') or row.get('event_name') or row.get('customer_name') or row.get('site_name') or row.get('item_name') or row.get('license_plate') or row.get('warehouse_name') or row.get('item_code'),amount=value)
 
 
 def save(kind,company,row,document=None):
     from plus_point.imports import required
+    if kind=='agreements':
+        from plus_point.operations import save_agreement
+        import json
+        created=save_agreement(dict(customer=row['customer'],agreement_title=row['agreement_title'],scope=row['scope'],
+            effective_start=row['start_date'],effective_end=row['end_date'],status=row['status'],billing_model=row['billing_model'],
+            agreement_currency=row['agreement_currency'],fixed_amount=row.get('fixed_amount') or 0,
+            pp_conditions=json.dumps([c.strip() for c in row.get('conditions','').split('|') if c.strip()]),
+            staffing=[dict(site_name=row['site_name'],designation=row['designation'],phase='Event',start_date=row['start_date'],
+                end_date=row['end_date'],workers_required=row['workers_per_day'],wage_rate=0,client_rate=row.get('client_rate') or 0)]))
+        return frappe.get_doc('PP Contract Terms',created['name'])
     name=document or target(kind,row)
     exists=bool(name and frappe.db.exists(TARGETS[kind],name))
     doc=frappe.get_doc(TARGETS[kind],name) if exists else frappe.new_doc(TARGETS[kind])
@@ -115,11 +147,17 @@ def save(kind,company,row,document=None):
     elif kind=='warehouses':
         parent=doc.parent_warehouse if exists else frappe.db.get_value('Warehouse',{'company':company,'is_group':1},'name')
         doc.update(dict(warehouse_name=row['warehouse_name'],company=company,is_group=0,parent_warehouse=parent))
+        if row.get('warehouse_type'):
+            from plus_point.resources import ensure_ownership
+            ensure_ownership(row['warehouse_type']);doc.warehouse_type=row['warehouse_type']
+        if row.get('status'):doc.disabled=int(row['status']=='Inactive')
     elif kind=='stock_balances':
         from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_difference_account
         purpose='Stock Reconciliation' if frappe.db.exists('Stock Ledger Entry',{'company':company}) else 'Opening Stock'
         doc.update(dict(company=company,purpose=purpose,expense_account=get_difference_account(purpose,company),posting_date=row['date'],set_posting_time=1,
             items=[dict(item_code=row['item_code'],warehouse=row['warehouse'],qty=float(row['quantity']),valuation_rate=float(row['valuation_rate']),allow_zero_valuation_rate=int(bool(row.get('allow_zero_valuation_rate'))))]))
+        if row.get('_automatic_count'):
+            stamp=frappe.utils.now_datetime();doc.posting_date=stamp.date();doc.posting_time=stamp.time()
         doc.insert();doc.submit();return doc
     elif kind=='events':
         from plus_point.events import create_event
@@ -137,8 +175,15 @@ def save(kind,company,row,document=None):
                     client=frappe.get_doc(dict(doctype='Customer',customer_name=values['customer_name'],customer_type=values['customer_type'],customer_group='Commercial',territory='All Territories',default_currency=values.get('default_currency') or None)).insert()
                     customer=client.name
             row=dict(row,customer=customer)
+        if row.get('designation'):
+            from plus_point.operations import save_agreement,create_plan
+            terms=save_agreement(dict(customer=row['customer'],agreement_title=row['event_name'],scope=row['agreement'],status='Active',
+                effective_start=row['start_date'],effective_end=row['end_date'],billing_model=row['billing_model'],fixed_amount=row.get('fixed_amount') or 0,
+                agreement_currency=row.get('agreement_currency') or frappe.db.get_value('Company',company,'default_currency'),
+                staffing=[dict(site_name=row['site_name'],designation=row['designation'],phase='Event',start_date=row['start_date'],end_date=row['end_date'],workers_required=row['workers_per_day'],client_rate=row.get('client_rate') or 0,wage_rate=0)]))
+            return frappe.get_doc('PP Event Plan',create_plan(terms['name'],row['event_name'])['name'])
         result=create_event(company,row['customer'],row['event_name'],row['start_date'],row['end_date'],row['agreement'],
-            row['billing_model'],row['wage_rate'],row['client_rate'] or 0,row['fixed_amount'] or 0,
+            row['billing_model'],row.get('wage_rate') or 0,row['client_rate'] or 0,row['fixed_amount'] or 0,
             sites=[dict(site_name=row['site_name'],phase='Event',start_date=row['start_date'],end_date=row['end_date'],workers_required=int(positive(row['workers_per_day'],'Workers per day',whole=True)))])
         return frappe.get_doc('PP Event Plan',result['plan'])
     doc.save();return doc
