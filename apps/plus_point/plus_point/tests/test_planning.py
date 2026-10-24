@@ -19,6 +19,44 @@ class PlanningTests(unittest.TestCase):
     agreement=hierarchy.HierarchyTests.agreement
     event=hierarchy.HierarchyTests.event
 
+    def test_capacity_counts_only_the_selected_category_and_its_date_window(self):
+        from plus_point import crew,people
+        driver=crew.add_worker(self.f.company.name,dict(first_name='Sana',gender='Female',date_of_birth='1990-01-01',date_of_joining='2020-01-01',designation='Driver'))
+        rows=[dict(designation='Driver',start_date=today(),end_date=add_days(today(),2),workers_required=1),
+              dict(designation='Event crew',start_date=today(),end_date=add_days(today(),2),workers_required=20),
+              dict(designation='Driver',start_date=add_days(today(),10),end_date=add_days(today(),12),workers_required=10)]
+        result=people.capacity(today(),add_days(today(),2),rows,designation='Driver')
+        self.assertEqual((result['category']['total'],result['category']['available'],result['category']['required']),(1,1,1))
+        self.assertGreater(result['total'],result['category']['total'])
+        self.assertEqual(people.capacity(today(),add_days(today(),2),rows,designation='AV technician')['category']['available'],0)
+        doc=frappe.get_doc('Employee',driver['name']);doc.status='Inactive';doc.save()
+        self.assertEqual(people.capacity(today(),add_days(today(),2),rows,designation='Driver')['category']['total'],0)
+
+    def test_category_capacity_credits_own_assignments_but_not_external_bookings(self):
+        from plus_point import people
+        a=self.agreement();op.auto_assign(self.event(a))
+        rows=frappe.get_doc('PP Contract Terms',a['name']).staffing
+        self.assertEqual(people.capacity(today(),add_days(today(),2),rows,designation=self.role)['category']['available'],0)
+        self.assertEqual(people.capacity(today(),add_days(today(),2),rows,agreement=a['name'],designation=self.role)['category']['available'],1)
+
+    def test_quick_worker_preserves_category_and_rejects_bad_contact_without_allocating(self):
+        from plus_point import crew,people
+        values=dict(first_name='Sana',gender='Female',date_of_birth='1990-01-01',date_of_joining='2020-01-01',designation='Driver',personal_email='sana@example.invalid',cell_number='+923001234567',status='Inactive')
+        result=crew.add_worker(self.f.company.name,values);doc=frappe.get_doc('Employee',result['name'])
+        self.assertEqual((doc.status,doc.designation,doc.personal_email),('Active','Driver','sana@example.invalid'))
+        self.assertFalse(frappe.db.exists('PP Assignment',{'employee':doc.name}))
+        self.assertEqual(people.capacity(today(),today(),designation='Driver')['category']['available'],1)
+        before=frappe.db.count('Employee')
+        with self.assertRaises(frappe.ValidationError):crew.add_worker(self.f.company.name,dict(values,cell_number='abc'))
+        with self.assertRaises(frappe.ValidationError):crew.add_worker(self.f.company.name,dict(values,designation='Not a crew category'))
+        with self.assertRaises(frappe.PermissionError):crew.add_worker('Not this company',values)
+        self.assertEqual(before,frappe.db.count('Employee'))
+
+    def test_quick_worker_defaults_to_event_crew(self):
+        from plus_point import crew
+        worker=crew.add_worker(self.f.company.name,dict(first_name='Ayesha',gender='Female',date_of_birth='1990-01-01',date_of_joining='2020-01-01'))
+        self.assertEqual(worker['designation'],'Event crew')
+
     def clean_agreement(self,**changes):
         a=self.agreement();terms=frappe.get_doc('PP Contract Terms',a['name'])
         rows=[r.as_dict() for r in terms.staffing]

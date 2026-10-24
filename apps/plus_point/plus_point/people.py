@@ -61,7 +61,7 @@ def peak(rows):
     return maximum
 
 @frappe.whitelist()
-def capacity(start_date,end_date,staffing=None,agreement=None):
+def capacity(start_date,end_date,staffing=None,agreement=None,designation=None):
     from plus_point.operations import company,terms_doc
     business=company()
     if agreement:terms_doc(agreement)
@@ -71,9 +71,19 @@ def capacity(start_date,end_date,staffing=None,agreement=None):
     own=set(frappe.get_list('PP Assignment',filters={'contract_terms':agreement},pluck='employee',limit_page_length=0)) if agreement else set()
     others=frappe.get_list('PP Assignment',filters={'contract_terms':['!=',agreement],'employee':['in',[r['name'] for r in rows] or ['']],'start_date':['<=',end_date]},fields=['employee','end_date'],limit_page_length=0) if agreement else []
     externally_booked={r.employee for r in others if not r.end_date or getdate(r.end_date)>=getdate(start_date)}
-    available=sum(r['available'] or (r['reason']=='Booked for overlapping dates' and r['name'] in own and r['name'] not in externally_booked) for r in rows)
-    required=peak(frappe.parse_json(staffing) or [])
-    return dict(total=len(rows),available=available,required=required,shortfall=max(0,required-len(rows)),availability_gap=max(0,required-available))
+    def usable(row):return row['available'] or (row['reason']=='Booked for overlapping dates' and row['name'] in own and row['name'] not in externally_booked)
+    available=sum(usable(r) for r in rows)
+    staffing=frappe.parse_json(staffing) or [];required=peak(staffing)
+    result=dict(total=len(rows),available=available,required=required,shortfall=max(0,required-len(rows)),availability_gap=max(0,required-available))
+    if designation:
+        category_rows=[r for r in rows if r['designation']==designation]
+        first,last=getdate(start_date),getdate(end_date)
+        requirements=[dict(workers_required=r.get('workers_required'),start_date=max(getdate(r.get('start_date')),first),end_date=min(getdate(r.get('end_date')),last)) for r in staffing
+            if r.get('designation')==designation and r.get('start_date') and r.get('end_date') and getdate(r.get('start_date'))<=last and getdate(r.get('end_date'))>=first]
+        category_required=peak(requirements);category_available=sum(usable(r) for r in category_rows)
+        result['category']=dict(designation=designation,total=len(category_rows),available=category_available,required=category_required,
+            shortfall=max(0,category_required-len(category_rows)),availability_gap=max(0,category_required-category_available))
+    return result
 
 def validate_capacity(doc):
     """A booking is not a new employee. Existing overloaded baselines can be reviewed."""

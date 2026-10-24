@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),{spawn}=require('child_process');
 (async()=>{
  const root=path.resolve(__dirname,'..'),out=path.join(root,'.local','qa');fs.mkdirSync(out,{recursive:true});
- const names=process.argv.slice(2).length?process.argv.slice(2):['browser-draft-flow.cjs','browser-planning.cjs','browser-calendar.cjs','browser-agreement-flow.cjs','browser-import-deletion.cjs','browser-finance.cjs','browser-resources.cjs','browser-attendance.cjs','browser-worker-flows.cjs'];
+ const names=process.argv.slice(2).length?process.argv.slice(2):['browser-draft-flow.cjs','browser-crew-categories.cjs','browser-planning.cjs','browser-calendar.cjs','browser-agreement-flow.cjs','browser-import-deletion.cjs','browser-finance.cjs','browser-resources.cjs','browser-attendance.cjs','browser-worker-flows.cjs'];
  const day=new Date(),stamp=process.env.PP_AUDIT_DATE||String(day.getFullYear())+String(day.getMonth()+1).padStart(2,'0')+String(day.getDate()).padStart(2,'0');
  const evidence=path.join(out,'full-audit-browsers-'+stamp+'.json'),results=fs.existsSync(evidence)?JSON.parse(fs.readFileSync(evidence,'utf8')):[];const previous=results.length;
  for(const name of names){

@@ -23,7 +23,7 @@ app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-component-validat
                   "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/dashboard.js?v=20261023-finance-3",
                   "/assets/plus_point/js/activity.js?v=20261023-finance-3",
-                  "/assets/plus_point/js/crew.js?v=20261023-finance-3",
+                  "/assets/plus_point/js/crew.js?v=20261024-crew-categories-1",
                   "/assets/plus_point/js/events.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/sections.js?v=20261023-finance-3",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
@@ -38,7 +38,7 @@ app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-fo
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/drafts.js?v=20261024-draft-flow-4",
                    "/assets/plus_point/js/daily_billing.js?v=20261024-draft-flow-4"]
-app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-draft-flow-4"]
+app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-crew-categories-1"]
 app_include_css += ["/assets/plus_point/css/operations.css?v=20261024-draft-flow-4"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"]},"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}

@@ -6,6 +6,33 @@
   const data=await response.json();if(!response.ok||data.exc_type){let message=__('Could not save. Review the worker list and try again.');try{if(data._server_messages)message=JSON.parse(data._server_messages).map(v=>JSON.parse(v).message).join(' ');}catch{}throw new Error(message.replace(/<[^>]*>/g,''));}return data.message;
  };
  const importFor=(dialog,company,refresh)=>{dialog.$wrapper.one('hidden.bs.modal',()=>plus_point.open_import(company,()=>setTimeout(()=>{dialog.show();refresh();},0),'employees','Return to crew selection'));dialog.hide();};
+ plus_point.quick_worker_fields=({designation='Event crew',categories=['Event crew'],locked=false}={})=>[
+  {fieldtype:'Data',fieldname:'first_name',label:__('First name'),reqd:1},
+  {fieldtype:'Data',fieldname:'last_name',label:__('Last name')},
+  {fieldtype:'Select',fieldname:'designation',label:__('Crew category'),options:[...new Set([designation,...categories])],default:designation,reqd:1,read_only:locked},
+  {fieldtype:'Link',fieldname:'gender',label:__('Gender'),options:'Gender',only_select:1,reqd:1},
+  {fieldtype:'Date',fieldname:'date_of_birth',label:__('Date of birth'),max_date:frappe.datetime.get_today(),reqd:1},
+  {fieldtype:'Date',fieldname:'date_of_joining',label:__('Joining date'),default:frappe.datetime.get_today(),reqd:1},
+  {fieldtype:'Data',fieldname:'cell_number',label:__('Phone')},
+  {fieldtype:'Data',fieldname:'personal_email',label:__('Email'),options:'Email'}
+ ];
+ plus_point.quick_worker_form=(body,{company,designation,categories,locked=false,onSaved,onCancel,label='Save worker'})=>{
+  body.replaceChildren();const heading=document.createElement('h4');heading.textContent=__('Add crew');body.append(heading);
+  const fields=plus_point.quick_worker_fields({designation,categories,locked}),form=new frappe.ui.FieldGroup({fields,body:$(body)});form.make();plus_point.enhance_selectors?.(form);
+  for(const c of Object.values(form.fields_dict))c.$input?.attr('aria-label',c.df.label||'');
+  const feedback=document.createElement('p');feedback.setAttribute('role','alert');feedback.hidden=true;body.append(feedback);
+  const actions=document.createElement('div');actions.className='pp-actions';body.append(actions);
+  const save=document.createElement('button');save.type='button';save.className='btn btn-primary';save.textContent=__(label);actions.append(save);
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn btn-default';cancel.textContent=__('Cancel');actions.append(cancel);cancel.onclick=()=>onCancel?.();
+  save.onclick=async()=>{
+   feedback.hidden=true;if(!plus_point.validate_inputs(form))return;const values=form.get_values(true)||{};let valid=true;
+   for(const df of fields)if(df.reqd&&!values[df.fieldname]){plus_point.field_error(form.fields_dict[df.fieldname],__('Enter {0}.',[df.label]));if(valid)form.fields_dict[df.fieldname].set_focus();valid=false;}if(!valid)return;
+   save.disabled=cancel.disabled=true;
+   try{const worker=await plus_point.crew_rpc('crew.add_worker',{company,values});if(body.isConnected){await onSaved(worker);document.dispatchEvent(new Event('pp:data-changed'));}}
+   catch(error){feedback.textContent=error.message;feedback.hidden=false;}finally{save.disabled=cancel.disabled=false;}
+  };
+  form.fields_dict.first_name.set_focus();return form;
+ };
  plus_point.CrewPicker=class{
   constructor(root,options){this.root=root;this.options=options;this.selected=[...(options.selected||[])];this.rows=[];this.labels=new Map();this.ready=false;this.limit=Number.MAX_SAFE_INTEGER;this.build();this.refresh();}
   build(){
@@ -43,10 +70,7 @@
   }
   addForm(){
    const body=this.root.querySelector('.pp-crew-new');if(body.childElementCount){body.hidden=!body.hidden;return;}body.hidden=false;
-   const fields=[['Data','first_name','First name'],['Data','last_name','Last name'],['Link','gender','Gender'],['Date','date_of_birth','Date of birth'],['Date','date_of_joining','Joining date'],['Data','cell_number','Phone']].map(([fieldtype,fieldname,label])=>({fieldtype,fieldname,label:__(label),reqd:['first_name','gender','date_of_birth','date_of_joining'].includes(fieldname)?1:0,...(fieldname==='gender'?{options:'Gender',only_select:1}:{}),...(fieldname==='date_of_joining'?{default:frappe.datetime.get_today()}:{} )}));
-   const form=new frappe.ui.FieldGroup({fields,body:$(body)});form.make();this.add_form=form;plus_point.enhance_selectors?.(form);
-   const button=$('<button type="button" class="btn btn-default"></button>').text(__('Create and select worker')).appendTo(body);
-   button.on('click',async()=>{if(!plus_point.validate_inputs(form))return;const values=form.get_values(true)||{},missing=fields.filter(f=>f.reqd&&!values[f.fieldname]);if(missing.length){this.error(__('Complete: {0}',[missing.map(f=>f.label).join(', ')]));return;}button.prop('disabled',true);try{const worker=await plus_point.crew_rpc('crew.add_worker',{company:this.options.company,values:JSON.stringify(values)});this.labels.set(worker.name,worker.worker);this.selected.push(worker.name);await this.refresh();body.hidden=true;body.replaceChildren();}catch(error){this.error(error.message);}finally{button.prop('disabled',false);}});
+   this.add_form=plus_point.quick_worker_form(body,{company:this.options.company,categories:[...new Set(['Event crew',...this.rows.map(r=>r.designation).filter(Boolean)])],label:'Create and select worker',onCancel:()=>{body.hidden=true;body.replaceChildren();},onSaved:async worker=>{this.labels.set(worker.name,worker.worker);this.selected.push(worker.name);await this.refresh();body.hidden=true;body.replaceChildren();}});
   }
  };
  plus_point.choose_event_crew=async(frm)=>{
