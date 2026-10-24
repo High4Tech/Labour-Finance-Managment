@@ -14,6 +14,8 @@ PLUS POINT and High4Tech use the same action system in `public/css/interface.css
 
 Primary actions use the product teal with white text. Secondary actions use the current theme's control surface and border. Destructive confirmation buttons use red. Disabled, loading, hover and visible keyboard-focus states retain native behavior and shared styling. Small field utilities, calendar cells and activity-map cells retain their own control geometry. The mobile page header has separate title and action rows so touch targets fit without covering list filters.
 
+The Desk main panel owns content scrolling and contains its positioned descendants. This keeps hidden table captions inside the panel, prevents a second document scrollbar and blank space below the app, and keeps the sidebar stationary. Do not hide document overflow to mask escaping content.
+
 **Appearance** is always available at the bottom of the sidebar. Light, Dark and System use the native `User.desk_theme` setting and theme engine. System follows operating-system changes, and explicit choices survive a reload. Both products use this control. A failed preference save keeps the previous choice and shows a retry message without opening another dialog. Theme changes do not convert or change any business data.
 
 Dark mode inherits native Desk surfaces and typography; product chart, activity, warning, error and success colors have explicit dark variants. Semantic status colors remain distinct from action colors. The featured metric retains a dark teal background with light text.

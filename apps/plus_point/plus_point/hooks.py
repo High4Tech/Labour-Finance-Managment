@@ -93,7 +93,7 @@ add_to_apps_screen = [
 
 app_include_js += ["/assets/plus_point/js/event_pay.js?v=20261024-event-pay-3"]
 app_include_js += ["/assets/plus_point/js/experience.js?v=20261024-draft-flow-4"]
-app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-component-validation-2"]
+app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-shell-scroll-1"]
 
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/record_ui.css?v=20261023-finance-3"]
