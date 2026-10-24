@@ -15,7 +15,7 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-component-validation-2","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
+app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-community-2","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/forms.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
@@ -34,12 +34,12 @@ app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-component-validat
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
-                   "/assets/plus_point/css/interface.css?v=20261023-finance-3"]
+                   "/assets/plus_point/css/interface.css?v=20261024-community-2"]
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/drafts.js?v=20261024-draft-flow-4",
                    "/assets/plus_point/js/daily_billing.js?v=20261024-draft-flow-4"]
-app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-crew-categories-1"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=20261024-draft-flow-4"]
+app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-community-2"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=20261024-community-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"]},"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -103,7 +103,7 @@ app_include_css += ["/assets/plus_point/css/people.css?v=20261023-finance-3"]
 
 app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261024-event-pay-3"]
 
-app_include_js += ["/assets/plus_point/js/resources.js?v=20261024-draft-flow-4"]
+app_include_js += ["/assets/plus_point/js/resources.js?v=20261024-community-2"]
 app_include_js += ["/assets/plus_point/js/finance_hub.js?v=20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/finance_hub.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/business_reports.js?v=20261023-report-layout-2"]

@@ -1,5 +1,21 @@
 /* Shared action geometry and semantic colors. Loaded after feature styles so
    legacy btn-sm / es-button rules cannot make neighboring actions unequal. */
+/* 21st.dev patterns, expressed through existing Desk tokens and native markup. */
+body.pp-ui .pp-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;text-align:center;min-width:0;color:var(--text-color)}
+body.pp-ui .pp-empty-state>strong{font-size:14px;font-weight:600;line-height:1.5}
+body.pp-ui .pp-empty-state>p{font-size:13px;line-height:1.6;color:var(--text-muted);margin:0;max-width:56ch;overflow-wrap:anywhere}
+body.pp-ui .pp-register-table .pp-table-empty{display:table-row;border:0;background:none}
+body.pp-ui .pp-register-table .pp-table-empty>td{display:table-cell;padding:0!important;width:auto!important;grid-column:1/-1;border:0;white-space:normal}
+body.pp-ui .pp-register-table .pp-table-empty>td:before{content:none!important}
+body.pp-ui .pp-register-table tbody>tr:not(.pp-table-empty):focus-within{background:var(--control-bg)}
+@media(hover:hover){body.pp-ui .pp-register-table tbody>tr:not(.pp-table-empty):hover{background:var(--control-bg)}}
+body.pp-ui .pp-loading-state{padding:16px 0;max-width:800px}
+body.pp-ui .pp-loading-state>p{color:var(--text-muted);font-size:13px;line-height:1.6;margin:0 0 20px}
+body.pp-ui .pp-loading-placeholder{display:grid;gap:14px}
+body.pp-ui .pp-loading-placeholder>span{display:block;height:20px;border-radius:6px;background:var(--control-bg)}
+body.pp-ui .pp-loading-placeholder>span:first-child{height:32px;width:45%}
+body.pp-ui .pp-loading-placeholder>span:last-child{width:75%}
+/* No looping shimmer, timers or extra observers for loading feedback. */
 body.pp-ui {
     --pp-action-height:36px;
     --pp-action-padding:12px;

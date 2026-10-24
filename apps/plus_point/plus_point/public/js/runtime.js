@@ -1,10 +1,15 @@
 /* One bounded UI observer. Enhancements cannot observe their own DOM writes. */
 (()=>{
  frappe.provide('plus_point');
- plus_point.render_table=(labels,rows)=>{
+ // Native equivalents of the Empty/Skeleton composition reviewed on 21st.dev.
+ // Text only: callers retain ownership of their actions and event listeners.
+ const escape=v=>frappe.utils.escape_html(String(v??''));
+ plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;
+ plus_point.loading_state=(label='Loading your records…')=>`<div class="pp-loading-state" role="status"><p>${escape(__(label))}</p><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span></div></div>`;
+ plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
-  template.innerHTML=`<div class="pp-op-table-scroll"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
-  template.content.querySelectorAll('tbody>tr').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';}));
+  template.innerHTML=`<div class="pp-op-table-scroll"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
+  template.content.querySelectorAll('tbody>tr:not(.pp-table-empty)').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';}));
   return template.innerHTML;
  };
  const watchers=new Map();let timer,observer,running=false,bursts=0,lastRun=0;

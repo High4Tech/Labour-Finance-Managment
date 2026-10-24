@@ -76,11 +76,17 @@
 .pp-focused-editor .pp-op-heading{align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
 .pp-focused-editor .pp-op-back{background:transparent;border-color:transparent;padding-inline:0;margin-bottom:12px}
 .pp-flow-steps{gap:0;align-items:stretch;overflow-x:auto;padding-bottom:0;border-bottom:1px solid var(--border-color);scroll-margin-top:16px}
-.pp-flow-steps .pp-op-tab-item{flex:1 0 auto;position:relative;align-items:center}
-.pp-flow-steps [role=tab]{display:flex;gap:8px;align-items:center;padding:12px 16px 14px 0;white-space:nowrap;font-weight:500}
+.pp-flow-steps .pp-op-tab-item{flex:1 1 0;min-width:0;position:relative;align-items:center;gap:12px}
+.pp-flow-separator{height:1px;min-width:16px;flex:1;background:var(--border-color);margin-inline-end:12px}
+.pp-flow-steps .pp-op-tab-item.is-complete .pp-flow-separator{background:var(--pp-accent)}
+.pp-flow-steps [role=tab]{display:flex;gap:8px;align-items:center;min-width:0;padding:12px 0 14px;white-space:normal;text-align:start;font-weight:500}
+.pp-flow-steps [role=tab]>span:last-child{white-space:normal}
 .pp-flow-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;border:1px solid var(--border-color);border-radius:50%;font-size:12px;color:var(--text-muted)}
 .pp-flow-steps .is-complete .pp-flow-number{border-color:var(--pp-accent);color:var(--pp-accent)}
-.pp-flow-steps [aria-selected=true] .pp-flow-number{background:var(--pp-accent);border-color:var(--pp-accent);color:white}
+.pp-flow-number .icon{width:14px;height:14px;--icon-stroke:currentColor}
+.pp-flow-steps [aria-selected=true] .pp-flow-number{background:var(--pp-action-primary);border-color:var(--pp-action-primary);color:var(--pp-action-on-primary)}
+.pp-flow-steps [role=tab]:focus-visible{outline:2px solid var(--pp-accent);outline-offset:-2px;border-radius:6px}
+@media(max-width:600px){.pp-flow-steps .pp-op-tab-item{flex:0 0 auto}.pp-flow-steps [role=tab]>span:last-child{white-space:nowrap}.pp-flow-separator{min-width:8px;margin-inline-end:4px}}
 .pp-flow-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--border-color);padding:20px 0;margin-top:24px}
 .pp-flow-position{margin:0;color:var(--text-muted);font-size:12px;flex:1 1 240px}
 .pp-flow-footer .pp-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
