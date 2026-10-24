@@ -73,7 +73,7 @@ def capacity(start_date,end_date,staffing=None,agreement=None):
     externally_booked={r.employee for r in others if not r.end_date or getdate(r.end_date)>=getdate(start_date)}
     available=sum(r['available'] or (r['reason']=='Booked for overlapping dates' and r['name'] in own and r['name'] not in externally_booked) for r in rows)
     required=peak(frappe.parse_json(staffing) or [])
-    return dict(total=len(rows),available=available,required=required,shortfall=max(0,required-len(rows)))
+    return dict(total=len(rows),available=available,required=required,shortfall=max(0,required-len(rows)),availability_gap=max(0,required-available))
 
 def validate_capacity(doc):
     """A booking is not a new employee. Existing overloaded baselines can be reviewed."""

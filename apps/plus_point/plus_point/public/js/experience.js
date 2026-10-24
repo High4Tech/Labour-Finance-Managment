@@ -1,4 +1,4 @@
-/* Shared product controls. Native lists retain filters, selection, sorting and views. */
+/* Shared product controls. Native lists retain search, selection and sorting. */
 (()=>{
  frappe.provide('plus_point');const esc=v=>frappe.utils.escape_html(String(v??''));let queued=false,bar,lastSummary=0,summaryBusy=false,started=false;
  plus_point.reveal_control=control=>{const node=control?.$wrapper?.get(0),panel=node?.closest('[role=tabpanel]');if(panel?.hidden)document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`)?.click();control?.set_focus?.();};
@@ -35,6 +35,8 @@
  }
  function lists(){
   if(frappe.boot.plus_point?.is_platform)return;const list=window.cur_list;if(frappe.get_route()?.[0]!=='List'||!list?.filter_area?.filter_list||!Array.isArray(list.data)||list.doctype!==frappe.get_route()?.[1])return;
+  list.page.wrapper.addClass('pp-business-list');
+  if(list.doctype==='PP Planning Draft'){list.page.set_title(__('Drafts'));list.page.clear_primary_action();list.settings.get_form_link=doc=>'/desk/'+(doc.kind==='Agreement'?'pp-agreements':'pp-event-plans')+'?draft='+encodeURIComponent(doc.name);return;}if(list.doctype==='PP Event Plan')list.page.set_title(__('Events'));
   if(['Vehicle','Warehouse'].includes(list.doctype)){list.settings.get_form_link=doc=>list.doctype==='Warehouse'&&doc.is_group?'/desk/warehouse/view/list?parent_warehouse='+encodeURIComponent(doc.name):'/desk/pp-inventory?view='+(list.doctype==='Vehicle'?'vehicles':'warehouses')+'&record='+encodeURIComponent(doc.name);list.make_new_doc=()=>plus_point.open_resource(list.doctype==='Vehicle'?'vehicles':'warehouses',()=>list.refresh());return;}
   const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
   list.settings.get_form_link=doc=>mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
@@ -63,6 +65,6 @@
  $(document).on('form-refresh.pp-experience',(_e,frm)=>{plus_point.bind_date_ranges(frm);schedule();});
  document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()?.[0]!=='List'||frappe.get_route()?.[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);
  let totalsTimer;document.addEventListener('pp:data-changed',()=>{clearTimeout(totalsTimer);totalsTimer=setTimeout(()=>totals(true),400);});document.addEventListener('pp:onboarding',schedule);
- const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;plus_point.watch_ui('experience',update);frappe.router.on('change',schedule);schedule();};
+ const start=()=>{if(started||!frappe.boot?.plus_point)return;started=true;document.body.classList.toggle('pp-customer-app',!frappe.boot.plus_point.is_platform);plus_point.watch_ui('experience',update);frappe.router.on('change',schedule);schedule();};
  $(document).on('app_ready.pp-experience',start);if(frappe.app?.sidebar)start();
 })();

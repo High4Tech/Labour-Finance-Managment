@@ -37,6 +37,8 @@ def local_defaults():
 
 
 def after_migrate():
+    from plus_point.drafts import install as install_drafts
+    install_drafts()
     refresh_record_permissions()
     ensure_event_archive_field()
     from plus_point.experience import install as install_experience

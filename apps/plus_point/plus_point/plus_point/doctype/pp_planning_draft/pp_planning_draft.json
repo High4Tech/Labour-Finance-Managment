@@ -1,0 +1,115 @@
+{
+  "doctype": "DocType",
+  "name": "PP Planning Draft",
+  "module": "PLUS POINT",
+  "autoname": "hash",
+  "title_field": "title",
+  "show_title_field_in_link": 1,
+  "track_changes": 0,
+  "engine": "InnoDB",
+  "field_order": [
+    "title",
+    "kind",
+    "company",
+    "draft_key",
+    "payload",
+    "status",
+    "scheduled_for",
+    "agreement",
+    "event",
+    "last_error",
+    "revision"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "Draft name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "kind",
+      "label": "Type",
+      "fieldtype": "Select",
+      "options": "Agreement\nEvent",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "draft_key",
+      "label": "Draft key",
+      "fieldtype": "Data",
+      "unique": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "payload",
+      "label": "Draft content",
+      "fieldtype": "Long Text",
+      "hidden": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Draft\nScheduled\nCompleted\nFailed",
+      "default": "Draft",
+      "reqd": 1,
+      "in_list_view": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "scheduled_for",
+      "label": "Create event on",
+      "fieldtype": "Datetime",
+      "in_list_view": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "agreement",
+      "label": "Agreement reference",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "event",
+      "label": "Event reference",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_error",
+      "label": "Needs attention",
+      "fieldtype": "Small Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "Revision",
+      "fieldtype": "Int",
+      "hidden": 1,
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

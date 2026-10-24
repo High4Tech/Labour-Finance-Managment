@@ -89,6 +89,8 @@ def catalogue():
 
 
 def validate_agreement(doc):
+    from plus_point.daily_billing import validate as validate_checkpoints
+    validate_checkpoints(doc)
     if not doc.get('staffing'):return
     project=linked('Project',doc.project)
     from plus_point.events import span,positive
@@ -150,13 +152,15 @@ def save_agreement(values,name=None):
         currency_changed=bool(name and values.get('pp_agreement_currency') and values.pp_agreement_currency!=previous_currency)
         if currency_changed and (frappe.db.exists('PP Milestone',{'contract_terms':name,'status':['in',['Approved','Invoiced']]}) or frappe.db.exists('Sales Invoice',{'project':project.name,'docstatus':['!=',2]})):
             frappe.throw('This agreement already has approved milestones or invoices. Create a new agreement to use a different currency and preserve its financial history.')
-        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions'):
+        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions','pp_daily_checkpoints'):
             if key in values:doc.set(key,values[key])
         if 'pp_conditions' in values:
             conditions=frappe.parse_json(values.pp_conditions or '[]')
             if not isinstance(conditions,list) or len(conditions)>100 or any(not isinstance(c,str) or len(c)>5000 for c in conditions):frappe.throw('Use at most 100 text conditions of 5,000 characters each.')
             if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('The agreement conditions update is awaiting installation approval. Save conditions after the app update is installed.')
             doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
+        from plus_point.daily_billing import validate as validate_checkpoints
+        validate_checkpoints(doc)
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
             contract.check_permission('write');contract.contract_terms=values.scope or (f'Draft: {doc.agreement_title}' if doc.status=='Draft' else values.scope);contract.save()
@@ -279,7 +283,7 @@ def agreement(name):
 
 
 @frappe.whitelist(methods=['POST'])
-def create_plan(contract_terms,event_name,notes=None):
+def create_plan(contract_terms,event_name,notes=None,start_date=None,end_date=None):
     doc=terms_doc(contract_terms)
     if doc.status!='Active':frappe.throw('Activate this agreement before planning the event.')
     from plus_point.budget import lock_project
@@ -289,6 +293,11 @@ def create_plan(contract_terms,event_name,notes=None):
     if not doc.staffing:frappe.throw('Add venue and worker-category requirements in the agreement first.')
     if not str(event_name or '').strip():frappe.throw('Enter the event name.')
     rows=[{key:r.get(key) for key in ('site','phase','start_date','end_date','workers_required','designation','wage_rate','client_rate')} for r in doc.staffing]
+    if start_date or end_date:
+        first=getdate(start_date or doc.effective_start);last=getdate(end_date or doc.effective_end)
+        if first>last or first<getdate(doc.effective_start) or last>getdate(doc.effective_end):frappe.throw('Choose event dates within the agreement, with end on or after start.')
+        rows=[dict(r,start_date=max(getdate(r['start_date']),first),end_date=min(getdate(r['end_date']),last)) for r in rows if getdate(r['start_date'])<=last and getdate(r['end_date'])>=first]
+        if not rows:frappe.throw('No crew requirements fall within these event dates. Choose dates covered by the agreement.')
     starts=[getdate(r['start_date']) for r in rows];ends=[getdate(r['end_date']) for r in rows]
     for kind in ('PP Vehicle Booking','PP Equipment Booking'):
         for reservation in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['start_date','end_date'],limit_page_length=0):

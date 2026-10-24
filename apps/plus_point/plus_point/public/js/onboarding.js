@@ -69,7 +69,7 @@
     const customerLists = {
         'Customer':['Clients','Add client'],
         'PP Site': ['Event sites', 'Add event site'],
-        'PP Event Plan':['Event plans','Plan an event'], 'Project':['Event projects','Plan an event'],
+        'PP Event Plan':['Events','Create event'], 'Project':['Event projects','Create event'],
         'Vehicle':['Vehicles','Add vehicle'],'Item':['Inventory items','Add inventory item'],
         'Warehouse':['Warehouses','Add warehouse'],'Stock Reconciliation':['Warehouse balances','Update warehouse balances'],
         'PP Vehicle Booking':['Vehicle assignments','Assign vehicle'],'PP Equipment Booking':['Event equipment','Reserve equipment'],
@@ -129,8 +129,8 @@
                 <h3>${esc(__('Start with attendance'))}</h3><p>${esc(__('Choose a site, review workers, and record a full day, half-day or absence.'))}</p></div>
                 <button type="button" class="btn btn-primary pp-mark-attendance" ${frappe.model.can_create('PP Daily Register') ? '' : 'disabled'}>${esc(__('Mark attendance'))}</button></div>
             <div class="pp-task-rows">
-                <div class="pp-task-row"><div><h3>${esc(__('Event plans and crew'))}</h3><p>${esc(__('Plan each venue day, then assign available workers.'))}</p></div>
-                    <div class="pp-task-links">${link(['PP Event Plan', 'Event plans'])}${link(['Employee', 'Workers'])}</div></div>
+                <div class="pp-task-row"><div><h3>${esc(__('Events and crew'))}</h3><p>${esc(__('Plan each venue day, then assign available workers.'))}</p></div>
+                    <div class="pp-task-links">${link(['PP Event Plan', 'Events'])}${link(['Employee', 'Workers'])}</div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Inventory and transport'))}</h3><p>${esc(__('Check warehouse availability and reserve vehicles or equipment for an event.'))}</p></div><div class="pp-task-links"><a href="/desk/pp-inventory">${esc(__('Warehouse availability'))}</a>${link(['Vehicle','Vehicles'])}${link(['PP Vehicle Booking','Vehicle assignments'])}</div></div>
                 <div class="pp-task-row"><div><h3>${esc(__('Client billing'))}</h3><p>${esc(__('Set the agreement, prepare an invoice and record client receipts.'))}</p></div>
                     <div class="pp-task-links"><a href="/desk/pp-agreements">${esc(__('Client agreements'))}</a><a href="/desk/pp-client-billing">${esc(__('Billing and finances'))}</a></div></div>
@@ -393,7 +393,7 @@
                 page.btn_primary.removeAttr('data-pp-event-action');
             }
             const primary=(key,label,handler)=>{if(page?.btn_primary?.attr('data-pp-event-action')!==key){page.set_primary_action({label:__(label)},handler,'plus');page.btn_primary.attr('data-pp-event-action',key);}};
-            if(!platform()&&['Project','PP Event Plan'].includes(route[1]))primary('plan','Plan an event',()=>plus_point.open_event_wizard());
+            if(!platform()&&['Project','PP Event Plan'].includes(route[1]))primary('plan','Create event',()=>plus_point.open_event_wizard());
             if(!platform()&&route[1]==='PP Contract Terms')primary('agreement','New agreement',()=>frappe.set_route('pp-agreements',{record:'new'}));
             if(!platform()&&route[1]==='Sales Invoice')primary('billing','Open agreement billing',()=>frappe.set_route('pp-client-billing',{record:'new'}));
             if(!platform()&&!serviceItems&&['Customer','Vehicle','Item','Warehouse'].includes(route[1]))primary('resource',action,()=>plus_point.open_resource({Customer:'clients',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses'}[route[1]],()=>listview.refresh()));

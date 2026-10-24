@@ -30,7 +30,7 @@
         receipts:'Use a submitted invoice ID, date (YYYY-MM-DD), amount and bank_account ledger ID. invoice accepts import:external_id from an earlier invoice import. This records money already received and allocates it to that invoice. It does not contact a bank.',
         worker_payments:'Use project and employee IDs, date (YYYY-MM-DD), amount and bank_account ledger ID. employee accepts import:external_id from an employee import. This records an actual historical payment and settles approved outstanding wages. It does not send money. Import the related work first.',
     };
-    Object.assign(kinds,{clients:'Clients',event_sites:'Event sites',events:'Event plans',vehicles:'Vehicles',inventory_items:'Inventory catalog',warehouses:'Warehouses',stock_balances:'Warehouse stock balances'});
+    Object.assign(kinds,{clients:'Clients',event_sites:'Event sites',events:'Events',vehicles:'Vehicles',inventory_items:'Inventory catalog',warehouses:'Warehouses',stock_balances:'Warehouse stock balances'});
     function download(method,args){
         const url='/api/method/plus_point.imports.'+method+'?'+new URLSearchParams(args);
         const anchor=document.createElement('a');anchor.href=url;anchor.download='';document.body.append(anchor);anchor.click();anchor.remove();

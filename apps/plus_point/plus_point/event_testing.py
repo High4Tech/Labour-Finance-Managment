@@ -138,6 +138,9 @@ def hierarchy_browser_fixture(action,run_id):
             doc=frappe.get_doc(dt,row.name)
             if doc.docstatus==1:doc.cancel()
             frappe.delete_doc(dt,row.name)
+    if frappe.db.exists('DocType','PP Planning Draft'):
+        for name in frappe.get_all('PP Planning Draft',filters={'company':prefix},pluck='name'):
+            frappe.db.set_value('PP Planning Draft',name,'status','Draft');frappe.delete_doc('PP Planning Draft',name)
     invoices=frappe.get_all('Sales Invoice',filters={'company':prefix},fields=['name','docstatus'])
     if any(r.docstatus for r in invoices):raise RuntimeError('Submitted invoices; cleanup refused')
     for row in invoices:frappe.delete_doc('Sales Invoice',row.name)

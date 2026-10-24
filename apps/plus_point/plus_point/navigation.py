@@ -5,7 +5,7 @@ import json
 CUSTOMER_GROUPS = [
     ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
     ('Inventory and transport', [('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
-    ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Event plans'),('Sales Invoice', 'Billing and finances')]),
+    ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Events'),('Sales Invoice', 'Billing and finances')]),
     ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans'),
                            ('Payment Entry', 'Receipts and payments'), ('Purchase Invoice', 'Expenses')]),
     ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
@@ -35,6 +35,7 @@ def product_navigation(platform):
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
     if not platform:
+        items.append(dict(type='Link',link_type='DocType',link_to='PP Planning Draft',label='Drafts',is_default_module=1))
         from plus_point.event_setup import current
         state=current()
         if state.get('step')!='done' and not state.get('skipped'):items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))
@@ -70,7 +71,7 @@ def product_navigation(platform):
     if not platform:
         # Supporting ledgers and reimbursements remain available from their
         # workflow, without duplicating the same task in the sidebar.
-        doctypes.update(['Account','Supplier','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
+        doctypes.update(['PP Planning Draft','Account','Supplier','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
                          'Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
         reports.update(['PLUS POINT Project Finances','PLUS POINT Worker Statement'])

@@ -156,6 +156,12 @@ def reserve_invoice(doc, method=None):
 
 
 def release_invoice(doc, method=None):
+    if doc.project and frappe.get_meta('PP Contract Terms').has_field('pp_daily_checkpoints'):
+        for terms in frappe.get_all('PP Contract Terms',filters={'project':doc.project},fields=['name','pp_daily_checkpoints']):
+            checkpoints=frappe.parse_json(terms.pp_daily_checkpoints or '[]');changed=False
+            for checkpoint in checkpoints:
+                if checkpoint.get('invoice')==doc.name:checkpoint.pop('invoice');changed=True
+            if changed:frappe.db.set_value('PP Contract Terms',terms.name,'pp_daily_checkpoints',frappe.as_json(checkpoints))
     for row in doc.items:
         if row.get('pp_source_name') and frappe.db.get_value(row.pp_source_type, row.pp_source_name, 'sales_invoice') == doc.name:
             frappe.db.set_value(row.pp_source_type, row.pp_source_name, 'sales_invoice', None)

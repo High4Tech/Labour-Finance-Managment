@@ -17,28 +17,30 @@ web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
 app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-component-validation-2","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/forms.js?v=20261024-guided-planning-2",
+                  "/assets/plus_point/js/forms.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/worker_profile.js?v=20261023-finance-3",
                   "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/dashboard.js?v=20261023-finance-3",
                   "/assets/plus_point/js/activity.js?v=20261023-finance-3",
                   "/assets/plus_point/js/crew.js?v=20261023-finance-3",
-                  "/assets/plus_point/js/events.js?v=20261023-finance-3",
+                  "/assets/plus_point/js/events.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/sections.js?v=20261023-finance-3",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/imports.js?v=20261024-event-pay-3",
+                  "/assets/plus_point/js/imports.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/setup_flow.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/event_setup.js?v=20261023-finance-3",
-                  "/assets/plus_point/js/onboarding.js?v=20261023-finance-3"]
+                  "/assets/plus_point/js/onboarding.js?v=20261024-draft-flow-4"]
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/interface.css?v=20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
-app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-guided-planning-2"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=20261024-guided-planning-2"]
-scheduler_events = {"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
+app_include_js += ["/assets/plus_point/js/drafts.js?v=20261024-draft-flow-4",
+                   "/assets/plus_point/js/daily_billing.js?v=20261024-draft-flow-4"]
+app_include_js += ["/assets/plus_point/js/operations.js?v=20261024-draft-flow-4"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=20261024-draft-flow-4"]
+scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"]},"hourly": ["plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
 doc_events = {
@@ -72,9 +74,9 @@ doc_events = {
         "on_update": "plus_point.billing.reserve_invoice",
     }
 }
-permission_query_conditions={"Company":"plus_point.workspace.company_query","Warehouse":"plus_point.workspace.warehouse_query","Vehicle":"plus_point.workspace.vehicle_query",
+permission_query_conditions={"PP Planning Draft":"plus_point.drafts.query","Company":"plus_point.workspace.company_query","Warehouse":"plus_point.workspace.warehouse_query","Vehicle":"plus_point.workspace.vehicle_query",
                              "PP Worker Loan":"plus_point.workspace.loan_query","PP Loan Recovery":"plus_point.workspace.recovery_query"}
-has_permission={"Company":"plus_point.workspace.company_permission","Warehouse":"plus_point.workspace.resource_permission","Vehicle":"plus_point.workspace.resource_permission",
+has_permission={"PP Planning Draft":"plus_point.drafts.permission","Company":"plus_point.workspace.company_permission","Warehouse":"plus_point.workspace.resource_permission","Vehicle":"plus_point.workspace.resource_permission",
                 "PP Worker Loan":"plus_point.workspace.resource_permission","PP Loan Recovery":"plus_point.workspace.resource_permission"}
 
 # Existing Frappe Desk handles the frontend automatically; this adds an app entry.
@@ -90,7 +92,7 @@ add_to_apps_screen = [
 ]
 
 app_include_js += ["/assets/plus_point/js/event_pay.js?v=20261024-event-pay-3"]
-app_include_js += ["/assets/plus_point/js/experience.js?v=20261024-guided-planning-2"]
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261024-draft-flow-4"]
 app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-component-validation-2"]
 
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261023-finance-3"]
@@ -101,7 +103,7 @@ app_include_css += ["/assets/plus_point/css/people.css?v=20261023-finance-3"]
 
 app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261024-event-pay-3"]
 
-app_include_js += ["/assets/plus_point/js/resources.js?v=20261024-guided-planning-2"]
+app_include_js += ["/assets/plus_point/js/resources.js?v=20261024-draft-flow-4"]
 app_include_js += ["/assets/plus_point/js/finance_hub.js?v=20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/finance_hub.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/business_reports.js?v=20261023-report-layout-2"]

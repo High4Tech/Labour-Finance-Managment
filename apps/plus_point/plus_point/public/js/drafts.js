@@ -1,0 +1,55 @@
+/* One bounded autosave session. Partial drafts do not create financial records. */
+(()=>{
+ frappe.provide('plus_point');
+ const rpc=(method,args={})=>plus_point.form_rpc('drafts.'+method,args),esc=v=>frappe.utils.escape_html(String(v??''));
+ let current=null;if(!frappe.boot.plus_point?.is_platform)document.body.classList.add('pp-customer-app');
+ const reloading=performance.getEntriesByType('navigation')[0]?.type==='reload';if(reloading&&location.pathname.startsWith('/desk/')&&!frappe.boot.plus_point?.is_platform)history.replaceState(null,'','/desk/plus-point');
+ const cacheKey=()=>`pp-form-recovery:${frappe.session.user}:${frappe.boot.plus_point?.company_identity?.name}`;
+ const backups=()=>{try{const data=JSON.parse(sessionStorage.getItem(cacheKey())||'[]');return Array.isArray(data)?data:[];}catch{return [];}};
+ const backup=value=>{try{const list=backups().filter(r=>r.client_key!==value.client_key&&Date.now()-r.at<12*60*60*1000);if(new TextEncoder().encode(JSON.stringify(value)).length<=48000&&list.length<5)sessionStorage.setItem(cacheKey(),JSON.stringify([...list,{...value,at:Date.now()}]));}catch{}};
+ const forget=key=>{try{const remaining=backups().filter(r=>r.client_key!==key);if(remaining.length)sessionStorage.setItem(cacheKey(),JSON.stringify(remaining));else sessionStorage.removeItem(cacheKey());}catch{}};
+ plus_point.draft_form=group=>Object.fromEntries(Object.values(group?.fields_dict||{}).filter(c=>!['Column Break','Section Break','HTML','Button'].includes(c.df.fieldtype)).map(c=>[c.df.fieldname,c.get_value?.()]));
+ async function persist(args,keepalive=false){const response=await fetch('/api/method/plus_point.drafts.save',{method:'POST',credentials:'same-origin',keepalive,headers:{'Content-Type':'application/json','X-Frappe-CSRF-Token':frappe.csrf_token},body:JSON.stringify(args)});const body=await response.json();if(!response.ok||body.exc){let message=__('Draft could not be saved. Check your connection or sign in again, then retry.');try{const messages=JSON.parse(body._server_messages||'[]').map(item=>JSON.parse(item));message=messages[0]?.message||message;}catch{}throw Error(message);}return body.message;}
+ async function flush(state){
+  if(!state||state.stopped)return;clearTimeout(state.timer);
+  if(state.pending){state.again=true;await state.pending;return state.dirty?flush(state):state.result;}
+  if(!state.dirty)return state.result;const payload=state.read(),serialized=JSON.stringify(payload);if(serialized===state.saved){state.dirty=false;return state.result;}
+  const snapshot={kind:state.kind,payload,name:state.name,client_key:state.key,revision:state.revision};backup(snapshot);
+  state.pending=(async()=>{state.notice.textContent=__('Saving draft…');try{const result=await persist(snapshot);state.name=result.name;state.revision=result.revision;state.saved=serialized;state.result=result;state.dirty=JSON.stringify(state.read())!==serialized;state.notice.textContent=__('Draft saved');state.retry.hidden=true;state.onSaved?.(result);if(!state.dirty)forget(state.key);return result;}catch(error){state.notice.textContent=error.message;state.retry.hidden=false;throw error;}})();
+  try{await state.pending;}finally{state.pending=null;}
+  if(state.again&&state.dirty){state.again=false;return flush(state);}return state.result;
+ }
+ plus_point.flush_draft=()=>flush(current);
+ plus_point.draft_is_for=root=>current?.root===root;
+ plus_point.save_current_draft=async()=>{if(!current)return;current.saved=null;current.dirty=true;return plus_point.flush_draft();};
+ plus_point.current_draft=async()=>current?.name?rpc('load',{name:current.name}):null;
+ plus_point.detach_draft=async()=>{const state=current;if(!state)return;await flush(state).catch(()=>{});state.cleanup();clearTimeout(state.timer);state.stopped=true;if(current===state)current=null;};
+ plus_point.stop_draft=async({complete}={})=>{const state=current;if(!state)return;await plus_point.flush_draft();clearTimeout(state.timer);state.cleanup();state.stopped=true;current=null;forget(state.key);if(complete&&state.name)await rpc('finish',{name:state.name,record:complete});};
+ plus_point.start_draft=async({root,kind,draft,read,onSaved})=>{
+  await plus_point.flush_draft().catch(()=>{});if(current){current.cleanup();clearTimeout(current.timer);}const banner=document.createElement('div');banner.className='pp-draft-status';banner.innerHTML='<span role="status" aria-live="polite"></span><button type="button" class="btn btn-default" hidden>'+esc(__('Retry saving draft'))+'</button>';root.querySelector('.pp-draft-status')?.remove();root.querySelector('.pp-op-heading')?.after(banner);
+  const state=current={root,kind,name:draft?.name,revision:draft?.revision,key:crypto.randomUUID(),read,onSaved,notice:banner.querySelector('span'),retry:banner.querySelector('button'),saved:JSON.stringify(read()),dirty:false};state.notice.textContent=__('Changes save automatically as a draft');
+  const changed=e=>{if(!root.contains(e.target)&&!document.querySelector('.pp-action-dialog:has(.pp-staffing-fields),.pp-draft-resource-dialog')?.contains(e.target))return;state.dirty=true;backup({kind,payload:read(),name:state.name,client_key:state.key,revision:state.revision});clearTimeout(state.timer);state.timer=setTimeout(()=>plus_point.flush_draft().catch(()=>{}),1500);};
+  for(const event of ['input','change','pp:flow-change'])document.addEventListener(event,changed);state.cleanup=()=>{for(const event of ['input','change','pp:flow-change'])document.removeEventListener(event,changed);};state.retry.onclick=()=>plus_point.flush_draft().catch(()=>{});return state;
+ };
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)plus_point.flush_draft().catch(()=>{});});
+ window.addEventListener('pagehide',()=>{const s=current;if(!s?.dirty)return;const snapshot={kind:s.kind,payload:s.read(),name:s.name,client_key:s.key,revision:s.revision};backup(snapshot);persist(snapshot,true).catch(()=>{});});
+ frappe.router.on('change',()=>plus_point.flush_draft().catch(()=>{}));
+ const ready=async()=>{
+  if(frappe.boot.plus_point?.is_platform)return;
+  try{for(const key of Object.keys(sessionStorage))if(key.startsWith('pp-form-recovery:')&&key!==cacheKey())sessionStorage.removeItem(key);}catch{}
+  for(const saved of backups()){try{if(Date.now()-saved.at<12*60*60*1000){delete saved.at;await persist(saved);}forget(saved.client_key);}catch{}}
+  if(reloading)await frappe.set_route('plus-point');
+ };
+ if(frappe.app?.sidebar)ready();else $(document).on('app_ready.pp-drafts',ready);
+ plus_point.open_event_draft=async draft=>{
+  if(typeof draft==='string')draft=await rpc('load',{name:draft});if(draft.status==='Completed'&&draft.event){frappe.set_route('pp-event-plans',{record:draft.event});return;}
+  const data=draft.payload,agreement=await plus_point.form_rpc('operations.agreement',{name:draft.agreement||data.contract_terms});
+  const d=new frappe.ui.Dialog({title:__('Event details'),fields:[{fieldtype:'Data',fieldname:'event_name',label:__('Event name'),reqd:1,default:data.event_name||agreement.agreement_title},{fieldtype:'Date',fieldname:'start_date',label:__('Event starts'),reqd:1,default:data.start_date||agreement.effective_start,min_date:agreement.effective_start,max_date:agreement.effective_end},{fieldtype:'Date',fieldname:'end_date',label:__('Event ends'),reqd:1,default:data.end_date||agreement.effective_end,min_date:agreement.effective_start,max_date:agreement.effective_end},{fieldtype:'Small Text',fieldname:'notes',label:__('Event notes'),default:data.notes||''},{fieldtype:'Select',fieldname:'action',label:__('Create this event'),options:[{value:'Draft',label:__('Keep as draft')},{value:'Now',label:__('Create now')},{value:'Schedule',label:__('Schedule creation')}],default:draft.status==='Scheduled'?'Schedule':'Now'},{fieldtype:'Datetime',fieldname:'scheduled_for',label:__('Create on')+' ('+(frappe.boot.time_zone?.system||__('site time'))+')',default:draft.scheduled_for,hidden:1},{fieldtype:'HTML',fieldname:'feedback',options:'<p role="status" aria-live="polite"></p>'}],primary_action_label:__('Save event details'),primary_action:async v=>{if(!plus_point.validate_inputs(d))return;if(v.action==='Schedule'&&(!v.scheduled_for||!moment(v.scheduled_for).isValid()||moment(v.scheduled_for).isSameOrBefore(moment(frappe.datetime.now_datetime())))){plus_point.field_error(d.fields_dict.scheduled_for,__('Choose a future date and time.'));d.fields_dict.scheduled_for.set_focus();return;}d.disable_primary_action();try{await plus_point.stop_draft();const result=await rpc('configure_event',{name:draft.name,values:v});d.hide();if(result.event)frappe.set_route('pp-event-plans',{record:result.event});else{frappe.set_route('List','PP Planning Draft','List');frappe.show_alert({message:__(result.status==='Scheduled'?'Event creation scheduled.':'Event draft saved.'),indicator:'green'});}}catch(error){d.fields_dict.feedback.$wrapper.find('p').text(error.message);}finally{d.enable_primary_action();}}});
+  d.fields_dict.action.df.onchange=()=>{const schedule=d.get_value('action')==='Schedule';d.set_df_property('scheduled_for','hidden',!schedule);d.set_df_property('scheduled_for','reqd',schedule);d.fields_dict.scheduled_for.$input?.attr('aria-label',d.fields_dict.scheduled_for.df.label);};d.show();d.fields_dict.action.df.onchange();plus_point.enhance_selectors(d);for(const c of Object.values(d.fields_dict))c.$input?.attr('aria-label',c.df.label||'');
+  if(draft.status!=='Scheduled'){const holder=document.createElement('div');holder.className='pp-op-heading';d.body.prepend(holder);await plus_point.start_draft({root:d.body,kind:'Event',draft,read:()=>({...plus_point.draft_form(d),contract_terms:agreement.name}),onSaved:r=>draft=r});d.$wrapper.one('hidden.bs.modal',()=>{if(current?.root===d.body)plus_point.stop_draft().catch(()=>{});});}
+ };
+ plus_point.agreement_created=async(agreement,draft)=>{
+  const d=new frappe.ui.Dialog({title:__('Agreement created'),fields:[{fieldtype:'HTML',fieldname:'next',options:'<p>'+esc(__('Your agreement is ready and its event draft is saved. Continue with event details, or send the agreement to the client for signature.'))+'</p>'}],primary_action_label:__('Enter event details'),primary_action:async()=>{await new Promise(resolve=>{d.$wrapper.one('hidden.bs.modal',resolve);d.hide();});await plus_point.open_event_draft(draft);},secondary_action_label:__('Send to client for signature'),secondary_action:()=>{d.hide();document.querySelector('[aria-controls="pp-agreements-send-and-sign"]')?.click();}});d.show();
+ };
+ frappe.listview_settings['PP Planning Draft']={hide_name_column:true,add_fields:['kind','status','scheduled_for','last_error'],get_indicator:doc=>[__(doc.status),doc.status==='Failed'?'red':doc.status==='Scheduled'?'orange':'grey',''],get_form_link:doc=>'/desk/'+(doc.kind==='Agreement'?'pp-agreements':'pp-event-plans')+'?draft='+encodeURIComponent(doc.name)};
+})();
