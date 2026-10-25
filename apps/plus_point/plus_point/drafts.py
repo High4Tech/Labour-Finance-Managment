@@ -52,6 +52,29 @@ def public(doc):
                 scheduled_for=doc.scheduled_for,agreement=doc.agreement,event=doc.event,last_error=doc.last_error,payload=frappe.parse_json(doc.payload or '{}'))
 
 
+def move_comments(doc,doctype,name):
+    for comment in frappe.get_all('Comment',filters={'reference_doctype':DT,'reference_name':doc.name,'comment_type':'Comment'},pluck='name'):
+        frappe.db.set_value('Comment',comment,{'reference_doctype':doctype,'reference_name':name},update_modified=False)
+
+
+def create_event_from_draft(doc,data,terms=None):
+    from decimal import Decimal, InvalidOperation
+    from plus_point.operations import create_plan,save_project,terms_doc
+    terms=terms or terms_doc(doc.agreement)
+    event=create_plan(doc.agreement,data['event_name'],data.get('notes'),data.get('start_date'),data.get('end_date'))
+    if not event['existing']:
+        changes={key:data[key] for key in ('budget','enforce_budget') if key in data}
+        if 'budget' in changes:
+            try:amount=Decimal(str(changes['budget'] or 0))
+            except (InvalidOperation,ValueError,TypeError):frappe.throw('Enter a valid spending budget of zero or more.')
+            if not amount.is_finite() or amount<0:frappe.throw('Enter a valid spending budget of zero or more.')
+            changes['budget']=float(amount)*float(terms.get('pp_agreement_rate') or 1)
+        if changes:save_project(event['name'],changes)
+    move_comments(doc,'PP Event Plan',event['name'])
+    doc.event=event['name'];doc.status='Completed';doc.payload='{}';doc.last_error=''
+    return event
+
+
 @frappe.whitelist()
 def load(name):return public(checked(name))
 
@@ -92,8 +115,7 @@ def finish(name,record):
     if doc.kind=='Agreement':doc.agreement=linked.name
     else:doc.event=linked.name
     # Keep collaboration when a planning draft becomes the final agreement/event.
-    for comment in frappe.get_all('Comment',filters={'reference_doctype':DT,'reference_name':doc.name,'comment_type':'Comment'},pluck='name'):
-        frappe.db.set_value('Comment',comment,{'reference_doctype':linked.doctype,'reference_name':linked.name},update_modified=False)
+    move_comments(doc,linked.doctype,linked.name)
     doc.status='Completed';doc.payload='{}'
     with writing():doc.save()
     return public(doc)
@@ -118,8 +140,12 @@ def event_for_agreement(agreement):
 
 @frappe.whitelist(methods=['POST'])
 def configure_event(name,values):
-    from plus_point.operations import terms_doc,create_plan
-    doc=checked(name,True);v=frappe._dict(frappe.parse_json(values) or {})
+    from plus_point.operations import terms_doc
+    doc=checked(name,True);v=frappe._dict({**frappe.parse_json(doc.payload or '{}'),**(frappe.parse_json(values) or {})})
+    if doc.kind=='Event' and doc.status=='Completed' and doc.event:
+        from plus_point.events import plan_doc
+        plan_doc(doc.event)
+        return public(doc)
     if doc.kind!='Event' or doc.status=='Completed':frappe.throw('Open an unfinished event draft.')
     agreement=v.get('contract_terms') or doc.agreement or frappe.parse_json(doc.payload or '{}').get('contract_terms')
     terms=terms_doc(agreement)
@@ -129,9 +155,9 @@ def configure_event(name,values):
     doc.agreement=agreement;doc.title=str(v.event_name).strip()[:140];doc.scheduled_for=None;doc.last_error=''
     first=getdate(v.get('start_date') or terms.effective_start);last=getdate(v.get('end_date') or terms.effective_end)
     if first>last or first<getdate(terms.effective_start) or last>getdate(terms.effective_end):frappe.throw('Choose event dates within the agreement, with end on or after start.')
-    doc.payload=json.dumps(dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last)))
+    data=dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last));data.update({key:v[key] for key in ('budget','enforce_budget') if key in v});doc.payload=json.dumps(data)
     if v.action=='Now':
-        event=create_plan(agreement,doc.title,v.get('notes'),str(first),str(last));doc.event=event['name'];doc.status='Completed';doc.payload='{}'
+        create_event_from_draft(doc,data,terms)
     elif v.action=='Schedule':
         if not v.get('scheduled_for') or get_datetime(v.scheduled_for)<=now_datetime():frappe.throw('Choose a future date and time for event creation.')
         if getdate(v.scheduled_for)>getdate(terms.effective_end):frappe.throw('Schedule creation on or before the agreement ends.')
@@ -157,12 +183,10 @@ def run_scheduled():
             frappe.set_user(doc.owner)
             frappe.db.savepoint('pp_scheduled_event')
             try:
-                from plus_point.operations import create_plan
                 from plus_point.setup_flow import require_customer
                 if not frappe.db.get_value('User',doc.owner,'enabled'):frappe.throw('The draft owner account is disabled. Ask an active company administrator to review this event.')
                 require_customer();assert_scope(doc)
-                data=frappe.parse_json(doc.payload);event=create_plan(doc.agreement,data['event_name'],data.get('notes'),data.get('start_date'),data.get('end_date'))
-                doc.event=event['name'];doc.status='Completed';doc.payload='{}';doc.last_error=''
+                data=frappe.parse_json(doc.payload);create_event_from_draft(doc,data)
             except Exception as error:
                 frappe.db.rollback(save_point='pp_scheduled_event');doc.status='Failed';doc.last_error=str(error)[:500]
             with writing():doc.save()

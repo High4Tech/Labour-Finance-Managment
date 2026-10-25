@@ -33,7 +33,8 @@
 .pp-builder-card .form-section{padding-block:0}
 .pp-builder-fields>.frappe-control:only-child,.pp-builder-fields>[data-fieldtype=Check],.pp-builder-fields>[data-fieldtype="Text Editor"],.pp-builder-fields>[data-fieldtype="Small Text"]{grid-column:1/-1}
 .pp-flow-builder .pp-op-details>.form-section{display:none}
-.pp-flow-builder .pp-op-project-fields>.form-section{display:none}
+.pp-flow-builder .pp-op-project-fields>.form-section,.pp-flow-builder .pp-op-new-plan>.form-section{display:none}
+.pp-event-start-note{margin-bottom:18px}
 .pp-flow-builder .pp-builder-card-body .pp-builder-card{padding:0;border:0}
 .pp-flow-builder .pp-builder-card-body .pp-op-capacity,.pp-flow-builder .pp-builder-card-body .pp-daily-checkpoints{margin:0}
 .pp-flow-builder .pp-capacity-summary{margin:0}
@@ -51,6 +52,7 @@
 .pp-event-pay-summary{display:block;border:0;background:transparent;text-align:start;color:var(--text-color);font-size:12px;line-height:1.6;padding:8px;white-space:pre-line;min-height:40px}
 .pp-event-pay-summary:hover{background:var(--control-bg);border-radius:5px}
 .pp-flow-builder .pp-op-badge.is-warning{color:var(--pp-status-warning);background:var(--fg-color)}
+.pp-flow-builder .pp-op-badge.is-good{color:var(--pp-status-success);background:var(--fg-color)}
 .splash>img{content:url('/assets/plus_point/images/freddy/thinking.svg');width:112px!important;height:112px;animation:pp-freddy-loading 1.2s ease-in-out 3}
 @keyframes pp-freddy-loading{50%{transform:translateY(-7px) rotate(3deg)}}
 @media(max-width:1250px){.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr)}.pp-flow-builder .pp-op-activity{margin-top:0!important;margin-left:calc(var(--pp-builder-rail) + var(--pp-builder-gap))}}

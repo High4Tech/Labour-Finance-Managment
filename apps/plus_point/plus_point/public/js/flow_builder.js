@@ -15,7 +15,7 @@
   function wrap(selector,title,description,icon){const node=area.querySelector(selector);if(!node)return;const box=card(title,description,icon);node.before(box);box.lastElementChild.append(node);return box;}
   function fieldCard(group,keys,title,description,icon){
    if(!group)return;const nodes=keys.map(key=>group.fields_dict[key]?.$wrapper?.[0]).filter(Boolean);if(!nodes.length)return;
-   const box=card(title,description,icon);nodes[0].closest('[data-pp-form]').append(box);box.lastElementChild.classList.add('pp-builder-fields');box.lastElementChild.append(...nodes);return box;
+   const box=card(title,description,icon);nodes[0].closest('[data-pp-form]').append(box);box.dataset.builderFields=keys.join(',');box.lastElementChild.classList.add('pp-builder-fields');box.lastElementChild.append(...nodes);return box;
   }
   const header=area.querySelector('.pp-op-heading'),actions=header.querySelector('.pp-op-actions,.pp-op-save');
   if(actions){const slot=document.createElement('div');slot.dataset.draftStatusSlot='true';actions.prepend(slot);const draft=area.querySelector('.pp-draft-status');if(draft)slot.append(draft);}
@@ -60,7 +60,7 @@
   footer.classList.add('pp-builder-footer');
   const finish=area.querySelector('[data-create-and-sign],[data-create-plan]');if(finish)footer.querySelector('.pp-actions').append(finish);
   const save=area.querySelector('[data-save-project]'),home=document.createComment('event save home');if(save)save.before(home);
-  function update(){const current=tabs.findIndex(tab=>tab.getAttribute('aria-selected')==='true');if(finish)finish.hidden=current!==tabs.length-1;if(save){const actions=footer.querySelector('.pp-actions');if(current===tabs.length-1){if(save.parentElement!==actions)actions.append(save);}else if(home.nextSibling!==save)home.after(save);}area.dispatchEvent(new Event('pp:builder-update'));}
+  function update(){for(const card of area.querySelectorAll('[data-builder-fields]'))card.hidden=card.dataset.builderFields.split(',').every(key=>groups.project?.fields_dict[key]?.df.hidden);const current=tabs.findIndex(tab=>tab.getAttribute('aria-selected')==='true');if(finish)finish.hidden=current!==tabs.length-1;if(save){const actions=footer.querySelector('.pp-actions');if(current===tabs.length-1){if(save.parentElement!==actions)actions.append(save);}else if(home.nextSibling!==save)home.after(save);}area.dispatchEvent(new Event('pp:builder-update'));}
   area.addEventListener('pp:builder-step',update);update();
   const rail=root.querySelector('.pp-op-activity'),layout=root.querySelector('.pp-op-layout');
   const align=()=>{stage.querySelectorAll('.pp-staffing-calendar').forEach(node=>node.ppCalendarReveal?.());nav.setAttribute('aria-orientation',innerWidth<=767?'horizontal':'vertical');const first=[...stage.querySelectorAll('.pp-builder-card')].find(card=>card.getClientRects().length);rail.style.setProperty('--pp-builder-top',Math.max(0,(first||stage).getBoundingClientRect().top-layout.getBoundingClientRect().top)+'px');};
