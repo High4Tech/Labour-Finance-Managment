@@ -93,7 +93,7 @@
         'Purchase Invoice':['Business expenses','Record expense'], 'Customer':['Billing contacts','Add billing contact'],
     };
     const listImports = {
-        Customer:'clients','PP Site':'event_sites','PP Event Plan':'events',Project:'events',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses','Stock Reconciliation':'stock_balances',
+        'PP Contract Terms':'agreements',Customer:'clients','PP Site':'event_sites','PP Event Plan':'events',Project:'events',Vehicle:'vehicles',Item:'inventory_items',Warehouse:'warehouses','Stock Reconciliation':'stock_balances',
         Employee:'employees', 'PP Work Entry':'work', 'PP Milestone':'milestones',
         'Purchase Invoice':'expenses', 'Sales Invoice':'invoices',
         'Payment Entry':'receipts', 'PP Wage Settlement':'worker_payments',
@@ -484,6 +484,15 @@
     function start() {
         if (started) return;
         started = true;
+        const nativeImport=frappe.views.ListView.prototype.open_import_dialog;
+        frappe.views.ListView.prototype.open_import_dialog=function(...args){
+            const kind=listImports[this.doctype],services=this.doctype==='Item'&&['0',0,false].includes(this.get_filter_value?.('is_stock_item'));
+            if(!platform()&&kind&&!services&&frappe.user.has_role('System Manager')){
+                const filter=this.get_filter_value?.('company'),company=typeof filter==='string'?filter:frappe.boot.plus_point?.company_identity?.name;
+                return plus_point.open_import(company,()=>this.refresh(),kind);
+            }
+            return nativeImport.apply(this,args);
+        };
         if (platform()) Object.assign(screens, {
             'Sales Invoice':['Software invoices','Bill a PLUS POINT customer for their software subscription. Record the receipt separately when paid.',[]],
             'Payment Entry':['Receipts and payments','Record software-customer receipts and High4Tech business payments. Submit to update your accounts.',[]],

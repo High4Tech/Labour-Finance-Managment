@@ -4,6 +4,8 @@ The [community component review](docs/COMMUNITY_COMPONENTS_2026-10-24.md) record
 
 All template imports share one drag-and-drop file component with native keyboard file selection, a filename/size summary and Remove action. Only one CSV/XLSX file up to 2 MB is accepted. Replacing/removing a file invalidates its review and consent; confirmation remains beside the posting action. Network failures require a fresh review rather than automatic posting retries. [The template audit](docs/IMPORT_TEMPLATE_AUDIT_2026-10-25.md) records supported fields, creation/link behaviour and end-to-end coverage.
 
+Agreement list imports, including the native list menu/empty-state handler, use that same importer for company managers. Importing inside a new agreement fixes the import type and flushes the existing draft first. One saved agreement opens automatically in the agreement editor, including a duplicate replay that resolves to an existing record. A batch presents record choices before navigating. Existing partial drafts are preserved. Saved agreement links use the product editor rather than the generic DocType form. Platform and unsupported native import paths retain their framework behavior.
+
 PLUS POINT and High4Tech use the same action system in `public/css/interface.css`. It loads after feature styles. New actions should use native `.btn` variants or Frappe `.es-button` controls; avoid per-page button heights, padding or border-radius overrides.
 
 | Token / role | Desktop | Mobile / touch |

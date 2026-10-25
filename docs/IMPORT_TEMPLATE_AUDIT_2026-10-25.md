@@ -65,3 +65,13 @@ A subsequent real agreement upload exposed a deployment gap: `pp_conditions` exi
 - **41/41 upload regression tests passed**, including missing-field review rejection and protection against a schema change after review.
 
 Repair backup tag: `backup/pre-import-schema-repair-20261025` → `17b938b`.
+
+## Follow-up: agreement import entry points and editor handoff
+
+The agreement list was absent from the app import mapping, leaving its native menu/empty-state action connected to Frappe's generic “Import PP Contract Terms” dialog. It is now mapped to the same agreement-template importer as the editor action. The scoped override applies to supported company-manager imports; platform, unsupported record types and non-stock service imports retain their native behavior.
+
+From **New agreement → Import agreement**, the current partial draft is flushed first and the import type is fixed. A successful single-record import closes the modal and opens the saved agreement in the product editor. Replaying the same file opens that existing agreement without duplication. Multi-record imports present explicit agreement choices instead of selecting an arbitrary record. Original unfinished drafts remain available. Saved-record links also lead to the product editor.
+
+`scripts/browser-agreement-import-handoff.cjs` verifies the list toolbar/native import handler, actual upload, automatic navigation, saving edits, partial-draft preservation, replay and choosing from a batch. The exact nonfinancial QA import receipts and records are removed by an ownership-guarded fixture. Backup tag: `backup/pre-agreement-import-handoff-20261025` → `50f82c3`. Asset version: `20261025-agreement-import-2`.
+
+Verification: **10 handoff checks passed**, including two scoped automated AA/layout checks at 1440px and 390px, with no browser errors and exact fixture restoration. Three read-only working-site checks confirmed the final assets and both agreement-list import entry points use the app uploader.

@@ -43,7 +43,7 @@
         const url=URL.createObjectURL(new Blob(['\ufeff'+content],{type:'text/csv;charset=utf-8'}));
         const anchor=document.createElement('a');anchor.href=url;anchor.download='plus-point-import-errors.csv';anchor.click();URL.revokeObjectURL(url);
     }
-    plus_point.open_import=async(defaultCompany,onClose,defaultKind='employees',returnLabel='Return to records')=>{
+    plus_point.open_import=async(defaultCompany,onClose,defaultKind='employees',returnLabel='Return to records',options={})=>{
         let preview=null,file=null,busy=false,finished=false,dialog;
         const reset=()=>{if(busy || !dialog)return;preview=null;feedback();dialog.set_value('confirmed',0);dialog.set_df_property('confirmed','hidden',1);dialog.fields_dict.preview.$wrapper.empty();dialog.set_primary_action(__('Review file'),review);updateReady();};
         const helpText=()=>{
@@ -79,6 +79,10 @@
             busy=value;updateReady();dialog.get_secondary_btn().prop('disabled',value);
             dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids,[data-upload-choose],[data-upload-remove]').prop('disabled',value);
         }
+        function editAgreement(name){
+            dialog.$wrapper.one('hidden.bs.modal',()=>{frappe.set_route('pp-agreements',{record:name});frappe.show_alert({message:__('Agreement imported. You can edit it now.'),indicator:'green'});});
+            dialog.hide();
+        }
         async function review(){
             if(busy)return;feedback();const values=dialog.get_values(true);
             if(!values?.company||!values?.kind){feedback(__('Choose your company and import type first.'));return;}
@@ -111,10 +115,17 @@
             feedback();
             setBusy(true);
             try{
-                const result=await request('imports.apply',{token:preview.token});
+                const kind=dialog.get_value('kind'),result=await request('imports.apply',{token:preview.token});
                 preview=null;finished=true;
-                dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li><strong>${esc(__(r.action==='Create'?'Created':r.action==='Update'?'Updated':'Skipped'))}</strong> · ${esc(r.external_id)}: <a href="/desk/${frappe.router.slug(r.doctype)}/${encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
+                const agreements=options.openAgreement&&kind==='agreements'?[...new Map(result.rows.filter(r=>r.doctype==='PP Contract Terms'&&r.document).map(r=>[r.document,r])).values()]:[];
+                if(agreements.length===1){editAgreement(agreements[0].document);return;}
+                dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li><strong>${esc(__(r.action==='Create'?'Created':r.action==='Update'?'Updated':'Skipped'))}</strong> · ${esc(r.external_id)}: <a href="${r.doctype==='PP Contract Terms'?'/desk/pp-agreements?record='+encodeURIComponent(r.document):'/desk/'+frappe.router.slug(r.doctype)+'/'+encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
                 dialog.fields_dict.preview.$wrapper.find('.pp-import-done').on('click',()=>dialog.hide());
+                if(agreements.length>1){
+                    const choices=$('<section class="pp-import-agreement-choices"></section>');$('<p></p>').text(__('Choose an imported agreement to continue editing.')).appendTo(choices);
+                    for(const row of agreements)$('<button type="button" class="pp-op-record"></button>').text(__('Edit {0}',[row.label&&row.label!==row.document?row.label:row.external_id])).on('click',()=>editAgreement(row.document)).appendTo(choices);
+                    dialog.fields_dict.preview.$wrapper.find('.pp-condition-success').after(choices);
+                }
                 dialog.set_df_property('confirmed','hidden',1);
                 dialog.set_primary_action(__('Import another file'),()=>{finished=false;chooseFile(null);});
                 plus_point.refresh_setup_banner?.();
@@ -129,6 +140,7 @@
         const confirmation=dialog.fields_dict.confirmed.$wrapper.addClass('pp-import-confirmation');
         confirmation.append('<p class="pp-import-confirmation-hint" role="status"></p>');
         confirmation.prependTo(dialog.$wrapper.find('.modal-footer'));
+        if(options.lockKind)dialog.set_df_property('kind','hidden',1);
         dialog.show();plus_point.enhance_selectors?.(dialog);for(const control of Object.values(dialog.fields_dict))if(control.df.fieldtype!=='Check')control.$input?.attr('aria-label',control.df.label||'');helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
         const errorId='pp-upload-error-'+crypto.randomUUID();

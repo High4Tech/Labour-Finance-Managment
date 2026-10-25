@@ -52,9 +52,12 @@ def browser_fixture(action,run_id):
         event=(receipt.kind=='events' and receipt.document_type=='PP Event Plan'
                 and re.fullmatch('EVT-'+run_id+r'-\d+',receipt.external_id)
                 and (not frappe.db.exists('PP Event Plan',receipt.document_name) or frappe.db.get_value('PP Event Plan',receipt.document_name,'company')==prefix))
-        if not (worker or event):
+        agreement=(receipt.kind=='agreements' and receipt.document_type=='PP Contract Terms'
+                and re.fullmatch('AGR-'+run_id+r'-\d+',receipt.external_id)
+                and (not frappe.db.exists('PP Contract Terms',receipt.document_name) or frappe.db.get_value('PP Contract Terms',receipt.document_name,'project') in projects))
+        if not (worker or event or agreement):
             raise RuntimeError('Unrecognized imported fixture; automatic cleanup refused')
-    # Exact disposable, nonfinancial worker/event receipts only. Production
+    # Exact disposable, nonfinancial worker/event/agreement receipts only. Production
     # receipts remain immutable; the recorded-history check above still applies.
     for receipt in receipts:frappe.db.delete('PP Import Record',{'name':receipt.name})
     if projects:
