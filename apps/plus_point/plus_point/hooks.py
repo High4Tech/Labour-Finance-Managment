@@ -15,7 +15,9 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/runtime.js?v=20261025-profiles-3","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
+app_include_js = ["/assets/plus_point/js/runtime.js?v=20261025-freddy-2",
+                  "/assets/plus_point/js/freddy-runtime.js?v=20261025-freddy-2",
+                  "/assets/plus_point/js/feedback.js?v=20261025-freddy-2","/assets/plus_point/js/appearance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/selectors.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/forms.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
@@ -28,9 +30,9 @@ app_include_js = ["/assets/plus_point/js/runtime.js?v=20261025-profiles-3","/ass
                   "/assets/plus_point/js/sections.js?v=20261023-finance-3",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/imports.js?v=profiles-3-20261025-agreement-import-2",
-                  "/assets/plus_point/js/setup_flow.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/event_setup.js?v=20261023-finance-3",
-                  "/assets/plus_point/js/onboarding.js?v=20261025-agreement-import-2"]
+                  "/assets/plus_point/js/setup_flow.js?v=20261025-freddy-2",
+                  "/assets/plus_point/js/event_setup.js?v=20261025-freddy-2",
+                  "/assets/plus_point/js/onboarding.js?v=20261025-freddy-2"]
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-import-2",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
@@ -39,7 +41,7 @@ app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"
 app_include_js += ["/assets/plus_point/js/drafts.js?v=profiles-3-20261024-draft-flow-4",
                    "/assets/plus_point/js/daily_billing.js?v=20261025-profiles-3"]
 app_include_js += ["/assets/plus_point/js/profiles.js?v=20261025-profiles-3", "/assets/plus_point/js/operations.js?v=20261025-profiles-3"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=profiles-3-20261024-community-2"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=profiles-3-20261024-community-2", "/assets/plus_point/css/feedback.css?v=20261025-freddy-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"],"*/15 * * * *":["plus_point.daily_billing.run_recurring"]},"hourly": ["plus_point.agreement_lifecycle.close_expired", "plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -98,7 +100,7 @@ app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-shell-scro
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=profiles-3-20261023-finance-3"]
 app_include_css += ["/assets/plus_point/css/record_ui.css?v=20261023-finance-3"]
 
-app_include_js += ["/assets/plus_point/js/people.js?v=profiles-3-20261024-event-pay-3"]
+app_include_js += ["/assets/plus_point/js/people.js?v=freddy-2-20261024-event-pay-3"]
 app_include_css += ["/assets/plus_point/css/people.css?v=20261023-finance-3"]
 
 app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261024-event-pay-3"]

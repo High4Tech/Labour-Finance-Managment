@@ -45,3 +45,7 @@ Draft autosave uses one active editor session, a 1.5-second debounce and one coa
 # Saved record profiles
 
 Agreement profiles use document sections and the shared fact-list, section-heading, table and popup-editor components in `profiles.js`. Events reuse the operational crew/resource/timeline components without forcing the contract document layout. Use `?record=<id>` for a saved profile and `?record=<id>&edit=1` only for an explicit full edit; imports started inside New agreement keep the edit handoff. Scrollable tables must be labeled keyboard-focusable regions. Keep creation signing actions visible and explain unavailable outgoing email in place.
+
+## Freddy feedback
+
+Use `plus_point.freddy_feedback(element, {message, tone, solution, rich})` for new error, warning, guidance, loading, empty and success messages. Existing field errors, native messages/snackbars and info popovers are adapted by the shared component. Keep it beside the relevant field or action; preserve backend validation, linked-record actions and `aria-describedby`. Explain the problem and the fix in a short sentence. Use supplied expressions with still images by default, one brief animation at a time, and reduced-motion support. Do not add a second floating assistant or a remote model call for ordinary feedback.

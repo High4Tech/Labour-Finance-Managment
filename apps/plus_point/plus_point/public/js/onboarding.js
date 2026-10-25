@@ -210,7 +210,7 @@
     function workflow() {
         return `<ol class="pp-workflow">${steps.map((step, index) => `
             <li class="pp-workflow-step" data-pp-step="${index}">
-                <h3>${esc(__(step.title))}</h3><p>${esc(__(step.text))}</p>
+                <h3>${esc(__(step.title))}</h3><p class="pp-freddy-guidance">${esc(__(step.text))}</p>
                 <div class="pp-workflow-links">${step.links.map(link).join('')}</div>
             </li>`).join('')}</ol>`;
     }

@@ -10,7 +10,7 @@
  let info;
  plus_point.show_info=(button,text)=>{
   const same=info?.button===button;info?.node.remove();if(info)info.button.setAttribute('aria-expanded','false');info=null;if(same)return;
-  const node=document.createElement('div');node.className='pp-info-portal';node.role='tooltip';node.textContent=text;document.body.append(node);
+  const node=document.createElement('div');node.className='pp-info-portal';node.role='tooltip';node.textContent=text;document.body.append(node);plus_point.freddy_feedback?.(node,{tone:'guide',animate:false});
   const box=button.getBoundingClientRect(),width=node.getBoundingClientRect().width;
   node.style.left=Math.max(12,Math.min(innerWidth-width-12,box.right-width))+'px';node.style.top=Math.min(box.bottom+8,Math.max(12,innerHeight-node.offsetHeight-12))+'px';button.setAttribute('aria-expanded','true');info={button,node};
  };

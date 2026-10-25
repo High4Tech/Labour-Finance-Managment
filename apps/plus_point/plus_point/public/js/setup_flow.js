@@ -54,7 +54,7 @@
     function show(saved,companies) {
         const [title,description]=copy[saved.step];
         const index=['company','worker','site','terms','assignment','import','done'].indexOf(saved.step);
-        const progress=`<div class="pp-setup-progress" aria-label="${esc(__('Setup progress'))}"><span>${esc(saved.step==='done'?__('Setup complete'):__('Step {0} of 6',[index+1]))}</span><progress max="6" value="${Math.min(index,6)}"></progress></div><p>${esc(__(description))}</p>`;
+        const progress=`<div class="pp-setup-progress" aria-label="${esc(__('Setup progress'))}"><span>${esc(saved.step==='done'?__('Setup complete'):__('Step {0} of 6',[index+1]))}</span><progress max="6" value="${Math.min(index,6)}"></progress></div><p class="pp-freddy-guidance">${esc(__(description))}</p>`;
         let busy=false,leaving=false,afterHide;
         const dialog=new frappe.ui.Dialog({title:__(title),static:true,size:'large',
             fields:[{fieldtype:'HTML',fieldname:'intro',options:progress},...fields(saved,companies),
