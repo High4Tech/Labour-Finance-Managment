@@ -15,7 +15,16 @@ def protect_reference(doc,method=None):
     old=doc.get_doc_before_save()
     if old and old.get('pp_reference') and doc.get('pp_reference')!=old.pp_reference:frappe.throw('Tracking IDs cannot be changed.')
 
+def install_agreement_conditions():
+    """Additive, idempotent repair for sites deployed before agreement conditions."""
+    from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+    create_custom_fields({'PP Contract Terms':[dict(fieldname='pp_conditions',label='Agreement conditions',fieldtype='Long Text')]})
+    frappe.clear_cache(doctype='PP Contract Terms')
+    return dict(installed=bool(frappe.get_meta('PP Contract Terms').has_field('pp_conditions') and frappe.db.has_column('PP Contract Terms','pp_conditions')))
+
+
 def install():
+    install_agreement_conditions()
     from plus_point.resources import install_agreement_transport
     install_agreement_transport()
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
@@ -27,7 +36,6 @@ def install():
         references[dt]=[dict(fieldname='pp_reference',label='Tracking ID',fieldtype='Data',read_only=1,no_copy=1,search_index=1,in_standard_filter=1,insert_after=anchor)]
     create_custom_fields(references)
     create_custom_fields({'PP Contract Terms':[
-        dict(fieldname='pp_conditions',label='Agreement conditions',fieldtype='Long Text'),
         dict(fieldname='pp_agreement_currency',label='Agreement currency',fieldtype='Link',options='Currency'),
         dict(fieldname='pp_agreement_rate',label='Accounting currency per agreement unit',fieldtype='Float',precision=9)]})
     for dt,prefix in REFERENCES.items():

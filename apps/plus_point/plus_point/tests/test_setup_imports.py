@@ -162,6 +162,23 @@ class SetupImportTests(unittest.TestCase):
         count=frappe.db.count('Customer');preview=self.preview('agreements',[self.agreement_row(vehicle_quantity='')])
         self.assertFalse(preview['valid']);self.assertIn('vehicle_quantity',preview['rows'][0]['error']);self.assertEqual(frappe.db.count('Customer'),count)
 
+    def test_missing_installed_fields_block_review_before_a_ready_preview(self):
+        from unittest.mock import patch
+        original=frappe.db.has_column;before=frappe.db.count('Customer')
+        with patch.object(frappe.db,'has_column',side_effect=lambda dt,key:False if (dt,key)==('PP Contract Terms','pp_conditions') else original(dt,key)):
+            with self.assertRaisesRegex(frappe.ValidationError,'app update is incomplete'):
+                self.preview('agreements',[self.agreement_row()])
+        self.assertEqual(frappe.db.count('Customer'),before)
+
+    def test_schema_change_after_review_blocks_apply_without_writes(self):
+        from unittest.mock import patch
+        original=frappe.db.has_column;row=self.agreement_row();preview=self.preview('agreements',[row]);self.assertTrue(preview['valid'],preview)
+        before=frappe.db.count('Customer')
+        with patch.object(frappe.db,'has_column',side_effect=lambda dt,key:False if (dt,key)==('PP Contract Terms','pp_conditions') else original(dt,key)):
+            with self.assertRaisesRegex(frappe.ValidationError,'app update is incomplete'):imports.apply(preview['token'])
+        self.assertEqual(frappe.db.count('Customer'),before)
+        self.assertFalse(frappe.db.exists('PP Import Record',imports.record_key(self.f.company.name,'agreements',row['external_id'])))
+
     def test_shared_new_event_client_full_profile_and_conflicting_rows(self):
         row=self.event_row(client_contact_name='Ayesha Malik',client_email='client@example.invalid',client_phone='+966501234567',
             client_country='Saudi Arabia',client_city='Riyadh',client_address_line1='12 Exhibition Road',client_default_currency='USD')

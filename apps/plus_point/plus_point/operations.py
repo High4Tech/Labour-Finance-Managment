@@ -157,7 +157,7 @@ def save_agreement(values,name=None):
         if 'pp_conditions' in values:
             conditions=frappe.parse_json(values.pp_conditions or '[]')
             if not isinstance(conditions,list) or len(conditions)>100 or any(not isinstance(c,str) or len(c)>5000 for c in conditions):frappe.throw('Use at most 100 text conditions of 5,000 characters each.')
-            if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('The agreement conditions update is awaiting installation approval. Save conditions after the app update is installed.')
+            if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('This company app update is incomplete. Ask support to install agreement conditions, then save again. Your changes have not been saved.')
             doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
         from plus_point.daily_billing import validate as validate_checkpoints
         validate_checkpoints(doc)

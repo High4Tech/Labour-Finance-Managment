@@ -52,3 +52,16 @@ Older worker, agreement, event, site, warehouse and stock-value template version
 Scripts: `browser-all-import-templates.cjs`, `browser-import-upload-ui.cjs`, `browser-import-confirmation.cjs`, `import-audit-site.py` and `import-audit-data.py`. Raw evidence/screenshots are local under ignored `.local/qa/`. The audit-site helper creates a separate database from the QA snapshot; cleanup checks the exact run, site path and database ownership marker before dropping only that disposable site. No dummy postings were made in the working company.
 
 Backup tag: `backup/pre-import-audit-20261024` → `44d6a20`. Upload assets: `20261025-upload-audit-2`.
+
+## Follow-up: working-site schema gap
+
+A subsequent real agreement upload exposed a deployment gap: `pp_conditions` existed on the QA database but not in the working site's metadata or table. The earlier six working-site smoke checks only reviewed a file and therefore did not exercise saving non-empty conditions. This was an app installation failure, not a malformed template row.
+
+- Backed up the working database before the additive repair (`20261025_102341`, native private backups).
+- Installed the missing Long Text field through the native custom-field installer. Existing business records were preserved. `workflows.install_agreement_conditions()` is also called by the normal migration installer.
+- Added installation-readiness checks before both review and final posting, so a site with missing required upload fields cannot produce a misleading ready-to-save preview.
+- Removed the misleading "awaiting installation approval" error; an incomplete installation is now identified as an app update issue.
+- Verified an actual preview → apply → database read-back of two conditions **on the repaired working site**, then rolled back all dummy customer/project/contract/import records and checked unchanged record counts.
+- **41/41 upload regression tests passed**, including missing-field review rejection and protection against a schema change after review.
+
+Repair backup tag: `backup/pre-import-schema-repair-20261025` → `17b938b`.

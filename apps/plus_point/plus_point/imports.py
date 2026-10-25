@@ -44,6 +44,23 @@ SCHEMAS.update(EVENT_SCHEMAS)
 TARGETS.update(EVENT_TARGETS)
 
 
+def check_installation(kind):
+    """A ready-looking preview must not approve fields that cannot be persisted."""
+    fields={
+        'employees':{'Employee':['pp_salary_basis','pp_daily_rate','pp_monthly_rate','pp_leaves_per_month','pp_loan_allowed','pp_loan_wait_months','pp_loan_deduction_percent']},
+        'vehicles':{'Vehicle':['pp_event_enabled','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom']},
+        'event_sites':{'PP Site':['country','city','address_line1','address_line2','state','postal_code']},
+    }
+    agreement={'PP Contract Terms':['pp_conditions','pp_transport_requirements','pp_agreement_currency','pp_agreement_rate','pp_daily_checkpoints'],
+               'PP Agreement Staffing':['designation','phase','workers_required','client_rate']}
+    required=agreement if kind in ('agreements','events') else fields.get(kind,{})
+    for doctype,names in required.items():
+        meta=frappe.get_meta(doctype)
+        for name in names:
+            if not meta.has_field(name) or not frappe.db.has_column(doctype,name):
+                frappe.throw('This company app update is incomplete. Ask support to finish installing the upload fields, then review the file again. Your file has not been saved.')
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
@@ -425,6 +442,7 @@ def spending_states(kind, results):
 @frappe.whitelist(methods=['POST'])
 def preview(kind, company, filename, content):
     company_doc = guard(kind, company)
+    check_installation(kind)
     rows = parse_file(filename, content, kind)
     results = prepare(kind, company, rows)
     budgets = spending_states(kind, results)
@@ -498,6 +516,7 @@ def apply(token):
         frappe.throw('This preview expired or belongs to another user. Upload the file again.')
     kind, company_name, rows = payload['kind'], payload['company'], payload['rows']
     company = guard(kind, company_name)
+    check_installation(kind)
     # Serialize import IDs and take project locks in the same order as budget writers.
     frappe.db.get_value('Company', company_name, 'name', for_update=True)
     results = prepare(kind, company_name, rows)
