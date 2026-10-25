@@ -69,7 +69,7 @@ class PPWorkEntry(Document):
         if day < getdate(assignment.start_date) or (assignment.end_date and day > getdate(assignment.end_date)):
             frappe.throw("Work date must be within the worker assignment period")
         terms = frappe.get_doc("PP Contract Terms", self.contract_terms, for_update=True)
-        if terms.status != "Active" or not frappe.db.get_value("PP Site", self.site, "is_active"):
+        if terms.status not in ("Active", "Closed") or not frappe.db.get_value("PP Site", self.site, "is_active"):
             frappe.throw("Work requires active contract terms and an active site")
         if day < getdate(terms.effective_start) or (terms.effective_end and day > getdate(terms.effective_end)):
             frappe.throw("Work date is outside contract term dates")

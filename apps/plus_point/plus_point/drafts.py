@@ -89,6 +89,9 @@ def finish(name,record):
     linked=terms_doc(record) if doc.kind=='Agreement' else plan_doc(record)
     if doc.kind=='Agreement':doc.agreement=linked.name
     else:doc.event=linked.name
+    # Keep collaboration when a planning draft becomes the final agreement/event.
+    for comment in frappe.get_all('Comment',filters={'reference_doctype':DT,'reference_name':doc.name,'comment_type':'Comment'},pluck='name'):
+        frappe.db.set_value('Comment',comment,{'reference_doctype':linked.doctype,'reference_name':linked.name},update_modified=False)
     doc.status='Completed';doc.payload='{}'
     with writing():doc.save()
     return public(doc)

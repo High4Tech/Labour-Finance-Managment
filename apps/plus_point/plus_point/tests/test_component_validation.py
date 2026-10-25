@@ -1,5 +1,6 @@
 """Component boundary and exceptional-path regressions; all changes roll back."""
 import unittest
+from unittest.mock import patch
 from urllib.parse import urlparse,parse_qs
 import frappe
 from frappe.utils import today,add_days
@@ -63,7 +64,10 @@ class ComponentValidationTests(unittest.TestCase):
         self.assertEqual(frappe.db.get_value('PP Agreement Share',link['name'],'status'),'Signed')
 
     def test_closed_agreement_stops_new_attendance_and_preserves_history(self):
-        self.approved();operations.save_agreement(dict(status='Closed'),self.a['name'])
+        self.approved()
+        from plus_point.agreement_lifecycle import close_expired
+        end=frappe.db.get_value('PP Contract Terms',self.a['name'],'effective_end')
+        with patch('plus_point.agreement_lifecycle.today',return_value=add_days(end,1)):close_expired()
         self.assertEqual(attendance.ensure_today(self.f.company.name)['created'],0)
         self.assertEqual(attendance.detail(self.register)['rows'][0]['status'],'Present')
         with self.assertRaisesRegex(frappe.ValidationError,'closed or has no active agreement'):

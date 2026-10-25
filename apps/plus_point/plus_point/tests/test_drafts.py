@@ -65,7 +65,7 @@ class DraftTests(unittest.TestCase):
     def test_schedule_failure_stays_visible_and_does_not_create_an_event(self):
         a=self.agreement();d=drafts.event_for_agreement(a['name']);due=now_datetime()+timedelta(minutes=2)
         drafts.configure_event(d['name'],dict(action='Schedule',event_name='Closed agreement',scheduled_for=due))
-        op.save_agreement(dict(status='Closed'),a['name'])
+        op.save_agreement(dict(status='Draft'),a['name'])
         with patch('plus_point.drafts.now_datetime',return_value=due+timedelta(seconds=1)):drafts.run_scheduled()
         self.assertEqual(drafts.load(d['name'])['status'],'Failed');self.assertTrue(drafts.load(d['name'])['last_error'])
         self.assertFalse(frappe.db.exists('PP Event Plan',{'project':a['project']}))

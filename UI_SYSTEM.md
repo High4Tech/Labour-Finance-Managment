@@ -42,3 +42,6 @@ Worker identity uses one capsule with a 30px photo or initials, a legible name, 
 
 
 Draft autosave uses one active editor session, a 1.5-second debounce and one coalesced request in flight. A bounded per-user/company session recovery cache retains only unsynced form snapshots for up to 12 hours (at most five, 48 KB each); server drafts are capped at 96 KB. Leaving the tab flushes the current form. Scheduled event creation runs once a minute, handles at most 25 due drafts and locks each draft to prevent duplicates. Mobile step titles remain available to screen readers even when visually shortened. New editor dependencies load before rendering, with a shared on-demand recovery request for older cached Desk include lists.
+# Saved record profiles
+
+Agreement profiles use document sections and the shared fact-list, section-heading, table and popup-editor components in `profiles.js`. Events reuse the operational crew/resource/timeline components without forcing the contract document layout. Use `?record=<id>` for a saved profile and `?record=<id>&edit=1` only for an explicit full edit; imports started inside New agreement keep the edit handoff. Scrollable tables must be labeled keyboard-focusable regions. Keep creation signing actions visible and explain unavailable outgoing email in place.

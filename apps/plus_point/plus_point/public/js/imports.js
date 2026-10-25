@@ -80,7 +80,7 @@
             dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids,[data-upload-choose],[data-upload-remove]').prop('disabled',value);
         }
         function editAgreement(name){
-            dialog.$wrapper.one('hidden.bs.modal',()=>{frappe.set_route('pp-agreements',{record:name});frappe.show_alert({message:__('Agreement imported. You can edit it now.'),indicator:'green'});});
+            dialog.$wrapper.one('hidden.bs.modal',()=>{frappe.set_route('pp-agreements',{record:name,edit:1});frappe.show_alert({message:__('Agreement imported. You can edit it now.'),indicator:'green'});});
             dialog.hide();
         }
         async function review(){

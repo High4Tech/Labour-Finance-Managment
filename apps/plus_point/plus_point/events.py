@@ -55,8 +55,8 @@ def validate_plan(doc):
     if doc.get('selected_crew'):
         from plus_point.crew import selection
         for name in selection(doc.selected_crew):linked('Employee',name,doc.company)
-    if terms.project!=doc.project or terms.status!='Active':
-        frappe.throw('Choose active client billing terms for this event project')
+    if terms.project!=doc.project or terms.status not in ('Active','Closed') or doc.is_new() and terms.status!='Active':
+        frappe.throw('Choose an active agreement to create an event. Existing events can retain their completed agreement.')
     days=span(doc.start_date,doc.end_date)
     if terms.effective_start and getdate(days[0])<getdate(terms.effective_start) or terms.effective_end and getdate(days[-1])>getdate(terms.effective_end):
         frappe.throw('Event dates must be inside the client billing agreement')

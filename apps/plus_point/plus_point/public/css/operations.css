@@ -97,3 +97,29 @@
 .pp-ui .modal .control-value,.pp-focused-editor .control-value{color:var(--text-color)!important}
 
 .pp-ui .modal .help-box{color:var(--text-color)!important}
+/* Record profiles use document rhythm, not a second wizard. */
+.pp-profile-section{padding:24px 0;border:0}
+.pp-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.pp-section-heading h3{font-size:17px;font-weight:650;margin:0}
+.pp-document-sheet{background:var(--fg-color);padding:20px 32px;border:1px solid var(--border-color);border-radius:8px}
+.pp-agreement-document .pp-op-heading small{display:block;color:var(--text-muted);margin-bottom:8px}
+.pp-agreement-document .pp-op-badge{margin-inline-start:12px}
+.pp-profile-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 28px;margin:0 0 20px}
+.pp-profile-facts>div{min-width:0}.pp-profile-facts dt{font-size:13px;font-weight:400;color:var(--text-muted);margin-bottom:6px}
+.pp-profile-facts dd{font-size:14px;margin:0;overflow-wrap:anywhere;color:var(--text-color)}
+.pp-document-prose{white-space:pre-wrap;line-height:1.8;font-size:14px;color:var(--text-color);overflow-wrap:anywhere}
+.pp-document-conditions{padding-inline-start:20px}.pp-document-conditions li{white-space:pre-wrap;line-height:1.8;margin-block:12px;overflow-wrap:anywhere}
+.pp-profile-site{margin-block:20px}.pp-profile-site h4{font-size:16px;margin-bottom:16px}
+.pp-profile-dialog .pp-profile-save-error{color:var(--pp-status-danger);margin-top:12px}
+.pp-profile-dialog .pp-profile-save-error:empty{display:none}
+.pp-focused-editor .pp-op-section,.pp-focused-editor .pp-flow-footer,.pp-focused-editor .pp-agreement-resources{border:0}
+.pp-focused-editor .pp-agreement-resources{margin-top:24px;padding-top:0}
+.pp-focused-editor .pp-venue-card{border:0;padding-inline:0}
+.pp-signing-ready{max-width:68ch;padding-block:8px}.pp-signing-ready h4{font-size:18px}
+.pp-event-profile .pp-profile-section{padding-block:20px}.pp-event-profile .pp-profile-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pp-agreement-document .pp-daily-checkpoints{margin-top:12px}.pp-agreement-document .pp-register-table{font-size:13px}
+.pp-profile-dialog .pp-condition-row{margin-bottom:12px}
+@media(max-width:767px){.pp-document-sheet{padding:12px 16px}.pp-profile-facts,.pp-event-profile .pp-profile-facts{grid-template-columns:minmax(0,1fr)}.pp-profile-section{padding-block:20px}.pp-section-heading .btn{max-width:100%;white-space:normal}.pp-op-layout.has-activity{gap:16px}}
+.pp-ui .pp-op-success{color:var(--text-color)}
+.pp-op-table-scroll:focus-visible{outline:3px solid var(--pp-accent);outline-offset:3px;border-radius:4px}
+.pp-ui .pp-timeline-empty{opacity:1;color:var(--text-color);background:var(--control-bg)}

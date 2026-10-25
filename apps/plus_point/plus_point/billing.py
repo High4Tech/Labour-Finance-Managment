@@ -57,8 +57,8 @@ def create_invoice(contract_terms, item_code=None, from_date=None, to_date=None,
     terms = frappe.get_doc('PP Contract Terms', contract_terms)
     terms.check_permission('read')
     frappe.db.get_value('PP Contract Terms', terms.name, 'name', for_update=True)
-    if terms.status != 'Active':
-        frappe.throw('Billing requires active terms')
+    if terms.status not in ('Active','Closed'):
+        frappe.throw('Create the agreement before billing approved work')
     project = frappe.get_doc('Project', terms.project)
     project.check_permission('read')
     if not item_code:
@@ -161,6 +161,8 @@ def release_invoice(doc, method=None):
             checkpoints=frappe.parse_json(terms.pp_daily_checkpoints or '[]');changed=False
             for checkpoint in checkpoints:
                 if checkpoint.get('invoice')==doc.name:checkpoint.pop('invoice');changed=True
+                if doc.name in checkpoint.get('supplemental_invoices',[]):
+                    checkpoint['supplemental_invoices'].remove(doc.name);changed=True
             if changed:frappe.db.set_value('PP Contract Terms',terms.name,'pp_daily_checkpoints',frappe.as_json(checkpoints))
     for row in doc.items:
         if row.get('pp_source_name') and frappe.db.get_value(row.pp_source_type, row.pp_source_name, 'sales_invoice') == doc.name:

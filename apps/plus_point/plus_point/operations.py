@@ -89,6 +89,8 @@ def catalogue():
 
 
 def validate_agreement(doc):
+    from plus_point.agreement_lifecycle import apply_status
+    apply_status(doc)
     from plus_point.daily_billing import validate as validate_checkpoints
     validate_checkpoints(doc)
     if not doc.get('staffing'):return
@@ -159,7 +161,8 @@ def save_agreement(values,name=None):
             if not isinstance(conditions,list) or len(conditions)>100 or any(not isinstance(c,str) or len(c)>5000 for c in conditions):frappe.throw('Use at most 100 text conditions of 5,000 characters each.')
             if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('This company app update is incomplete. Ask support to install agreement conditions, then save again. Your changes have not been saved.')
             doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
-        from plus_point.daily_billing import validate as validate_checkpoints
+        from plus_point.daily_billing import validate as validate_checkpoints,rebase
+        rebase(doc)
         validate_checkpoints(doc)
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
@@ -335,8 +338,12 @@ def save_project(name,values):
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
     data=frappe._dict(frappe.parse_json(values) or {})
     project=linked('Project',doc.project);project.check_permission('write')
-    project.estimated_costing=data.get('budget',0);project.pp_enforce_spending_budget=frappe.utils.cint(data.get('enforce_budget'));project.save()
-    doc.notes=data.get('notes') or '';doc.save();return dict(name=doc.name)
+    if 'budget' in data:project.estimated_costing=data.budget
+    if 'enforce_budget' in data:project.pp_enforce_spending_budget=frappe.utils.cint(data.enforce_budget)
+    project.save()
+    for key in ('event_name','start_date','end_date','notes'):
+        if key in data:doc.set(key,data[key])
+    doc.save();return dict(name=doc.name)
 
 
 def coverage(doc):
@@ -688,13 +695,16 @@ def create_category(title):
 
 
 def activity_doc(doctype,name):
+    if doctype=='PP Planning Draft':
+        from plus_point.drafts import checked
+        return checked(name)
     if doctype=='PP Contract Terms':return terms_doc(name)
     if doctype=='PP Event Plan':
         from plus_point.events import plan_doc
         doc=plan_doc(name)
         if doc.contract_terms:terms_doc(doc.contract_terms)
         return doc
-    frappe.throw('Choose an agreement or event for comments.')
+    frappe.throw('Choose an agreement, draft or event for comments.')
 
 
 @frappe.whitelist()

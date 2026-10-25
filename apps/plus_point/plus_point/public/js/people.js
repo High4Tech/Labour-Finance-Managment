@@ -23,7 +23,7 @@
   const heading=target.querySelector(':scope>h4');if(heading)heading.hidden=true;
   if(active?.target===target){active.dialog.set_title(heading?.textContent||__(title));active.dialog.show();return active.dialog;}
   if(active)await plus_point.close_action_popup();
-  const scope=target.closest('.pp-op-content')||target.parentElement,marker=document.createComment('action form');target.before(marker);
+  const scope=target.closest('.pp-op-content')||target.closest('.modal')?.parentElement||target.parentElement,marker=document.createComment('action form');target.before(marker);
   const dialog=new frappe.ui.Dialog({title:heading?.textContent||__(title),size:'extra-large',fields:[{fieldtype:'HTML',fieldname:'content'}]});
   dialog.$wrapper.addClass('pp-action-dialog');dialog.fields_dict.content.$wrapper.append('<div class="pp-modal-feedback pp-op-message" role="status" hidden></div>');dialog.fields_dict.content.$wrapper.append(target);target.hidden=false;
   // Keep controls scoped to their record while the visible content lives in a modal.
