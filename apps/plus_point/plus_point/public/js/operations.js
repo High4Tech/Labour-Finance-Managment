@@ -36,7 +36,7 @@
   if(!editorDependencies)editorDependencies=(async()=>{
    // An already open Desk can have an older cached include list. Load the
    // editor dependencies explicitly before rendering, and share one request.
-   for(const [name,ready] of [['drafts',()=>typeof plus_point.start_draft==='function'],['daily_billing',()=>typeof plus_point.daily_checkpoints_editor==='function'],['profiles',()=>typeof plus_point.render_agreement_profile==='function']]){
+   for(const [name,ready] of [['drafts',()=>typeof plus_point.start_draft==='function'],['daily_billing',()=>typeof plus_point.daily_checkpoints_editor==='function'],['agreement_profile',()=>typeof plus_point.agreement_profile_layout==='function'],['profiles',()=>typeof plus_point.render_agreement_profile==='function']]){
     // Native require adds its own cache version and expects a plain file path.
     if(!ready())await frappe.require(`/assets/plus_point/js/${name}.js`);
     if(!ready())throw new Error(__('The editor could not finish loading. Reload this page and try again.'));
@@ -138,7 +138,7 @@
     }
     if(record)await activityRail(mode==='pp-event-plans'?'PP Event Plan':'PP Contract Terms',record);else if(mode==='pp-agreements'){const draft=await plus_point.save_current_draft();if(draft)await activityRail('PP Planning Draft',draft.name);}
     if(token!==sequence)return;await Promise.all([...root.querySelectorAll('[data-pp-form]')].map(node=>node.pp_form?.pp_ready));
-    if(token!==sequence)return;root.dataset.ready='true';if(pendingNotice?.record===record){message(root,pendingNotice.text,true);pendingNotice=null;}if(pendingSign===record){pendingSign=null;content().querySelector('[data-profile-sign]')?.click();const signing=content().querySelector('[data-create-signing]');if(signing)await signing.onclick({currentTarget:signing});}
+    if(token!==sequence)return;root.dataset.ready='true';if(pendingNotice?.record===record){message(root,pendingNotice.text,true);pendingNotice=null;}if(pendingSign===record){pendingSign=null;await plus_point.open_agreement_signing(record,{create:true});}
    }catch(error){if(token!==sequence)return;root.innerHTML=`<p class="pp-onboarding-errors" role="alert">${esc(error.message)}</p>${button('Try again')}`;root.querySelector('button').onclick=load;}
   }
   const content=()=>root.querySelector('.pp-op-content');
@@ -165,6 +165,7 @@
   async function activityRail(doctype,name){
    const rail=root.querySelector('.pp-op-activity'),generation=sequence;if(!rail)return;
    const data=await rpc('activity',{doctype,name});if(generation!==sequence||!rail.isConnected)return;rail.hidden=false;root.querySelector('.pp-op-layout').classList.add('has-activity');
+   if(content()?.classList.contains('pp-agreement-document')){plus_point.render_agreement_activity(content(),rail,data,event=>act(root,event.currentTarget,async()=>{await rpc('add_comment',{doctype,name,content:rail.querySelector('textarea').value});await activityRail(doctype,name);}));return;}
    rail.innerHTML=`<h3>${esc(__('Comments and activity'))}</h3><label>${esc(__('Add a comment'))}<textarea class="form-control pp-op-comment" rows="3" maxlength="5000"></textarea></label>${button('Post comment','btn-default','data-post-comment')}<div class="pp-op-comment-list">${data.comments.map(r=>`<article><strong>${esc(r.comment_by)}</strong><small>${esc(frappe.datetime.str_to_user(r.creation))}</small><div>${esc(plain(r.content))}</div></article>`).join('')}</div><h4>${esc(__('Activity'))}</h4><p>${esc(__('Last updated by {0}',[data.modified_by]))}<small>${esc(frappe.datetime.str_to_user(data.modified))}</small></p>${data.versions.map(r=>`<p>${esc(__('Record updated by {0}',[r.owner]))}<small>${esc(frappe.datetime.str_to_user(r.creation))}</small></p>`).join('')}<p>${esc(__('Created by {0}',[data.owner]))}<small>${esc(frappe.datetime.str_to_user(data.created))}</small></p>`;
    rail.querySelector('[data-post-comment]').onclick=e=>act(root,e.currentTarget,async()=>{await rpc('add_comment',{doctype,name,content:rail.querySelector('textarea').value});await activityRail(doctype,name);});
   }
