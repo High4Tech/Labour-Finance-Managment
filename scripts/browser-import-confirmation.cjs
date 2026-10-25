@@ -6,6 +6,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  const run=crypto.randomBytes(6).toString('hex'),fixture=action=>JSON.parse(execFileSync('docker',['compose','exec','-T','-w','/home/frappe/frappe-bench','frappe','bench','--site','qa.localhost','execute','plus_point.event_testing.browser_fixture','--kwargs',JSON.stringify({action,run_id:run})],{cwd:root,encoding:'utf8'}));
  const data=fixture('begin'),browser=await chromium.launch({headless:true,channel:'msedge'}),page=await browser.newPage({viewport:{width:1320,height:900}}),errors=[];
  page.setDefaultTimeout(30000);page.on('pageerror',error=>errors.push(error.message));
+ // Native Administrator release notices are unrelated to import-dialog stacking.
+ await page.route('**/api/method/frappe.utils.change_log.show_update_popup*',r=>r.fulfill({status:200,contentType:'application/json',body:'{"message":null}'}));
  try{
   await page.goto('http://qa.localhost:8000/login',{waitUntil:'domcontentloaded'});
   assert.equal(await page.evaluate(async pwd=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usr:'Administrator',pwd})})).json()).message,settings.PP_ADMIN_PASSWORD),'Logged In');
@@ -33,19 +35,26 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.screenshot({path:path.join(out,'import-confirmation-mobile.png'),fullPage:true});
   await check.check();assert(await primary.isEnabled());
+  let interrupted=0;
+  await page.route('**/api/method/plus_point.imports.apply',route=>{interrupted++;return route.abort('connectionreset');});
+  await primary.click();await dialog.locator('.pp-import-feedback').filter({hasText:'Connection lost. Review the file again'}).waitFor();assert.equal(interrupted,1);await oneModal();
+  await page.unroute('**/api/method/plus_point.imports.apply');
+  await dialog.getByRole('button',{name:'Review file again',exact:true}).click();await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.equal(await check.isChecked(),false);await check.check();
   await page.route('**/api/method/plus_point.imports.apply',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({_server_messages:JSON.stringify([JSON.stringify({message:'Temporary test connection failure. Review the file again.'})])})}));
   await primary.click();await dialog.locator('.pp-import-feedback').filter({hasText:'Temporary test connection failure.'}).waitFor();await oneModal();
   await page.unroute('**/api/method/plus_point.imports.apply');
   await dialog.getByRole('button',{name:'Review file again',exact:true}).click();await dialog.getByText('Review before saving',{exact:true}).waitFor();
   assert(await primary.isDisabled());assert.equal(await check.isChecked(),false);await check.check();await primary.click();
   await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/5 created, 0 updated, 0 skipped/);await oneModal();
+  await dialog.getByText('Saved records',{exact:true}).click();assert.equal(await dialog.locator('details li strong').filter({hasText:'Created'}).count(),5);
   const count=()=>page.evaluate(async company=>(await frappe.db.get_list('Employee',{filters:{company},fields:['name'],limit:100})).length,data.company);
   assert.equal(await count(),6);
   await primary.click();await dialog.locator('input[type=file]').setInputFiles(file);await dialog.getByRole('button',{name:'Review file',exact:true}).click();
   await dialog.getByText('Review before saving',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-import-preview').innerText(),/5 skip/);assert(await primary.isDisabled());
   await check.check();await primary.click();await dialog.getByText('Import saved',{exact:true}).waitFor();assert.match(await dialog.locator('.pp-condition-success').innerText(),/0 created, 0 updated, 5 skipped/);
+  await dialog.getByText('Saved records',{exact:true}).click();assert.equal(await dialog.locator('details li strong').filter({hasText:'Skipped'}).count(),5);
   assert.equal(await count(),6);assert.deepEqual(errors,[]);
-  console.log('PASS one import dialog, inline file/server errors, persistent footer consent, disabled-until-reviewed action, mobile fit, actual 5-worker save and duplicate-free replay');
+  console.log('PASS one import dialog, inline file/server/network errors, fresh consent after failure, mobile fit, actual 5-worker save, per-row Created/Skipped labels and duplicate-free replay');
  }catch(error){await page.screenshot({path:path.join(out,'import-confirmation-failure.png'),fullPage:true});throw error;}
  finally{await browser.close();assert(fixture('end').restored);console.log('PASS exact disposable import receipts, employees and workspace settings restored');}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});

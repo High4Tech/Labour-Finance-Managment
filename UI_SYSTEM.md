@@ -2,6 +2,8 @@
 
 The [community component review](docs/COMMUNITY_COMPONENTS_2026-10-24.md) records the 21st.dev patterns adapted into the native system. Shared `empty_state`, `loading_state` and `render_table` helpers own supporting-table feedback. Empty states provide a clear title and next-step guidance without duplicating surrounding actions. Loading placeholders are static and expose one status message. Agreement/event step navigation shows completed checks and connecting separators while retaining the native validation gates. Table row feedback follows both pointer hover and keyboard focus. These patterns add no external runtime dependencies.
 
+All template imports share one drag-and-drop file component with native keyboard file selection, a filename/size summary and Remove action. Only one CSV/XLSX file up to 2 MB is accepted. Replacing/removing a file invalidates its review and consent; confirmation remains beside the posting action. Network failures require a fresh review rather than automatic posting retries. [The template audit](docs/IMPORT_TEMPLATE_AUDIT_2026-10-25.md) records supported fields, creation/link behaviour and end-to-end coverage.
+
 PLUS POINT and High4Tech use the same action system in `public/css/interface.css`. It loads after feature styles. New actions should use native `.btn` variants or Frappe `.es-button` controls; avoid per-page button heights, padding or border-radius overrides.
 
 | Token / role | Desktop | Mobile / touch |

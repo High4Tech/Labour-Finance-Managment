@@ -6,7 +6,7 @@ from plus_point.setup_flow import linked
 
 LABELS = {'Customer':'customer_name', 'Supplier':'supplier_name', 'Project':'project_name',
           'Employee':'employee_name', 'Item':'item_name', 'Warehouse':'warehouse_name',
-          'Account':'account_name', 'PP Site':'site_name'}
+          'Account':'account_name', 'PP Site':'site_name','Department':'department_name','Employment Type':'employee_type_name','Branch':'branch'}
 EARLIER = {'Customer':'clients', 'Employee':'employees', 'Item':'inventory_items',
            'Warehouse':'warehouses', 'PP Site':'event_sites', 'Project':'events',
            'Sales Invoice':'invoices', 'PP Work Entry':'work', 'PP Milestone':'milestones'}
@@ -16,7 +16,7 @@ def find(doctype, value, company, field=None, optional=False, filters=None):
     """Exact IDs win; labels must identify one visible record in the chosen company."""
     value = str(value or '').strip()
     filters = dict(filters or {})
-    if doctype in ('Employee','Project','Warehouse','Account','Vehicle'):
+    if doctype in ('Employee','Project','Warehouse','Account','Vehicle','Department'):
         filters['company'] = company
     if doctype == 'PP Site':
         projects = frappe.get_list('Project', filters={'company':company}, pluck='name', limit_page_length=0)
@@ -38,7 +38,7 @@ def find(doctype, value, company, field=None, optional=False, filters=None):
     if value and frappe.db.exists(doctype,value):
         doc = linked(doctype,value)
         # An exact ID from a different company must never fall back to a label.
-        if doc.get('company') and doctype in ('Employee','Project','Warehouse','Account','Vehicle') and doc.company != company:
+        if doc.get('company') and doctype in ('Employee','Project','Warehouse','Account','Vehicle','Department') and doc.company != company:
             frappe.throw(f'{field or doctype}: {doctype} must belong to the selected company')
         if doctype == 'PP Site':linked('Project',doc.project,company)
         return doc.name
@@ -102,6 +102,23 @@ def validate_client(values):
     return full
 
 
+WORKER_LINKS={'department':('Department','department_name'),'employment_type':('Employment Type','employee_type_name'),'branch':('Branch','branch')}
+
+
+def save_worker_links(company,row,doc):
+    for key,(doctype,label) in WORKER_LINKS.items():
+        if key not in row:continue
+        value=row[key]
+        if key in row.get('_new_worker_links',{}):
+            existing=find(doctype,value,company,key,optional=True)
+            if not existing:
+                values={label:value}
+                if doctype=='Department':values.update(company=company,is_group=0)
+                existing=frappe.get_doc(dict(doctype=doctype,**values)).insert().name
+            value=existing
+        doc.set(key,value or None)
+
+
 def normalize(kind, company, original):
     row = dict(original)
     notes = []
@@ -113,6 +130,23 @@ def normalize(kind, company, original):
         before=row.get(key,'')
         row[key]=choice(before,key,options,aliases,default)
         if before!=row[key]:notes.append(f'{key}: {before or "(blank)"} → {row[key]}')
+    def client_reference():
+        value=row.get('customer') or row.get('customer_name')
+        if not value:frappe.throw('Enter customer: a new client name, an existing exact client name or Customer ID')
+        existing=find('Customer',value,company,'customer',optional=True)
+        if existing:
+            row['customer']=existing
+            if value!=existing:notes.append(f'Client: {value} → {existing}')
+            return
+        row['customer_name']=row.get('customer_name') or value
+        before=row.get('customer_type','');row['customer_type']=customer_type(before)
+        if before and before!=row['customer_type']:notes.append(f'customer_type: {before} → {row["customer_type"]}')
+        values=client_values(row,'client_');full=validate_client(values)
+        frappe.has_permission('Customer','create',throw=True)
+        if full:
+            for doctype in ('Contact','Address'):frappe.has_permission(doctype,'create',throw=True)
+        row['_new_client']=values
+        notes.append('Create client: '+values['customer_name']+(' with contact and address' if full else ' (basic profile; add contact and address later)'))
     if kind in ('employees','event_sites','vehicles','inventory_items'):
         select('status',('Active','Inactive'))
     if kind=='employees' and row.get('gender'):
@@ -130,11 +164,27 @@ def normalize(kind, company, original):
             if positive(row.get('client_rate'),'Client daily rate',allow_zero=True):
                 row['client_rate']='0'
                 notes.append('Fixed-price event: client_rate is unused and will be saved as 0. The fixed_amount is the client contract total; crew wages stay separate.')
+        if row.get('designation'):
+            from plus_point.operations import event_roles
+            row['designation']=next((role for role in event_roles() if role.casefold()==row['designation'].casefold()),row['designation'])
+            if not frappe.db.exists('Designation',row['designation']):notes.append('Create worker category '+row['designation'])
     if kind == 'employees':
         if row.get('designation'):
             existing=frappe.db.get_value('Designation',row['designation'],'name')
             if existing:row['designation']=existing
             else:notes.append('Create worker category '+row['designation'])
+        for key,(doctype,label) in WORKER_LINKS.items():
+            if row.get(key):
+                value=row[key]
+                if len(value)>140 or '\n' in value:frappe.throw(f'{key}: use one name of at most 140 characters')
+                existing=find(doctype,value,company,key,optional=True)
+                if existing:row[key]=existing
+                else:
+                    frappe.has_permission(doctype,'create',throw=True)
+                    row.setdefault('_new_worker_links',{})[key]=value
+                    notes.append(f'Create {key}: {value}')
+        if row.get('pp_loan_allowed'):
+            select('pp_loan_allowed',('0','1'),{'yes':'1','no':'0','true':'1','false':'0'})
         return row, notes
     if kind == 'clients':
         value = row.get('customer') or row.get('customer_name')
@@ -147,7 +197,7 @@ def normalize(kind, company, original):
     elif kind == 'event_sites':
         ref('project','Project')
         value = row.get('site') or row.get('site_name')
-        row['site'] = find('PP Site',value,company,'site',optional=not bool(row.get('site')),
+        row['site'] = find('PP Site',value,company,'site',optional=True,
             filters={'project':row['project']}) or ''
         if row['site'] and linked('PP Site',row['site']).project != row['project']:
             frappe.throw('site must belong to the selected event project')
@@ -164,27 +214,11 @@ def normalize(kind, company, original):
                 _expected_quantity=str(current.actual_qty or 0) if current else '0')
             notes.append('Absolute counted quantity; server date/time and existing unit value are retained automatically. Event reservations cannot be edited.')
     elif kind == 'agreements':
-        ref('customer','Customer')
+        client_reference()
         select('status',('Draft','Active'),default='Draft')
+        if 'phase' in row:select('phase',('Setup','Event','Pack-down','Other'),default='Event')
     elif kind == 'events':
-        value = row.get('customer') or row.get('customer_name')
-        if not value:frappe.throw('Enter customer: the client name or an existing Customer ID')
-        existing = find('Customer',value,company,'customer',optional=True)
-        if existing:
-            row['customer'] = existing
-            if value!=existing:notes.append(f'Client: {value} → {existing}')
-        else:
-            row['customer_name'] = row.get('customer_name') or value
-            before=row.get('customer_type','')
-            row['customer_type']=customer_type(before)
-            if before and before!=row['customer_type']:notes.append(f'customer_type: {before} → {row["customer_type"]}')
-            values = client_values(row,'client_')
-            full = validate_client(values)
-            frappe.has_permission('Customer','create',throw=True)
-            if full:
-                for doctype in ('Contact','Address'):frappe.has_permission(doctype,'create',throw=True)
-            row['_new_client'] = values
-            notes.append('Create client: '+values['customer_name']+(' with contact and address' if full else ' (basic profile; add contact and address later)'))
+        client_reference()
     elif kind == 'work':ref('assignment','PP Assignment')
     elif kind == 'milestones':ref('contract_terms','PP Contract Terms')
     elif kind == 'receipts':

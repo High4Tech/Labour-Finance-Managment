@@ -27,11 +27,11 @@ app_include_js = ["/assets/plus_point/js/runtime.js?v=20261024-community-2","/as
                   "/assets/plus_point/js/events.js?v=20261024-draft-flow-4",
                   "/assets/plus_point/js/sections.js?v=20261023-finance-3",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/imports.js?v=20261024-draft-flow-4",
+                  "/assets/plus_point/js/imports.js?v=20261025-upload-audit-2",
                   "/assets/plus_point/js/setup_flow.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/event_setup.js?v=20261023-finance-3",
                   "/assets/plus_point/js/onboarding.js?v=20261024-draft-flow-4"]
-app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261021-complete-forms-4",
+app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-upload-audit-2",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/interface.css?v=20261024-community-2"]

@@ -206,8 +206,21 @@
 .pp-setup-progress span { font-size:12px; white-space:nowrap; }
 .pp-setup-progress progress { flex:1; width:100%; height:6px; accent-color:var(--primary,#171717); }
 .pp-import-tools { margin:12px 0 20px; }
-.pp-import-file { display:block; font-weight:500; }
-.pp-import-file input { display:block; max-width:100%; padding:12px 0; font-weight:400; }
+.pp-import-dropzone { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:190px;padding:24px 18px;border:2px dashed var(--border-color);border-radius:12px;background:var(--control-bg);text-align:center;color:var(--text-color); }
+.pp-import-dropzone>strong { font-size:15px;font-weight:600;line-height:1.5; }
+.pp-import-dropzone>p { color:var(--text-muted);font-size:13px;line-height:1.6;margin:0; }
+.pp-upload-symbol { display:flex;align-items:center;justify-content:center;width:40px;height:40px;color:var(--text-muted); }
+.pp-upload-symbol .icon { width:28px;height:28px;--icon-stroke:currentColor; }
+.pp-import-dropzone:is(.is-dragging,:focus-within) { border-color:var(--pp-accent);outline:2px solid var(--pp-accent);outline-offset:3px; }
+.pp-import-dropzone.has-error { border-color:var(--pp-status-danger); }
+.pp-import-selected { display:flex;align-items:center;gap:12px;padding:14px 16px;margin-top:12px;border:1px solid var(--border-color);border-radius:8px;color:var(--text-color);min-width:0; }
+.pp-import-selected>div { display:flex;flex-direction:column;gap:4px;flex:1;min-width:0; }
+.pp-import-selected strong { font-size:13px;overflow-wrap:anywhere; }
+.pp-import-selected [data-upload-size],.pp-upload-guidance { color:var(--text-muted);font-size:12px;line-height:1.6; }
+.pp-upload-guidance { margin:12px 0 0; }
+.pp-import-selected[hidden],.pp-upload-error[hidden],.pp-import-dropzone input[hidden] { display:none!important; }
+.pp-upload-error { color:var(--pp-status-danger);font-size:13px;line-height:1.6;margin:10px 0; }
+@media(max-width:767px){.pp-import-dropzone{min-height:172px;padding:20px 12px}.pp-import-selected{padding:12px;gap:8px}.pp-import-selected>span{display:none}}
 .pp-import-preview h3 { font-size:18px; }
 .pp-import-table { overflow:auto; max-height:340px; border:1px solid var(--border-color,#e5e7eb); margin:16px 0; }
 .pp-import-table table { border-collapse:collapse; width:100%; font-size:12px; }

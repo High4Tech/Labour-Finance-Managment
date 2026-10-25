@@ -3,7 +3,9 @@
     frappe.provide('plus_point');
     const esc=value=>frappe.utils.escape_html(String(value ?? ''));
     async function request(method,args){
-        const response=await fetch('/api/method/plus_point.'+method,{method:'POST',headers:{'Content-Type':'application/json','X-Frappe-CSRF-Token':frappe.csrf_token},body:JSON.stringify(args)});
+        let response;
+        try{response=await fetch('/api/method/plus_point.'+method,{method:'POST',headers:{'Content-Type':'application/json','X-Frappe-CSRF-Token':frappe.csrf_token},body:JSON.stringify(args)});}
+        catch{throw new Error(__('Connection lost. Review the file again before retrying. Rows already saved will be recognised so they are not duplicated.'));}
         const data=await response.json();
         if(!response.ok||data.exc_type){
             let message=__('Could not complete the import. Review the file and try again.');
@@ -14,15 +16,15 @@
     }
     const kinds={agreements:'Client agreements',employees:'Employees',work:'Approved daily work',milestones:'Fixed-price milestones',expenses:'Project expenses',invoices:'Client invoices',receipts:'Client receipts',worker_payments:'Worker payments'};
     const help={
-        agreements:'One agreement with one site and crew category per row. Select an existing client by exact name or ID. Enter client_rate only for Daily billing, or fixed_amount for Fixed billing. Choose agreement_currency and Draft or Active status. Separate conditions with |. Worker wages are chosen later in the event plan. Import once, then edit to add more sites, categories, milestones or optional transport. Keep external_id unchanged to avoid duplicate imports.',
+        agreements:'One agreement with one site and crew category per row. A new customer name creates a client after confirmation; existing exact names or IDs reuse that client. Optional customer_name, customer_type and client_ contact/address columns create its full profile. Enter client_rate only for Daily billing, or fixed_amount for Fixed billing. Choose agreement_currency, Draft or Active status and an optional crew phase. Separate conditions with |. Optional vehicle_type and vehicle_quantity add a vehicle requirement. Worker wages and individual vehicle assignments are chosen later in the event. Import once, then edit to add more sites, categories or milestones. Keep external_id unchanged to avoid duplicate imports.',
         clients:'Add clients using customer_name and customer_type (Company or Individual). Leave customer blank for a new client; unique existing names or Customer IDs update that profile. The template includes contact_name, email, phone, country, street address, city, state, postal_code. Currency is chosen on the agreement. To save contact/address details, include a contact name, email or phone, country, city and address_line1. Legacy name-only templates remain supported.',
-        event_sites:'Use the event project ID, site_name, address and status (Active or Inactive). Leave site blank for a new venue or enter its ID to update it.',
+        event_sites:'Use an existing event project ID, exact project name or import:external_id from an Events import. Fill site_name, address and status (Active or Inactive). Leave site blank or enter a new venue name to create it; existing exact names or IDs update that site. The template includes country, city, street address, state and postal_code. Missing import: references must be uploaded first.',
         vehicles:'Use a unique license_plate, make/model, crew_seats (driver excluded), cargo_capacity and cargo_uom (units, kg or m³). fuel_type is Petrol, Diesel, Natural Gas or Electric. Status is Active or Inactive. Existing plates update the vehicle; bookings protect capacity reductions.',
         inventory_items:'Use a unique item_code, item_name, stock_uom (for example Nos) and status (Active or Inactive). This adds/updates the equipment catalog only, not warehouse quantities or finances.',
         warehouses:'Enter warehouse_name, warehouse_type (Owned or Rented) and status (Active or Inactive). Your company is recorded automatically. Existing unique warehouse names update that warehouse. Group warehouses cannot receive stock.',
         stock_balances:'Enter item_code, warehouse and absolute counted quantity. Date and time are automatic; the current stock unit value is retained (zero for new unvalued equipment). Reserved quantities come from event allocations and cannot be edited. This posts a native stock reconciliation; review every count before confirming. Older dated/value templates remain supported.',
         events:'One event and venue per row: customer accepts an existing client ID, unique client name or import:external_id from a Clients import. A new client name creates a client profile together with the event; review this in the Details column. Optional customer_name, customer_type and client_ contact/address columns let you include the full new client profile. Include dates, site_name, workers_per_day, designation, agreement_currency, Daily/Fixed billing, client_rate for Daily, fixed_amount for Fixed and agreement text. Labels ignore capitalization; per_worker means Daily (per worker per day). Fixed-price rows ignore client_rate and show this in the review. This creates a project, internal agreement and plan, without allocating crew, approving attendance or billing. Existing client details are preserved. Older templates still work.',
-        employees:'Use one stable external_id per person. Format IDs and phone columns as text in your spreadsheet. New workers: leave employee blank or enter their full name. Existing Employee IDs update that profile; a unique full-name match also checks date of birth. external_id links later uploads to the same profile. Required: first_name, gender, date_of_birth, date_of_joining, status (Active or Inactive). Dates use YYYY-MM-DD. Optional designation sets the worker category used for event matching; new categories are shown in the review and created with the import. Photos are added later in the worker profile. The template includes your worker number, contact details, daily and monthly pay rates, default event pay basis, leave allowance and loan eligibility (0 or 1), waiting months and recovery percentage. Daily and monthly rates are separate choices when assigning an event. Optional columns left blank clear those fields; older templates preserve columns they do not contain. No login is created.',
+        employees:'Use one stable external_id per person. Format IDs and phone columns as text in your spreadsheet. New workers: leave employee blank or enter their full name. Existing Employee IDs update that profile; a unique full-name match also checks date of birth. external_id links later uploads to the same profile. Required: first_name, gender, date_of_birth, date_of_joining, status (Active or Inactive). Dates use YYYY-MM-DD. Optional designation, department, employment_type and branch use existing exact names or create the named reference after review. Departments belong to your company. Photos are added later in the worker profile. The template includes your worker number, contact details, daily and monthly pay rates, default event pay basis, leave allowance and loan eligibility (0/1 or Yes/No), waiting whole months and recovery percentage. Daily and monthly rates are separate choices when assigning an event. Optional columns left blank clear those fields; older templates preserve columns they do not contain. No login is created.',
         work:'Use an existing assignment ID, work_date (YYYY-MM-DD) and units (1, 0.5 or 0). Wages and client charges use that assignment’s agreed rates. Rows become approved earnings, not payments. Import work before its invoices or worker payments.',
         milestones:'Use active Fixed contract_terms, a title, date (YYYY-MM-DD) and amount. Rows become approved client earnings. The fixed contract cap still applies. Import milestones before their invoices.',
         expenses:'Use existing project, supplier and non-stock service item IDs or unique names, date (YYYY-MM-DD) and the net amount. This posts an unpaid supplier invoice and updates project spending. Missing suppliers and billing service items must be added first; inventory items cannot be used as billing services. Tax-bearing invoices need their full breakdown in the native invoice form.',
@@ -60,7 +62,7 @@
             {fieldtype:'Select',fieldname:'kind',label:__('What are you importing?'),options:Object.entries(kinds).map(([value,label])=>({value,label:__(label)})),default:defaultKind,reqd:1,onchange:helpText},
             {fieldtype:'HTML',fieldname:'template_actions',options:`<div class="pp-import-tools"><button class="btn btn-primary pp-download-template" type="button">${esc(__('Download template'))}</button><button class="btn btn-default pp-download-ids" type="button">${esc(__('Download reference IDs'))}</button></div>`},
             {fieldtype:'HTML',fieldname:'instructions'},
-            {fieldtype:'HTML',fieldname:'upload',options:`<label class="pp-import-file">${esc(__('Choose CSV or Excel file'))}<input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}"></label><p class="text-muted">${esc(__('Google Sheets: File → Download → CSV or Microsoft Excel. Use one sheet, keep the headers, and replace formulas with values. Use company-currency amounts without separators or symbols.'))}</p>`},
+            {fieldtype:'HTML',fieldname:'upload',options:''},
             {fieldtype:'HTML',fieldname:'preview'},
             {fieldtype:'Check',fieldname:'confirmed',label:__('I reviewed these records and confirm the changes.'),hidden:1,onchange:()=>updateReady()},
         ],primary_action_label:__('Review file'),primary_action:()=>review(),secondary_action_label:__('Close'),secondary_action:()=>{if(!busy)dialog.hide();}});
@@ -75,7 +77,7 @@
         }
         function setBusy(value){
             busy=value;updateReady();dialog.get_secondary_btn().prop('disabled',value);
-            dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids').prop('disabled',value);
+            dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids,[data-upload-choose],[data-upload-remove]').prop('disabled',value);
         }
         async function review(){
             if(busy)return;feedback();const values=dialog.get_values(true);
@@ -111,25 +113,41 @@
             try{
                 const result=await request('imports.apply',{token:preview.token});
                 preview=null;finished=true;
-                dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li>${esc(r.external_id)}: <a href="/desk/${frappe.router.slug(r.doctype)}/${encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
+                dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li><strong>${esc(__(r.action==='Create'?'Created':r.action==='Update'?'Updated':'Skipped'))}</strong> · ${esc(r.external_id)}: <a href="/desk/${frappe.router.slug(r.doctype)}/${encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
                 dialog.fields_dict.preview.$wrapper.find('.pp-import-done').on('click',()=>dialog.hide());
                 dialog.set_df_property('confirmed','hidden',1);
-                dialog.set_primary_action(__('Import another file'),()=>{finished=false;file=null;dialog.fields_dict.upload.$wrapper.find('input').val('');reset();});
+                dialog.set_primary_action(__('Import another file'),()=>{finished=false;chooseFile(null);});
                 plus_point.refresh_setup_banner?.();
             }catch(error){
                 preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file again'),review);
                 feedback(error.message||__('Import could not finish. Review the file again before retrying.'));
             }finally{setBusy(false);}
         }
-        dialog.$wrapper.on('hidden.bs.modal',()=>{if(onClose)onClose();else if(finished)plus_point.refresh_setup_banner?.();});
+        dialog.$wrapper.one('hidden.bs.modal',()=>{file=null;upload.off('.pp-import-upload');dialog.$wrapper.remove();if(onClose)onClose();else if(finished)plus_point.refresh_setup_banner?.();});
         dialog.$wrapper.addClass('pp-import-dialog');
         // Keep consent beside the action, outside the long, scrolling preview.
         const confirmation=dialog.fields_dict.confirmed.$wrapper.addClass('pp-import-confirmation');
         confirmation.append('<p class="pp-import-confirmation-hint" role="status"></p>');
         confirmation.prependTo(dialog.$wrapper.find('.modal-footer'));
-        dialog.show();plus_point.enhance_selectors?.(dialog);helpText();
+        dialog.show();plus_point.enhance_selectors?.(dialog);for(const control of Object.values(dialog.fields_dict))if(control.df.fieldtype!=='Check')control.$input?.attr('aria-label',control.df.label||'');helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
-        upload.find('input').on('change',event=>{file=event.target.files[0];reset();});
+        const errorId='pp-upload-error-'+crypto.randomUUID();
+        upload.html(`<div class="pp-import-dropzone" role="group" aria-label="${esc(__('Upload import file'))}"><span class="pp-upload-symbol" aria-hidden="true">${frappe.utils.icon('upload','lg')}</span><strong>${esc(__('Drag your file here'))}</strong><p>${esc(__('CSV or Excel (.xlsx), up to 2 MB'))}</p><button type="button" class="btn btn-default" data-upload-choose aria-describedby="${errorId}">${esc(__('Upload file'))}</button><input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}" hidden></div><div class="pp-import-selected" hidden role="status"><span aria-hidden="true">${frappe.utils.icon('file','md')}</span><div><strong data-upload-name></strong><span data-upload-size></span></div><button type="button" class="btn btn-default" data-upload-remove aria-label="${esc(__('Remove selected file'))}">${esc(__('Remove'))}</button></div><p class="pp-upload-error" id="${errorId}" role="alert" hidden></p><p class="pp-upload-guidance">${esc(__('Use one worksheet, keep the template headers, and replace formulas with values. Dates use YYYY-MM-DD.'))}</p>`);
+        const input=upload.find('input[type=file]'),zone=upload.find('.pp-import-dropzone'),selected=upload.find('.pp-import-selected'),uploadError=upload.find('.pp-upload-error');let dragDepth=0;
+        function chooseFile(next,error=''){
+            if(busy)return;file=null;reset();uploadError.text('').prop('hidden',true);zone.removeClass('is-dragging has-error');selected.prop('hidden',true);
+            if(!error&&next&&!/\.(csv|xlsx)$/i.test(next.name))error=__('Choose a CSV or Excel (.xlsx) file.');
+            if(!error&&next&&next.size>2*1024*1024)error=__('This file is larger than 2 MB. Split it into smaller files.');
+            if(error){input.val('');uploadError.text(error).prop('hidden',false);zone.addClass('has-error');return;}
+            file=next||null;
+            if(file){upload.find('[data-upload-name]').text(file.name);upload.find('[data-upload-size]').text(Math.max(1,Math.ceil(file.size/1024))+' KB');selected.prop('hidden',false);}else input.val('');
+        }
+        upload.on('click.pp-import-upload','[data-upload-choose]',()=>{if(!busy)input.get(0).click();});
+        upload.on('click.pp-import-upload','[data-upload-remove]',()=>{chooseFile(null);upload.find('[data-upload-choose]').trigger('focus');});
+        upload.on('change.pp-import-upload','input[type=file]',event=>chooseFile(event.target.files[0]));
+        upload.on('dragenter.pp-import-upload dragover.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();if(busy)return;if(event.type==='dragenter')dragDepth++;zone.addClass('is-dragging');});
+        upload.on('dragleave.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)zone.removeClass('is-dragging');});
+        upload.on('drop.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();dragDepth=0;zone.removeClass('is-dragging');if(busy)return;const files=event.originalEvent.dataTransfer?.files;chooseFile(files?.[0],files?.length!==1?__('Choose one CSV or Excel file at a time.'):'');});
         dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else feedback(__('Choose your company first.'));});
         dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else feedback(__('Choose your company first.'));});
         if(!defaultCompany){try{const info=await request('setup_flow.status',{});if(info.companies.length===1){dialog.set_value('company',info.companies[0].name);dialog.set_df_property('company','hidden',true);};}catch(error){feedback(error.message);}}

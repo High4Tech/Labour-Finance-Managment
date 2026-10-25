@@ -33,6 +33,8 @@ EMPLOYEE_OPTIONAL_COLUMNS += ['designation']
 SCHEMAS['employees'] += EMPLOYEE_OPTIONAL_COLUMNS
 EMPLOYEE_PRE_PAY_COLUMNS=list(SCHEMAS['employees'])
 SCHEMAS['employees'] += ['pp_salary_basis','pp_daily_rate','pp_monthly_rate','pp_leaves_per_month','pp_loan_allowed','pp_loan_wait_months','pp_loan_deduction_percent']
+EMPLOYEE_PRE_ORG_COLUMNS=list(SCHEMAS['employees'])
+SCHEMAS['employees'] += ['department','employment_type','branch']
 TARGETS = dict(employees='Employee', work='PP Work Entry', milestones='PP Milestone',
     expenses='Purchase Invoice', invoices='Sales Invoice', receipts='Payment Entry', worker_payments='PP Wage Settlement')
 MAX_ROWS = 200
@@ -112,7 +114,7 @@ def parse_file(filename, content, kind):
     from plus_point.event_imports import LEGACY_SCHEMAS
     legacy = LEGACY_EMPLOYEE_COLUMNS if kind=='employees' else LEGACY_SCHEMAS.get(kind)
     from plus_point.event_imports import PREVIOUS_SCHEMAS
-    if headers != SCHEMAS[kind] and headers != legacy and headers!=PREVIOUS_SCHEMAS.get(kind) and not (kind=='employees' and headers in (EMPLOYEE_PROFILE_COLUMNS,EMPLOYEE_PRE_PAY_COLUMNS)):
+    if headers != SCHEMAS[kind] and headers != legacy and headers!=PREVIOUS_SCHEMAS.get(kind) and not (kind=='employees' and headers in (EMPLOYEE_PROFILE_COLUMNS,EMPLOYEE_PRE_PAY_COLUMNS,EMPLOYEE_PRE_ORG_COLUMNS)):
         frappe.throw('Column headers must match the selected template in the same order. Download a fresh template.')
     if not rows or len(rows) > MAX_ROWS:
         frappe.throw('Add between 1 and 200 data rows. Blank rows between records are not allowed.')
@@ -210,6 +212,10 @@ def validate_row(kind, company, row):
         from plus_point.benefits import validate_worker_settings
         validate_worker_settings(frappe._dict(row))
         if row.get('pp_salary_basis') and row['pp_salary_basis'] not in ('Daily','Monthly'):frappe.throw('Default event pay basis must be Daily or Monthly.')
+        for key in ('pp_daily_rate','pp_monthly_rate','pp_leaves_per_month','pp_loan_wait_months','pp_loan_deduction_percent'):
+            if row.get(key):
+                value=as_decimal(row[key])
+                if key=='pp_loan_wait_months' and value!=value.to_integral_value():frappe.throw('pp_loan_wait_months must use whole months')
         employee_target(company, row)
         return dict(label=f"{row['first_name']} {row['last_name']}".strip(), amount=None)
     if kind == 'work':
@@ -521,6 +527,8 @@ def apply(token):
                 if row.get('designation'):
                     from plus_point.operations import create_category
                     create_category(row['designation'])
+                from plus_point.import_links import save_worker_links
+                save_worker_links(company_name,row,doc)
                 doc.company = company_name
                 doc.create_user_automatically = 0
                 doc.save()

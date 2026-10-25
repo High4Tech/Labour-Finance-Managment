@@ -96,6 +96,72 @@ class SetupImportTests(unittest.TestCase):
             self.assertFalse(frappe.db.exists('PP Work Entry',{'project':plan.project}))
         self.assertEqual(self.apply('events',rows)['skipped'],15)
 
+    def agreement_row(self,**changes):
+        from frappe.utils import add_days
+        return dict(external_id='agreement-new',agreement_title='Imported agreement '+uuid.uuid4().hex[:8],customer='New agreement client '+uuid.uuid4().hex[:8],
+            start_date=add_days(today(),2),end_date=add_days(today(),3),status='Active',billing_model='Fixed',agreement_currency='PKR',fixed_amount='5000',
+            scope='Stage crew and transport',conditions='Arrive on time|Wear safety equipment',site_name='Main stage',designation='Event crew',workers_per_day='1',client_rate='',
+            customer_type='Company',client_contact_name='Ayesha Malik',client_email='qa@example.invalid',client_phone='+923001234567',client_country='Pakistan',client_city='Karachi',client_address_line1='12 QA Road',
+            phase='Setup',vehicle_type='Crew van',vehicle_quantity='2')|changes
+
+    def test_agreement_template_creates_new_client_profile_category_and_transport_after_review(self):
+        from plus_point import operations
+        old_company=operations.company
+        operations.company=lambda:self.f.company
+        try:
+            category='Audit crew '+uuid.uuid4().hex[:8]
+            row=self.agreement_row(designation=category)
+            before=frappe.db.count('Customer');preview=self.preview('agreements',[row])
+            self.assertTrue(preview['valid'],preview);self.assertEqual(preview['rows'][0]['action'],'Create')
+            self.assertEqual(frappe.db.count('Customer'),before);self.assertFalse(frappe.db.exists('Designation',category))
+            self.assertTrue(any('Create client:' in note for note in preview['rows'][0]['notes']))
+            saved=imports.apply(preview['token']);doc=frappe.get_doc('PP Contract Terms',saved['rows'][0]['document'])
+            client=frappe.get_doc('Customer',frappe.db.get_value('Project',doc.project,'customer'))
+            self.assertEqual(client.customer_name,row['customer']);self.assertTrue(client.customer_primary_contact);self.assertTrue(client.customer_primary_address)
+            self.assertEqual(doc.staffing[0].designation,category);self.assertEqual(doc.staffing[0].phase,'Setup')
+            self.assertEqual(json.loads(doc.pp_transport_requirements)[0]['quantity'],2)
+            self.assertEqual(json.loads(doc.pp_conditions),['Arrive on time','Wear safety equipment'])
+            self.assertEqual(self.apply('agreements',[row])['skipped'],1)
+        finally:operations.company=old_company
+
+    def test_site_name_in_target_column_creates_new_site_and_preserves_legacy_address(self):
+        row=dict(external_id='site-name-new',site='New named venue',site_name='New named venue',project=self.f.project.name,address='Legacy address',status='Active',country='Pakistan',city='Karachi',address_line1='12 QA Road')
+        result=self.apply('event_sites',[row]);doc=frappe.get_doc('PP Site',result['rows'][0]['document'])
+        self.assertEqual(doc.site_name,row['site_name']);self.assertEqual(doc.city,'Karachi');self.assertEqual(doc.address_line1,'12 QA Road')
+        self.assertEqual(self.apply('event_sites',[row])['skipped'],1)
+        self.assertEqual(self.apply('event_sites',[dict(row,city='Lahore')])['updated'],1)
+
+    def test_blank_stock_count_is_not_treated_as_zero(self):
+        code='COUNT-'+uuid.uuid4().hex[:8];warehouse='Count QA '+uuid.uuid4().hex[:8]
+        self.apply('inventory_items',[dict(external_id='count-item',item_code=code,item_name=code,stock_uom='Nos',status='Active')])
+        self.apply('warehouses',[dict(external_id='count-warehouse',warehouse_name=warehouse)])
+        row=dict(external_id='count-empty',item_code=code,warehouse=warehouse,quantity='')
+        preview=self.preview('stock_balances',[row]);self.assertFalse(preview['valid']);self.assertIn('quantity',preview['rows'][0]['error']);self.assertIsNone(preview['token'])
+
+    def test_worker_organization_references_are_reviewed_then_created_and_old_templates_preserve_them(self):
+        suffix=uuid.uuid4().hex[:8];row=self.employee()
+        row.update(department='Import crew '+suffix,employment_type='Import contract '+suffix,branch='Import branch '+suffix,pp_loan_allowed='Yes',pp_loan_wait_months='3')
+        count=frappe.db.count('Department');preview=self.preview('employees',[row]);self.assertTrue(preview['valid'],preview)
+        self.assertEqual(frappe.db.count('Department'),count);self.assertTrue(any('Create department:' in note for note in preview['rows'][0]['notes']))
+        result=imports.apply(preview['token']);doc=frappe.get_doc('Employee',result['rows'][0]['document'])
+        self.assertEqual(frappe.db.get_value('Department',doc.department,'company'),self.f.company.name)
+        self.assertEqual(doc.employment_type,row['employment_type']);self.assertEqual(doc.branch,row['branch']);self.assertEqual(doc.pp_loan_allowed,1)
+        self.assertEqual(self.apply('employees',[row])['skipped'],1)
+        stream=io.StringIO();writer=csv.DictWriter(stream,fieldnames=imports.EMPLOYEE_PRE_ORG_COLUMNS)
+        writer.writeheader();writer.writerow({key:row.get(key,'') for key in imports.EMPLOYEE_PRE_ORG_COLUMNS})
+        legacy=imports.preview('employees',self.f.company.name,'old-workers.csv',base64.b64encode(stream.getvalue().encode()).decode());self.tokens.append(legacy['token'])
+        self.assertTrue(legacy['valid'],legacy);imports.apply(legacy['token']);doc.reload();self.assertTrue(doc.department);self.assertEqual(doc.branch,row['branch'])
+
+    def test_worker_fractional_loan_months_and_unsupported_boolean_are_blocked_in_review(self):
+        for changes,key in [({'pp_loan_wait_months':'1.5'},'whole months'),({'pp_loan_allowed':'sometimes'},'pp_loan_allowed')]:
+            row=self.employee();row.update(changes);preview=self.preview('employees',[row]);self.assertFalse(preview['valid']);self.assertIn(key,preview['rows'][0]['error'])
+
+    def test_agreement_reference_typo_and_invalid_vehicle_details_do_not_create_dependencies(self):
+        row=self.agreement_row(customer='import:missing-client')
+        preview=self.preview('agreements',[row]);self.assertFalse(preview['valid']);self.assertIn('Import the clients template first',preview['rows'][0]['error'])
+        count=frappe.db.count('Customer');preview=self.preview('agreements',[self.agreement_row(vehicle_quantity='')])
+        self.assertFalse(preview['valid']);self.assertIn('vehicle_quantity',preview['rows'][0]['error']);self.assertEqual(frappe.db.count('Customer'),count)
+
     def test_shared_new_event_client_full_profile_and_conflicting_rows(self):
         row=self.event_row(client_contact_name='Ayesha Malik',client_email='client@example.invalid',client_phone='+966501234567',
             client_country='Saudi Arabia',client_city='Riyadh',client_address_line1='12 Exhibition Road',client_default_currency='USD')
