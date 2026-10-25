@@ -5,8 +5,10 @@
  const ranges=[['start_date','end_date'],['effective_start','effective_end'],['from_date','to_date'],['expected_start_date','expected_end_date'],['posting_date','due_date'],['date_of_birth','date_of_joining']];
  const dateOptions=frappe.ui.form.ControlDate.prototype.set_date_options;
  frappe.ui.form.ControlDate.prototype.set_date_options=function(){dateOptions.call(this);for(const key of ['minDate','maxDate'])if(typeof this.datepicker_options[key]==='string')this.datepicker_options[key]=frappe.datetime.str_to_obj(this.datepicker_options[key]);};
- plus_point.validate_dates=layout=>{
-  let valid=true;const read=k=>layout.get_value?layout.get_value(k):layout.doc?.[k];
+ plus_point.validate_dates=(layout,{focus=false}={})=>{
+  // Blur can run before native asynchronous parsing updates the model. Validate
+  // the visible typed date and reserve focus changes for an explicit submission.
+  let valid=true;const read=k=>{const control=layout.fields_dict?.[k];if(control?.df.fieldtype==='Date'&&control.$input&&!control.df.read_only){const raw=String(control.$input.val()||'').trim();if(!raw)return '';const date=moment(raw,control.date_format||frappe.defaultDateFormat,true);if(date.isValid())return date.format('YYYY-MM-DD');}return layout.get_value?layout.get_value(k):layout.doc?.[k];};
   for(const field of Object.values(layout.fields_dict||{})){
    if(field.df.fieldtype!=='Date'||field.df.hidden)continue;
    const iso=v=>v instanceof Date?frappe.datetime.obj_to_str(v):String(v),first=ranges.find(([,b])=>b===field.df.fieldname)?.[0],start=first&&read(first),value=read(field.df.fieldname),limits=[field.df.min_date,start].filter(Boolean).map(iso).sort(),min=limits.at(-1),max=field.df.max_date?iso(field.df.max_date):null;
@@ -17,14 +19,14 @@
    }
    const bad=value&&((min&&value<min)||(max&&value>max));
    plus_point.field_error(field,bad?(min&&value<min?__('Choose {0} or a later date.',[min]):__('Choose {0} or an earlier date.',[max])):'','date');
-   if(bad){if(valid)plus_point.reveal_control(field);valid=false;}
+   if(bad){if(valid&&focus)plus_point.reveal_control(field);valid=false;}
   }
   for(const field of Object.values(layout.fields_dict||{}))if(field.df.fieldtype==='Table')for(const row of field.get_value()||[])for(const [a,b] of ranges)if(row[a]&&row[b]&&row[b]<row[a]){frappe.show_alert({message:__('Row {0}: end date must be on or after start date.',[row.idx]),indicator:'red'});valid=false;}
   return valid;
  };
  plus_point.bind_date_ranges=layout=>{for(const field of Object.values(layout.fields_dict||{})){if(field.df.fieldtype!=='Date'||field.__pp_date_bound)continue;field.__pp_date_bound=true;const original=field.df.onchange;field.df.onchange=async(...args)=>{await original?.(...args);plus_point.validate_dates(layout);};field.$input?.on('change.pp-dates blur.pp-dates',()=>plus_point.validate_dates(layout));}plus_point.validate_dates(layout);};
  const enhance=plus_point.enhance_selectors;plus_point.enhance_selectors=layout=>{enhance?.(layout);plus_point.bind_date_ranges(layout);};
- const validate=plus_point.validate_inputs;plus_point.validate_inputs=layout=>{const a=validate?.(layout)!==false,b=plus_point.validate_dates(layout);return a&&b;};
+ const validate=plus_point.validate_inputs;plus_point.validate_inputs=layout=>{const a=validate?.(layout)!==false,b=plus_point.validate_dates(layout,{focus:true});return a&&b;};
  function guidance(){
   document.querySelectorAll('.help-box:not([data-pp-info]),.pp-op-heading>div>p:not([data-pp-info]),.pp-op-section>p:not([data-pp-info]),.pp-event-plan-panel>p:not([data-pp-info])').forEach(note=>{
    if(note.closest('.pp-onboarding-shell,.pp-onboarding-pane')||note.closest('[role=alert],.pp-onboarding-errors,.pp-op-message,.pp-register-error')||!note.textContent.trim())return;

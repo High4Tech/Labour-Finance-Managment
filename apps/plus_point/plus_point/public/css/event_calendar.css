@@ -1,4 +1,21 @@
 /* One calendar component for profiles, editors and native event forms. */
+.pp-gantt-scroll{max-width:100%;overflow:auto;border:1px solid var(--border-color);border-radius:8px}
+.pp-gantt{min-width:calc(190px + var(--pp-gantt-days)*28px);color:var(--text-color)}
+.pp-gantt-axis,.pp-gantt-row{display:grid;grid-template-columns:190px minmax(0,1fr)}
+.pp-gantt-axis{border-bottom:1px solid var(--border-color);background:var(--control-bg)}
+.pp-gantt-axis>strong{padding:12px;font-size:12px;position:sticky;left:0;z-index:2;background:var(--control-bg)}
+.pp-gantt-axis>div,.pp-gantt-track{display:grid;grid-template-columns:repeat(var(--pp-gantt-days),minmax(28px,1fr))}
+.pp-gantt-axis span{padding:12px 0;text-align:center;font-size:12px}
+.pp-gantt-axis .is-today{background:var(--pp-action-primary);color:var(--pp-action-on-primary);border-radius:20px}
+.pp-gantt-row{min-height:98px;border-bottom:1px solid var(--border-color)}
+.pp-gantt-row:last-child{border-bottom:0}
+.pp-gantt-label{padding:14px 12px;background:var(--fg-color);font-size:13px;position:sticky;left:0;z-index:1;border-right:1px solid var(--border-color)}
+.pp-gantt-label strong,.pp-gantt-label small{display:block;overflow-wrap:anywhere;line-height:1.6}
+.pp-gantt-label small{color:var(--text-muted);font-size:11px}
+.pp-gantt-track{align-items:center;background:repeating-linear-gradient(to right,transparent,transparent calc(100%/var(--pp-gantt-days) - 1px),var(--border-color) calc(100%/var(--pp-gantt-days) - 1px),var(--border-color) calc(100%/var(--pp-gantt-days)))}
+.pp-gantt-bar{min-width:0;min-height:42px;overflow:hidden;border:1px solid var(--pp-accent);border-left:4px solid var(--pp-accent);border-radius:6px;background:color-mix(in srgb,var(--pp-action-primary) 12%,var(--fg-color));color:var(--text-color);font-size:12px;font-weight:650;text-align:start;padding:10px 6px;white-space:nowrap}
+.pp-gantt-bar.is-short{border-color:var(--pp-status-warning,#946200);border-left-style:dashed;background:color-mix(in srgb,var(--pp-status-warning) 10%,var(--fg-color))}
+.pp-gantt-bar:focus-visible,.pp-gantt-scroll:focus-visible{outline:3px solid var(--pp-accent);outline-offset:-3px}
 .pp-staffing-calendar{min-width:0}
 .pp-staffing-calendar .pp-calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:0 0 12px}
 .pp-staffing-calendar .pp-calendar-heading>div:first-child{flex:1;min-width:220px}

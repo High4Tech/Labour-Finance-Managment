@@ -74,7 +74,7 @@
   else{let copy=sentence(text,tone);if(tone==='empty'){const title=node.querySelector('strong')?.textContent.trim(),description=node.querySelector('p')?.textContent.trim(),match=title?.match(/^No (.+?) yet[.!]?$/i);if(match&&description)copy=translate('I don’t have any ')+match[1]+translate(' to show yet; ')+description[0].toLowerCase()+description.slice(1);}speech.textContent=copy+(solution?' '+plain(solution):'');}
   widget.append(avatar,speech,...dismiss);node.replaceChildren(widget);node.classList.add('pp-freddy-host');
   states.set(node,{rendered:node.textContent,spoken:speech.textContent,tone,original:text});stats.rendered++;
-  if(play&&['error','warning','success'].includes(tone))requestAnimationFrame(()=>animate(widget,true));
+  if(play&&['error','warning','success','loading'].includes(tone))requestAnimationFrame(()=>animate(widget,true));
  };
  const selector=['.pp-input-hint','.pp-op-message','.pp-onboarding-errors','.pp-import-feedback','.pp-upload-error','.pp-import-error td:last-child','.pp-profile-save-error','.pp-checkpoint-feedback','.pp-sign-feedback','.pp-worker-edit-error','.pp-stock-feedback','.pp-empty-state','.pp-loading-state','.pp-activity-empty','.pp-info-portal','.pp-tooltip .tooltip-inner','.pp-freddy-guidance','.pp-upload-guidance','.pp-guide-note','.driver-popover-description','.pp-draft-status>span','.pp-signing-ready>p','.pp-flow-position','.msgprint','.frappe-confirm-message','.es-toast__message','#alert-container .alert-message','#agreement-status','[data-freddy-feedback]','[role=alert]'].join(',');
  function enhance(){
