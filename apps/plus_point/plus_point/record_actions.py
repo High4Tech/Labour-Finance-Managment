@@ -4,12 +4,19 @@ from plus_point.setup_flow import require_customer
 
 SUPPORTED={'Employee','Customer','Contract','Project','PP Site','PP Assignment','PP Event Plan',
     'PP Contract Terms','PP Work Entry','PP Daily Register','PP Milestone','PP Vehicle Booking',
-    'PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim','PP Worker Loan'}
+    'PP Equipment Booking','Vehicle','Item','Warehouse','Sales Invoice','Payment Entry','Purchase Invoice','Expense Claim','PP Worker Loan','PP Planning Draft'}
 
 
 def document(doctype,name,lock=False):
     require_customer()
     if doctype not in SUPPORTED:frappe.throw('This record cannot be removed here.')
+    if doctype in ('PP Contract Terms','PP Event Plan') and name.startswith('draft:'):
+        from plus_point.drafts import checked
+        doc=checked(name[6:],lock)
+        if doc.kind!=('Agreement' if doctype=='PP Contract Terms' else 'Event'):
+            frappe.throw('Open this draft in its matching list.',frappe.PermissionError)
+        doc.check_permission('delete')
+        return doc
     doc=frappe.get_doc(doctype,name,for_update=lock);doc.check_permission('read');doc.check_permission('delete')
     from plus_point.setup_flow import linked
     company=doc.get('company')
@@ -19,6 +26,8 @@ def document(doctype,name,lock=False):
 
 
 def protected(doc):
+    if doc.doctype=='PP Planning Draft' and doc.status=='Scheduled':return 'Cancel scheduled creation in this event draft before deleting it.'
+    if doc.doctype=='PP Planning Draft' and doc.status=='Completed':return 'This draft has already been created. Open the agreement or event to review it.'
     if doc.docstatus!=0:return 'Posted or cancelled records are retained for accounting history. Use the record’s correction or cancellation workflow.'
     if doc.doctype=='PP Work Entry' and doc.status!='Draft':return 'Approved work has earned wages and cannot be deleted. Review its attendance and linked invoice.'
     if doc.doctype=='PP Milestone' and doc.status in ('Approved','Invoiced'):return 'Approved milestones record earnings and cannot be deleted. Review the linked client invoice.'
@@ -29,6 +38,7 @@ def protected(doc):
 @frappe.whitelist()
 def review(doctype,name):
     doc=document(doctype,name)
+    doctype=doc.doctype
     blocked=protected(doc);dependency=None
     if not blocked:
         from frappe.model.delete_doc import get_linked_docs, get_dynamic_linked_docs
@@ -90,7 +100,7 @@ def remove_many(doctype,names):
     try:
         # Native controllers, submitted history and operational link checks run
         # normally. The audit-only import receipts remain intact via the hook.
-        for name in names:frappe.delete_doc(doctype,name)
+        for doc in docs:frappe.delete_doc(doc.doctype,doc.name)
     except Exception:
         frappe.db.rollback(save_point='pp_remove_records');raise
     return dict(deleted=names,doctype=doctype)

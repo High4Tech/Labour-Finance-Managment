@@ -35,7 +35,6 @@ def product_navigation(platform):
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
     if not platform:
-        items.append(dict(type='Link',link_type='DocType',link_to='PP Planning Draft',label='Drafts',is_default_module=1))
         from plus_point.event_setup import current
         state=current()
         if state.get('step')!='done' and not state.get('skipped'):items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))

@@ -23,7 +23,9 @@ def assert_scope(doc):
 
 def query(user=None):
     from plus_point.operations import company
-    return '`tabPP Planning Draft`.company='+frappe.db.escape(company().name)+" AND `tabPP Planning Draft`.status!='Completed'"
+    condition='`tabPP Planning Draft`.company='+frappe.db.escape(company().name)+" AND `tabPP Planning Draft`.status!='Completed'"
+    if 'System Manager' not in frappe.get_roles(user):condition+=' AND `tabPP Planning Draft`.owner='+frappe.db.escape(user or frappe.session.user)
+    return condition
 
 
 def permission(doc,user=None,permission_type=None):

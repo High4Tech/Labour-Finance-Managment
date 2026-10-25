@@ -49,6 +49,7 @@ def main():
     if '--components' in sys.argv:names=['test_component_validation']
     if '--draft-repairs' in sys.argv:names=['test_hierarchy','test_drafts']
     if '--drafts' in sys.argv:names=['test_drafts']
+    if '--inline-drafts' in sys.argv:names=['test_planning_list','test_drafts']
     if '--planning' in sys.argv:names=['test_planning']
     if '--profiles' in sys.argv:names=['test_profiles_billing','test_drafts','test_hierarchy','test_component_validation']
     if '--planning-repairs' in sys.argv:names=['test_setup_imports','test_planning','test_attendance']

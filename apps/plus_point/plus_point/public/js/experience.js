@@ -41,7 +41,7 @@
   if(list.doctype==='PP Planning Draft'){list.page.set_title(__('Drafts'));list.page.clear_primary_action();list.settings.get_form_link=doc=>'/desk/'+(doc.kind==='Agreement'?'pp-agreements':'pp-event-plans')+'?draft='+encodeURIComponent(doc.name);return;}if(list.doctype==='PP Event Plan')list.page.set_title(__('Events'));
   if(['Vehicle','Warehouse'].includes(list.doctype)){list.settings.get_form_link=doc=>list.doctype==='Warehouse'&&doc.is_group?'/desk/warehouse/view/list?parent_warehouse='+encodeURIComponent(doc.name):'/desk/pp-inventory?view='+(list.doctype==='Vehicle'?'vehicles':'warehouses')+'&record='+encodeURIComponent(doc.name);list.make_new_doc=()=>plus_point.open_resource(list.doctype==='Vehicle'?'vehicles':'warehouses',()=>list.refresh());return;}
   const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
-  list.settings.get_form_link=doc=>mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
+  list.settings.get_form_link=doc=>doc.pp_draft_name?'/desk/'+mode+'?draft='+encodeURIComponent(doc.pp_draft_name):mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
   if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)&&!list.fields.includes('project'))list.fields.push('project');
   list.make_new_doc=()=>frappe.set_route(mode,{record:'new'});
   // Native list filters belong to the user; opening a section adds none.

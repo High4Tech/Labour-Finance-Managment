@@ -38,9 +38,9 @@ app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-i
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/interface.css?v=20261024-community-2"]
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
-app_include_js += ["/assets/plus_point/js/drafts.js?v=20261025-builder-1",
+app_include_js += ["/assets/plus_point/js/drafts.js?v=20261026-inline-drafts-1",
                    "/assets/plus_point/js/daily_billing.js?v=20261025-profiles-3"]
-app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261025-header-calendar-2", "/assets/plus_point/js/profiles.js?v=20261025-header-calendar-2", "/assets/plus_point/js/operations.js?v=20261025-builder-1"]
+app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261025-header-calendar-2", "/assets/plus_point/js/profiles.js?v=20261025-header-calendar-2", "/assets/plus_point/js/operations.js?v=20261026-inline-drafts-1"]
 app_include_css += ["/assets/plus_point/css/operations.css?v=profiles-3-20261024-community-2", "/assets/plus_point/css/feedback.css?v=20261025-freddy-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"],"*/15 * * * *":["plus_point.daily_billing.run_recurring"]},"hourly": ["plus_point.agreement_lifecycle.close_expired", "plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
@@ -94,11 +94,11 @@ add_to_apps_screen = [
 ]
 
 app_include_js += ["/assets/plus_point/js/event_pay.js?v=20261024-event-pay-3"]
-app_include_js += ["/assets/plus_point/js/experience.js?v=20261025-builder-1"]
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261026-inline-drafts-1"]
 app_include_css += ["/assets/plus_point/css/experience.css?v=20261024-shell-scroll-1"]
 
-app_include_js += ["/assets/plus_point/js/record_actions.js?v=profiles-3-20261023-finance-3"]
-app_include_css += ["/assets/plus_point/css/record_ui.css?v=20261023-finance-3"]
+app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261026-inline-drafts-1"]
+app_include_css += ["/assets/plus_point/css/record_ui.css?v=20261026-inline-drafts-1"]
 
 app_include_js += ["/assets/plus_point/js/people.js?v=freddy-2-20261024-event-pay-3"]
 app_include_css += ["/assets/plus_point/css/people.css?v=20261023-finance-3"]
@@ -121,3 +121,5 @@ app_include_css += ["/assets/plus_point/css/event_calendar.css?v=20261025-builde
 
 app_include_js += ["/assets/plus_point/js/flow_builder.js?v=20261025-builder-1"]
 app_include_css += ["/assets/plus_point/css/flow_builder.css?v=20261025-builder-1"]
+
+app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261026-inline-drafts-1"]
