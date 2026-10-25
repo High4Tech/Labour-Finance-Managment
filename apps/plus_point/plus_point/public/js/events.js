@@ -36,7 +36,8 @@
    dialog.show();plus_point.enhance_selectors?.(dialog);
   }show(0);
  };
- plus_point.render_event_timeline=(root,data)=>{
+ // An older native form include must not replace the shared staffing calendar.
+ if(!plus_point.render_event_timeline?.ppCalendarVersion)plus_point.render_event_timeline=(root,data)=>{
   const previous=root.dataset.period||'Month';let period=previous,index=Number(root.dataset.periodIndex)||0;
   root.innerHTML=`<header class="pp-panel-heading"><div><h3>${esc(data.title)}</h3><span>${esc(data.start)} – ${esc(data.end)} · ${data.duration} ${esc(__('days'))}</span></div></header><div class="pp-timeline-tools">${['Week','Month','Year'].map(v=>`<button type="button" class="btn btn-default" data-period="${v}" aria-pressed="${v===period}">${esc(__(v))}</button>`).join('')}<button type="button" class="btn btn-default" data-prev aria-label="${esc(__('Previous period'))}">←</button><strong class="pp-period-label"></strong><button type="button" class="btn btn-default" data-next aria-label="${esc(__('Next period'))}">→</button></div><div class="pp-timeline-sites"></div><div class="pp-timeline-legend"><span>● ${esc(__('Crew covered'))}</span><span>◐ ${esc(__('Crew needed'))}</span><span>${esc(__('Numbers show agreed crew per day. Select a day for attendance.'))}</span></div>`;
   function buckets(){const dates=data.sites[0]?.days.map(d=>d.date)||[];return [...new Set(dates.map(date=>period==='Year'?date.slice(0,4):period==='Month'?date.slice(0,7):frappe.datetime.add_days(date,-((new Date(date+'T12:00:00').getDay()+6)%7))))];}

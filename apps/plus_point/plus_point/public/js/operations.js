@@ -36,11 +36,11 @@
   if(!editorDependencies)editorDependencies=(async()=>{
    // An already open Desk can have an older cached include list. Load the
    // editor dependencies explicitly before rendering, and share one request.
-   for(const [name,ready] of [['drafts',()=>typeof plus_point.start_draft==='function'],['daily_billing',()=>typeof plus_point.daily_checkpoints_editor==='function'],['agreement_profile',()=>typeof plus_point.agreement_profile_layout==='function'&&!!plus_point.record_profile_ui],['profiles',()=>typeof plus_point.render_agreement_profile==='function'],['event_profile',()=>typeof plus_point.event_profile_layout==='function']]){
+   for(const [name,ready] of [['drafts',()=>typeof plus_point.start_draft==='function'],['daily_billing',()=>typeof plus_point.daily_checkpoints_editor==='function'],['agreement_profile',()=>typeof plus_point.agreement_profile_layout==='function'&&!!plus_point.record_profile_ui],['profiles',()=>typeof plus_point.render_agreement_profile==='function'],['event_profile',()=>typeof plus_point.event_profile_layout==='function'],['event_calendar',()=>plus_point.render_event_timeline?.ppCalendarVersion===2]]){
     // Native require adds its own cache version and expects a plain file path.
     if(!ready())await frappe.require(`/assets/plus_point/js/${name}.js`);
     if(!ready())throw new Error(__('The editor could not finish loading. Reload this page and try again.'));
-    if(['agreement_profile','event_profile'].includes(name)&&!document.querySelector('link[href*="/assets/plus_point/css/'+name+'.css"]'))await frappe.require('/assets/plus_point/css/'+name+'.css');
+    if(['agreement_profile','event_profile','event_calendar'].includes(name)&&!document.querySelector('link[href*="/assets/plus_point/css/'+name+'.css"]'))await frappe.require('/assets/plus_point/css/'+name+'.css');
    }
   })().catch(error=>{editorDependencies=null;throw error;});
   return editorDependencies;
