@@ -324,6 +324,7 @@ def plan(name):
         person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '')
     project=linked('Project',doc.project)
     result['allocations']=allocations;result['coverage']=coverage(doc)
+    result['files']=frappe.get_list('File',filters={'attached_to_doctype':'PP Event Plan','attached_to_name':doc.name},fields=['name','file_name','file_url'],limit_page_length=100)
     result.update(archived=bool(project.get('pp_archived')),budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)
     result['reservations']=[]
     for kind,label in [('PP Vehicle Booking','vehicle'),('PP Equipment Booking','item')]:

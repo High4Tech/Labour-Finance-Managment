@@ -10,6 +10,7 @@
  function date(value){if(!value)return '—';const parsed=new Date(String(value).slice(0,10)+'T12:00:00');if(Number.isNaN(parsed.valueOf()))return String(value);let format;try{format=new Intl.DateTimeFormat((frappe.boot.lang||'en').replace('_','-'),{month:'short',day:'2-digit',year:'numeric'});}catch{format=new Intl.DateTimeFormat('en',{month:'short',day:'2-digit',year:'numeric'});}return format.format(parsed);}
  const timestamp=value=>value?frappe.datetime.str_to_user(value):'';
  const commentText=value=>{const node=document.createElement('textarea');node.innerHTML=String(value||'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'');return node.value;};
+ plus_point.record_profile_ui={icon,card,date};
  const safeFiles=files=>(files||[]).filter(file=>/^\/(?!\/)|^https?:\/\//i.test(file.file_url||''));
  plus_point.agreement_profile_layout=(area,data)=>{
   const name=data.name,root=area.closest('.pp-operations'),rail=root.querySelector('.pp-op-activity'),client=data.client||{},currency=data.agreement_currency||data.currency,rate=Number(data.agreement_rate)||1;
@@ -41,13 +42,14 @@
   return {select,card,icon,keepPanel:()=>root.dataset.agreementTabRestore=name+':'+area.dataset.profileTab};
  };
  plus_point.render_agreement_activity=(area,rail,data,post)=>{
+  const isEvent=area.classList.contains('pp-event-overview'),commentId=isEvent?'event-comment':'agreement-comment';
   const commentList=data.comments.length?'<div class="pp-agreement-comments">'+data.comments.map(comment=>'<article><header><strong>'+esc(comment.comment_by)+'</strong><time>'+esc(timestamp(comment.creation))+'</time></header><p>'+esc(commentText(comment.content))+'</p></article>').join('')+'</div>':plus_point.empty_state('No comments yet','Add a comment in the sidebar to start the conversation.');
   const event=(label,owner,when,symbol)=>'<li><span class="pp-agreement-event-icon">'+icon(symbol)+'</span><div><span>'+esc(__(label))+'</span><strong>'+esc(owner||'—')+'</strong><time>'+esc(timestamp(when))+'</time></div></li>';
   const summary=event('Last updated by',data.modified_by,data.modified,'edit')+event('Created by',data.owner,data.created,'plus');
   const timeline=data.versions.length?data.versions.map(version=>event('Updated by',version.owner,version.creation,'edit')).join('')+event('Created by',data.owner,data.created,'plus'):summary;
-  rail.querySelector('[data-agreement-collaboration]').innerHTML=card('Comments','<label class="sr-only" for="agreement-comment">'+esc(__('Add a comment'))+'</label><textarea id="agreement-comment" class="form-control pp-op-comment" rows="3" maxlength="5000" placeholder="'+esc(__('Add a comment…'))+'"></textarea><p id="agreement-comment-error" role="alert"></p>'+action('Post comment','data-post-comment'),'','comment')+card('Activity','<ol class="pp-agreement-activity">'+summary+'</ol>','','clock');
-  area.querySelector('[data-profile-comment-feed]').innerHTML=commentList;area.querySelector('[data-profile-activity-feed]').innerHTML='<ol class="pp-agreement-activity">'+timeline+'</ol>';
-  const input=rail.querySelector('textarea'),error=rail.querySelector('#agreement-comment-error');input.oninput=()=>{if(input.value.trim()){error.replaceChildren();input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');}};
+  rail.querySelector('[data-agreement-collaboration]').innerHTML=card('Comments','<label class="sr-only" for="'+commentId+'">'+esc(__('Add a comment'))+'</label><textarea id="'+commentId+'" class="form-control pp-op-comment" rows="3" maxlength="5000" placeholder="'+esc(__('Add a comment…'))+'"></textarea><p id="'+commentId+'-error" role="alert"></p>'+action('Post comment','data-post-comment')+(isEvent?commentList:''),'','comment')+card('Activity','<ol class="pp-agreement-activity">'+summary+'</ol>'+(isEvent?'<details class="pp-event-activity-history"><summary>'+esc(__('View recent activity'))+'</summary><ol class="pp-agreement-activity">'+timeline+'</ol></details>':''),'','clock');
+  if(!isEvent){area.querySelector('[data-profile-comment-feed]').innerHTML=commentList;area.querySelector('[data-profile-activity-feed]').innerHTML='<ol class="pp-agreement-activity">'+timeline+'</ol>';}
+  const input=rail.querySelector('textarea'),error=rail.querySelector('#'+commentId+'-error');input.oninput=()=>{if(input.value.trim()){error.replaceChildren();input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');}};
   rail.querySelector('[data-post-comment]').onclick=event=>{if(!input.value.trim()){error.textContent=__('Write a comment before posting.');input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby',error.id);input.focus();return;}return post(event);};
  };
  plus_point.open_agreement_signing=async(name,{create=false}={})=>{
