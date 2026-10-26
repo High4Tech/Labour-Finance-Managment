@@ -456,7 +456,7 @@ class HierarchyTests(unittest.TestCase):
         from plus_point import signing
         from urllib.parse import urlparse,parse_qs
         a=self.agreement();link=signing.create_link(a['name']);token=parse_qs(urlparse(link['url']).query)['token'][0]
-        op.save_agreement(dict(scope='Updated client scope'),a['name'])
+        __import__('plus_point.agreement_updates',fromlist=['propose']).propose(a['name'],dict(scope='Updated client scope'),'Scope confirmed',method='Company attested')
         with self.assertRaises(frappe.PermissionError):signing.review(token)
         link=signing.create_link(a['name']);token=parse_qs(urlparse(link['url']).query)['token'][0]
         frappe.db.set_value('PP Agreement Share',link['name'],'expires',add_days(today(),-1))

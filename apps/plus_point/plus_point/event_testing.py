@@ -63,7 +63,7 @@ def browser_fixture(action,run_id):
     if projects:
         for doctype in ('PP Vehicle Booking','PP Equipment Booking','PP Assignment','PP Event Plan','PP Contract Terms','PP Site','Project'):
             filters={'name':['in',projects]} if doctype=='Project' else {'project':['in',projects]}
-            for name in frappe.get_all(doctype,filters=filters,pluck='name'):frappe.delete_doc(doctype,name)
+            for name in frappe.get_all(doctype,filters=filters,pluck='name',order_by='event_basis desc' if doctype=='PP Contract Terms' else 'modified desc'):frappe.delete_doc(doctype,name)
     for doctype in ('Vehicle','Employee'):
         for name in frappe.get_all(doctype,filters={'company':prefix},pluck='name'):frappe.delete_doc(doctype,name)
     customer=frappe.db.get_value('Customer',{'customer_name':prefix+' Client'},'name')
@@ -149,8 +149,8 @@ def hierarchy_browser_fixture(action,run_id):
     for row in invoices:frappe.delete_doc('Sales Invoice',row.name)
     projects=frappe.get_all('Project',filters={'company':prefix},pluck='name')
     terms=frappe.get_all('PP Contract Terms',filters={'project':['in',projects or ['']]},pluck='name')
-    for share in frappe.get_all('PP Agreement Share',filters={'contract_terms':['in',terms or ['']]},fields=['name','status','signed_email']):
-        if share.status=='Signed' and share.signed_email!='qa-sign-'+run_id+'@example.invalid':raise RuntimeError('Unrecognized signed agreement; cleanup refused')
+    for share in frappe.get_all('PP Agreement Share',filters={'contract_terms':['in',terms or ['']]},fields=['name','status','signed_email','signed_by','approval_method']):
+        if share.status=='Signed' and share.signed_email!='qa-sign-'+run_id+'@example.invalid' and not (share.approval_method=='Company attested' and share.signed_by=='Administrator' and not share.signed_email):raise RuntimeError('Unrecognized signed agreement; cleanup refused')
         for file in frappe.get_all('File',filters={'attached_to_doctype':'PP Agreement Share','attached_to_name':share.name},pluck='name'):frappe.delete_doc('File',file)
         if share.status=='Signed':frappe.db.set_value('PP Agreement Share',share.name,'status','Revoked')
         frappe.delete_doc('PP Agreement Share',share.name)

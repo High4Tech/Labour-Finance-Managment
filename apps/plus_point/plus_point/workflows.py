@@ -64,6 +64,10 @@ def rate_values(business,values,old=None):
     if 'fixed_amount' in v:v.fixed_amount=float(money(Decimal(str(v.fixed_amount or 0))*rate))
     for row in v.get('staffing',[]):
         for key in ['wage_rate','client_rate']:row[key]=float(money(Decimal(str(row.get(key) or 0))*rate))
+    if 'rate_card' in v:
+        rows=frappe.parse_json(v.rate_card or '[]')
+        for row in rows:row['client_rate']=float(money(Decimal(str(row.get('client_rate') or 0))*rate))
+        v.rate_card=frappe.as_json(rows)
     for row in v.get('milestones',[]):row['amount']=float(money(Decimal(str(row.get('amount') or 0))*rate))
     v.pp_agreement_currency=currency;v.pp_agreement_rate=float(rate)
     return v

@@ -22,7 +22,16 @@
     "effective_end",
     "staffing",
     "billing_item",
-    "auto_invoice"
+    "auto_invoice",
+    "validity_mode",
+    "resource_mode",
+    "rate_card",
+    "event_basis",
+    "governing_agreement",
+    "commercial_status",
+    "commercial_source",
+    "recurrence_note",
+    "commercial_snapshot"
   ],
   "fields": [
     {
@@ -111,6 +120,65 @@
       "label": "Create invoice draft when a milestone is approved",
       "fieldtype": "Check",
       "default": "0"
+    },
+    {
+      "fieldname": "validity_mode",
+      "fieldtype": "Select",
+      "label": "Agreement validity",
+      "options": "\nFixed period\nOngoing",
+      "default": ""
+    },
+    {
+      "fieldname": "resource_mode",
+      "fieldtype": "Select",
+      "label": "Resource commitment",
+      "options": "Fixed quantities\nEstimated quantities\nMinimum quantities\nRate card\nPer event",
+      "default": "Fixed quantities"
+    },
+    {
+      "fieldname": "rate_card",
+      "fieldtype": "Long Text",
+      "label": "Negotiated category rates",
+      "hidden": 1
+    },
+    {
+      "fieldname": "event_basis",
+      "fieldtype": "Check",
+      "label": "Event commercial snapshot",
+      "default": "0",
+      "hidden": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "governing_agreement",
+      "fieldtype": "Link",
+      "label": "Governing agreement",
+      "options": "PP Contract Terms",
+      "read_only": 1
+    },
+    {
+      "fieldname": "commercial_status",
+      "fieldtype": "Select",
+      "label": "Commercial confirmation",
+      "options": "Pending\nConfirmed\nCompany attested",
+      "default": "Pending"
+    },
+    {
+      "fieldname": "commercial_source",
+      "fieldtype": "Small Text",
+      "label": "Confirmation source"
+    },
+    {
+      "fieldname": "recurrence_note",
+      "fieldtype": "Small Text",
+      "label": "Future occurrences note"
+    },
+    {
+      "fieldname": "commercial_snapshot",
+      "fieldtype": "Long Text",
+      "label": "Inherited commercial commitment",
+      "hidden": 1,
+      "read_only": 1
     }
   ],
   "permissions": [

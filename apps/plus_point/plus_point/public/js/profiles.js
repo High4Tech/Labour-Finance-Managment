@@ -7,7 +7,7 @@
  plus_point.profile_section=(title,html,action='')=>'<section class="pp-profile-section"><header class="pp-section-heading"><h3>'+esc(__(title))+'</h3>'+action+'</header>'+html+'</section>';
  plus_point.profile_facts=items=>'<dl class="pp-profile-facts">'+items.map(([label,value])=>'<div><dt>'+esc(__(label))+'</dt><dd>'+esc(value||'—')+'</dd></div>').join('')+'</dl>';
  plus_point.profile_dialog=({title,fields,save})=>{
-  const d=new frappe.ui.Dialog({title:__(title),size:'large',fields:[...fields,{fieldtype:'HTML',fieldname:'save_feedback',options:'<p role="alert" class="pp-profile-save-error"></p>'}],primary_action_label:__('Save changes'),primary_action:async values=>{if(!plus_point.validate_inputs(d))return;d.disable_primary_action();try{await save(values,d);d.hide();document.dispatchEvent(new Event('pp:data-changed'));}catch(error){d.fields_dict.save_feedback.$wrapper.find('p').text(error.message);}finally{d.enable_primary_action();}}});
+  const d=new frappe.ui.Dialog({title:__(title),size:'large',fields:[...fields,{fieldtype:'HTML',fieldname:'save_feedback',options:'<p role="alert" class="pp-profile-save-error"></p>'}],primary_action_label:__('Save changes'),primary_action:async values=>{if(!plus_point.validate_inputs(d))return;d.disable_primary_action();try{const saved=await save(values,d);if(saved===false)return;d.hide();document.dispatchEvent(new Event('pp:data-changed'));}catch(error){d.fields_dict.save_feedback.$wrapper.find('p').text(error.message);}finally{d.enable_primary_action();}}});
   d.$wrapper.addClass('pp-profile-dialog');d.$wrapper.one('hidden.bs.modal',()=>d.$wrapper.remove());d.show();plus_point.enhance_selectors(d);for(const c of Object.values(d.fields_dict))c.$input?.attr('aria-label',c.df.label||'');return d;
  };
  plus_point.render_agreement_profile=async(area,data,catalogue,refresh,renderMilestones)=>{
@@ -15,9 +15,9 @@
   const conditions=JSON.parse(data.pp_conditions||'[]'),transport=JSON.parse(data.pp_transport_requirements||'[]'),layout=plus_point.agreement_profile_layout(area,data);
   area.querySelector('[data-profile-scope-copy]').textContent=text(data.scope);
   const refreshPanel=async()=>{layout.keepPanel();await refresh();};
-  const save=async values=>{await plus_point.with_pay_confirmation(confirm_over_budget=>rpc('save_agreement',{name,values:{...values,confirm_over_budget}}));await refreshPanel();};
+  const save=async values=>{const result=await plus_point.propose_agreement_update(name,values);if(result){await refreshPanel();return true;}return false;};
   const f=(fieldtype,fieldname,label,more={})=>({fieldtype,fieldname,label:__(label),...more});
-  area.querySelector('[data-profile-details]').onclick=()=>plus_point.profile_dialog({title:'Agreement details',fields:[f('Data','agreement_title','Agreement name',{reqd:1,default:data.agreement_title}),f('Date','effective_start','Agreement starts',{reqd:1,default:data.effective_start}),f('Date','effective_end','Agreement ends',{reqd:1,default:data.effective_end})],save});
+  area.querySelector('[data-profile-details]').onclick=()=>plus_point.profile_dialog({title:'Agreement details',fields:[f('Data','agreement_title','Agreement name',{reqd:1,default:data.agreement_title}),f('Date','effective_start','Agreement starts',{reqd:1,default:data.effective_start}),f('Select','validity_mode','Agreement validity',{options:'Fixed period\nOngoing',default:data.validity_mode||'Fixed period'}),f('Date','effective_end','Agreement ends',{default:data.effective_end})],save});
   area.querySelector('[data-profile-scope]').onclick=()=>plus_point.profile_dialog({title:'Agreement scope',fields:[f('Text Editor','scope','Scope and deliverables',{reqd:1,default:data.scope})],save});
   area.querySelector('[data-profile-client]').onclick=()=>plus_point.profile_dialog({title:'Client details',fields:plus_point.resource_fields('clients').filter(f=>f.fieldname!=='default_currency').map(f=>({...f,default:client[f.fieldname]})),save:values=>save({client:values})});
   area.querySelector('[data-profile-conditions]').onclick=()=>{

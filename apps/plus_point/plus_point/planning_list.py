@@ -97,6 +97,7 @@ def rows(doctype, fields=None, filters=None, order_by=None, start=0, page_length
     else:
         projects = frappe.get_list('Project', filters={'company': business.name}, pluck='name', limit_page_length=0)
         native_filters.append([doctype, 'project', 'in', projects or ['']])
+        native_filters.append([doctype, 'event_basis', '=', 0])
     status = str(planning_status or '')
     if status not in ('', 'Draft', 'Created'):
         frappe.throw('Choose All, Draft or Created.')

@@ -37,7 +37,7 @@ class EventStartTests(unittest.TestCase):
         first=drafts.configure_event(d['name'],dict(action='Now',event_name='One event'))
         second=drafts.configure_event(d['name'],dict(action='Now',event_name='A retry'))
         self.assertEqual(first['event'],second['event'])
-        self.assertEqual(frappe.db.count('PP Event Plan',{'project':a['project']}),1)
+        self.assertEqual(frappe.db.count('PP Event Plan',{'contract_terms':['in',frappe.get_all('PP Contract Terms',filters={'governing_agreement':a['name']},pluck='name') or [a['name']]]}),1)
 
     def test_existing_event_is_reused_without_overwriting_details(self):
         a=self.agreement();event=self.event(a)

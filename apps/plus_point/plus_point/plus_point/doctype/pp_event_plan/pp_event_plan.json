@@ -49,7 +49,7 @@
       "label": "Client billing agreement",
       "fieldtype": "Link",
       "options": "PP Contract Terms",
-      "description": "An unlinked event is excluded from finances. Select a replacement agreement before assigning workers or recording costs."
+      "description": "Event-specific commercial basis. A formal agreement is optional; approved rates remain traceable."
     },
     {
       "fieldname": "start_date",
@@ -80,7 +80,7 @@
       "label": "Site staffing requirements",
       "fieldtype": "Table",
       "options": "PP Event Staffing",
-      "reqd": 1
+      "reqd": 0
     },
     {
       "fieldname": "crew_allocated",

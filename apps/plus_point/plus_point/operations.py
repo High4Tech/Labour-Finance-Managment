@@ -78,7 +78,7 @@ def terms_doc(name,write=False):
 def catalogue():
     business=company()
     projects={r.name:r for r in frappe.get_list('Project',filters={'company':business.name,'pp_archived':0},fields=['name','project_name','customer','status'],limit_page_length=0)}
-    terms=frappe.get_list('PP Contract Terms',filters={'project':['in',list(projects) or ['']]},fields=['name','project','contract','billing_model','status','fixed_amount','effective_start','effective_end','agreement_title','pp_reference'],order_by='modified desc',limit_page_length=0)
+    terms=frappe.get_list('PP Contract Terms',filters={'project':['in',list(projects) or ['']],'event_basis':0},fields=['name','project','contract','billing_model','status','fixed_amount','effective_start','effective_end','agreement_title','pp_reference','validity_mode','resource_mode'],order_by='modified desc',limit_page_length=0)
     clients={r.name:r.customer_name for r in frappe.get_list('Customer',filters={'disabled':0},fields=['name','customer_name'],order_by='customer_name,name',limit_page_length=0)}
     for row in terms:row.update(title=row.agreement_title or projects[row.project].project_name,customer=projects[row.project].customer,client=clients.get(projects[row.project].customer,''))
     plans=frappe.get_list('PP Event Plan',filters={'company':business.name,'project':['in',list(projects) or ['']]},fields=['name','event_name','contract_terms','project','start_date','end_date','crew_allocated','pp_reference'],order_by='start_date desc,event_name',limit_page_length=0)
@@ -90,6 +90,8 @@ def catalogue():
 
 def validate_agreement(doc):
     from plus_point.agreement_lifecycle import apply_status
+    from plus_point.agreement_events import validate_terms
+    validate_terms(doc)
     apply_status(doc)
     from plus_point.daily_billing import validate as validate_checkpoints
     validate_checkpoints(doc)
@@ -114,13 +116,17 @@ def validate_agreement(doc):
             if (previous.site,previous.designation)==key and getdate(previous.start_date)<=getdate(row.end_date) and getdate(previous.end_date)>=getdate(row.start_date):frappe.throw('Combine overlapping requirements for the same venue and role.')
         seen.add(key)
     from plus_point.people import validate_capacity
-    validate_capacity(doc)
+    if doc.get('resource_mode') in (None,'','Fixed quantities'):validate_capacity(doc)
     if doc.get('auto_invoice') and not doc.get('billing_item'):frappe.throw('Choose a billing service item for automatic milestone invoices.')
 
 
 @frappe.whitelist(methods=['POST'])
 def save_agreement(values,name=None):
     business=company();values=frappe._dict(frappe.parse_json(values) or {})
+    if name:
+        from plus_point.agreement_updates import guard
+        guard(terms_doc(name))
+    if values.get('validity_mode')=='Ongoing':values.effective_end=None
     if values.get('scope') is not None and not frappe.utils.strip_html(values.scope).strip():values.scope=''
     if values.get('effective_start') and getdate(values.effective_start)<getdate(today()):
         changed=not name or getdate(terms_doc(name).effective_start)!=getdate(values.effective_start)
@@ -146,7 +152,7 @@ def save_agreement(values,name=None):
             project=frappe.get_doc(dict(doctype='Project',project_name=title,company=business.name,customer=customer,
                 expected_start_date=values.effective_start,expected_end_date=values.effective_end)).insert()
             contract=frappe.new_doc('Contract');contract.update(dict(party_type='Customer',party_name=customer,
-                start_date=values.effective_start,end_date=values.effective_end,contract_terms=values.get('scope') or title));contract.insert()
+                start_date=values.effective_start,end_date=values.effective_end,contract_terms=values.get('scope') or title));contract.flags.ignore_mandatory=not bool(values.effective_end);contract.insert()
             doc=frappe.new_doc('PP Contract Terms');doc.update(dict(project=project.name,contract=contract.name,currency=business.default_currency))
         if values.get('client') and (name or values.get('customer')):
             from plus_point.clients import save
@@ -156,19 +162,23 @@ def save_agreement(values,name=None):
         currency_changed=bool(name and values.get('pp_agreement_currency') and values.pp_agreement_currency!=previous_currency)
         if currency_changed and (frappe.db.exists('PP Milestone',{'contract_terms':name,'status':['in',['Approved','Invoiced']]}) or frappe.db.exists('Sales Invoice',{'project':project.name,'docstatus':['!=',2]})):
             frappe.throw('This agreement already has approved milestones or invoices. Create a new agreement to use a different currency and preserve its financial history.')
-        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions','pp_daily_checkpoints'):
+        for key in ('agreement_title','billing_model','effective_start','effective_end','fixed_amount','billing_item','auto_invoice','status','pp_agreement_currency','pp_agreement_rate','pp_future_crew_count','pp_conditions','pp_daily_checkpoints','validity_mode','resource_mode','rate_card','recurrence_note'):
             if key in values:doc.set(key,values[key])
         if 'pp_conditions' in values:
             conditions=frappe.parse_json(values.pp_conditions or '[]')
             if not isinstance(conditions,list) or len(conditions)>100 or any(not isinstance(c,str) or len(c)>5000 for c in conditions):frappe.throw('Use at most 100 text conditions of 5,000 characters each.')
             if conditions and not doc.meta.has_field('pp_conditions'):frappe.throw('This company app update is incomplete. Ask support to install agreement conditions, then save again. Your changes have not been saved.')
             doc.pp_conditions=frappe.as_json([c.strip() for c in conditions if c.strip()])
+        if not doc.get('event_basis'):
+            contract.start_date=getdate(doc.effective_start);contract.end_date=getdate(doc.effective_end) if doc.effective_end else None
+            contract.flags.ignore_mandatory=not bool(doc.effective_end)
+            contract.save()
         from plus_point.daily_billing import validate as validate_checkpoints,rebase
         rebase(doc)
         validate_checkpoints(doc)
         if not doc.billing_item:doc.billing_item=service_item()
         if values.get('scope') is not None:
-            contract.check_permission('write');contract.contract_terms=values.scope or (f'Draft: {doc.agreement_title}' if doc.status=='Draft' else values.scope);contract.save()
+            contract.check_permission('write');contract.contract_terms=values.scope or (f'Draft: {doc.agreement_title}' if doc.status=='Draft' else values.scope);contract.flags.ignore_mandatory=not bool(doc.effective_end);contract.save()
         if 'staffing' in values:
             if 'sites' in values and (not isinstance(values.sites,list) or len(values.sites)>12 or any(not isinstance(v,str) or len(v)>140 for v in values.sites)):frappe.throw('Use at most 12 named sites in an agreement.')
             locations={r.site_name:r.name for r in frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name'],limit_page_length=0)}
@@ -210,7 +220,7 @@ def save_agreement(values,name=None):
                         if raw.get(key) is not None:venue.set(key,raw[key])
                     venue.save()
                 rows.append(dict(site=site,**{key:raw.get(key) for key in ('designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')}))
-            if not rows and doc.status!='Draft':frappe.throw('Add at least one venue and worker category.')
+            if not rows and doc.status!='Draft' and doc.get('resource_mode') not in ('Rate card','Per event'):frappe.throw('Add at least one venue and worker category.')
             doc.set('staffing',rows)
         if 'transport_requirements' in values:
             from plus_point.resources import transport_requirements
@@ -230,11 +240,11 @@ def save_agreement(values,name=None):
             factor=Decimal(str(doc.pp_agreement_rate))/previous_rate
             for row in frappe.get_list('PP Milestone',filters={'contract_terms':name,'status':'Planned'},fields=['name'],limit_page_length=0):
                 milestone=linked('PP Milestone',row.name);milestone.amount=money(Decimal(str(milestone.amount))*factor);milestone.save()
-        if name:
+        if name and not frappe.flags.get('pp_agreement_revision'):
             from plus_point.signing import invalidate
             invalidate(doc.name)
         plan_name=frappe.db.get_value('PP Event Plan',{'project':project.name},'name')
-        if plan_name and 'staffing' in values:
+        if plan_name and 'staffing' in values and not frappe.flags.get('pp_agreement_revision'):
             plan=frappe.get_doc('PP Event Plan',plan_name)
             keys=('site','designation','start_date','end_date','phase')
             signature=lambda r:tuple(str(r.get(k) or '') for k in keys)
@@ -288,17 +298,24 @@ def agreement(name):
     doc=terms_doc(name);project=linked('Project',doc.project);contract=linked('Contract',doc.contract)
     from plus_point.clients import details
     scope=contract.contract_terms
+    if doc.get('commercial_snapshot'):scope=frappe.parse_json(doc.commercial_snapshot).get('scope') or scope
     if doc.status=='Draft' and scope==f'Draft: {doc.agreement_title}':scope=''
     result=doc.as_dict();result.update(archived=bool(project.get('pp_archived')),has_allocations=bool(frappe.db.exists('PP Assignment',{'contract_terms':name})),client_company=project.company,scope=scope,customer=project.customer,client=details(project.customer),is_signed=contract.get('is_signed'),
         files=frappe.get_list('File',filters={'attached_to_doctype':'Contract','attached_to_name':contract.name},fields=['name','file_name','file_url'],limit_page_length=0),
         venues=frappe.get_list('PP Site',filters={'project':project.name},fields=['name','site_name','country','city','address_line1'],order_by='site_name',limit_page_length=0),
         milestones=frappe.get_list('PP Milestone',filters={'contract_terms':name},fields=['name','milestone_title','due_date','amount','status','sales_invoice'],order_by='due_date,name',limit_page_length=0))
+    if doc.get('event_basis') and doc.get('governing_agreement'):
+        parent=terms_doc(doc.governing_agreement);result['validity_start']=parent.effective_start;result['validity_end']=parent.effective_end
+    result['updates']=frappe.get_list('PP Agreement Share',filters={'contract_terms':name,'proposed_values':['is','set']},fields=['name','status','change_summary','approval_method'],order_by='creation desc',limit_page_length=10)
     from plus_point.workflows import agreement_units
     return agreement_units(result)
 
 
 @frappe.whitelist(methods=['POST'])
-def create_plan(contract_terms,event_name,notes=None,start_date=None,end_date=None):
+def create_plan(contract_terms,event_name,notes=None,start_date=None,end_date=None,new_occurrence=0):
+    if frappe.utils.cint(new_occurrence):
+        from plus_point.agreement_events import create_event
+        return create_event(agreement=contract_terms,event_name=event_name,notes=notes,start_date=start_date,end_date=end_date)
     doc=terms_doc(contract_terms)
     if doc.status!='Active':frappe.throw('Activate this agreement before planning the event.')
     from plus_point.budget import lock_project
@@ -330,6 +347,9 @@ def plan(name):
     if not doc.contract_terms:return dict(doc.as_dict(),unlinked=True)
     terms_doc(doc.contract_terms)
     result=doc.as_dict();result.update(timeline=timeline(name),agreement=agreement(doc.contract_terms))
+    from plus_point.agreement_events import governing
+    result.update(governing_agreement=governing(frappe.get_doc('PP Contract Terms',doc.contract_terms)),standalone=bool(result['agreement'].get('event_basis') and not result['agreement'].get('governing_agreement')))
+    if result['governing_agreement']:result['governing_title']=frappe.db.get_value('PP Contract Terms',result['governing_agreement'],'agreement_title')
     workers={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','employee_name','designation','image'],limit_page_length=0)}
     allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate','pp_pay_basis','pp_pay_amount'],order_by='start_date,employee',limit_page_length=0)
     for row in allocations:
@@ -369,6 +389,16 @@ def save_project(name,values):
     project.save()
     for key in ('event_name','start_date','end_date','notes'):
         if key in data:doc.set(key,data[key])
+    terms=terms_doc(doc.contract_terms,True)
+    if terms.get('event_basis'):
+        if terms.governing_agreement:
+            parent=terms_doc(terms.governing_agreement)
+            if first<getdate(parent.effective_start) or parent.effective_end and last>getdate(parent.effective_end):frappe.throw('Event dates must remain within the governing agreement.')
+        terms.effective_start=first;terms.effective_end=last
+        for row in terms.staffing:row.start_date=first;row.end_date=last
+        from plus_point.daily_billing import rebase
+        rebase(terms)
+        terms.save()
     doc.save();return dict(name=doc.name)
 
 
@@ -492,8 +522,14 @@ def assign_crew(name,requirement,employees,payments=None,confirm_over_budget=0):
 @frappe.whitelist(methods=['POST'])
 def add_requirement(name,values):
     from plus_point.events import plan_doc
-    doc=plan_doc(name,True);terms_doc(doc.contract_terms)
+    doc=plan_doc(name,True);terms=terms_doc(doc.contract_terms)
     raw=frappe._dict(frappe.parse_json(values) or {})
+    if terms.get('event_basis') and terms.billing_model=='Daily':
+        agreed={r['designation']:money(r['client_rate']) for r in frappe.parse_json(terms.rate_card or '[]')}
+        agreed.update({r.designation:money(r.client_rate) for r in terms.staffing})
+        if raw.get('client_rate') is None:raw.client_rate=agreed.get(raw.designation,0)
+        if money(raw.client_rate)!=agreed.get(raw.designation):
+            terms.commercial_status='Pending';terms.commercial_source='Additional or changed client rate requires confirmation.';terms.save()
     doc.append('staffing',{key:raw.get(key) for key in ('site','designation','start_date','end_date','workers_required','wage_rate','client_rate','phase')})
     doc.save();return dict(name=doc.name)
 
@@ -575,16 +611,27 @@ def milestone_invoice(doc,method=None):
 def billing(contract_terms):
     terms=terms_doc(contract_terms)
     from plus_point.api import project_summary
+    ids=[terms.name]+frappe.get_list('PP Contract Terms',filters={'governing_agreement':terms.name,'event_basis':1},pluck='name',limit_page_length=200)
+    projects={terms.project}|set(frappe.get_list('PP Contract Terms',filters={'name':['in',ids]},pluck='project',limit_page_length=200))
+    summaries=[project_summary(p) for p in sorted(projects)];totals=dict(summaries[0])
+    for key,value in list(totals.items()):
+        if isinstance(value,str):
+            try:totals[key]=str(sum((money(r[key]) for r in summaries),money(0)))
+            except (ValueError,ArithmeticError):pass
+    totals['fixed_contract_value']=str(money(terms.fixed_amount))
     source_type='PP Milestone' if terms.billing_model=='Fixed' else 'PP Work Entry'
-    return dict(agreement=agreement(terms.name),totals=project_summary(terms.project),
-        unbilled_count=frappe.db.count(source_type,{'contract_terms':terms.name,'status':'Approved','sales_invoice':['is','not set'],
-            ('amount' if source_type=='PP Milestone' else 'billable_amount'):['>',0]}),
-        invoices=frappe.get_list('Sales Invoice',filters={'project':terms.project},fields=['name','posting_date','due_date','grand_total','outstanding_amount','currency','docstatus','status'],order_by='posting_date desc,name desc',limit_page_length=0))
+    return dict(agreement=agreement(terms.name),totals=totals,
+        unbilled_count=frappe.db.count(source_type,{'contract_terms':['in',ids],'status':'Approved','sales_invoice':['is','not set'],('amount' if source_type=='PP Milestone' else 'billable_amount'):['>',0]}),
+        invoices=frappe.get_list('Sales Invoice',filters={'project':['in',list(projects)]},fields=['name','posting_date','due_date','grand_total','outstanding_amount','currency','docstatus','status'],order_by='posting_date desc,name desc',limit_page_length=200))
+
 
 
 @frappe.whitelist(methods=['POST'])
 def extra_invoice(contract_terms,item_code,description,amount,invoice_currency=None,exchange_rate=None):
-    terms=terms_doc(contract_terms);project=linked('Project',terms.project)
+    terms=terms_doc(contract_terms)
+    from plus_point.agreement_events import assert_confirmed
+    assert_confirmed(terms)
+    project=linked('Project',terms.project)
     from plus_point.events import positive
     positive(amount,'Invoice amount');linked('Item',item_code)
     if not str(description or '').strip():frappe.throw('Describe the extra charge.')

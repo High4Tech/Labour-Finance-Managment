@@ -55,16 +55,16 @@ def validate_plan(doc):
     if doc.get('selected_crew'):
         from plus_point.crew import selection
         for name in selection(doc.selected_crew):linked('Employee',name,doc.company)
-    if terms.project!=doc.project or terms.status not in ('Active','Closed') or doc.is_new() and terms.status!='Active':
+    if terms.project!=doc.project or terms.status not in ('Active','Closed') and not terms.get('event_basis') or doc.is_new() and terms.status!='Active' and not terms.get('event_basis'):
         frappe.throw('Choose an active agreement to create an event. Existing events can retain their completed agreement.')
     days=span(doc.start_date,doc.end_date)
     if terms.effective_start and getdate(days[0])<getdate(terms.effective_start) or terms.effective_end and getdate(days[-1])>getdate(terms.effective_end):
         frappe.throw('Event dates must be inside the client billing agreement')
     positive(doc.wage_rate,'Daily crew wage',allow_zero=True)
-    positive(doc.client_rate,'Client rate',allow_zero=terms.billing_model=='Fixed')
+    positive(doc.client_rate,'Client rate',allow_zero=terms.billing_model=='Fixed' or bool(terms.get('event_basis')))
     if terms.billing_model=='Fixed' and as_decimal(doc.client_rate or 0)!=0:
         frappe.throw('Fixed contracts use milestones, not worker-day client charges')
-    if not doc.staffing or len(doc.staffing)>60 or len({r.site for r in doc.staffing})>12:
+    if (not doc.staffing and not terms.get('event_basis')) or len(doc.staffing)>60 or len({r.site for r in doc.staffing})>12:
         frappe.throw('Add 1â€“60 staffing phases covering at most 12 event sites')
     by_site=defaultdict(list)
     for row in doc.staffing:

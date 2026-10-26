@@ -70,7 +70,10 @@ def project_finances(filters=None):
         limit_page_length=0) if names else []
     unlinked_projects=set(frappe.get_list('PP Event Plan',filters={'project':['in',names or ['']],'contract_terms':['is','not set']},pluck='project',limit_page_length=0))
     contractor_projects = {row.project for row in terms}-unlinked_projects
-    projects = [row for row in projects if row.name in contractor_projects]
+    agreement_masters=set(frappe.get_list('PP Contract Terms',filters={'event_basis':0,'name':['in',frappe.get_list('PP Contract Terms',filters={'governing_agreement':['is','set']},pluck='governing_agreement',limit_page_length=0) or ['']]},pluck='project',limit_page_length=0))
+    for master in list(agreement_masters):
+        if frappe.db.exists('PP Event Plan',{'project':master}) or any(frappe.db.exists(dt,{'project':master}) for dt in ('PP Work Entry','Sales Invoice','Purchase Invoice','PP Wage Settlement')) or frappe.db.exists('PP Milestone',{'contract_terms':['in',[r.name for r in terms if r.project==master] or ['']],'status':['in',['Approved','Invoiced']]}):agreement_masters.discard(master)
+    projects = [row for row in projects if row.name in contractor_projects and row.name not in agreement_masters]
     names = [row.name for row in projects]
     terms_by_project = defaultdict(list)
     for row in terms:

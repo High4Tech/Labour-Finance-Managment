@@ -7,10 +7,12 @@ from plus_point.operations import terms_doc
 
 def recipients(recipient,cc=''):
     def parse(value):
-        if not isinstance(value,str) or '\n' in value or '\r' in value:frappe.throw('Enter email addresses separated by commas.')
-        rows=[v.strip() for v in value.split(',') if v.strip()]
+        if not isinstance(value,str) or '\r' in value:frappe.throw('Enter email addresses separated by commas.')
+        rows=[v.strip() for v in re.split(r'[,;\n]+',value) if v.strip()]
         if len(rows)>10:frappe.throw('Use at most ten CC email addresses.')
-        for email in rows:frappe.utils.validate_email_address(email,throw=True)
+        for email in rows:
+            if not re.fullmatch(r'[^@\s<>:,;]+@[^@\s<>:,;]+\.[^@\s<>:,;]+',email):frappe.throw('Enter valid email addresses without email headers.')
+            frappe.utils.validate_email_address(email,throw=True)
         return list(dict.fromkeys(rows))
     to=parse(recipient);copies=parse(cc)
     if len(to)!=1:frappe.throw('Enter one recipient email address.')
@@ -54,7 +56,7 @@ def save_pdf(doctype,name,title,content,identity=None):
 def signed_body(doc):
     body=doc.snapshot
     if doc.status=='Signed':
-        body+='<section class="acceptance"><h2>Client acceptance</h2><p>Signed by '+esc(doc.signed_by)+' · '+esc(str(doc.signed_on))+'</p><p>Agreement version: '+esc(doc.digest)+'</p>'
+        body+='<section class="acceptance"><h2>'+('Company-recorded client agreement (not a client signature)' if doc.get('approval_method')=='Company attested' else 'Client acceptance')+'</h2><p>'+('Recorded by ' if doc.get('approval_method')=='Company attested' else 'Signed by ')+esc(doc.signed_by)+' · '+esc(str(doc.signed_on))+'</p><p>Agreement version: '+esc(doc.digest)+'</p>'
         if doc.signature:
             import base64
             file=frappe.db.get_value('File',{'attached_to_doctype':'PP Agreement Share','attached_to_name':doc.name,'file_url':doc.signature},'name')
@@ -92,7 +94,8 @@ def invoice_pdf(name):
 @frappe.whitelist()
 def documents(name):
     terms=terms_doc(name)
-    invoices=frappe.get_list('Sales Invoice',filters={'project':terms.project},fields=['name','creation'],limit_page_length=500)
+    projects=[terms.project]+frappe.get_list('PP Contract Terms',filters={'governing_agreement':name,'event_basis':1},pluck='project',limit_page_length=0)
+    invoices=frappe.get_list('Sales Invoice',filters={'project':['in',projects]},fields=['name','creation'],limit_page_length=500)
     result=frappe.get_list('File',filters={'attached_to_doctype':'Contract','attached_to_name':terms.contract},fields=['name','file_name','file_url','creation','is_private'],order_by='creation desc',limit_page_length=100)
     if invoices:
         invoice_files=frappe.get_list('File',filters={'attached_to_doctype':'Sales Invoice','attached_to_name':['in',[row.name for row in invoices]]},fields=['name','file_name','file_url','creation','is_private','attached_to_name'],order_by='creation desc',limit_page_length=200)
@@ -101,7 +104,7 @@ def documents(name):
         for invoice in invoices:
             if invoice.name not in printed:result.append(frappe._dict(name='invoice:'+invoice.name,invoice=invoice.name,file_name=invoice.name+' Invoice.pdf',creation=invoice.creation,is_private=1))
     # Signed snapshots are documents already; render their PDF only when opened.
-    for share in frappe.get_list('PP Agreement Share',filters={'contract_terms':name,'status':'Signed'},fields=['name','snapshot','digest','status','signed_by','signed_on','signature'],order_by='signed_on desc',limit_page_length=10):
+    for share in frappe.get_list('PP Agreement Share',filters={'contract_terms':name,'status':'Signed'},fields=['name','snapshot','digest','status','signed_by','signed_on','signature','approval_method'],order_by='signed_on desc',limit_page_length=10):
         title=(terms.pp_reference or name)+' Signed agreement'
         filename=pdf_filename(title,document_html(signed_body(share),terms.pp_reference or name))
         if not any(re.fullmatch(re.escape(filename[:-4])+r'(?:[a-f0-9]{6})?\.pdf',r.file_name) for r in result):

@@ -37,6 +37,8 @@ def local_defaults():
 
 
 def after_migrate():
+    from plus_point.agreement_events import install as install_agreement_events
+    install_agreement_events()
     from plus_point.drafts import install as install_drafts
     install_drafts()
     refresh_record_permissions()

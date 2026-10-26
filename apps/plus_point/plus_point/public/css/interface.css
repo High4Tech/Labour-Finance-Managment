@@ -228,3 +228,18 @@ body.pp-ui :is([data-remove-upload],[data-remove-file],button[data-label^=Delete
 
 body.pp-ui .pp-agreement-files [data-preview-file]{height:auto!important;white-space:normal!important;overflow-wrap:anywhere;text-align:left;min-width:0;flex:1}
 body.pp-ui :is([data-save-worker-profile],[data-save-stock]){background:#116f65!important;border-color:#116f65!important;color:#fff!important;--icon-stroke:#fff}
+
+/* Native dropdown chrome is absent once a choice group replaces its input. */
+.pp-choice-control .control-input-wrapper,.pp-choice-control .select-icon,.pp-choice-control>.control-label{display:none!important}
+.pp-choice-control .pp-choice-field{margin:0;padding:0;min-height:68px}
+.pp-choice-control .pp-choice-field legend{font-size:14px;line-height:21px;margin:0 0 8px;padding:0}
+.pp-choice-control{align-self:start}
+body.pp-ui .pp-agreement-files li{display:flex;align-items:center;gap:12px;padding:12px 0;min-width:0}
+body.pp-ui .pp-agreement-files .pp-file-name{justify-content:flex-start!important;text-align:left!important;flex:1;padding:4px 0!important}
+body.pp-ui .pp-agreement-files .pp-icon-button{flex:none;width:40px;height:40px;padding:8px!important}
+.pp-delivery-checklist .form-section{padding:0!important;margin:0!important;border:0!important}
+.pp-delivery-checklist .form-column{padding:0 12px 0 0!important;min-width:0}
+.pp-delivery-checklist .frappe-control{margin-bottom:16px!important}
+.pp-delivery-checklist [data-fieldtype=Check]{width:100%;max-width:none!important}
+.pp-delivery-checklist [data-fieldtype=Check] label,.pp-delivery-checklist [data-fieldtype=Check] .label-area{max-width:none!important;width:auto!important;white-space:normal}
+.pp-delivery-checklist [data-fieldname=cc] textarea{min-height:76px;height:76px}

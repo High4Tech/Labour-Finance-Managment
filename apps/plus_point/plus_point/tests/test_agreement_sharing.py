@@ -46,10 +46,10 @@ class AgreementSharingTests(unittest.TestCase):
         a=self.agreement();result=docs.finalize(a['name']);file=frappe.get_doc('File',result['pdf']['name']);self.assertEqual(file.is_private,1);self.assertEqual(file.attached_to_name,frappe.get_doc('PP Contract Terms',a['name']).contract)
         self.assertEqual(docs.agreement_pdf(a['name'])['name'],file.name,repr(frappe.get_doc('PP Agreement Share',result['share']['name']).snapshot)+' VS '+repr(signing.snapshot(a['name'])))
         share=frappe.get_doc('PP Agreement Share',result['share']['name']);original=share.snapshot
-        op.save_agreement({'scope':'Updated scope for a later document version'},a['name'])
+        __import__('plus_point.agreement_updates',fromlist=['propose']).propose(a['name'],{'scope':'Updated scope for a later document version'},'New document version',method='Company attested')
         self.assertNotEqual(docs.agreement_pdf(a['name'])['name'],file.name)
         self.assertEqual(docs.agreement_pdf(a['name'],share.name)['name'],file.name);self.assertEqual(frappe.get_doc('PP Agreement Share',share.name).snapshot,original)
-        self.assertTrue(docs.data(file.name)['content']);self.assertEqual(len(docs.documents(a['name'])),2);self.assertNotIn('<th>Dates</th>',original)
+        self.assertTrue(docs.data(file.name)['content']);self.assertEqual(len(docs.documents(a['name'])),3);self.assertNotIn('<th>Dates</th>',original)
     def test_signed_snapshot_is_in_documents_and_its_pdf_retains_acceptance(self):
         from urllib.parse import urlparse,parse_qs
         a=self.agreement();result=docs.finalize(a['name']);token=parse_qs(urlparse(result['share']['url']).query)['token'][0]

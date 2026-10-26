@@ -10,6 +10,9 @@ class PPContractTerms(Document):
         validate_agreement(self)
         frappe.db.get_value('Contract', self.contract, 'name', for_update=True)
         old = self.get_doc_before_save()
+        if old and any(self.get(k)!=old.get(k) for k in ('agreement_title','billing_model','fixed_amount','effective_start','effective_end','validity_mode','resource_mode','rate_card','pp_conditions','pp_agreement_currency')):
+            from plus_point.agreement_updates import guard
+            guard(old)
         def normalized(doc, field):
             value = doc.get(field)
             if field == 'fixed_amount':
@@ -29,7 +32,7 @@ class PPContractTerms(Document):
             frappe.throw("Billing model must be Daily or Fixed")
         if self.effective_end and getdate(self.effective_end) < getdate(self.effective_start):
             frappe.throw("End date must not precede start date")
-        if self.billing_model == "Fixed" and self.status!='Draft' and as_decimal(self.fixed_amount or 0) <= 0:
+        if self.billing_model == "Fixed" and self.status!='Draft' and not self.get('event_basis') and as_decimal(self.fixed_amount or 0) <= 0:
             frappe.throw("Fixed contracts require a positive fixed amount")
         if self.billing_model == "Daily" and as_decimal(self.fixed_amount or 0) != 0:
             frappe.throw("Daily contracts must not specify a fixed amount")

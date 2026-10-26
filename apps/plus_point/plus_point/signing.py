@@ -23,9 +23,12 @@ def snapshot(name):
     resources=''
     requirements=frappe.parse_json(a.get('pp_transport_requirements') or '[]')
     resources+=''.join('<li>'+e(str(r['quantity']))+' × '+e(r['vehicle_type'])+' · '+e(r.get('site_name') or 'All sites')+'</li>' for r in requirements)
+    rate_rows=''.join('<tr><td>'+e(r['designation'])+'</td><td>'+e(amount(r['client_rate']))+'</td></tr>' for r in frappe.parse_json(a.get('rate_card') or '[]'))
+    rate_section='<h2>Negotiated rate card</h2><table><thead><tr><th>Category</th><th>Client rate / day</th></tr></thead><tbody>'+rate_rows+'</tbody></table>' if rate_rows else ''
+    requirements_table='<table><thead><tr><th>Site</th><th>Crew category</th><th>Crew / day</th><th>Client pricing</th></tr></thead><tbody>'+rows+'</tbody></table>' if rows else '<p>Resource quantities and venues are confirmed for each event.</p>'
     contact_line=' · '.join(str(a['client'].get(k) or '') for k in ('email','phone') if a['client'].get(k))
     logo=f'<img alt="" src="{e(company.company_logo)}" style="max-width:160px;max-height:70px">' if company.company_logo and not company.company_logo.startswith('/private/') else ''
-    return f'''<article class="agreement-document">{logo}<p>{e(company.company_name)} · {e(a.get('pp_reference') or '')}</p><h1>{e(a['agreement_title'])}</h1><p>Client: <strong>{e(a['client']['title'])}</strong></p><p>{e(str(a['effective_start']))} – {e(str(a['effective_end']))}</p><h2>Client details</h2><p>{e(a['client'].get('contact_name') or '')}<br>{e(contact_line)}<br>{e(', '.join(str(a['client'].get(k) or '') for k in ('address_line1','city','country') if a['client'].get(k)))}</p><h2>Agreed scope</h2><p>{e(frappe.utils.strip_html(a['scope'] or '')).replace(chr(10),'<br>')}</p>{'<h2>Conditions</h2><ol>'+conditions+'</ol>' if conditions else ''}<h2>Pricing</h2><p>{e(a['billing_model'])} billing{': '+e(amount(a['fixed_amount'])) if a['billing_model']=='Fixed' else ''}</p><table><thead><tr><th>Site</th><th>Crew category</th><th>Crew / day</th><th>Client pricing</th></tr></thead><tbody>{rows}</tbody></table>{'<h2>Payment milestones</h2><table><thead><tr><th>Milestone</th><th>Due</th><th>Amount</th></tr></thead><tbody>'+milestones+'</tbody></table>' if milestones else ''}{'<h2>Daily billing milestones</h2><p>Invoices use approved attendance only.</p><table><thead><tr><th scope="col">Milestone</th><th scope="col">Attendance period</th><th scope="col">Payment due</th></tr></thead><tbody>'+checkpoints+'</tbody></table>' if checkpoints else ''}{'<h2>Agreed vehicles</h2><ul>'+resources+'</ul>' if resources else ''}</article>'''
+    return f'''<article class="agreement-document">{logo}<p>{e(company.company_name)} · {e(a.get('pp_reference') or '')}</p><h1>{e(a['agreement_title'])}</h1><p>Client: <strong>{e(a['client']['title'])}</strong></p><p>{e(str(a['effective_start']))} – {e(str(a['effective_end']) if a['effective_end'] else 'Ongoing')}</p><h2>Client details</h2><p>{e(a['client'].get('contact_name') or '')}<br>{e(contact_line)}<br>{e(', '.join(str(a['client'].get(k) or '') for k in ('address_line1','city','country') if a['client'].get(k)))}</p><h2>Agreed scope</h2><p>{e(frappe.utils.strip_html(a['scope'] or '')).replace(chr(10),'<br>')}</p>{'<h2>Conditions</h2><ol>'+conditions+'</ol>' if conditions else ''}<h2>Pricing</h2><p>{e(a['billing_model'])} billing{': '+e(amount(a['fixed_amount'])) if a['billing_model']=='Fixed' else ''}</p><p>Resource commitment: {e(a.get('resource_mode') or 'Fixed quantities')}</p>{rate_section}{requirements_table}{'<h2>Payment milestones</h2><table><thead><tr><th>Milestone</th><th>Due</th><th>Amount</th></tr></thead><tbody>'+milestones+'</tbody></table>' if milestones else ''}{'<h2>Daily billing milestones</h2><p>Invoices use approved attendance only.</p><table><thead><tr><th scope="col">Milestone</th><th scope="col">Attendance period</th><th scope="col">Payment due</th></tr></thead><tbody>'+checkpoints+'</tbody></table>' if checkpoints else ''}{'<h2>Agreed vehicles</h2><ul>'+resources+'</ul>' if resources else ''}</article>'''
 
 def digest(html):return hashlib.sha256(html.encode()).hexdigest()
 
@@ -33,7 +36,7 @@ def digest(html):return hashlib.sha256(html.encode()).hexdigest()
 def status(name):
     from plus_point.operations import terms_doc
     terms_doc(name)
-    rows=frappe.get_list('PP Agreement Share',filters={'contract_terms':name},fields=['name','status','expires','recipient','signed_by','signed_on'],order_by='creation desc',limit_page_length=10)
+    rows=frappe.get_list('PP Agreement Share',filters={'contract_terms':name},fields=['name','status','expires','recipient','signed_by','signed_on','approval_method','change_summary'],order_by='creation desc',limit_page_length=10)
     return dict(requests=rows,email_configured=bool(frappe.db.exists('Email Account',{'enable_outgoing':1})))
 
 @frappe.whitelist(methods=['POST'])
@@ -80,7 +83,7 @@ def public_doc(token,lock=False):
 @rate_limit(limit=30,seconds=60)
 def review(token):
     doc=public_doc(token)
-    return dict(html=doc.snapshot,status=doc.status,signed_by=doc.signed_by,signed_on=doc.signed_on,reference=doc.name,digest=doc.digest)
+    return dict(html=doc.snapshot,status=doc.status,signed_by=doc.signed_by,signed_on=doc.signed_on,reference=doc.name,digest=doc.digest,change_summary=doc.get('change_summary'),approval_method=doc.get('approval_method'))
 
 @frappe.whitelist(allow_guest=True,methods=['POST'])
 @rate_limit(limit=8,seconds=60)
@@ -93,9 +96,12 @@ def accept(token,signer,email,consent,signature=None):
     if len(signer)<2 or len(signer)>140 or str(consent).lower() not in ('1','true'):frappe.throw('Enter your full name and confirm agreement acceptance.')
     frappe.utils.validate_email_address(email,throw=True)
     if not email:frappe.throw('Enter your email address.')
+    if doc.get('proposed_values'):
+        from plus_point.agreement_updates import apply
+        apply(doc)
     # The bearer token grants access to this exact frozen snapshot, never the company workspace.
     with operation():
-        doc.status='Signed';doc.signed_by=signer;doc.signed_email=email;doc.signed_on=now_datetime()
+        doc.approval_method='Client signature';doc.status='Signed';doc.signed_by=signer;doc.signed_email=email;doc.signed_on=now_datetime()
         if signature:
             import base64,binascii
             if not isinstance(signature,str) or not signature.startswith('data:image/png;base64,') or len(signature)>300000:frappe.throw('Draw a valid signature or leave the drawing blank.')
@@ -112,7 +118,7 @@ def accept(token,signer,email,consent,signature=None):
         for user in recipients:
             if user!='Guest' and frappe.db.get_value('User',user,'enabled'):
                 frappe.get_doc(dict(doctype='Notification Log',subject=f'Agreement signed: {terms.agreement_title}'[:140],email_content=text,for_user=user,type='Alert',document_type='PP Contract Terms',document_name=terms.name)).insert(ignore_permissions=True)
-    return dict(signed=True,reference=doc.name)
+    return dict(signed=True,reference=doc.name,updated=bool(doc.get('proposed_values')))
 
 
 def invalidate(name):

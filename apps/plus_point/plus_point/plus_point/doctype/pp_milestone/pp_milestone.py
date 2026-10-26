@@ -47,6 +47,8 @@ class PPMilestone(Document):
                 frappe.throw('A reserved draft invoice must include this milestone as its source')
             if invoice.currency!=terms.currency and not any(row.get('pp_source_type')=='PP Milestone' and row.get('pp_source_name')==self.name for row in invoice.items):
                 frappe.throw('A foreign-currency milestone invoice must link this approved milestone as its source.')
+        from plus_point.agreement_events import validate_milestone_group
+        validate_milestone_group(self,terms)
         if self.status in {"Approved", "Invoiced"}:
             others = frappe.db.sql('''SELECT amount FROM `tabPP Milestone`
                 WHERE contract_terms=%s AND status IN ('Approved', 'Invoiced')

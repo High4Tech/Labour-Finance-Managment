@@ -72,6 +72,11 @@ def project_summary(project):
         operational_profit=str(money(total_revenue - total_wages - other_costs)),
         cost_scope='Posted net project purchase items and sanctioned expense lines; excludes taxes, overhead and unallocated costs',
     )
+    # A legacy event may share the agreement project. Its displayed allocation is
+    # the residual after explicit allocations to additional delivery projects.
+    for term in terms:
+        children=frappe.get_list('PP Contract Terms',filters={'governing_agreement':term.name,'event_basis':1},fields=['fixed_amount'],limit_page_length=0)
+        if children:result['fixed_contract_value']=str(max(Decimal(0),money(result['fixed_contract_value'])-sum((money(r.fixed_amount) for r in children),Decimal(0))))
     return result
 
 

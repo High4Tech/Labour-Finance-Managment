@@ -49,7 +49,7 @@ def validate(terms):
             if not expected or any(row.get(k)!=expected[k] for k in ('from_date','to_date','due_date')):frappe.throw('The payment schedule no longer matches the agreement dates. Set the payment schedule again.')
         start=getdate(row.get('from_date'));end=getdate(row.get('to_date'))
         if not row.get('from_date') or not row.get('to_date') or start>end:frappe.throw('Choose a valid attendance period for each billing checkpoint.')
-        if start<getdate(terms.effective_start) or end>getdate(terms.effective_end):frappe.throw('Billing periods must be within the agreement dates.')
+        if start<getdate(terms.effective_start) or terms.effective_end and end>getdate(terms.effective_end):frappe.throw('Billing periods must be within the agreement dates.')
         if not row.get('due_date') or getdate(row['due_date'])<end:frappe.throw('Payment due must be on or after the attendance period ends.')
         if any(a<=end and b>=start for a,b in occupied):frappe.throw('Daily billing periods cannot overlap. Edit the existing checkpoint instead.')
         occupied.append((start,end))
@@ -59,6 +59,9 @@ def validate(terms):
 
 def rebase(terms):
     rows=frappe.parse_json(terms.get('pp_daily_checkpoints') or '[]')
+    if not terms.effective_end:
+        if rows:frappe.throw('For an ongoing agreement, define payment schedules on each dated event.')
+        return
     recurring=next((r for r in rows if r.get('schedule_id')),None)
     if not recurring:return
     generated=periods(terms.effective_start,terms.effective_end,recurring['frequency'],recurring.get('payment_days',0),recurring['schedule_id'])
@@ -67,14 +70,22 @@ def rebase(terms):
     terms.pp_daily_checkpoints=frappe.as_json([old[r['id']] if old.get(r['id'],{}).get('invoice') or old.get(r['id'],{}).get('supplemental_invoices') else r for r in generated])
 
 
-def create_period_invoice(terms,row):
+def event_terms(terms):
+    return [terms.name]+frappe.get_list('PP Contract Terms',filters={'governing_agreement':terms.name,'event_basis':1},pluck='name',limit_page_length=200)
+
+
+def create_period_invoice(terms,row,limit=50):
     from plus_point.billing import create_invoice
-    result=create_invoice(terms.name,from_date=row['from_date'],to_date=row['to_date'])
-    invoice=frappe.get_doc('Sales Invoice',result['name'])
-    invoice.posting_date=row['to_date'];invoice.due_date=row['due_date']
-    for payment in invoice.get('payment_schedule',[]):payment.due_date=row['due_date']
-    invoice.save()
-    return result
+    result=[]
+    for name in event_terms(terms):
+        if len(result)>=limit:break
+        if not frappe.db.exists('PP Work Entry',{'contract_terms':name,'status':'Approved','sales_invoice':['is','not set'],'billable_amount':['>',0],'work_date':['between',[row['from_date'],row['to_date']]]}):continue
+        item=create_invoice(name,from_date=row['from_date'],to_date=row['to_date'])
+        invoice=frappe.get_doc('Sales Invoice',item['name']);invoice.posting_date=row['to_date'];invoice.due_date=row['due_date']
+        for payment in invoice.get('payment_schedule',[]):payment.due_date=row['due_date']
+        invoice.save();result.append(item['name'])
+    if not result:frappe.throw('No approved, commercially confirmed unbilled work in this period.')
+    return dict(name=result[0],invoices=result,sources=len(result),status='Draft')
 
 
 @frappe.whitelist()
@@ -82,7 +93,7 @@ def overview(agreement):
     from plus_point.operations import terms_doc
     terms=terms_doc(agreement);rate=float(terms.get('pp_agreement_rate') or 1);result=[]
     for row in frappe.parse_json(terms.get('pp_daily_checkpoints') or '[]'):
-        work=frappe.get_list('PP Work Entry',filters={'contract_terms':terms.name,'status':'Approved','work_date':['between',[row['from_date'],row['to_date']]],'sales_invoice':['is','not set']},fields=['name','billable_amount'],limit_page_length=0)
+        work=frappe.get_list('PP Work Entry',filters={'contract_terms':['in',event_terms(terms)],'status':'Approved','work_date':['between',[row['from_date'],row['to_date']]],'sales_invoice':['is','not set']},fields=['name','billable_amount'],limit_page_length=0)
         result.append(dict(row,amount=float(sum((money(r.billable_amount) for r in work),money(0)))/rate,
             sources=len(work),status='Invoiced' if row.get('invoice') else 'Ready to invoice' if work and row['to_date']<=today() else 'Planned'))
     return result
@@ -98,6 +109,7 @@ def invoice(agreement,checkpoint):
     if row['to_date']>today():frappe.throw('Wait until this attendance period ends before generating its invoice.')
     result=create_period_invoice(terms,row)
     row['invoice']=result['name']
+    if len(result.get('invoices',[]))>1:row['supplemental_invoices']=result['invoices'][1:]
     # The reference is derived from the locked invoice action, never accepted from the browser.
     frappe.db.set_value('PP Contract Terms',agreement,'pp_daily_checkpoints',frappe.as_json(rows))
     return result
@@ -123,15 +135,16 @@ def run_recurring():
                 terms=frappe.get_doc('PP Contract Terms',candidate.name,for_update=True)
                 rows=frappe.parse_json(terms.pp_daily_checkpoints or '[]');changed=False
                 if not any(r.get('automatic') for r in rows):continue
-                pending_dates={str(r.work_date) for r in frappe.get_all('PP Work Entry',filters={'contract_terms':terms.name,'status':'Approved','billable_amount':['>',0],'sales_invoice':['is','not set']},fields=['work_date'],group_by='work_date',order_by='work_date',limit_page_length=1000)}
+                pending_dates={str(r.work_date) for r in frappe.get_all('PP Work Entry',filters={'contract_terms':['in',event_terms(terms)],'status':'Approved','billable_amount':['>',0],'sales_invoice':['is','not set']},fields=['work_date'],group_by='work_date',order_by='work_date',limit_page_length=1000)}
                 for row in rows:
                     if created>=50:break
                     if not row.get('automatic') or row.get('to_date','9999')>=today():continue
                     if not any(row['from_date']<=date<=row['to_date'] for date in pending_dates):continue
-                    result=create_period_invoice(terms,row)
+                    result=create_period_invoice(terms,row,limit=50-created)
                     if row.get('invoice'):row.setdefault('supplemental_invoices',[]).append(result['name'])
                     else:row['invoice']=result['name']
-                    changed=True;created+=1
+                    row.setdefault('supplemental_invoices',[]).extend(result.get('invoices',[])[1:])
+                    changed=True;created+=len(result.get('invoices') or [result['name']])
                 if changed:frappe.db.set_value('PP Contract Terms',terms.name,'pp_daily_checkpoints',frappe.as_json(rows))
             except Exception:
                 frappe.db.rollback(save_point='pp_recurring_invoice');frappe.log_error(title='Recurring attendance invoice',message=frappe.get_traceback())

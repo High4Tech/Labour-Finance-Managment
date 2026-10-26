@@ -56,6 +56,8 @@ def create_invoice(contract_terms, item_code=None, from_date=None, to_date=None,
     frappe.has_permission('Sales Invoice', 'create', throw=True)
     terms = frappe.get_doc('PP Contract Terms', contract_terms)
     terms.check_permission('read')
+    from plus_point.agreement_events import assert_confirmed
+    assert_confirmed(terms)
     frappe.db.get_value('PP Contract Terms', terms.name, 'name', for_update=True)
     if terms.status not in ('Active','Closed'):
         frappe.throw('Create the agreement before billing approved work')
@@ -103,6 +105,11 @@ def create_invoice(contract_terms, item_code=None, from_date=None, to_date=None,
 
 
 def validate_invoice(doc, method=None):
+    if doc.project:
+        basis=frappe.db.get_value('PP Contract Terms',{'project':doc.project,'event_basis':1},'name')
+        if basis:
+            from plus_point.agreement_events import assert_confirmed
+            assert_confirmed(frappe.get_doc('PP Contract Terms',basis))
     seen = set()
     for row in doc.items:
         if not row.get('pp_source_type') and not row.get('pp_source_name'):
@@ -121,6 +128,8 @@ def validate_invoice(doc, method=None):
         if source.status not in ('Approved', 'Invoiced'):
             frappe.throw('Only approved sources may be invoiced')
         terms = frappe.get_doc('PP Contract Terms', source.contract_terms)
+        from plus_point.agreement_events import assert_confirmed
+        assert_confirmed(terms)
         project = frappe.get_doc('Project', terms.project)
         customer = frappe.db.get_value('Contract', terms.contract, 'party_name')
         expected = (source.get('pp_invoice_amount_snapshot') or source.billable_amount) if key[0] == 'PP Work Entry' else source.amount

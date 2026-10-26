@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from hashlib import sha256
 import json
 import frappe
-from frappe.utils import get_datetime, now_datetime, getdate
+from frappe.utils import get_datetime, now_datetime, getdate, today
 
 DT='PP Planning Draft'
 
@@ -60,15 +60,22 @@ def move_comments(doc,doctype,name):
 def create_event_from_draft(doc,data,terms=None):
     from decimal import Decimal, InvalidOperation
     from plus_point.operations import create_plan,save_project,terms_doc
-    terms=terms or terms_doc(doc.agreement)
-    event=create_plan(doc.agreement,data['event_name'],data.get('notes'),data.get('start_date'),data.get('end_date'))
-    if not event['existing']:
+    terms=terms or (terms_doc(doc.agreement) if doc.agreement else None)
+    if data.get('new_occurrence') or not doc.agreement:
+        from plus_point.agreement_events import create_event
+        prepared=dict(data)
+        from plus_point.events import positive
+        for key in ('budget','fixed_amount'):
+            if key in prepared:prepared[key]=float(positive(prepared[key],key.replace('_',' ').title(),allow_zero=True))*float((terms.get('pp_agreement_rate') if terms else 1) or 1)
+        event=create_event(agreement=doc.agreement,**{k:v for k,v in prepared.items() if k in ('event_name','start_date','end_date','customer','billing_model','fixed_amount','commercial_status','commercial_source','notes','budget','enforce_budget')})
+    else:event=create_plan(doc.agreement,data['event_name'],data.get('notes'),data.get('start_date'),data.get('end_date'))
+    if not event['existing'] and not data.get('new_occurrence') and doc.agreement:
         changes={key:data[key] for key in ('budget','enforce_budget') if key in data}
         if 'budget' in changes:
             try:amount=Decimal(str(changes['budget'] or 0))
             except (InvalidOperation,ValueError,TypeError):frappe.throw('Enter a valid spending budget of zero or more.')
             if not amount.is_finite() or amount<0:frappe.throw('Enter a valid spending budget of zero or more.')
-            changes['budget']=float(amount)*float(terms.get('pp_agreement_rate') or 1)
+            changes['budget']=float(amount)*float((terms.get('pp_agreement_rate') if terms else 1) or 1)
         if changes:save_project(event['name'],changes)
     move_comments(doc,'PP Event Plan',event['name'])
     doc.event=event['name'];doc.status='Completed';doc.payload='{}';doc.last_error=''
@@ -131,16 +138,17 @@ def finish(name,record):
 @frappe.whitelist(methods=['POST'])
 def event_for_agreement(agreement):
     from plus_point.operations import terms_doc
-    terms=terms_doc(agreement)
-    if terms.status!='Active':frappe.throw('Complete and activate the agreement before creating its event.')
+    terms=terms_doc(agreement) if agreement else None
+    if terms and terms.status!='Active':frappe.throw('Complete and activate the agreement before creating its event.')
     frappe.db.get_value('PP Contract Terms',agreement,'name',for_update=True)
     key=sha256(('agreement-event|'+agreement).encode()).hexdigest()
-    existing=frappe.db.get_value(DT,{'draft_key':key})
-    if existing:return public(checked(existing))
-    event=frappe.db.get_value('PP Event Plan',{'project':terms.project},'name')
+    existing=frappe.db.get_value(DT,{'agreement':agreement,'kind':'Event','status':['in',['Draft','Scheduled']]},'name')
+    if existing and frappe.db.get_value(DT,existing,'status')!='Completed':return public(checked(existing))
+    event=None
+    key=key+'-'+frappe.generate_hash(length=8)
     doc=frappe.get_doc(dict(doctype=DT,company=frappe.db.get_value('Project',terms.project,'company'),kind='Event',draft_key=key,
         title=terms.agreement_title,agreement=agreement,event=event,status='Completed' if event else 'Draft',revision=1,
-        payload=json.dumps(dict(contract_terms=agreement,event_name=terms.agreement_title,notes=''))))
+        payload=json.dumps(dict(contract_terms=agreement,event_name=terms.agreement_title,start_date=str(terms.effective_start),end_date=str(terms.effective_end or terms.effective_start),new_occurrence=1,notes=''))))
     with writing():doc.insert()
     return public(doc)
 
@@ -154,20 +162,20 @@ def configure_event(name,values):
         plan_doc(doc.event)
         return public(doc)
     if doc.kind!='Event' or doc.status=='Completed':frappe.throw('Open an unfinished event draft.')
-    agreement=v.get('contract_terms') or doc.agreement or frappe.parse_json(doc.payload or '{}').get('contract_terms')
-    terms=terms_doc(agreement)
-    if terms.status!='Active':frappe.throw('Choose an active agreement for this event.')
+    agreement=None if v.get('event_path')=='Standalone' else v.get('contract_terms') or doc.agreement or frappe.parse_json(doc.payload or '{}').get('contract_terms')
+    terms=terms_doc(agreement) if agreement else None
+    if terms and terms.status!='Active':frappe.throw('Choose an active agreement for this event.')
     if not str(v.get('event_name') or '').strip():frappe.throw('Enter the event name.')
     if v.get('action') not in ('Draft','Now','Schedule'):frappe.throw('Choose Keep draft, Create now or Schedule creation.')
     doc.agreement=agreement;doc.title=str(v.event_name).strip()[:140];doc.scheduled_for=None;doc.last_error=''
-    first=getdate(v.get('start_date') or terms.effective_start);last=getdate(v.get('end_date') or terms.effective_end)
-    if first>last or first<getdate(terms.effective_start) or last>getdate(terms.effective_end):frappe.throw('Choose event dates within the agreement, with end on or after start.')
-    data=dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last));data.update({key:v[key] for key in ('budget','enforce_budget') if key in v});doc.payload=json.dumps(data)
+    first=getdate(v.get('start_date') or (terms.effective_start if terms else today()));last=getdate(v.get('end_date') or (terms.effective_end if terms else first))
+    if first>last or terms and (first<getdate(terms.effective_start) or terms.effective_end and last>getdate(terms.effective_end)):frappe.throw('Choose event dates within the agreement, with end on or after start.')
+    data=dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last));data.update({key:v[key] for key in ('budget','enforce_budget','new_occurrence','customer','billing_model','fixed_amount','commercial_status','commercial_source') if key in v});doc.payload=json.dumps(data)
     if v.action=='Now':
         create_event_from_draft(doc,data,terms)
     elif v.action=='Schedule':
         if not v.get('scheduled_for') or get_datetime(v.scheduled_for)<=now_datetime():frappe.throw('Choose a future date and time for event creation.')
-        if getdate(v.scheduled_for)>getdate(terms.effective_end):frappe.throw('Schedule creation on or before the agreement ends.')
+        if terms and terms.effective_end and getdate(v.scheduled_for)>getdate(terms.effective_end):frappe.throw('Schedule creation on or before the agreement ends.')
         doc.scheduled_for=get_datetime(v.scheduled_for);doc.status='Scheduled'
     else:doc.status='Draft'
     doc.revision=int(doc.revision or 0)+1

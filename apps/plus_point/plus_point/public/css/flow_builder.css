@@ -74,3 +74,14 @@
 .pp-worker-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
 .pp-worker-profile[data-building=true]{position:relative;min-height:240px}
 .pp-worker-profile[data-building=true]>:not(.pp-loading-state){visibility:hidden;pointer-events:none}
+
+/* Commercial steps use the product green, independent of black form actions. */
+.pp-flow-builder .pp-flow-number{border-color:#116f65!important;color:#116f65!important;background:var(--fg-color)!important}
+.pp-flow-builder .pp-op-tab-item:is(.is-complete,.is-current) .pp-flow-number,.pp-flow-builder .pp-op-tab-item:has([aria-selected=true]) .pp-flow-number{background:#116f65!important;color:#fff!important}
+.pp-flow-builder .pp-flow-steps [role=tab][aria-selected=true]{background:rgba(17,111,101,.1)!important;color:#0d655b!important}
+.pp-flow-builder .pp-builder-card:has(.pp-delivery-checklist){padding-bottom:12px}
+
+[data-theme=dark] .pp-flow-builder .pp-flow-steps [role=tab][aria-selected=true]{color:#9be3d0!important;background:#123b33!important}
+.pp-delivery-checklist :is(.form-page,.form-section,.section-body,.form-column,.row){min-height:0!important;height:auto!important}
+.pp-delivery-checklist .form-section:has([data-fieldname=send_email]){margin-bottom:0!important;padding-bottom:0!important}
+.pp-event-payment-schedule{padding-top:20px;margin-top:20px;border-top:1px solid var(--border-color)}

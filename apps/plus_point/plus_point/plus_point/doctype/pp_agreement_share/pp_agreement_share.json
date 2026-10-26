@@ -15,7 +15,11 @@
     "signed_by",
     "signed_email",
     "signed_on",
-    "signature"
+    "signature",
+    "proposed_values",
+    "base_modified",
+    "approval_method",
+    "change_summary"
   ],
   "fields": [
     {
@@ -84,6 +88,32 @@
       "fieldname": "signature",
       "label": "Signature",
       "fieldtype": "Attach Image",
+      "read_only": 1
+    },
+    {
+      "fieldname": "proposed_values",
+      "fieldtype": "Long Text",
+      "label": "Proposed agreement update",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "base_modified",
+      "fieldtype": "Datetime",
+      "label": "Agreement version before update",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approval_method",
+      "fieldtype": "Select",
+      "label": "Approval method",
+      "options": "\nClient signature\nCompany attested",
+      "read_only": 1
+    },
+    {
+      "fieldname": "change_summary",
+      "fieldtype": "Small Text",
+      "label": "Update summary",
       "read_only": 1
     }
   ],

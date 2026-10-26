@@ -58,7 +58,7 @@ class DraftTests(unittest.TestCase):
         with patch('plus_point.drafts.now_datetime',return_value=due+timedelta(seconds=1)):
             drafts.run_scheduled();drafts.run_scheduled()
         saved=drafts.load(d['name']);self.assertEqual(saved['status'],'Completed')
-        self.assertEqual(frappe.db.count('PP Event Plan',{'project':a['project']}),1)
+        self.assertEqual(frappe.db.count('PP Event Plan',{'contract_terms':['in',frappe.get_all('PP Contract Terms',filters={'governing_agreement':a['name']},pluck='name') or [a['name']]]}),1)
         self.assertFalse(frappe.db.exists('PP Assignment',{'project':a['project']}))
         self.assertFalse(frappe.db.exists('PP Work Entry',{'contract_terms':a['name']}))
 
