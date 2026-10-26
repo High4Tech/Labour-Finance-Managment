@@ -150,10 +150,12 @@ class HierarchyTests(unittest.TestCase):
     def tearDownClass(cls):
         frappe.set_user('Administrator');frappe.db.rollback(save_point='pp_hierarchy_suite');frappe.flags.pp_test_entitlement=cls.previous
     def setUp(self):
-        frappe.set_user('Administrator');frappe.db.savepoint('pp_hierarchy_case')
+        frappe.set_user('Administrator');frappe.db.savepoint('pp_hierarchy_case');self.case_files=set(frappe.get_all('File',pluck='name'))
         self.scope=patch('plus_point.event_setup.companies',return_value=[self.f.company]);self.scope.start()
     def tearDown(self):
-        frappe.set_user('Administrator');self.scope.stop();frappe.db.rollback(save_point='pp_hierarchy_case')
+        frappe.set_user('Administrator')
+        for name in set(frappe.get_all('File',pluck='name'))-self.case_files:frappe.delete_doc('File',name,force=1)
+        self.scope.stop();frappe.db.rollback(save_point='pp_hierarchy_case')
     def agreement(self,title='Event agreement',fixed=False):
         return op.save_agreement(dict(customer=self.f.customer.name,agreement_title=title,scope='Full event agreement',billing_model='Fixed' if fixed else 'Daily',fixed_amount=10000 if fixed else 0,status='Active',effective_start=today(),effective_end=add_days(today(),4),billing_item=self.f.item.name,auto_invoice=int(fixed),staffing=[dict(site_name='Main venue',designation=self.role,phase='Event',start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=1000,client_rate=0 if fixed else 1500)]))
     def event(self,agreement=None):

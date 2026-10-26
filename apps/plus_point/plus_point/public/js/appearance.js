@@ -5,7 +5,7 @@
     const root = document.documentElement;
     let started = false, pending = false, scheduled = false;
     const mode = () => root.getAttribute('data-theme-mode') || 'light';
-    const icon = dark => plus_point.icon(dark?'moon':'sun');
+    const icon = dark => {const slug=dark?'clear-night':'clear-day',base='/assets/plus_point/images/meteocons/'+slug;return '<span class="pp-theme-animated" aria-hidden="true"><img class="pp-meteo-static" alt="" src="'+base+'-static.svg"><img class="pp-meteo-motion" alt="" src="'+base+'.svg"></span>';};
 
     plus_point.set_theme = async next => {
         if (!Object.hasOwn(modes,next) || pending || next === mode()) return;

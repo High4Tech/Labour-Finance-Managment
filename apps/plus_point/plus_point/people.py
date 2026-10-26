@@ -20,12 +20,12 @@ def senior(role):
 def work_options(employee=None):
     from plus_point.operations import company, event_roles, ensure_event_role
     business=company();worker=linked('Employee',employee,business.name) if employee else None
-    departments=[];roles={}
+    departments=[];roles={};known={role for choices in DEPARTMENTS.values() for role in choices};custom=[role for role in event_roles() if role not in known]
     for title, categories in DEPARTMENTS.items():
         name=frappe.db.get_value('Department',{'department_name':title,'company':business.name},'name')
         if not name:
             name=frappe.get_doc(dict(doctype='Department',department_name=title,company=business.name)).insert().name
-        departments.append(dict(value=name,label=title));roles[name]=categories
+        departments.append(dict(value=name,label=title));roles[name]=categories+custom
         for category in categories:ensure_event_role(category)
     if worker and worker.department and worker.department not in roles:
         departments.append(dict(value=worker.department,label=frappe.db.get_value('Department',worker.department,'department_name')))
@@ -47,7 +47,7 @@ def validate_worker(doc,method=None):
         department=frappe.db.get_value('Department',doc.department,['department_name','company'],as_dict=True)
         if not department or department.company not in (None,'',doc.company):frappe.throw('Choose a department in your company.')
         allowed=DEPARTMENTS.get(department.department_name)
-        if allowed and doc.designation not in allowed:frappe.throw('Choose a worker category belonging to this department.')
+        if allowed and doc.designation not in allowed and doc.designation in {role for choices in DEPARTMENTS.values() for role in choices}:frappe.throw('Choose a worker category belonging to this department.')
 
 def peak(rows):
     changes=defaultdict(int)
@@ -61,7 +61,7 @@ def peak(rows):
     return maximum
 
 @frappe.whitelist()
-def capacity(start_date,end_date,staffing=None,agreement=None,designation=None):
+def capacity(start_date,end_date,staffing=None,agreement=None,designation=None,pending_index=None):
     from plus_point.operations import company,terms_doc
     business=company()
     if agreement:terms_doc(agreement)
@@ -81,7 +81,9 @@ def capacity(start_date,end_date,staffing=None,agreement=None,designation=None):
         requirements=[dict(workers_required=r.get('workers_required'),start_date=max(getdate(r.get('start_date')),first),end_date=min(getdate(r.get('end_date')),last)) for r in staffing
             if r.get('designation')==designation and r.get('start_date') and r.get('end_date') and getdate(r.get('start_date'))<=last and getdate(r.get('end_date'))>=first]
         category_required=peak(requirements);category_available=sum(usable(r) for r in category_rows)
-        result['category']=dict(designation=designation,total=len(category_rows),available=category_available,required=category_required,
+        committed=[dict(workers_required=r.get('workers_required'),start_date=max(getdate(r.get('start_date')),first),end_date=min(getdate(r.get('end_date')),last)) for i,r in enumerate(staffing) if (pending_index is None or i!=cint(pending_index)) and r.get('designation')==designation and r.get('start_date') and r.get('end_date') and getdate(r.get('start_date'))<=last and getdate(r.get('end_date'))>=first]
+        planned=peak(committed)
+        result['category']=dict(planned=planned,remaining=max(0,category_available-planned),designation=designation,total=len(category_rows),available=category_available,required=category_required,
             shortfall=max(0,category_required-len(category_rows)),availability_gap=max(0,category_required-category_available))
     return result
 

@@ -31,7 +31,7 @@
   let feedback=control.$wrapper.find('.pp-input-hint');if(!feedback.length&&message)feedback=$('<span class="pp-input-hint" role="alert"></span>').appendTo(control.$wrapper);
   if(feedback.length){if(!feedback.attr('id'))feedback.attr('id','pp-field-error-'+(++errorSequence));if(feedback.get(0).dataset.message!==message){feedback.get(0).dataset.message=message;if(message&&plus_point.freddy_feedback){plus_point.freddy_feedback(feedback.get(0),{message,tone:'error'});if(!feedback.get(0).children.length)feedback.text(message);}else feedback.text(message);}feedback.prop('hidden',!message);}
   const input=control.$input||control.$wrapper.find('[contenteditable]').first(),node=input.get(0),ids=new Set((input.attr('aria-describedby')||'').split(/\s+/).filter(Boolean));if(feedback.length)ids.add(feedback.attr('id'));
-  input.attr({'aria-describedby':[...ids].join(' '),'aria-invalid':String(!!message)});node?.setCustomValidity?.(message);
+  input.attr({'aria-describedby':[...ids].join(' '),'aria-invalid':String(!!message)});node?.setCustomValidity?.(message);if(control.ppChoiceInputs)control.ppChoiceInputs.attr({'aria-invalid':String(!!message),'aria-describedby':[...ids].join(' ')});
  };
  function error(control,required=true){
   const {df}=control,raw=String(control.$input.val()??'').trim();

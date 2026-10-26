@@ -193,8 +193,38 @@ body.pp-ui :is(.btn-tertiary,.btn-link,.btn-ghost):hover{background:var(--pp-act
 body.pp-ui .btn-danger{background:var(--fg-color)!important;color:var(--pp-status-danger)!important;border-color:color-mix(in srgb,var(--pp-status-danger) 40%,var(--border-color))!important}
 body.pp-ui .btn-danger:not(:disabled,.disabled):hover{background:var(--pp-action-danger)!important;color:#fff!important}
 body.pp-ui .btn[aria-busy=true]::before{content:"";width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pp-button-busy .8s linear infinite}
-body.pp-ui .pp-streamline-icon{fill:none;stroke:currentColor;flex-shrink:0;vertical-align:middle}
-body.pp-ui .pp-streamline-credit{font-size:12px;color:var(--text-muted)}
+body.pp-ui .pp-icon{fill:none;stroke:currentColor;flex-shrink:0;vertical-align:middle}
+body.pp-ui .pp-icon-credit{font-size:12px;color:var(--text-muted)}
 @keyframes pp-button-busy{to{transform:rotate(1turn)}}
 @media(max-width:767px),(pointer:coarse){body.pp-ui :is(.btn-sm,.es-button[data-size=sm]){--pp-action-height:44px}}
 @media(prefers-reduced-motion:reduce){body.pp-ui :is(.btn,.es-button){transition:none}body.pp-ui .btn[aria-busy=true]::before{animation:none}}
+/* Action roles: page commits, drafts, primary form actions, support and destruction. */
+body.pp-ui{--pp-action-primary:#172320;--pp-action-primary-hover:#293a34}
+html[data-theme=dark] body.pp-ui{--pp-action-primary:#e4ece8;--pp-action-primary-hover:#c7d9cf;--pp-action-on-primary:#101b17}
+body.pp-ui :is([data-save-agreement],[data-save-project],[data-create-plan],[data-create-and-sign],.pp-page-primary){background:#116f65!important;border-color:#116f65!important;color:#fff!important;--icon-stroke:#fff;--icon-fill:transparent}
+body.pp-ui :is([data-save-agreement],[data-save-project],[data-create-plan],[data-create-and-sign],.pp-page-primary):hover{background:#0c5b53!important;border-color:#0c5b53!important}
+body.pp-ui :is(.pp-draft-action,[data-save-draft],[data-save-event-draft]){background:#fff0b6!important;color:#694500!important;border:1px solid #d2ad45!important;--icon-stroke:#694500}
+html[data-theme=dark] body.pp-ui :is(.pp-draft-action,[data-save-draft],[data-save-event-draft]){background:#483913!important;color:#ffe5a1!important;border-color:#8c7130!important;--icon-stroke:#ffe5a1}
+body.pp-ui .pp-destructive{background:#fff3f3!important;border-color:#cb8190!important;color:#a32136!important;--icon-stroke:#a32136}
+body.pp-ui .pp-destructive:hover{background:#a32136!important;border-color:#a32136!important;color:white!important;--icon-stroke:white}
+html[data-theme=dark] body.pp-ui .pp-destructive{background:#3b1e26!important;color:#ffb1be!important;border-color:#a65568!important;--icon-stroke:#ffb1be}
+body.pp-ui .pp-choice-native{display:none!important}
+.pp-choice-field{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px 16px;min-width:0}
+.pp-choice-field legend{font:inherit;font-size:14px;line-height:1.5;color:var(--text-color);width:100%;margin-bottom:8px;border:0}
+.pp-choice-field[data-required=true] legend:after{content:' *';color:var(--pp-status-danger)}
+.pp-choice-field label{display:flex;gap:8px;align-items:center;min-height:40px;margin:0;padding:6px 8px;border:1px solid var(--border-color);border-radius:6px;color:var(--text-color);font-weight:400;cursor:pointer}
+.pp-choice-field label:has(input:checked){border-color:var(--pp-accent);background:var(--control-bg)}
+.pp-choice-field input{accent-color:var(--pp-accent);width:18px;height:18px;margin:0;flex:none}
+.pp-choice-field input:focus-visible{outline:2px solid var(--pp-accent);outline-offset:3px}
+.pp-choice-field input[aria-invalid=true]{outline:2px solid var(--pp-status-danger)}
+.pp-theme-animated{display:inline-flex;width:24px;height:24px;vertical-align:middle}.pp-theme-animated img{width:100%;height:100%}
+@media(max-width:767px),(pointer:coarse){.pp-choice-field label{min-height:44px}}
+
+.pp-theme-animated{position:relative}.pp-theme-animated img{position:absolute;inset:0}.pp-theme-animated .pp-meteo-motion{display:none}.pp-theme-toggle:is(:hover,:focus-visible) .pp-meteo-motion{display:block}.pp-theme-toggle:is(:hover,:focus-visible) .pp-meteo-static{visibility:hidden}
+@media(prefers-reduced-motion:reduce){.pp-theme-toggle .pp-theme-animated .pp-meteo-motion{display:none}.pp-theme-toggle .pp-theme-animated .pp-meteo-static{visibility:visible}}
+
+body.pp-ui .btn-primary:not(:disabled,.disabled):hover{color:var(--pp-action-on-primary)}body.pp-ui .btn-primary:not(:disabled,.disabled):active{background:var(--pp-action-primary-hover);border-color:var(--pp-action-primary-hover);color:var(--pp-action-on-primary)}
+body.pp-ui :is([data-remove-upload],[data-remove-file],button[data-label^=Delete],button[data-label^=Remove]){background:#fff3f3!important;border:1px solid #cb8190!important;color:#a32136!important}
+
+body.pp-ui .pp-agreement-files [data-preview-file]{height:auto!important;white-space:normal!important;overflow-wrap:anywhere;text-align:left;min-width:0;flex:1}
+body.pp-ui :is([data-save-worker-profile],[data-save-stock]){background:#116f65!important;border-color:#116f65!important;color:#fff!important;--icon-stroke:#fff}

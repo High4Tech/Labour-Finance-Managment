@@ -7,8 +7,9 @@
  };
  plus_point.bind_country_currency=async form=>{let seq=0;const suggest=async()=>{const own=++seq,before=form.get_value('default_currency');try{const data=await plus_point.setup_rpc('plus_point.locations.country_defaults',{country:form.get_value('country')});if(own===seq&&form.get_value('default_currency')===before)await form.set_value('default_currency',data.currency);}catch{form.set_df_property('default_currency','description',__('Choose the currency you bill this client in.'));}};form.fields_dict.country.df.onchange=suggest;if(!form.get_value('default_currency'))await suggest();};
  plus_point.enhance_selectors=layout=>{
-  plus_point.enhance_inputs?.(layout);
+  plus_point.enhance_inputs?.(layout);plus_point.bind_category_choice?.(layout);plus_point.enhance_choices?.(layout);
   for(const control of Object.values(layout.fields_dict||{})){
+   if(control.df.label)control.$input?.attr('aria-label',control.df.label);
    if(!['Link','Dynamic Link'].includes(control.df.fieldtype)||!control.$input||control.pp_picker)continue;
    const input=control.$input,awesomplete=control.awesomplete;let sequence=0;if(!awesomplete)continue;
    control.pp_picker=true;control.df.only_select=1;control.$wrapper.addClass('pp-search-picker');

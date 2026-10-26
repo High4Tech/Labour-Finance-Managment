@@ -28,3 +28,6 @@ body[data-pp-freddy=true] #agreement-status.pp-freddy-host{padding:0;background:
 @media(max-width:600px){.pp-freddy{--freddy-size:48px;gap:8px}.pp-freddy--compact{--freddy-size:40px}.pp-freddy__speech{padding:10px 12px}.pp-freddy .pp-dismiss-message{flex-basis:28px}.pp-flow-position:has(.pp-freddy){flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.pp-freddy *{animation:none!important;transition:none!important}}
 .es-toast:has(.pp-freddy) .es-toast__icon{display:none}
+
+.pp-freddy-pause{min-height:32px;padding:4px 8px;border:1px solid var(--border-color);border-radius:6px;background:var(--control-bg);color:var(--text-color);font-size:11px;align-self:center}.pp-freddy-pause:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.pp-draft-status>span{display:inline-flex;align-items:center;gap:8px}.pp-draft-status>span:before{display:inline-block}.pp-draft-status>span:not([data-state]):before{content:none}.pp-draft-status>span[data-state=saving]:before{content:'\21bb';animation:pp-draft-spin 1s linear infinite}.pp-draft-status>span[data-state=error]:before{content:'!'}.pp-draft-status>span[data-state=saved]:before{content:'\2713'}@keyframes pp-draft-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pp-draft-status>span[data-state=saving]:before{animation:none}}

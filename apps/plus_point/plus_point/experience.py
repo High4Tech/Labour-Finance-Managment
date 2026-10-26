@@ -96,9 +96,9 @@ def invoice_preview(name):
 
 @frappe.whitelist(methods=['POST'])
 def pdf_data(name):
-    from plus_point.operations import invoice,invoice_pdf_content
-    invoice(name);doc=linked('Sales Invoice',name)
-    return dict(filename=name+'.pdf',content=base64.b64encode(invoice_pdf_content(doc)).decode(),mime='application/pdf')
+    from plus_point.agreement_documents import invoice_pdf,data
+    stored=invoice_pdf(name)
+    result=data(stored['name']);return dict(filename=result['filename'],content=result['content'],mime=result['mime'])
 
 
 @frappe.whitelist(methods=['POST'])

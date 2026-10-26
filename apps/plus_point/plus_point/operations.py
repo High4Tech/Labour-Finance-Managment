@@ -98,6 +98,8 @@ def validate_agreement(doc):
     from plus_point.events import span,positive
     seen=set()
     for row in doc.staffing:
+        from plus_point.phases import normalize
+        row.phase=normalize(row.phase)
         site=linked('PP Site',row.site);linked('Designation',row.designation)
         if site.project!=project.name:frappe.throw('Agreement venues must belong to this event.')
         span(row.start_date,row.end_date)
@@ -176,6 +178,16 @@ def save_agreement(values,name=None):
                 if not title:frappe.throw('Enter each site name.')
                 if title not in locations:
                     venue=frappe.get_doc(dict(doctype='PP Site',project=project.name,site_name=title,is_active=1,country=client_country)).insert();locations[title]=venue.name
+            details=values.get('site_details') or {}
+            if not isinstance(details,dict) or len(details)>12:frappe.throw('Use location details for at most 12 sites.')
+            for title,metadata in details.items():
+                if title not in locations or not isinstance(metadata,dict):continue
+                venue=linked('PP Site',locations[title]);venue.check_permission('write')
+                for key in ('city','address_line1'):
+                    if key in metadata:
+                        if not isinstance(metadata[key],str) or len(metadata[key])>200:frappe.throw('Keep site location details within 200 characters.')
+                        venue.set(key,metadata[key])
+                venue.save()
             rows=[]
             for raw in values.staffing:
                 raw=frappe._dict(raw);site=raw.get('site')
@@ -338,6 +350,19 @@ def save_project(name,values):
     from plus_point.events import plan_doc
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
     data=frappe._dict(frappe.parse_json(values) or {})
+    first=getdate(data.get('start_date') or doc.start_date);last=getdate(data.get('end_date') or doc.end_date)
+    if (first,last)!=(getdate(doc.start_date),getdate(doc.end_date)):
+        from plus_point.events import span
+        span(first,last)
+        for assignment in frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['start_date','end_date'],limit_page_length=0):
+            if getdate(assignment.start_date)<first or not assignment.end_date or getdate(assignment.end_date)>last:
+                frappe.throw('Adjust the assigned workers’ dates before shortening the event period. Existing attendance and wages will be preserved.')
+        for row in doc.staffing:
+            if (getdate(row.start_date),getdate(row.end_date))==(getdate(doc.start_date),getdate(doc.end_date)):
+                row.start_date=first;row.end_date=last
+            else:
+                if getdate(row.end_date)<first or getdate(row.start_date)>last:frappe.throw('Move or remove crew requirements outside the new event period first.')
+                row.start_date=max(first,getdate(row.start_date));row.end_date=min(last,getdate(row.end_date))
     project=linked('Project',doc.project);project.check_permission('write')
     if 'budget' in data:project.estimated_costing=data.budget
     if 'enforce_budget' in data:project.pp_enforce_spending_budget=frappe.utils.cint(data.enforce_budget)
@@ -644,7 +669,9 @@ def invoice_pdf_content(doc):
 @frappe.whitelist()
 def download_invoice(name):
     invoice(name);doc=linked('Sales Invoice',name)
-    content=invoice_pdf_content(doc)
+    from plus_point.agreement_documents import invoice_pdf
+    stored=invoice_pdf(name);content=frappe.get_doc('File',stored['name']).get_content()
+    if isinstance(content,str):content=content.encode()
     frappe.local.response.update(filename=re.sub(r'[^A-Za-z0-9_.-]','_',name)+'.pdf',filecontent=content,type='pdf',http_status_code=200)
     from frappe.utils.response import build_response
     response=build_response('pdf')
@@ -660,8 +687,10 @@ def email_invoice(name,recipient,subject,body):
     if not recipient:frappe.throw('Enter the client email address.')
     if not str(subject or '').strip() or len(subject)>140:frappe.throw('Enter an email subject of up to 140 characters.')
     doc=linked('Sales Invoice',name);doc.check_permission('read')
+    from plus_point.agreement_documents import invoice_pdf
+    stored=invoice_pdf(name);file=frappe.get_doc('File',stored['name'])
     frappe.sendmail(recipients=[recipient],subject=subject,message=frappe.utils.escape_html(body or '').replace('\n','<br>'),
-        attachments=[dict(fname=re.sub(r'[^A-Za-z0-9_.-]','_',name)+'.pdf',fcontent=invoice_pdf_content(doc))],
+        attachments=[dict(fname=file.file_name,fcontent=file.get_content())],
         reference_doctype='Sales Invoice',reference_name=name)
     return dict(queued=True)
 

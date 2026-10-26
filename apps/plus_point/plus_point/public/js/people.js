@@ -1,6 +1,8 @@
 /* Shared identity capsules, single action dialogs and focused native worker editing. */
 (()=>{
  frappe.provide('plus_point');
+ plus_point.bind_category_choice=group=>{const c=group.fields_dict?.designation;if(!c||c.df.fieldtype!=='Select'||c.df.read_only||c.ppCategory)return;c.ppCategory=true;const options=Array.isArray(c.df.options)?c.df.options:String(c.df.options||'').split('\n');c.df.options=[...options.filter(v=>v!=='__new__'),{label:__('New category…'),value:'__new__'}];c.refresh();const extra=frappe.ui.form.make_control({parent:c.$wrapper.parent(),df:{fieldtype:'Data',fieldname:'new_category',label:__('New category name')},render_input:true});extra.$wrapper.insertAfter(c.$wrapper).hide();extra.$input.attr('aria-label',__('New category name'));group.ppNewCategory=extra;const old=c.df.onchange;c.df.onchange=async(...args)=>{extra.$wrapper.toggle(c.get_value()==='__new__');if(c.get_value()==='__new__'){extra.$input.trigger('focus');return;}await old?.(...args);};};
+ plus_point.resolve_category=async group=>{if(group.fields_dict?.designation?.get_value()!=='__new__')return;const title=String(group.ppNewCategory?.get_value()||'').trim();if(!title){plus_point.field_error(group.ppNewCategory,__('Enter the new category name.'));throw Error(__('Enter the new category name.'));}const saved=await plus_point.form_rpc('operations.create_category',{title});group.ppCreatedCategories=[...new Set([...(group.ppCreatedCategories||[]),saved.name])];const c=group.fields_dict.designation;c.df.options=[...c.df.options.filter(v=>(typeof v==='object'?v.value:v)!=='__new__'),saved.name,{label:__('New category…'),value:'__new__'}];c.refresh();await group.set_value('designation',saved.name);group.ppNewCategory.$wrapper.hide();return saved.name;};
  const esc=v=>frappe.utils.escape_html(String(v??''));
  plus_point.worker_avatar=(name,image)=>{
   const parts=String(name||'').trim().split(/\s+/),initials=(parts.length>1?parts[0][0]+parts[1][0]:parts[0]?.slice(0,2)||'?').toUpperCase();
@@ -18,16 +20,16 @@
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&info){info.node.remove();info.button.setAttribute('aria-expanded','false');info.button.focus();info=null;}});
  let active;
  plus_point.close_action_popup=()=>{if(!active)return Promise.resolve();const previous=active;return new Promise(resolve=>{previous.dialog.$wrapper.one('hidden.bs.modal',resolve);previous.dialog.hide();});};
- plus_point.action_popup=async(target,title)=>{
+ plus_point.action_popup=async(target,title,{size='extra-large'}={})=>{
   if(!target?.isConnected)return;
   const heading=target.querySelector(':scope>h4');if(heading)heading.hidden=true;
-  if(active?.target===target){active.dialog.set_title(heading?.textContent||__(title));active.dialog.show();return active.dialog;}
+  if(active?.target===target&&!active.closing){active.dialog.set_title(heading?.textContent||__(title));active.dialog.show();return active.dialog;}
   if(active)await plus_point.close_action_popup();
   const scope=target.closest('.pp-op-content')||target.closest('.modal')?.parentElement||target.parentElement,marker=document.createComment('action form');target.before(marker);
-  const dialog=new frappe.ui.Dialog({title:heading?.textContent||__(title),size:'extra-large',fields:[{fieldtype:'HTML',fieldname:'content'}]});
+  const dialog=new frappe.ui.Dialog({title:heading?.textContent||__(title),size,fields:[{fieldtype:'HTML',fieldname:'content'}]});
   dialog.$wrapper.addClass('pp-action-dialog');dialog.fields_dict.content.$wrapper.append('<div class="pp-modal-feedback pp-op-message" role="status" hidden></div>');dialog.fields_dict.content.$wrapper.append(target);target.hidden=false;
   // Keep controls scoped to their record while the visible content lives in a modal.
-  scope.append(dialog.$wrapper.get(0));active={target,dialog};
+  scope.append(dialog.$wrapper.get(0));active={target,dialog};dialog.$wrapper.one('hide.bs.modal',()=>{if(active?.dialog===dialog)active.closing=true;});
   dialog.$wrapper.one('hidden.bs.modal',()=>{if(marker.isConnected){marker.replaceWith(target);target.hidden=true;}target.dispatchEvent(new Event('pp:popup-closed'));if(active?.dialog===dialog)active=null;dialog.$wrapper.remove();});
   dialog.show();return dialog;
  };
@@ -53,7 +55,7 @@
    const group=new frappe.ui.FieldGroup({body:panel,fields:fields.map(f=>({...f,default:(['pp_daily_rate','pp_monthly_rate'].includes(f.fieldname)?(frm.doc[f.fieldname]??f.default):frm.doc[f.fieldname]??f.default)}))});group.make();plus_point.enhance_selectors(group);for(const c of Object.values(group.fields_dict))c.$input?.attr('aria-label',c.df.label||'');groups.push(group);$(panel).on('input.pp-worker-dirty change.pp-worker-dirty',event=>{if(!event.originalEvent||frm.is_dirty())return;if(group.fields.some(f=>frm.fields_dict[f.fieldname]&&String(group.get_value(f.fieldname)??'')!==String(frm.doc[f.fieldname]??'')))frm.dirty();});
    tab.onclick=()=>{[...tabs.children].forEach(b=>b.setAttribute('aria-selected',String(b===tab)));[...body.children].forEach(p=>p.hidden=p!==panel);};if(index===0)tab.click();
   }
-  const work=groups[1],updateRoles=()=>{const current=work.get_value('designation'),roles=options.roles[work.get_value('department')]||options.designations;work.fields_dict.designation.df.options=['',...roles];work.fields_dict.designation.refresh();if(current&&!roles.includes(current))work.set_value('designation','');};
+  const work=groups[1],updateRoles=()=>{const current=work.get_value('designation'),roles=[...new Set([...(options.roles[work.get_value('department')]||options.designations),...(work.ppCreatedCategories||[])])];work.fields_dict.designation.df.options=['',...roles,{value:'__new__',label:__('New category…')}];work.fields_dict.designation.refresh();if(current&&!roles.includes(current))work.set_value('designation','');};
   work.fields_dict.department.df.onchange=updateRoles;
   if(options.roles[frm.doc.department]?.includes(frm.doc.designation))updateRoles();
   frm.__pp_worker_groups=groups;root.dataset.ready='true';
@@ -64,7 +66,7 @@
  };
  async function sync(frm){
   if(!frm.__pp_worker_groups)return;
-  for(const group of frm.__pp_worker_groups){if(!plus_point.validate_inputs(group))throw Error(__('Review the highlighted fields.'));const values=group.get_values(true)||{};
+  for(const group of frm.__pp_worker_groups){await plus_point.resolve_category(group);if(!plus_point.validate_inputs(group))throw Error(__('Review the highlighted fields.'));const values=group.get_values(true)||{};
    for(const df of group.fields)if(df.reqd&&!values[df.fieldname])throw Error(__('{0} is required.',[df.label]));
    for(const [key,value]of Object.entries(values))if(frm.fields_dict[key])await frm.set_value(key,value);
   }

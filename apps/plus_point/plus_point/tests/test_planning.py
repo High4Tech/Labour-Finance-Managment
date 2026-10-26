@@ -210,7 +210,7 @@ class PlanningTests(unittest.TestCase):
         self.assertNotIn('default_currency',imports.SCHEMAS['clients']);self.assertNotIn('client_default_currency',imports.SCHEMAS['events'])
         self.assertIn('pp_daily_rate',imports.SCHEMAS['employees']);self.assertIn('pp_monthly_rate',imports.SCHEMAS['employees'])
         row=dict(external_id='agreement-test',agreement_title='Imported client agreement',customer=self.f.customer.name,start_date=today(),end_date=add_days(today(),4),status='Active',billing_model='Daily',agreement_currency='PKR',fixed_amount='',scope='Imported scope',conditions='First | Second',site_name='Imported site',designation=self.role,workers_per_day='1',client_rate='150')
-        out=io.StringIO();writer=csv.writer(out);writer.writerow(imports.SCHEMAS['agreements']);writer.writerow([row[k] for k in imports.SCHEMAS['agreements']])
+        out=io.StringIO();writer=csv.writer(out);writer.writerow(imports.SCHEMAS['agreements']);writer.writerow([row.get(k,'') for k in imports.SCHEMAS['agreements']])
         preview=imports.preview('agreements',self.f.company.name,'agreements.csv',base64.b64encode(out.getvalue().encode()).decode())
         self.assertTrue(preview['valid'],preview['rows'])
         result=imports.apply(preview['token']);self.assertTrue(result)

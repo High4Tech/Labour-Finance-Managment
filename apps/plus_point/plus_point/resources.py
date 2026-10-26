@@ -205,3 +205,15 @@ def attach_item(warehouse,item):
     from erpnext.stock.utils import get_bin
     get_bin(item,warehouse)
     return dict(name=item)
+
+
+@frappe.whitelist()
+def agreement_vehicle_options(start_date,end_date,agreement=None):
+    business=company();span(start_date,end_date)
+    from plus_point.operations import terms_doc
+    own=terms_doc(agreement).project if agreement else None
+    vehicles=frappe.get_list('Vehicle',filters={'company':business.name},fields=['name','license_plate','make','model','pp_event_enabled','pp_crew_seats'],limit_page_length=500,order_by='make,model,license_plate')
+    bookings=frappe.get_list('PP Vehicle Booking',filters={'company':business.name,'status':'Planned','start_date':['<=',end_date],'end_date':['>=',start_date]},fields=['vehicle','project'],limit_page_length=0)
+    booked={b.vehicle for b in bookings if b.project!=own}
+    for row in vehicles:row.update(vehicle_type=' '.join(filter(None,[row.make,row.model])),available=bool(row.pp_event_enabled and row.name not in booked))
+    return vehicles

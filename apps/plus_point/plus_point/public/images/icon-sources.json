@@ -1,0 +1,80 @@
+{
+  "tabler": {
+    "repository": "https://github.com/tabler/tabler-icons",
+    "commit": "a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d",
+    "icons": {
+      "add": "plus",
+      "check": "check",
+      "check-square": "checkbox",
+      "close": "x",
+      "edit": "pencil",
+      "delete": "trash",
+      "left": "chevron-left",
+      "right": "chevron-right",
+      "down": "chevron-down",
+      "up": "chevron-up",
+      "calendar": "calendar-event",
+      "users": "users",
+      "user": "user",
+      "user-add": "user-plus",
+      "document": "file-text",
+      "clipboard": "clipboard-text",
+      "money": "coins",
+      "wallet": "wallet",
+      "truck": "truck",
+      "warehouse": "building-warehouse",
+      "box": "box",
+      "home": "home",
+      "search": "search",
+      "settings": "settings",
+      "bell": "bell",
+      "info": "info-circle",
+      "help": "help-circle",
+      "comment": "message-circle",
+      "clock": "clock",
+      "send": "send",
+      "upload": "upload",
+      "download": "download",
+      "save": "device-floppy",
+      "filter": "filter",
+      "sort": "arrows-sort",
+      "chart": "chart-bar",
+      "list": "list",
+      "more": "dots",
+      "copy": "copy",
+      "eye": "eye",
+      "pin": "map-pin",
+      "refresh": "refresh",
+      "link": "external-link",
+      "sun": "sun",
+      "moon": "moon",
+      "globe": "world",
+      "logout": "logout",
+      "warning": "alert-triangle",
+      "layers": "layers-intersect",
+      "shield": "shield-lock"
+    }
+  },
+  "meteocons": {
+    "repository": "https://github.com/basmilius/meteocons",
+    "version": "3.0.0-next.10",
+    "files": {
+      "clear-day.svg": {
+        "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/clear-day.svg",
+        "sha256": "4b1f6766e201163dfabfc8e1e73387c9e5bba09f1c468b35c7be68b6bce54169"
+      },
+      "clear-day-static.svg": {
+        "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/clear-day.svg",
+        "sha256": "2fea6c6287ddbd72f059ce6639cf0b2e43e76d0c657e9f7646dbdf5d1ce7417d"
+      },
+      "clear-night.svg": {
+        "source": "https://cdn.meteocons.com/3.0.0-next.10/svg/fill/clear-night.svg",
+        "sha256": "93b4d005ef1254eb502da514edd1664cb3e514125562f430719e64a1ea768535"
+      },
+      "clear-night-static.svg": {
+        "source": "https://cdn.meteocons.com/3.0.0-next.10/svg-static/fill/clear-night.svg",
+        "sha256": "7e2f2042f5389af304c73880f013dfae7b45d7dfa13d1f167fe00e7fc4cf7d60"
+      }
+    }
+  }
+}

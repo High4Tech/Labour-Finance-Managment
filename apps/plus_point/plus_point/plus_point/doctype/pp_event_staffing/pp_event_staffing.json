@@ -26,11 +26,11 @@
     {
       "fieldname": "phase",
       "label": "Phase",
-      "fieldtype": "Select",
-      "options": "Setup\nEvent\nPack-down\nOther",
+      "fieldtype": "Data",
       "default": "Event",
       "reqd": 1,
-      "in_list_view": 1
+      "in_list_view": 1,
+      "description": "One or more crew phases: Setup, Event, Pack-down, Other."
     },
     {
       "fieldname": "start_date",

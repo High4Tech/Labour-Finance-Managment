@@ -25,7 +25,7 @@
   const save=document.createElement('button');save.type='button';save.className='btn btn-primary';save.textContent=__(label);actions.append(save);
   const cancel=document.createElement('button');cancel.type='button';cancel.className='btn btn-default';cancel.textContent=__('Cancel');actions.append(cancel);cancel.onclick=()=>onCancel?.();
   save.onclick=async()=>{
-   feedback.hidden=true;if(!plus_point.validate_inputs(form))return;const values=form.get_values(true)||{};let valid=true;
+   feedback.hidden=true;try{await plus_point.resolve_category?.(form);}catch(error){feedback.textContent=error.message;feedback.hidden=false;return;}if(!plus_point.validate_inputs(form))return;const values=form.get_values(true)||{};let valid=true;
    for(const df of fields)if(df.reqd&&!values[df.fieldname]){plus_point.field_error(form.fields_dict[df.fieldname],__('Enter {0}.',[df.label]));if(valid)form.fields_dict[df.fieldname].set_focus();valid=false;}if(!valid)return;
    save.disabled=cancel.disabled=true;
    try{const worker=await plus_point.crew_rpc('crew.add_worker',{company,values});if(body.isConnected){await onSaved(worker);document.dispatchEvent(new Event('pp:data-changed'));}}

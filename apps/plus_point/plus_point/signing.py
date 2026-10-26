@@ -15,15 +15,17 @@ def snapshot(name):
     from plus_point.operations import agreement
     a=agreement(name);company=frappe.get_doc('Company',a['client_company']);rate=a['agreement_rate'];currency=a['agreement_currency'];venues={r.name:r.site_name for r in a['venues']}
     amount=lambda v:f'{float(v or 0)/rate:,.2f} {currency}'
-    rows=''.join(f'<tr><td>{e(venues.get(r.site,r.site))}</td><td>{e(r.designation)}</td><td>{e(str(r.start_date))} – {e(str(r.end_date))}</td><td>{int(r.workers_required)}</td><td>{e(amount(r.client_rate)) if a["billing_model"]=="Daily" else "Included"}</td></tr>' for r in a['staffing'])
+    locations={r.name:', '.join(str(r.get(k) or '') for k in ('address_line1','city','country') if r.get(k)) for r in a['venues']}
+    rows=''.join(f'<tr><td>{e(venues.get(r.site,r.site))}<br><small>{e(locations.get(r.site,""))}</small></td><td>{e(r.designation)}<br><small>{e(r.phase or "Event")}</small></td><td>{int(r.workers_required)}</td><td>{e(amount(r.client_rate)) if a["billing_model"]=="Daily" else "Included"}</td></tr>' for r in a['staffing'])
     milestones=''.join(f'<tr><td>{e(r.milestone_title)}</td><td>{e(str(r.due_date or ""))}</td><td>{e(amount(r.amount))}</td></tr>' for r in a['milestones'])
     checkpoints=''.join('<tr><td>'+e(r['title'])+'</td><td>'+e(r['from_date'])+' - '+e(r['to_date'])+'</td><td>'+e(r['due_date'])+'</td></tr>' for r in frappe.parse_json(a.get('pp_daily_checkpoints') or '[]'))
     conditions=''.join('<li>'+e(c)+'</li>' for c in frappe.parse_json(a.get('pp_conditions') or '[]'))
     resources=''
     requirements=frappe.parse_json(a.get('pp_transport_requirements') or '[]')
-    resources+=''.join('<li>'+e(str(r['quantity']))+' × '+e(r['vehicle_type'])+' · '+e(r.get('site_name') or 'All sites')+' · '+e(r['start_date'])+' – '+e(r['end_date'])+'</li>' for r in requirements)
+    resources+=''.join('<li>'+e(str(r['quantity']))+' × '+e(r['vehicle_type'])+' · '+e(r.get('site_name') or 'All sites')+'</li>' for r in requirements)
+    contact_line=' · '.join(str(a['client'].get(k) or '') for k in ('email','phone') if a['client'].get(k))
     logo=f'<img alt="" src="{e(company.company_logo)}" style="max-width:160px;max-height:70px">' if company.company_logo and not company.company_logo.startswith('/private/') else ''
-    return f'''<article class="agreement-document">{logo}<p>{e(company.company_name)} · {e(a.get('pp_reference') or '')}</p><h1>{e(a['agreement_title'])}</h1><p>Client: <strong>{e(a['client']['title'])}</strong></p><p>{e(str(a['effective_start']))} – {e(str(a['effective_end']))}</p><h2>Agreed scope</h2><p>{e(frappe.utils.strip_html(a['scope'] or '')).replace(chr(10),'<br>')}</p>{'<h2>Conditions</h2><ol>'+conditions+'</ol>' if conditions else ''}<h2>Pricing</h2><p>{e(a['billing_model'])} billing{': '+e(amount(a['fixed_amount'])) if a['billing_model']=='Fixed' else ''}</p><table><thead><tr><th>Site</th><th>Crew category</th><th>Dates</th><th>Crew / day</th><th>Client rate / day</th></tr></thead><tbody>{rows}</tbody></table>{'<h2>Payment milestones</h2><table><thead><tr><th>Milestone</th><th>Due</th><th>Amount</th></tr></thead><tbody>'+milestones+'</tbody></table>' if milestones else ''}{'<h2>Daily billing milestones</h2><p>Invoices use approved attendance only.</p><table><thead><tr><th scope="col">Milestone</th><th scope="col">Attendance period</th><th scope="col">Payment due</th></tr></thead><tbody>'+checkpoints+'</tbody></table>' if checkpoints else ''}{'<h2>Agreed vehicles</h2><ul>'+resources+'</ul>' if resources else ''}</article>'''
+    return f'''<article class="agreement-document">{logo}<p>{e(company.company_name)} · {e(a.get('pp_reference') or '')}</p><h1>{e(a['agreement_title'])}</h1><p>Client: <strong>{e(a['client']['title'])}</strong></p><p>{e(str(a['effective_start']))} – {e(str(a['effective_end']))}</p><h2>Client details</h2><p>{e(a['client'].get('contact_name') or '')}<br>{e(contact_line)}<br>{e(', '.join(str(a['client'].get(k) or '') for k in ('address_line1','city','country') if a['client'].get(k)))}</p><h2>Agreed scope</h2><p>{e(frappe.utils.strip_html(a['scope'] or '')).replace(chr(10),'<br>')}</p>{'<h2>Conditions</h2><ol>'+conditions+'</ol>' if conditions else ''}<h2>Pricing</h2><p>{e(a['billing_model'])} billing{': '+e(amount(a['fixed_amount'])) if a['billing_model']=='Fixed' else ''}</p><table><thead><tr><th>Site</th><th>Crew category</th><th>Crew / day</th><th>Client pricing</th></tr></thead><tbody>{rows}</tbody></table>{'<h2>Payment milestones</h2><table><thead><tr><th>Milestone</th><th>Due</th><th>Amount</th></tr></thead><tbody>'+milestones+'</tbody></table>' if milestones else ''}{'<h2>Daily billing milestones</h2><p>Invoices use approved attendance only.</p><table><thead><tr><th scope="col">Milestone</th><th scope="col">Attendance period</th><th scope="col">Payment due</th></tr></thead><tbody>'+checkpoints+'</tbody></table>' if checkpoints else ''}{'<h2>Agreed vehicles</h2><ul>'+resources+'</ul>' if resources else ''}</article>'''
 
 def digest(html):return hashlib.sha256(html.encode()).hexdigest()
 
@@ -49,14 +51,20 @@ def create_link(name):
     return dict(name=share.name,url=frappe.utils.get_url('/agree?token='+token),recipient=recipient,expires=str(share.expires))
 
 @frappe.whitelist(methods=['POST'])
-def send_link(name,share,token,recipient):
+def send_link(name,share,token,recipient,cc="",pdf_file=None):
     from plus_point.operations import terms_doc
     terms_doc(name,True);doc=public_doc(token)
     if doc.name!=share or doc.contract_terms!=name or doc.status!='Pending':frappe.throw('Create a current signing link before sending.')
-    frappe.utils.validate_email_address(recipient,throw=True)
+    from plus_point.agreement_documents import recipients
+    to,copies=recipients(recipient,cc)
     if not frappe.db.exists('Email Account',{'enable_outgoing':1}):frappe.throw('Configure an outgoing Email Account first. You can copy the signing link instead.')
     url=frappe.utils.get_url('/agree?token='+token)
-    frappe.sendmail(recipients=[recipient],subject='Agreement ready for review',message=f'<p>Please review and sign your agreement.</p><p><a href="{e(url)}">Review agreement</a></p>',reference_doctype='PP Contract Terms',reference_name=name)
+    attachments=[]
+    if pdf_file:
+        file=frappe.get_doc('File',pdf_file);file.check_permission('read')
+        if file.attached_to_doctype!='Contract' or file.attached_to_name!=frappe.db.get_value('PP Contract Terms',name,'contract'):frappe.throw('Choose a document from this agreement.')
+        attachments=[dict(fname=file.file_name,fcontent=file.get_content())]
+    frappe.sendmail(recipients=to,cc=copies,attachments=attachments,subject='Agreement ready for review',message=f'<p>Please review and sign your agreement.</p><p><a href="{e(url)}">Review agreement</a></p>',reference_doctype='PP Contract Terms',reference_name=name)
     with operation():doc.recipient=recipient;doc.save()
     return dict(queued=True)
 

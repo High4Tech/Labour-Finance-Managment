@@ -84,6 +84,13 @@ def save(kind,payload,name=None,client_key=None,revision=None):
     from plus_point.operations import company
     business=company();data=frappe.parse_json(payload)
     if kind not in ('Agreement','Event') or not isinstance(data,dict):frappe.throw('Choose an agreement or event draft.')
+    if data.get('record'):
+        if kind=='Event':
+            from plus_point.events import plan_doc
+            plan_doc(data['record'])
+        else:
+            from plus_point.operations import terms_doc
+            terms_doc(data['record'])
     content=json.dumps(data,ensure_ascii=False)
     if len(content.encode())>96000:frappe.throw('This draft is too large. Save the current rows before adding more.')
     if not name:

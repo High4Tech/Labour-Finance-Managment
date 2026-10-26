@@ -51,7 +51,8 @@ def validate(kind,company,row):
         if positive(row.get('workers_per_day'),'Workers per day',whole=True)>500:frappe.throw('Use at most 500 workers per category.')
         if row['billing_model']=='Daily':positive(row.get('client_rate'),'Client rate per day')
         else:positive(row.get('fixed_amount'),'Fixed contract price')
-        if row.get('phase') and row['phase'] not in ('Setup','Event','Pack-down','Other'):frappe.throw('phase must be Setup, Event, Pack-down or Other')
+        from plus_point.phases import normalize
+        row['phase']=normalize(row.get('phase'))
         if row.get('vehicle_type') or row.get('vehicle_quantity'):
             required(row,'vehicle_type');required(row,'vehicle_quantity')
             if len(row['vehicle_type'])>140:frappe.throw('vehicle_type must be 140 characters or fewer')

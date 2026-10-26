@@ -2,7 +2,7 @@
 (()=>{
  frappe.provide('plus_point');
  const esc=v=>frappe.utils.escape_html(String(v??''));
- const descriptions={agreement:['Add client and contact information.','Set dates, name and scope of work.','Configure billing and payment schedule.','Add sites, crew and vehicle requirements.','Review and prepare for signature.'],event:['Set core details, dates, budget and notes.','Review venues, crew categories and staffing.','Reserve vehicles and equipment.','Review the staffing schedule and calendar.']};
+ const descriptions={agreement:['Add client and contact information.','Set dates, name and scope of work.','Configure billing and payment schedule.','Add sites, crew and vehicle requirements.','Review, create and share your agreement.'],event:['Set core details, dates, budget and notes.','Review venues, crew categories and staffing.','Reserve vehicles and equipment.','Review the staffing schedule and calendar.']};
  plus_point.flow_builder=(area,{sections,nav,footer,tabs,go})=>{
   const root=area.closest('.pp-operations'),agreement=sections.length===5,type=agreement?'agreement':'event',groups=area.ppBuilderGroups||{},read=area.ppBuilderRead;
   root.classList.add('pp-flow-builder');area.classList.add('pp-builder-content');area.dataset.builder=type;
@@ -38,9 +38,9 @@
    wrap('.pp-op-capacity','Crew availability','Availability is checked for the selected dates and category.','client');
    const sitesCard=wrap('.pp-op-staffing','Sites and crew','Add a site, then define its crew categories and daily requirements.','scope');
    wrap('.pp-agreement-transport','Vehicle requirements','Optional: agree vehicle types and quantities. Assign vehicles in the event.','truck');
-   const category=area.querySelector('[data-open-category]'),categoryForm=area.querySelector('.pp-op-category'),siteAdd=area.querySelector('[data-add-staffing]');if(sitesCard){const tools=document.createElement('div');tools.className='pp-actions pp-builder-card-actions';if(siteAdd)tools.append(siteAdd);if(category)tools.append(category);sitesCard.querySelector('header').append(tools);if(categoryForm)sitesCard.lastElementChild.append(categoryForm);}
+   const siteAdd=area.querySelector('[data-add-staffing]');if(sitesCard&&siteAdd){const tools=document.createElement('div');tools.className='pp-actions pp-builder-card-actions';tools.append(siteAdd);sitesCard.querySelector('header').append(tools);}
    const summary=card('Review summary','Review the entered details before creating your signing link.');summary.classList.add('pp-builder-review');sections.at(-1).prepend(summary);
-   wrap('.pp-signing-ready','Send for signature','Create a private signing link, then choose how to share it.','send');area.querySelector('.pp-signing-ready>h4')?.remove();
+   wrap('.pp-signing-ready','Creation checklist','Review the details and choose whether to email the client.','send');area.querySelector('.pp-signing-ready>h4')?.remove();
    let lastReview='';const update=()=>{
     if(!read)return;const t=groups.terms?plus_point.draft_form(groups.terms):(read().terms||{});
     daily.hidden=t.billing_model!=='Daily';fixed.hidden=t.billing_model!=='Fixed'||!!area.querySelector('.pp-new-milestones')?.hidden;if(existing)existing.closest('.pp-builder-card').hidden=t.billing_model!=='Fixed'||existing.hidden;

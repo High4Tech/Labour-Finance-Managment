@@ -68,6 +68,8 @@ def validate_plan(doc):
         frappe.throw('Add 1â€“60 staffing phases covering at most 12 event sites')
     by_site=defaultdict(list)
     for row in doc.staffing:
+        from plus_point.phases import normalize
+        row.phase=normalize(row.phase)
         site=linked('PP Site',row.site)
         if site.project!=doc.project or not site.is_active:
             frappe.throw('Each staffing row needs an active site from this event project')

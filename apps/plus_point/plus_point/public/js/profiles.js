@@ -3,7 +3,7 @@
  frappe.provide('plus_point');
  const esc=v=>frappe.utils.escape_html(String(v??'')),rpc=(method,args)=>plus_point.form_rpc('operations.'+method,args);
  const text=html=>{const el=document.createElement('textarea');el.innerHTML=String(html||'').replace(/<br\s*\/?>|<\/(?:p|div|li|h[1-6])>/gi,'\n').replace(/<[^>]*>/g,'');return el.value.trim();};
- const btn=(label,attr)=>'<button type="button" class="btn btn-default" '+attr+'>'+esc(__(label))+'</button>';
+ const btn=(label,attr)=>'<button type="button" class="btn '+plus_point.action_class(label)+'" '+attr+'>'+esc(__(label))+'</button>';
  plus_point.profile_section=(title,html,action='')=>'<section class="pp-profile-section"><header class="pp-section-heading"><h3>'+esc(__(title))+'</h3>'+action+'</header>'+html+'</section>';
  plus_point.profile_facts=items=>'<dl class="pp-profile-facts">'+items.map(([label,value])=>'<div><dt>'+esc(__(label))+'</dt><dd>'+esc(value||'—')+'</dd></div>').join('')+'</dl>';
  plus_point.profile_dialog=({title,fields,save})=>{
@@ -30,18 +30,19 @@
   };
   area.querySelector('[data-profile-crew]').onclick=()=>{
    let editor,future=Number(data.pp_future_crew_count)||0;
-   const d=plus_point.profile_dialog({title:'Sites and crew',fields:[f('HTML','crew','',{options:'<div class="pp-profile-crew-editor"></div>'})],save:async()=>{await editor.flush();await save({staffing:editor.get_value('staffing'),sites:editor.siteNames(),pp_future_crew_count:future});}});
+   const d=plus_point.profile_dialog({title:'Sites and crew',fields:[f('HTML','crew','',{options:'<div class="pp-profile-crew-editor"></div>'})],save:async()=>{await editor.flush();await save({staffing:editor.get_value('staffing'),sites:editor.siteNames(),site_details:editor.siteDetails(),pp_future_crew_count:future});}});
    editor=plus_point.agreement_staffing_editor(d.body.querySelector('.pp-profile-crew-editor'),{rows:(data.staffing||[]).map(r=>({...r,site_name:venues[r.site]?.site_name||r.site,...Object.fromEntries(['country','city','address_line1'].map(k=>[k,venues[r.site]?.[k]||''])),client_rate:Number(r.client_rate)/rate,wage_rate:0})),sites:(data.venues||[]).map(v=>v.site_name),roles:catalogue.designations,currency:()=>currency,model:()=>data.billing_model,dates:()=>({start_date:data.effective_start,end_date:data.effective_end}),agreement:name,customer:()=>data.customer,country:()=>client.country,future:()=>future,setFuture:n=>future=n,capacity:()=>{},copyTransport:()=>{}});
   };
   area.querySelector('[data-profile-vehicles]').onclick=()=>{
    let editor;const d=plus_point.profile_dialog({title:'Vehicle requirements',fields:[f('HTML','vehicles','',{options:'<div class="pp-profile-vehicle-editor"></div>'})],save:()=>save({transport_requirements:editor.get_value()})});
-   editor=plus_point.agreement_transport_editor(d.body.querySelector('.pp-profile-vehicle-editor'),{rows:transport,sites:()=>(data.venues||[]).map(v=>v.site_name),dates:()=>({start:data.effective_start,end:data.effective_end})});
+   editor=plus_point.agreement_transport_editor(d.body.querySelector('.pp-profile-vehicle-editor'),{agreement:data.name,rows:transport,sites:()=>(data.venues||[]).map(v=>v.site_name),dates:()=>({start:data.effective_start,end:data.effective_end})});
   };
   const holder=area.querySelector('.pp-profile-milestones');
   if(data.billing_model==='Daily'){
    const daily=plus_point.daily_checkpoints_editor(holder,{rows:JSON.parse(data.pp_daily_checkpoints||'[]'),dates:()=>({start:data.effective_start,end:data.effective_end}),currency:()=>currency,agreement:name});
    holder.addEventListener('pp:flow-change',()=>save({pp_daily_checkpoints:JSON.stringify(daily.get_value())}).catch(error=>{holder.querySelector('.pp-checkpoint-feedback').textContent=error.message;}));
   }else renderMilestones(holder,data,refreshPanel);
+  area.querySelector('[data-profile-pdf]')?.addEventListener('click',async()=>plus_point.preview_document(await plus_point.form_rpc('agreement_documents.agreement_pdf',{name})));
   area.querySelector('[data-profile-sign]').onclick=()=>plus_point.open_agreement_signing(name);
   area.querySelectorAll('[data-profile-upload]').forEach(button=>button.onclick=()=>new frappe.ui.FileUploader({doctype:'Contract',docname:data.contract,make_attachments_public:false,allow_multiple:false,on_success:refreshPanel}));
   area.querySelector('[data-profile-event]').onclick=async()=>{if(data.status==='Draft'){frappe.set_route('pp-agreements',{record:name,edit:1});return;}try{await plus_point.open_event_draft(await plus_point.form_rpc('drafts.event_for_agreement',{agreement:name}));}catch(error){frappe.show_alert({message:error.message,indicator:'red'});}};
