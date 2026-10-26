@@ -1,0 +1,412 @@
+<svg xmlns="http://www.w3.org/2000/svg"><symbol id="add" viewBox="0 0 14 14"><desc>
+    Add 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="add-1--expand-cross-buttons-button-more-remove-plus-add-+-mathematics-math">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v13" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6.95996h13" stroke-width="1" />
+  </g>
+</symbol><symbol id="check" viewBox="0 0 14 14"><desc>
+    Check Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="check--check-form-validation-checkmark-success-add-addition-tick">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 8.55005 3.23 12.06c0.09212 0.1197 0.21016 0.217 0.34525 0.2846 0.13509 0.0675 0.28373 0.1036 0.43475 0.1054 0.14859 0.0018 0.2957 -0.0297 0.43063 -0.0919 0.13492 -0.0623 0.25427 -0.1539 0.34937 -0.2681L13.5 1.55005" stroke-width="1" />
+  </g>
+</symbol><symbol id="check-square" viewBox="0 0 14 14"><desc>
+    Check Square Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="check-square--check-form-validation-checkmark-success-add-addition-box-square-tick">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 0.5h-7c-1.65685 0 -3 1.34315 -3 3v7c0 1.6569 1.34315 3 3 3h7c1.6569 0 3 -1.3431 3 -3v-7c0 -1.65685 -1.3431 -3 -3 -3Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m9.91711 4.75 -4 5 -2 -1.5" stroke-width="1" />
+  </g>
+</symbol><symbol id="close" viewBox="0 0 14 14"><desc>
+    Delete 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="delete-1--remove-add-button-buttons-delete-cross-x-mathematics-multiply-math">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m13.5 0.5 -13 13" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m0.5 0.5 13 13" stroke-width="1" />
+  </g>
+</symbol><symbol id="edit" viewBox="0 0 14 14"><desc>
+    Pencil Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="pencil--change-edit-modify-pencil-write-writing">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 12.24 0.5 13.5l1.26 -4.49998L10 0.800021c0.0931 -0.095246 0.2044 -0.170925 0.3271 -0.222592 0.1228 -0.051668 0.2547 -0.078283 0.3879 -0.078283 0.1332 0 0.2651 0.026615 0.3879 0.078283 0.1227 0.051667 0.234 0.127346 0.3271 0.222592L13.2 2.58002c0.0937 0.09296 0.1681 0.20357 0.2189 0.32542 0.0508 0.12186 0.0769 0.25257 0.0769 0.38458 0 0.13201 -0.0261 0.26272 -0.0769 0.38458 -0.0508 0.12186 -0.1252 0.23246 -0.2189 0.32542L5 12.24Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="delete" viewBox="0 0 14 14"><desc>
+    Recycle Bin 2 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="recycle-bin-2--remove-delete-empty-bin-trash-garbage">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 3.5h12" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.5 3.5h9v9c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-7c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C2.60536 13.0196 2.5 12.7652 2.5 12.5v-9Z" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 3.5V3c0 -0.66304 0.26339 -1.29893 0.73223 -1.76777C5.70107 0.763392 6.33696 0.5 7 0.5c0.66304 0 1.29893 0.263392 1.76777 0.73223C9.23661 1.70107 9.5 2.33696 9.5 3v0.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.5 6.50146V10.503" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 6.50146V10.503" stroke-width="1" />
+  </g>
+</symbol><symbol id="left" viewBox="0 0 14 14"><g transform="rotate(-90 7 7)"><g id="arrow-up-1--arrow-up-keyboard">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5V0.5" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 4 7 0.5 3.5 4" stroke-width="1" />
+  </g>
+</g></symbol><symbol id="right" viewBox="0 0 14 14"><g transform="rotate(90 7 7)"><g id="arrow-up-1--arrow-up-keyboard">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5V0.5" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 4 7 0.5 3.5 4" stroke-width="1" />
+  </g>
+</g></symbol><symbol id="down" viewBox="0 0 14 14"><g transform="rotate(180 7 7)"><g id="arrow-up-1--arrow-up-keyboard" transform="translate(0 4.75)">
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 4 7 0.5 3.5 4" stroke-width="1" />
+  </g>
+</g></symbol><symbol id="up" viewBox="0 0 14 14"><g transform="rotate(0 7 7)"><g id="arrow-up-1--arrow-up-keyboard" transform="translate(0 4.75)">
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 4 7 0.5 3.5 4" stroke-width="1" />
+  </g>
+</g></symbol><symbol id="calendar" viewBox="0 0 14 14"><desc>
+    Blank Calendar Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="blank-calendar--blank-calendar-date-day-month-empty">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.5 2c-0.26522 0 -0.51957 0.10536 -0.707107 0.29289C0.605357 2.48043 0.5 2.73478 0.5 3v9.5c0 0.2652 0.105357 0.5196 0.292893 0.7071 0.187537 0.1875 0.441887 0.2929 0.707107 0.2929h11c0.2652 0 0.5196 -0.1054 0.7071 -0.2929s0.2929 -0.4419 0.2929 -0.7071V3c0 -0.26522 -0.1054 -0.51957 -0.2929 -0.70711C13.0196 2.10536 12.7652 2 12.5 2h-2" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 5.5h13" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.5 0.5v3" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 0.5v3" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.5 2h5" stroke-width="1" />
+  </g>
+</symbol><symbol id="users" viewBox="0 0 14 14"><desc>
+    User Multiple Group Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="user-multiple-group--close-geometric-human-multiple-person-up-user">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 6.5c1.38071 0 2.5 -1.11929 2.5 -2.5S6.38071 1.5 5 1.5 2.5 2.61929 2.5 4 3.61929 6.5 5 6.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 13.5h9v-0.5421c-0.00796 -0.7622 -0.20898 -1.51 -0.58427 -2.1734 -0.3753 -0.6635 -0.91263 -1.221 -1.5618 -1.62049 -0.64918 -0.3995 -1.38902 -0.62793 -2.15041 -0.66398C5.13564 8.49682 5.06778 8.49514 5 8.495c-0.06778 0.00014 -0.13564 0.00182 -0.20352 0.00503 -0.76139 0.03605 -1.50123 0.26448 -2.15041 0.66398 -0.64917 0.39949 -1.1865 0.95699 -1.5618 1.62049C0.708977 11.4479 0.507961 12.1957 0.5 12.9579V13.5Z" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9 6.5c1.3807 0 2.5 -1.11929 2.5 -2.5S10.3807 1.5 9 1.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.5 13.5001h2v-0.5422c-0.008 -0.7622 -0.209 -1.51 -0.5843 -2.1734 -0.3753 -0.6635 -0.9126 -1.22098 -1.5618 -1.62047 -0.4196 -0.25825 -0.8772 -0.44501 -1.3539 -0.55453" stroke-width="1" />
+  </g>
+</symbol><symbol id="user" viewBox="0 0 14 14"><desc>
+    User Single Neutral Male Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="user-single-neutral-male--close-geometric-human-person-single-up-user-male">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.1801 13.5c-0.4199 -1.3092 -1.2446 -2.4512 -2.3552 -3.2614 -1.11074 -0.8102 -2.45003 -1.24678 -3.82483 -1.24678 -1.37481 0 -2.7141 0.43658 -3.82479 1.24678C2.0646 11.0488 1.23989 12.1908 0.820068 13.5H13.1801Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 9c2.3373 0 4.2321 -1.89476 4.2321 -4.23206S9.3373 0.535889 7 0.535889 2.76794 2.43064 2.76794 4.76794 4.6627 9 7 9Z" stroke-width="1" />
+    <path id="Ellipse 592" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.38196 6.4054s-0.35115 0.69094 -1.3819 0.69094c-1.03075 0 -1.3819 -0.69094 -1.3819 -0.69094" stroke-width="1" />
+    <path id="Intersect" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.1554 3.96219c-0.0095 0.00006 -0.0189 0.00009 -0.0283 0.00009 -1.23017 0 -2.3346 -0.53819 -3.09073 -1.39195 -0.75612 0.85378 -1.86056 1.39198 -3.09071 1.39198 -0.71434 0 -1.3863 -0.18149 -1.97227 -0.50087C3.52393 1.76353 5.11856 0.535889 6.99993 0.535889c2.06177 0 3.77917 1.474371 4.15547 3.426301Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="user-add" viewBox="0 0 14 14"><desc>
+    User Add Plus Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="user-add-plus--actions-add-close-geometric-human-person-plus-single-up-user">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 5.5c1.38071 0 2.5 -1.11929 2.5 -2.5S6.38071 0.5 5 0.5 2.5 1.61929 2.5 3 3.61929 5.5 5 5.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.5 12.5h-6l0 -0.5421c0.007961 -0.7622 0.208977 -1.51 0.58427 -2.17342 0.3753 -0.66346 0.91263 -1.22097 1.5618 -1.62047 0.64918 -0.39949 1.38902 -0.62793 2.15041 -0.66397 0.7614 -0.03605 1.51951 0.12148 2.20352 0.45785" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 7.5v6" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.5 10.5h6" stroke-width="1" />
+  </g>
+</symbol><symbol id="document" viewBox="0 0 14 14"><desc>
+    New File Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="new-file--empty-common-file-content">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-9c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929C1.60536 13.0196 1.5 12.7652 1.5 12.5v-11c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5H9L12.5 4v8.5Z" stroke-width="1" />
+    <path id="Vector 2529" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 0.5v4h4" stroke-width="1" />
+  </g>
+</symbol><symbol id="clipboard" viewBox="0 0 14 14"><desc>
+    Clipboard Check Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="clipboard-check--checkmark-edit-task-edition-checklist-check-success-clipboard-form">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 0.5h-3c-0.55228 0 -1 0.447715 -1 1V2c0 0.55228 0.44772 1 1 1h3c0.55228 0 1 -0.44772 1 -1v-0.5c0 -0.552285 -0.44772 -1 -1 -1Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.75 1.5h1.5c0.2652 0 0.5196 0.10536 0.7071 0.29289 0.1875 0.18754 0.2929 0.44189 0.2929 0.70711v10c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-8.5c-0.26522 0 -0.51957 -0.1054 -0.70711 -0.2929 -0.18753 -0.1875 -0.29289 -0.4419 -0.29289 -0.7071v-10c0 -0.26522 0.10536 -0.51957 0.29289 -0.70711C2.23043 1.60536 2.48478 1.5 2.75 1.5h1.5" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5 9 1.5 1 3 -4" stroke-width="1" />
+  </g>
+</symbol><symbol id="money" viewBox="0 0 14 14"><desc>
+    Coins Stack Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="coins-stack--accounting-billing-payment-stack-cash-coins-currency-money-finance">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9 7.5c2.4853 0 4.5 -0.89543 4.5 -2s-2.0147 -2 -4.5 -2c-2.48528 0 -4.5 0.89543 -4.5 2s2.01472 2 4.5 2Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.5v6c0 1.1 2 2 4.5 2s4.5 -0.9 4.5 -2v-6" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 8.5c0 1.1 -2 2 -4.5 2s-4.5 -0.9 -4.5 -2" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.9 1.50878C7.73149 0.787652 6.37133 0.438892 5 0.508776c-2.49 0 -4.5 0.900004 -4.5 2.000004 0 0.59 0.58 1.12 1.5 1.5" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 10.0088C1.08 9.62879 0.5 9.09879 0.5 8.50879v-6" stroke-width="1" />
+    <path id="Vector_6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2 7.00879c-0.92 -0.38 -1.5 -0.91 -1.5 -1.5" stroke-width="1" />
+  </g>
+</symbol><symbol id="wallet" viewBox="0 0 14 14"><desc>
+    Wallet Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="wallet--money-payment-finance-wallet">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v2c0 0.2652 -0.1054 0.5196 -0.2929 0.7071S11.2652 13.5 11 13.5H1.5c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5V5c0 -1.65685 1.34315 -3 3 -3H10v2.5" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13 7.5H9.5c-0.27614 0 -0.5 0.22386 -0.5 0.5v2c0 0.2761 0.22386 0.5 0.5 0.5H13c0.2761 0 0.5 -0.2239 0.5 -0.5V8c0 -0.27614 -0.2239 -0.5 -0.5 -0.5Z" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 7.5v-2c0 -0.26522 -0.1054 -0.51957 -0.2929 -0.70711C11.5196 4.60536 11.2652 4.5 11 4.5H3.5" stroke-width="1" />
+  </g>
+</symbol><symbol id="truck" viewBox="0 0 14 14"><desc>
+    Shipping Truck Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="shipping-truck--truck-shipping-delivery-transfer">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 5.5h3c0.5304 0 1.0391 0.21071 1.4142 0.58579 0.3751 0.37507 0.5858 0.88378 0.5858 1.41421v4H12" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1.5 11.5h-1v-7c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 3.60536 1.23478 3.5 1.5 3.5h6c0.26522 0 0.51957 0.10536 0.70711 0.29289 0.18753 0.18754 0.29289 0.44189 0.29289 0.70711v7" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 11.5H5.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.25 13.5c-0.9665 0 -1.75 -0.7835 -1.75 -1.75S9.2835 10 10.25 10s1.75 0.7835 1.75 1.75 -0.7835 1.75 -1.75 1.75Z" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.5 13.5c-0.9665 0 -1.75 -0.7835 -1.75 -1.75S2.5335 10 3.5 10s1.75 0.7835 1.75 1.75 -0.7835 1.75 -1.75 1.75Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="warehouse" viewBox="0 0 14 14"><desc>
+    Warehouse 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="warehouse-1--delivery-warehouse-shipping-fulfillment">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 6.94c0.001 -0.1388 -0.027 -0.27628 -0.0821 -0.40368 -0.0551 -0.1274 -0.1361 -0.24194 -0.2379 -0.33632L7.00002 0.5 0.820023 6.2c-0.101775 0.09438 -0.182787 0.20892 -0.23788 0.33632S0.499084 6.8012 0.500023 6.94v5.56c0 0.2652 0.105357 0.5196 0.292893 0.7071s0.441894 0.2929 0.707104 0.2929H12.5c0.2652 0 0.5196 -0.1054 0.7071 -0.2929 0.1876 -0.1875 0.2929 -0.4419 0.2929 -0.7071V6.94Z" stroke-width="1" />
+    <path id="Rectangle 756" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.25 10.001h2.999s0.25 0 0.25 0.25v2.999s0 0.25 -0.25 0.25H7.25s-0.25 0 -0.25 -0.25v-2.999s0 -0.25 0.25 -0.25" stroke-width="1" />
+    <path id="Rectangle 758" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.5 6.501h2.999s0.25 0 0.25 0.25V9.75s0 0.25 -0.25 0.25H5.5s-0.25 0 -0.25 -0.25V6.751s0 -0.25 0.25 -0.25" stroke-width="1" />
+    <path id="Rectangle 757" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.751 10.001H6.75s0.25 0 0.25 0.25v2.999s0 0.25 -0.25 0.25H3.751s-0.25 0 -0.25 -0.25v-2.999s0 -0.25 0.25 -0.25" stroke-width="1" />
+  </g>
+</symbol><symbol id="box" viewBox="0 0 14 14"><desc>
+    Shipping Box 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="shipping-box-1--box-package-label-delivery-shipment-shipping">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 0.5h-11c-0.552285 0 -1 0.447715 -1 1v11c0 0.5523 0.447715 1 1 1h11c0.5523 0 1 -0.4477 1 -1v-11c0 -0.552285 -0.4477 -1 -1 -1Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9 0.5v5c0 0.13261 -0.05268 0.25979 -0.14645 0.35355C8.75979 5.94732 8.63261 6 8.5 6h-3c-0.13261 0 -0.25979 -0.05268 -0.35355 -0.14645C5.05268 5.75979 5 5.63261 5 5.5v-5" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 11H11" stroke-width="1" />
+  </g>
+</symbol><symbol id="home" viewBox="0 0 14 14"><desc>
+    Home 3 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="home-3--home-house-roof-shelter">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 6.94c0.001 -0.1388 -0.027 -0.27628 -0.0821 -0.40368 -0.0551 -0.1274 -0.1361 -0.24194 -0.2379 -0.33632L7.00002 0.5 0.820023 6.2c-0.101775 0.09438 -0.182787 0.20892 -0.23788 0.33632S0.499084 6.8012 0.500023 6.94v5.56c0 0.2652 0.105357 0.5196 0.292893 0.7071s0.441894 0.2929 0.707104 0.2929H12.5c0.2652 0 0.5196 -0.1054 0.7071 -0.2929 0.1876 -0.1875 0.2929 -0.4419 0.2929 -0.7071V6.94Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5v-4" stroke-width="1" />
+  </g>
+</symbol><symbol id="search" viewBox="0 0 14 14"><desc>
+    Magnifying Glass Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="magnifying-glass--glass-search-magnifying">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6 11.5c3.03757 0 5.5 -2.46243 5.5 -5.5S9.03757 0.5 6 0.5 0.5 2.96243 0.5 6s2.46243 5.5 5.5 5.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 13.5 10 10" stroke-width="1" />
+  </g>
+</symbol><symbol id="settings" viewBox="0 0 14 14"><desc>
+    Cog Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="cog--work-loading-cog-gear-settings-machine">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5.23004 2.25 0.43 -1.11c0.07252 -0.187936 0.20011 -0.349589 0.36605 -0.463788C6.19204 0.562014 6.3886 0.500595 6.59004 0.5h0.82c0.20144 0.000595 0.39801 0.062014 0.56395 0.176212 0.16595 0.114199 0.29353 0.275852 0.36605 0.463788l0.43 1.11 1.45996 0.84 1.18 -0.18c0.1965 -0.02667 0.3965 0.00567 0.5746 0.09292 0.178 0.08725 0.3261 0.22546 0.4254 0.39708l0.4 0.7c0.1025 0.17435 0.1498 0.37568 0.1355 0.57742 -0.0143 0.20174 -0.0894 0.39441 -0.2155 0.55258l-0.73 0.93v1.68l0.75 0.93c0.1261 0.15817 0.2012 0.35084 0.2155 0.55258 0.0143 0.20174 -0.033 0.40307 -0.1355 0.57742l-0.4 0.7c-0.0993 0.1716 -0.2474 0.3098 -0.4254 0.3971 -0.1781 0.0872 -0.3781 0.1196 -0.5746 0.0929l-1.18 -0.18 -1.45996 0.84 -0.43 1.11c-0.07252 0.1879 -0.2001 0.3496 -0.36605 0.4638 -0.16594 0.1142 -0.36251 0.1756 -0.56395 0.1762h-0.84c-0.20144 -0.0006 -0.398 -0.062 -0.56395 -0.1762 -0.16594 -0.1142 -0.29353 -0.2759 -0.36605 -0.4638l-0.43 -1.11 -1.46 -0.84 -1.18 0.18c-0.19648 0.0267 -0.39646 -0.0057 -0.57452 -0.0929 -0.17805 -0.0873 -0.32615 -0.2255 -0.42548 -0.3971l-0.4 -0.7c-0.1025 -0.17435 -0.14972 -0.37568 -0.13544 -0.57742 0.01428 -0.20174 0.0894 -0.39441 0.21544 -0.55258l0.73 -0.93V6.16l-0.75 -0.93c-0.12604 -0.15817 -0.20116 -0.35084 -0.21544 -0.55258 -0.01428 -0.20174 0.03294 -0.40307 0.13544 -0.57742l0.4 -0.7c0.09933 -0.17162 0.24743 -0.30983 0.42548 -0.39708 0.17806 -0.08725 0.37804 -0.11959 0.57452 -0.09292l1.18 0.18 1.48 -0.84Zm-0.23 4.75c0 0.39556 0.1173 0.78224 0.33706 1.11114 0.21977 0.3289 0.53212 0.58524 0.89757 0.73662 0.36546 0.15137 0.76759 0.19098 1.15555 0.11381 0.38796 -0.07717 0.74433 -0.26765 1.02404 -0.54736 0.2797 -0.2797 0.47018 -0.63607 0.54735 -1.02403 0.07717 -0.38796 0.03757 -0.79009 -0.11381 -1.15555 -0.15137 -0.36545 -0.40772 -0.67781 -0.73662 -0.89757C7.78228 5.1173 7.3956 5 7.00004 5c-0.53043 0 -1.03914 0.21071 -1.41421 0.58579 -0.37507 0.37507 -0.58579 0.88378 -0.58579 1.41421v0Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="bell" viewBox="0 0 14 14"><desc>
+    Ringing Bell Notification Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="ringing-bell-notification--notification-vibrate-ring-sound-alarm-alert-bell-noise">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6 13.25h2" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11 5.75c0 -1.06087 -0.4214 -2.07828 -1.17157 -2.82843C9.07828 2.17143 8.06087 1.75 7 1.75s-2.07828 0.42143 -2.82843 1.17157C3.42143 3.67172 3 4.68913 3 5.75v3.5c0 0.39782 -0.15804 0.7794 -0.43934 1.0607S1.89782 10.75 1.5 10.75h11c-0.3978 0 -0.7794 -0.158 -1.0607 -0.4393S11 9.64782 11 9.25v-3.5Z" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 5.62c0.000539 -0.95186 0.227534 -1.88993 0.66224 -2.73673C1.59694 2.03647 2.22687 1.30525 3 0.75" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 5.62c-0.0005 -0.95186 -0.2275 -1.88993 -0.6622 -2.73673S11.7731 1.30525 11 0.75" stroke-width="1" />
+  </g>
+</symbol><symbol id="info" viewBox="0 0 14 14"><desc>
+    Information Circle Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="information-circle--information-frame-info-more-help-point-circle">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5c3.5899 0 6.5 -2.9101 6.5 -6.5C13.5 3.41015 10.5899 0.5 7 0.5 3.41015 0.5 0.5 3.41015 0.5 7c0 3.5899 2.91015 6.5 6.5 6.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5.5 10h3" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 10V6.5H6" stroke-width="1" />
+    <g id="Group 2605">
+      <path id="Ellipse 1111" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 4.25c-0.13807 0 -0.25 -0.11193 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Ellipse 1112" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 4.25c0.13807 0 0.25 -0.11193 0.25 -0.25s-0.11193 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+  </g>
+</symbol><symbol id="help" viewBox="0 0 14 14"><desc>
+    Chat Bubble Square Question Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="chat-bubble-square-question--bubble-square-messages-notification-chat-message-question-help">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.5 -4 1 1 -3v-9c0 -0.26522 0.10536 -0.51957 0.29289 -0.707107C1.98043 0.605357 2.23478 0.5 2.5 0.5h10c0.2652 0 0.5196 0.105357 0.7071 0.292893 0.1875 0.187537 0.2929 0.441887 0.2929 0.707107v10c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-8Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6 5c0 -0.29667 0.08797 -0.58668 0.2528 -0.83335 0.16482 -0.24668 0.39909 -0.43894 0.67317 -0.55247 0.27409 -0.11353 0.57569 -0.14324 0.86667 -0.08536 0.29097 0.05788 0.55824 0.20074 0.76802 0.41052 0.20978 0.20978 0.35264 0.47705 0.41052 0.76803 0.05788 0.29097 0.02817 0.59257 -0.08536 0.86666 -0.11353 0.27408 -0.30579 0.50835 -0.55247 0.67317C8.08668 6.41203 7.79667 6.5 7.5 6.5v1" stroke-width="1" />
+    <g id="Group 4488">
+      <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.5 10c-0.13807 0 -0.25 -0.11193 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.5 10c0.13807 0 0.25 -0.11193 0.25 -0.25s-0.11193 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+  </g>
+</symbol><symbol id="comment" viewBox="0 0 14 14"><desc>
+    Chat Bubble Oval Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="chat-bubble-oval--messages-message-bubble-chat-oval">
+    <path id="Ellipse 1144" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.14472 12.8409C5.00659 13.263 5.97562 13.5 7 13.5c3.5899 0 6.5 -2.9101 6.5 -6.5C13.5 3.41015 10.5899 0.5 7 0.5 3.41015 0.5 0.5 3.41015 0.5 7c0 1.33261 0.40102 2.57155 1.08896 3.6027m2.55576 2.2382L0.5 13.5l1.08896 -2.8973m2.55576 2.2382L4.15 12.84m-2.56104 -2.2373L1.59 10.6" stroke-width="1" />
+  </g>
+</symbol><symbol id="clock" viewBox="0 0 14 14"><desc>
+    Circle Clock Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="circle-clock--clock-loading-measure-time-circle">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5c3.5899 0 6.5 -2.9101 6.5 -6.5C13.5 3.41015 10.5899 0.5 7 0.5 3.41015 0.5 0.5 3.41015 0.5 7c0 3.5899 2.91015 6.5 6.5 6.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 4.5V7l2.54 2.96" stroke-width="1" />
+  </g>
+</symbol><symbol id="send" viewBox="0 0 14 14"><desc>
+    Send Email Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="send-email--mail-send-email-paper-airplane">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5.81234 11.0005 2.17799 2.168c0.13363 0.1369 0.30071 0.2366 0.4847 0.2892 0.18399 0.0526 0.37852 0.0562 0.56434 0.0105 0.18698 -0.0435 0.35963 -0.1343 0.50135 -0.2638 0.14173 -0.1295 0.24776 -0.2932 0.3079 -0.4755L13.4253 2.00876c0.0747 -0.20086 0.0901 -0.41893 0.0444 -0.62829 -0.0457 -0.20937 -0.1505 -0.401209 -0.302 -0.552731 -0.1515 -0.151523 -0.3434 -0.256351 -0.5527 -0.302025 -0.2094 -0.045674 -0.4275 -0.030273 -0.6283 0.044373L1.26653 4.14679c-0.18858 0.06441 -0.356534 0.17802 -0.486508 0.32907 -0.129974 0.15105 -0.217253 0.33407 -0.252815 0.53014 -0.036707 0.17833 -0.028536 0.36298 0.02378 0.53737 0.052316 0.17438 0.147137 0.33304 0.275944 0.46171L3.56441 8.74256l-0.08992 3.46684 2.33785 -1.2089Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.1057 0.789795 3.56445 8.74247" stroke-width="1" />
+  </g>
+</symbol><symbol id="upload" viewBox="0 0 14 14"><desc>
+    Upload Computer Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="upload-computer--action-actions-computer-desktop-device-display-monitor-screen-upload">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11 2h2c0.2761 0 0.5 0.22386 0.5 0.5v8c0 0.2761 -0.2239 0.5 -0.5 0.5H1c-0.276142 0 -0.5 -0.2239 -0.5 -0.5v-8c0 -0.27614 0.223858 -0.5 0.5 -0.5h2" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 11 -1 2.5" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m8 11 1 2.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4 13.5h6" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 6.5v-6" stroke-width="1" />
+    <path id="Vector_6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5 2.5 2 -2 2 2" stroke-width="1" />
+  </g>
+</symbol><symbol id="download" viewBox="0 0 14 14"><desc>
+    Download Computer Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="download-computer--action-actions-computer-desktop-device-display-download-monitor-screen">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 0.5v6" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5 4.5 2 2 2 -2" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 2H13c0.2761 0 0.5 0.22386 0.5 0.5v8c0 0.2761 -0.2239 0.5 -0.5 0.5H1c-0.276142 0 -0.5 -0.2239 -0.5 -0.5v-8c0 -0.27614 0.223858 -0.5 0.5 -0.5h3.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 11 -1 2.5" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m8 11 1 2.5" stroke-width="1" />
+    <path id="Vector_6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4 13.5h6" stroke-width="1" />
+  </g>
+</symbol><symbol id="save" viewBox="0 0 14 14"><desc>
+    Floppy Disk Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="floppy-disk--disk-floppy-electronics-device-disc-computer-storage">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 12.5c0 0.2652 -0.1054 0.5196 -0.2929 0.7071s-0.4419 0.2929 -0.7071 0.2929h-11c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5V4.91c0.001105 -0.26234 0.105256 -0.51374 0.29 -0.7L4.21 0.79c0.18626 -0.184744 0.43766 -0.288895 0.7 -0.29h7.59c0.2652 0 0.5196 0.105357 0.7071 0.292893 0.1875 0.187537 0.2929 0.441887 0.2929 0.707107v11Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 13.5V9c0 -0.13261 -0.0527 -0.25979 -0.1464 -0.35355C10.2598 8.55268 10.1326 8.5 10 8.5H4c-0.13261 0 -0.25979 0.05268 -0.35355 0.14645C3.55268 8.74021 3.5 8.86739 3.5 9v4.5" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10.5 0.5V4c0 0.13261 -0.0527 0.25979 -0.1464 0.35355 -0.0938 0.09377 -0.221 0.14645 -0.3536 0.14645H6c-0.13261 0 -0.25979 -0.05268 -0.35355 -0.14645C5.55268 4.25979 5.5 4.13261 5.5 4V0.5" stroke-width="1" />
+  </g>
+</symbol><symbol id="filter" viewBox="0 0 14 14"><desc>
+    Filter 2 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="filter-2--funnel-filter-angle-oil">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 0.5H0.5l5 7v6l3 -2v-4l5 -7Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="sort" viewBox="0 0 14 14"><desc>
+    Sort Descending Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="sort-descending">
+    <path id="Vector 1025" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.92857 0.5H0.5" stroke-width="1" />
+    <path id="Vector 1026" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.92855 3.28564H2.82141" stroke-width="1" />
+    <path id="Vector 1027" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.92854 6.07129H5.14282" stroke-width="1" />
+    <path id="Vector 348" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 11 11 13.5 8.5 11" stroke-width="1" />
+    <path id="Vector 349" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11 0.5v13" stroke-width="1" />
+  </g>
+</symbol><symbol id="chart" viewBox="0 0 14 14"><desc>
+    Graph Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="graph--analytics-business-product-graph-data-chart-analysis">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 0.5v13h13" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M3.5 6.5 6 9l4 -6 3.5 2.5" stroke-width="1" />
+  </g>
+</symbol><symbol id="list" viewBox="0 0 14 14"><desc>
+    Bullet List Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="bullet-list--points-bullet-unordered-list-lists-bullets">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 3c0.27614 0 0.5 -0.22386 0.5 -0.5S1.27614 2 1 2c-0.276142 0 -0.5 0.22386 -0.5 0.5s0.223858 0.5 0.5 0.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 2.5h9" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 7.5c0.27614 0 0.5 -0.22386 0.5 -0.5s-0.22386 -0.5 -0.5 -0.5c-0.276142 0 -0.5 0.22386 -0.5 0.5s0.223858 0.5 0.5 0.5Z" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 7h9" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 12c0.27614 0 0.5 -0.2239 0.5 -0.5S1.27614 11 1 11c-0.276142 0 -0.5 0.2239 -0.5 0.5s0.223858 0.5 0.5 0.5Z" stroke-width="1" />
+    <path id="Vector_6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4.5 11.5h9" stroke-width="1" />
+  </g>
+</symbol><symbol id="more" viewBox="0 0 14 14"><desc>
+    Horizontal Menu Circle Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="horizontal-menu-circle--navigation-dots-three-circle-button-horizontal-menu">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5c3.5899 0 6.5 -2.9101 6.5 -6.5C13.5 3.41015 10.5899 0.5 7 0.5 3.41015 0.5 0.5 3.41015 0.5 7c0 3.5899 2.91015 6.5 6.5 6.5Z" stroke-width="1" />
+    <g id="Group 2606">
+      <path id="Ellipse 1111" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4 7.25c-0.13807 0 -0.25 -0.11193 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Ellipse 1112" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4 7.25c0.13807 0 0.25 -0.11193 0.25 -0.25s-0.11193 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+    <g id="Group 2632">
+      <path id="Ellipse 1111_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 7.25c-0.13807 0 -0.25 -0.11193 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Ellipse 1112_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 7.25c0.13807 0 0.25 -0.11193 0.25 -0.25s-0.11193 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+    <g id="Group 2633">
+      <path id="Ellipse 1111_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 7.25c-0.13807 0 -0.25 -0.11193 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Ellipse 1112_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 7.25c0.1381 0 0.25 -0.11193 0.25 -0.25s-0.1119 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+  </g>
+</symbol><symbol id="copy" viewBox="0 0 14 14"><desc>
+    Copy Paste Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="copy-paste--clipboard-copy-cut-paste">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 3.5v-1c0 -0.26522 -0.10536 -0.51957 -0.29289 -0.70711C8.01957 1.60536 7.76522 1.5 7.5 1.5h-1" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M4 10.5H1.5c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 10.0196 0.5 9.76522 0.5 9.5v-7c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 1.60536 1.23478 1.5 1.5 1.5h1" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12.5 5.5h-5c-0.55228 0 -1 0.44772 -1 1v6c0 0.5523 0.44772 1 1 1h5c0.5523 0 1 -0.4477 1 -1v-6c0 -0.55228 -0.4477 -1 -1 -1Z" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.75 0.5h-4.5l0.41 1.62c0.02498 0.10843 0.08611 0.20513 0.17335 0.27419 0.08724 0.06906 0.19538 0.10638 0.30665 0.10581h2.72c0.11127 0.00057 0.21941 -0.03675 0.30665 -0.10581 0.08724 -0.06906 0.14837 -0.16576 0.17335 -0.27419L6.75 0.5Z" stroke-width="1" />
+    <path id="Vector_5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 8.5h3" stroke-width="1" />
+    <path id="Vector_6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5h3" stroke-width="1" />
+  </g>
+</symbol><symbol id="eye" viewBox="0 0 14 14"><desc>
+    Eye Optic Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="eye-optic--health-medical-eye-optic">
+    <path id="Vector 2095" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 3.625c-4.18729 0-5.94531 3.76562-5.94531 3.84375 0 .07813 1.75802 3.84375 5.94531 3.84375 4.1873 0 5.9453-3.76562 5.9453-3.84375 0-.07813-1.758-3.84375-5.9453-3.84375Z" />
+    <path id="Vector 2096" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M2.16895 5.8125.610352 4.25391" />
+    <path id="Vector 2097" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m5.13483 3.89834-.63532-2.05532" />
+    <path id="Vector 2099" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m11.8311 5.8125 1.5585-1.55859" />
+    <path id="Vector 2100" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m8.86517 3.89834.63532-2.05532" />
+    <path id="Ellipse 902" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="rotate(12.898 7 7.469)" d="M5.262 7.469a1.738 1.738 0 1 0 3.476 0 1.738 1.738 0 1 0-3.476 0" />
+  </g>
+</symbol><symbol id="pin" viewBox="0 0 14 14"><desc>
+    Location Pin 3 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="location-pin-3--navigation-map-maps-pin-gps-location">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.5 5c0 3 -4.5 6.5 -4.5 6.5S2.5 8 2.5 5C2.5 2.549 4.549 0.5 7 0.5s4.5 2.049 4.5 4.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 6.5c0.82843 0 1.5 -0.67157 1.5 -1.5S7.82843 3.5 7 3.5 5.5 4.17157 5.5 5 6.17157 6.5 7 6.5Z" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.0773 10H12l1.5 3.5H0.5L2 10h0.9227" stroke-width="1" />
+  </g>
+</symbol><symbol id="refresh" viewBox="0 0 14 14"><desc>
+    Arrow Reload Horizontal 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="arrow-reload-horizontal-1--arrows-load-arrow-sync-square-loading-reload-synchronize">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9 0.5 11.5 3 9 5.5" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M0.5 6V4c0 -0.26522 0.105357 -0.51957 0.292893 -0.70711C0.98043 3.10536 1.23478 3 1.5 3h10" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 13.5 2.5 11 5 8.5" stroke-width="1" />
+    <path id="Vector_4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 8v2c0 0.2652 -0.1054 0.5196 -0.2929 0.7071S12.7652 11 12.5 11h-10" stroke-width="1" />
+  </g>
+</symbol><symbol id="link" viewBox="0 0 14 14"><desc>
+    Link Chain Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="link-chain--create-hyperlink-link-make-unlink-connection-chain">
+    <path id="Vector 2513" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m6 3 1.46436 -1.46447c1.38071 -1.380708 3.61924 -1.380708 5.00004 0 1.3807 1.38072 1.3807 3.61929 0 5.00001L11 8" stroke-width="1" />
+    <path id="Vector 2514" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m8.00001 11 -1.46435 1.4645c-1.38072 1.3807 -3.61929 1.3807 -5 0 -1.380717 -1.3807 -1.380716 -3.61932 0 -5.00004L3.00001 6" stroke-width="1" />
+    <path id="Vector 2515" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9 5 5 9" stroke-width="1" />
+  </g>
+</symbol><symbol id="sun" viewBox="0 0 14 14"><desc>
+    Lightbulb Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="lightbulb--lighting-light-incandescent-bulb-lights">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M11.5 5.03108c0.0056 -0.80324 -0.204 -1.59332 -0.6069 -2.28823 -0.4029 -0.6949 -0.98447 -1.26929 -1.68431 -1.66354C8.50894 0.68506 7.71631 0.485325 6.91321 0.50084c-0.80311 0.015514 -1.58743 0.245713 -2.27153 0.6667 -0.6841 0.42098 -1.24304 1.01741 -1.61881 1.72735 -0.37576 0.70995 -0.55465 1.50753 -0.51808 2.30996 0.03656 0.80242 0.28725 1.58043 0.72602 2.25326 0.43878 0.67283 1.04965 1.21594 1.76921 1.57297v1.50002c0 0.1326 0.05267 0.2598 0.14644 0.3535 0.09377 0.0938 0.22095 0.1465 0.35356 0.1465h3c0.1326 0 0.25978 -0.0527 0.35355 -0.1465 0.09377 -0.0937 0.14645 -0.2209 0.14645 -0.3535V9.03108c0.74748 -0.36828 1.37748 -0.93772 1.81908 -1.64433 0.4416 -0.70662 0.6774 -1.52241 0.6809 -2.35567v0Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M5 13.5h4" stroke-width="1" />
+  </g>
+</symbol><symbol id="moon" viewBox="0 0 14 14"><desc>
+    Waning Cresent Moon Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="waning-cresent-moon--night-new-moon-crescent-weather-time-waning">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M8 7c0.00471 -1.21237 0.32421 -2.40274 0.92723 -3.45452S10.3961 1.61657 11.44 1C10.6659 0.679515 9.83775 0.509809 9 0.5c-1.72391 0 -3.37721 0.68482 -4.59619 1.90381C3.18482 3.62279 2.5 5.27609 2.5 7s0.68482 3.3772 1.90381 4.5962C5.62279 12.8152 7.27609 13.5 9 13.5c0.84786 -0.006 1.6866 -0.1758 2.47 -0.5 -1.0495 -0.6128 -1.92131 -1.4883 -2.52974 -2.5404C8.33183 9.40759 8.00779 8.21528 8 7v0Z" stroke-width="1" />
+  </g>
+</symbol><symbol id="globe" viewBox="0 0 14 14"><desc>
+    Earth 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="earth-1--planet-earth-globe-world">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 13.5c3.5899 0 6.5 -2.9101 6.5 -6.5C13.5 3.41015 10.5899 0.5 7 0.5 3.41015 0.5 0.5 3.41015 0.5 7c0 3.5899 2.91015 6.5 6.5 6.5Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M1 9.49995h1.75c0.46413 0 0.90925 -0.18438 1.23744 -0.51257C4.31563 8.6592 4.5 8.21407 4.5 7.74995v-1.5c0 -0.46413 0.18437 -0.90925 0.51256 -1.23744 0.32819 -0.32819 0.77331 -0.51256 1.23744 -0.51256 0.46413 0 0.90925 -0.18438 1.23744 -0.51257C7.81563 3.65919 8 3.21408 8 2.74995V0.569946" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 6.9c-0.5007 -0.25979 -1.0559 -0.39689 -1.62 -0.4H9.75c-0.46413 0 -0.90925 0.18437 -1.23744 0.51256C8.18437 7.34075 8 7.78587 8 8.25c0 0.46413 0.18437 0.90925 0.51256 1.23744C8.84075 9.81563 9.28587 10 9.75 10c0.3315 0 0.6495 0.1317 0.8839 0.3661 0.2344 0.2344 0.3661 0.5524 0.3661 0.8839v0.87" stroke-width="1" />
+  </g>
+</symbol><symbol id="logout" viewBox="0 0 14 14"><desc>
+    Logout 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="logout-1--arrow-exit-frame-leave-logout-rectangle-right">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M9.5 10.5v2c0 0.2652 -0.10536 0.5196 -0.29289 0.7071 -0.18754 0.1875 -0.44189 0.2929 -0.70711 0.2929h-7c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5v-11c0 -0.26522 0.105357 -0.51957 0.292893 -0.707107C0.98043 0.605357 1.23478 0.5 1.5 0.5h7c0.26522 0 0.51957 0.105357 0.70711 0.292893C9.39464 0.98043 9.5 1.23478 9.5 1.5v2" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M6.5 7h7" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m11.5 5 2 2 -2 2" stroke-width="1" />
+  </g>
+</symbol><symbol id="warning" viewBox="0 0 14 14"><desc>
+    Warning Triangle Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="warning-triangle--frame-alert-warning-triangle-exclamation-caution">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.89003 1.0499C7.80611 0.886097 7.67861 0.748632 7.52158 0.652642 7.36455 0.556651 7.18407 0.505859 7.00003 0.505859c-0.18405 0 -0.36453 0.050792 -0.52156 0.146783 -0.15703 0.09599 -0.28453 0.233455 -0.36844 0.397258l-5.500004 11c-0.07671 0.1522 -0.113232 0.3215 -0.106098 0.4919 0.007134 0.1703 0.057688 0.3359 0.146861 0.4812 0.089172 0.1453 0.214003 0.2654 0.362641 0.3488 0.14863 0.0835 0.31613 0.1276 0.4866 0.1281H12.5c0.1705 -0.0005 0.338 -0.0446 0.4866 -0.1281 0.1487 -0.0834 0.2735 -0.2035 0.3627 -0.3488 0.0891 -0.1453 0.1397 -0.3109 0.1468 -0.4812 0.0072 -0.1704 -0.0294 -0.3397 -0.1061 -0.4919l-5.49997 -11Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 5v3.25" stroke-width="1" />
+    <g id="Group 2605">
+      <path id="Ellipse 1111" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 11c-0.13807 0 -0.25 -0.1119 -0.25 -0.25s0.11193 -0.25 0.25 -0.25" stroke-width="1" />
+      <path id="Ellipse 1112" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7 11c0.13807 0 0.25 -0.1119 0.25 -0.25s-0.11193 -0.25 -0.25 -0.25" stroke-width="1" />
+    </g>
+  </g>
+</symbol><symbol id="layers" viewBox="0 0 14 14"><desc>
+    Layers 1 Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="layers-1--design-layer-layers-pile-stack-align">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.47003 6.89996c-0.14833 0.06441 -0.3083 0.09764 -0.47 0.09764 -0.16171 0 -0.32168 -0.03323 -0.47 -0.09764l-5.700004 -2.64c-0.092558 -0.04668 -0.170342 -0.11814 -0.224688 -0.20642 -0.054346 -0.08828 -0.083121 -0.18991 -0.083121 -0.29358 0 -0.10367 0.028775 -0.2053 0.083121 -0.29358 0.054346 -0.08827 0.13213 -0.15973 0.224688 -0.20642L6.53003 0.599961c0.14832 -0.064407 0.30829 -0.097642 0.47 -0.097642 0.1617 0 0.32167 0.033235 0.47 0.097642L13.17 3.23996c0.0926 0.04669 0.1704 0.11815 0.2247 0.20642 0.0544 0.08828 0.0831 0.18991 0.0831 0.29358 0 0.10367 -0.0287 0.2053 -0.0831 0.29358 -0.0543 0.08828 -0.1321 0.15974 -0.2247 0.20642l-5.69997 2.66Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13.5 7.34998 7.4 10.16c-0.13028 0.0594 -0.27181 0.0902 -0.415 0.0902 -0.14319 0 -0.28472 -0.0308 -0.415 -0.0902L0.5 7.34998" stroke-width="1" />
+    <path id="Vector_3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="m13.5 10.6 -6.1 2.81c-0.13028 0.0594 -0.27181 0.0902 -0.415 0.0902 -0.14319 0 -0.28472 -0.0308 -0.415 -0.0902L0.5 10.6" stroke-width="1" />
+  </g>
+</symbol><symbol id="shield" viewBox="0 0 14 14"><desc>
+    Shield Check Streamline Icon: https://streamlinehq.com
+  </desc>
+  <g id="shield-check--shield-protection-security-defend-crime-war-cover-check">
+    <path id="Vector" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M7.35359 13.3836c-0.22977 0.0886 -0.4843 0.0886 -0.71407 0v0c-1.79285 -0.6884 -3.33473 -1.9043 -4.42196 -3.48738C1.13032 8.31318 0.548888 6.43757 0.550051 4.51713V1.54182c0 -0.26303 0.104489 -0.5153 0.290482 -0.701288 0.185997 -0.185993 0.438257 -0.290483 0.701287 -0.290483H12.4513c0.263 0 0.5153 0.10449 0.7013 0.290483 0.186 0.185988 0.2905 0.438258 0.2905 0.701288v2.97531c0.0011 1.92044 -0.5803 3.79605 -1.6675 5.37909 -1.0873 1.58308 -2.62915 2.79898 -4.42201 3.48738v0Z" stroke-width="1" />
+    <path id="Vector_2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M10 4 6 8.5 4 7" stroke-width="1" />
+  </g>
+</symbol></svg>

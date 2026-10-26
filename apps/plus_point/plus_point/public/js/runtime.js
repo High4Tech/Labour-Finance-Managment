@@ -23,9 +23,9 @@
   try{for(const callback of watchers.values())try{callback();}catch(error){console.warn('PLUS POINT enhancement',error);}stats.passes++;}
   finally{running=false;observer.observe(document.body,{childList:true,subtree:true});}
  }
- plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true});}schedule();};
+ plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(records=>{if(records.some(record=>!(record.target.nodeType===1?record.target:record.target.parentElement)?.closest('[contenteditable=true],.pp-freddy__motion')))schedule();});observer.observe(document.body,{childList:true,subtree:true});}schedule();};
  const wake=()=>{bursts=0;schedule();};
  document.addEventListener('visibilitychange',wake);document.addEventListener('pp:data-changed',wake);
- for(const type of ['pointerdown','keydown'])document.addEventListener(type,wake,{passive:true});
+ // Typing and pointer movement do not require rescanning every screen. DOM changes and routes wake the enhancements.
  frappe.router.on('change',()=>{wake();requestAnimationFrame(()=>{const page=frappe.container?.page;page?.querySelectorAll('.pp-operations,.pp-worker-profile').forEach(node=>{node.closest('.layout-main-section-wrapper')?.scrollTo(0,0);});});});
 })();

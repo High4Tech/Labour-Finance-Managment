@@ -51,6 +51,7 @@ def main():
     if '--drafts' in sys.argv:names=['test_drafts']
     if '--inline-drafts' in sys.argv:names=['test_planning_list','test_drafts']
     if '--event-start' in sys.argv:names=['test_event_start','test_drafts','test_planning_list']
+    if '--ui-stability' in sys.argv:names=['test_component_validation','test_event_start','test_drafts','test_planning_list']
     if '--planning' in sys.argv:names=['test_planning']
     if '--profiles' in sys.argv:names=['test_profiles_billing','test_drafts','test_hierarchy','test_component_validation']
     if '--planning-repairs' in sys.argv:names=['test_setup_imports','test_planning','test_attendance']

@@ -16,7 +16,7 @@
    input.attr({autocomplete:'off',placeholder:__('Choose or search…'),'aria-autocomplete':'list'});
    control.$link?.hide();
    const status=$('<span class="pp-picker-status" role="status"></span>').appendTo(control.$wrapper);
-   const button=$('<button type="button" class="pp-picker-toggle" tabindex="-1"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>')
+   const button=$('<button type="button" class="pp-picker-toggle" tabindex="-1">'+plus_point.icon('down')+'</button>')
     .attr('aria-label',__('Choose {0}',[__(control.df.label||control.df.options)])).appendTo(control.$input_area.find('.link-field'));
    const search=async term=>{
     if(control.df.read_only||control.df.hidden)return;const own=++sequence,args=control.get_search_args(term);if(!args)return;

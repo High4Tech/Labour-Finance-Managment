@@ -59,6 +59,7 @@
  const preserved='button,a,input,select,textarea,table,ul,ol,details';
  pp.freddy_feedback=(node,{message,tone,solution,rich=false,animate:play=true}={})=>{
   if(!node||!enabled())return;const previous=states.get(node);
+  if(message!=null&&previous&&plain(message)===previous.original&&(!tone||tone===previous.tone)&&node.querySelector(':scope > .pp-freddy'))return;
   if(message==null&&previous&&node.querySelector(':scope > .pp-freddy')&&node.textContent===previous.rendered&&(!tone||tone===previous.tone))return;
   const existing=node.querySelector(':scope > .pp-freddy');
   if(existing){if(active&&existing.contains(active.host))stop();const details=existing.querySelector('.pp-freddy__details'),speech=existing.querySelector('.pp-freddy__speech'),close=[...existing.querySelectorAll(':scope > .pp-dismiss-message,:scope > .close')];existing.replaceWith(...(details?[...details.childNodes]:[document.createTextNode(speech?.textContent===previous?.spoken?previous.original:speech?.textContent||'')]),...close);}
@@ -77,9 +78,9 @@
   if(play&&['error','warning','success','loading'].includes(tone))requestAnimationFrame(()=>animate(widget,true));
  };
  const selector=['.pp-input-hint','.pp-op-message','.pp-onboarding-errors','.pp-import-feedback','.pp-upload-error','.pp-import-error td:last-child','.pp-profile-save-error','.pp-checkpoint-feedback','.pp-sign-feedback','.pp-worker-edit-error','.pp-stock-feedback','.pp-empty-state','.pp-loading-state','.pp-activity-empty','.pp-info-portal','.pp-tooltip .tooltip-inner','.pp-freddy-guidance','.pp-upload-guidance','.pp-guide-note','.driver-popover-description','.pp-draft-status>span','.pp-signing-ready>p','.pp-flow-position','.msgprint','.frappe-confirm-message','.es-toast__message','#alert-container .alert-message','#agreement-status','[data-freddy-feedback]','[role=alert]'].join(',');
- function enhance(){
+ function enhance(scope=document){
   if(!enabled())return;if(active&&!active.host.isConnected)stop();
-  const nodes=[...document.querySelectorAll(selector)].filter(node=>!node.closest('.pp-freddy')&&!node.closest('[hidden],[inert],pre,code')&&node.getClientRects().length&&plain(node.textContent));
+  const nodes=[...scope.querySelectorAll(selector)].filter(node=>!node.closest('.pp-freddy')&&!node.closest('[hidden],[inert],pre,code')&&node.getClientRects().length&&plain(node.textContent));
   // Keep a pathological error list from creating unbounded work in a single pass.
   let changed=0;for(const node of nodes){
    if(node.querySelector('.pp-freddy')&&!node.querySelector(':scope > .pp-freddy'))continue;
@@ -90,6 +91,7 @@
    pp.freddy_feedback(node,{rich});
   }
  }
+ pp.enhance_feedback=enhance;
  function anchorError(message,tone){
   const action=lastAction?.node;if(!action?.isConnected||Date.now()-lastAction.at>15000)return false;
   const scope=action.closest('.modal-content')?.querySelector('.modal-body')||action.closest('.pp-op-content,.pp-worker-profile,.layout-main-section');if(!scope)return false;

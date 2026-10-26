@@ -10,8 +10,8 @@ PLUS POINT and High4Tech use the same action system in `public/css/interface.css
 
 | Token / role | Desktop | Mobile / touch |
 | --- | --- | --- |
-| Action height | 36px | 44px |
-| Icon-only action | 36 × 36px | 44 × 44px |
+| Default action height | 40px | 44px |
+| Icon-only action | 40 × 40px | 44 × 44px |
 | Horizontal padding | 12px | 12px |
 | Icon | 16px | 16px |
 | Radius | 8px | 8px |
@@ -61,3 +61,10 @@ Agreements and saved events share `pp-record-hero`, including its dark teal surf
 Use `plus_point.freddy_feedback(element, {message, tone, solution, rich})` for new error, warning, guidance, loading, empty and success messages. Existing field errors, native messages/snackbars and info popovers are adapted by the shared component. Keep it beside the relevant field or action; preserve backend validation, linked-record actions and `aria-describedby`. Explain the problem and the fix in a short sentence. Use supplied expressions with still images by default, one brief animation at a time, and reduced-motion support. Do not add a second floating assistant or a remote model call for ordinary feedback.
 
 New event creation validates the initial details, then opens the real event editor at Venues and crew through Create event and continue. Never show read-only requirement previews in place of worker assignment controls. Reuse an existing event explicitly when its agreement already has one, preserving its details, budget and assignments. Scheduling is optional and keeps budget settings and draft comments. See [event-start controls](docs/EVENT_START_CONTROLS_2026-10-26.md).
+
+
+The supplied PLUS POINT button reference is implemented in `interface.css`: 32/40/48px small/default/large buttons, 14px default text, 8px icon gap, primary/secondary/text/ghost/destructive states, focus rings and loading feedback. Touch actions are at least 44px. The public signing form reuses this same stylesheet.
+
+Company navigation and profile/action icons use the locally hosted Streamline Core Line sprite (`icons.js`, `images/streamline.svg`). Set navigation icons in the initial server metadata; do not replace sidebar icons after paint. Streamline credits are available in the company menu's About PLUS POINT entry.
+
+Keep render readiness explicit: agreement/event builders show their loading state until the final controls and collaboration rail are composed. Never paint an intermediate form and then transform it visibly. Reuse unchanged footer/help/error widgets; typing must not replace avatars, footer text or hidden review panels. Shared UI enhancements react to meaningful DOM/route changes, not every keystroke. Component redraws synchronously reconcile one header and its action; do not add duplicated inner headings. List setup must not trigger a second render just to hide a column. Refresh/route changes reconcile the actual selection before exposing bulk actions. Close a worker-summary dialog fully before opening pay/move controls. See [the stability review](docs/UI_STABILITY_2026-10-26.md).

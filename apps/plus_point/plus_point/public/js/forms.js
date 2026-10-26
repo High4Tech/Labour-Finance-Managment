@@ -28,9 +28,9 @@
  plus_point.field_error=(control,text,source='input')=>{
   if(!control?.$wrapper)return;control.pp_errors||={};control.pp_errors[source]=text||'';
   const message=Object.values(control.pp_errors).find(Boolean)||'';
-  let feedback=control.$wrapper.find('.pp-input-hint');if(!feedback.length)feedback=$('<span class="pp-input-hint" role="alert"></span>').appendTo(control.$wrapper);
-  if(!feedback.attr('id'))feedback.attr('id','pp-field-error-'+(++errorSequence));feedback.text(message);
-  const input=control.$input||control.$wrapper.find('[contenteditable]').first(),node=input.get(0),ids=new Set((input.attr('aria-describedby')||'').split(/\s+/).filter(Boolean));ids.add(feedback.attr('id'));
+  let feedback=control.$wrapper.find('.pp-input-hint');if(!feedback.length&&message)feedback=$('<span class="pp-input-hint" role="alert"></span>').appendTo(control.$wrapper);
+  if(feedback.length){if(!feedback.attr('id'))feedback.attr('id','pp-field-error-'+(++errorSequence));if(feedback.get(0).dataset.message!==message){feedback.get(0).dataset.message=message;if(message&&plus_point.freddy_feedback){plus_point.freddy_feedback(feedback.get(0),{message,tone:'error'});if(!feedback.get(0).children.length)feedback.text(message);}else feedback.text(message);}feedback.prop('hidden',!message);}
+  const input=control.$input||control.$wrapper.find('[contenteditable]').first(),node=input.get(0),ids=new Set((input.attr('aria-describedby')||'').split(/\s+/).filter(Boolean));if(feedback.length)ids.add(feedback.attr('id'));
   input.attr({'aria-describedby':[...ids].join(' '),'aria-invalid':String(!!message)});node?.setCustomValidity?.(message);
  };
  function error(control,required=true){

@@ -1,4 +1,7 @@
 /* Shared creation and edit scaffold; native controls and theme tokens remain authoritative. */
+.pp-operations[data-building=true]{position:relative;min-height:240px}
+.pp-operations[data-building=true]>.pp-op-layout{visibility:hidden;pointer-events:none}
+.pp-operations[data-building=true]>.pp-loading-state{position:absolute;inset:24px;z-index:1}
 .pp-flow-builder{--pp-builder-rail:180px;--pp-builder-gap:20px;background:var(--bg-color);padding:24px}
 .pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr) 260px;gap:var(--pp-builder-gap);align-items:start}
 .pp-flow-builder .pp-op-content{max-width:none!important;display:grid;grid-template-columns:var(--pp-builder-rail) minmax(0,1fr);gap:0 var(--pp-builder-gap)}
@@ -25,6 +28,14 @@
 .pp-builder-card>header{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
 .pp-builder-card>header h3{font-size:16px;font-weight:650;margin:0 0 4px;line-height:1.45}
 .pp-builder-card>header p{margin:0;font-size:13px;line-height:1.6;color:var(--text-muted)}
+.pp-builder-card>header>div:not(.pp-actions){flex:1;min-width:0}
+.pp-builder-card-actions{margin-inline-start:auto;align-self:center;flex-shrink:0;justify-content:flex-end}
+.pp-builder-card>header{flex-wrap:wrap}
+.pp-builder-card .pp-op-actions:empty{display:none}
+.pp-builder-fields>[data-fieldtype=Check]{min-height:0!important;padding:0!important;margin:0!important}
+.pp-builder-fields>[data-fieldtype=Check] :is(.checkbox,.control-input-wrapper,.control-input){min-height:0!important;margin:0!important;height:auto!important}
+.pp-builder-fields>[data-fieldtype=Check] .help-box{margin:6px 0 0!important}
+.pp-builder-fields>[data-fieldtype=Check] label{margin:0!important}
 .pp-builder-icon{display:grid;place-items:center;flex:0 0 40px;height:40px;border-radius:8px;background:color-mix(in srgb,var(--pp-action-primary) 9%,var(--fg-color));color:var(--pp-accent)}
 .pp-builder-icon svg{width:23px;height:23px}
 .pp-builder-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
@@ -58,3 +69,8 @@
 @media(max-width:1250px){.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr)}.pp-flow-builder .pp-op-activity{margin-top:0!important;margin-left:calc(var(--pp-builder-rail) + var(--pp-builder-gap))}}
 @media(max-width:767px){.pp-flow-builder{padding:16px;--pp-builder-rail:0px}.pp-flow-builder .pp-op-content{display:block}.pp-flow-builder .pp-flow-steps{display:flex;flex-direction:row;position:static;overflow-x:auto;gap:8px;margin-bottom:20px}.pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:0;padding:0;flex:0 0 150px}.pp-flow-builder .pp-flow-steps [role=tab]{padding:8px 8px 8px 42px;font-size:12px;min-height:48px}.pp-flow-builder .pp-flow-number{top:8px;left:4px}.pp-flow-builder .pp-flow-separator,.pp-builder-step-help{display:none}.pp-flow-builder .pp-op-activity{margin-left:0}.pp-builder-fields,.pp-builder-review-grid{grid-template-columns:minmax(0,1fr)}.pp-builder-card{padding:16px}.pp-flow-builder .pp-builder-footer{padding:14px 8px}.pp-flow-builder .pp-op-heading h2{font-size:22px}}
 @media(prefers-reduced-motion:reduce){.splash>img{animation:none}}
+
+/* Worker native fields stay hidden from their first load; the product profile paints when ready. */
+.pp-worker-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
+.pp-worker-profile[data-building=true]{position:relative;min-height:240px}
+.pp-worker-profile[data-building=true]>:not(.pp-loading-state){visibility:hidden;pointer-events:none}

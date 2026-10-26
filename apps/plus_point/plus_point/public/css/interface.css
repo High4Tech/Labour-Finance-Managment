@@ -17,8 +17,8 @@ body.pp-ui .pp-loading-placeholder>span:first-child{height:32px;width:45%}
 body.pp-ui .pp-loading-placeholder>span:last-child{width:75%}
 /* No looping shimmer, timers or extra observers for loading feedback. */
 body.pp-ui {
-    --pp-action-height:36px;
-    --pp-action-padding:12px;
+    --pp-action-height:40px;
+    --pp-action-padding:16px;
     --pp-action-radius:8px;
     --pp-action-icon:16px;
     --pp-action-gap:8px;
@@ -56,7 +56,7 @@ body.pp-ui :is(.btn,.es-button):not(.btn-reset) {
     padding:0 var(--pp-action-padding)!important;
     border-radius:var(--pp-action-radius)!important;
     font-family:inherit;
-    font-size:13px!important;
+    font-size:14px!important;
     font-weight:500;
     line-height:20px!important;
     vertical-align:middle;
@@ -180,3 +180,21 @@ html[data-theme=dark] body.pp-ui .pp-company-avatar { background:#155f56;color:#
 @media(prefers-reduced-motion:reduce) {
     body.pp-ui :is(.btn,.es-button) { transition:none!important; }
 }
+
+/* PLUS POINT button scale and emphasis, shared by native controls and product components. */
+body.pp-ui :is(.btn-sm,.es-button[data-size=sm]){--pp-action-height:32px;--pp-action-padding:12px;font-size:13px!important}
+body.pp-ui :is(.btn-lg,.es-button[data-size=lg]){--pp-action-height:48px;--pp-action-padding:24px;font-size:16px!important}
+body.pp-ui :is(.btn,.es-button){touch-action:manipulation;transition:box-shadow .12s}
+body.pp-ui .btn-primary:not(:disabled,.disabled):active{background:#084f48;border-color:#084f48;box-shadow:inset 0 1px 2px #0003}
+body.pp-ui :is(.btn-default,.btn-secondary):not(:disabled,.disabled):active{background:var(--pp-action-hover);box-shadow:inset 0 1px 2px #0002}
+body.pp-ui :is(.btn-tertiary,.btn-link){background:transparent;border:1px solid transparent;color:var(--pp-accent)}
+body.pp-ui .btn-ghost{background:transparent;border:1px solid transparent;color:var(--text-color)}
+body.pp-ui :is(.btn-tertiary,.btn-link,.btn-ghost):hover{background:var(--pp-action-hover)}
+body.pp-ui .btn-danger{background:var(--fg-color)!important;color:var(--pp-status-danger)!important;border-color:color-mix(in srgb,var(--pp-status-danger) 40%,var(--border-color))!important}
+body.pp-ui .btn-danger:not(:disabled,.disabled):hover{background:var(--pp-action-danger)!important;color:#fff!important}
+body.pp-ui .btn[aria-busy=true]::before{content:"";width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pp-button-busy .8s linear infinite}
+body.pp-ui .pp-streamline-icon{fill:none;stroke:currentColor;flex-shrink:0;vertical-align:middle}
+body.pp-ui .pp-streamline-credit{font-size:12px;color:var(--text-muted)}
+@keyframes pp-button-busy{to{transform:rotate(1turn)}}
+@media(max-width:767px),(pointer:coarse){body.pp-ui :is(.btn-sm,.es-button[data-size=sm]){--pp-action-height:44px}}
+@media(prefers-reduced-motion:reduce){body.pp-ui :is(.btn,.es-button){transition:none}body.pp-ui .btn[aria-busy=true]::before{animation:none}}

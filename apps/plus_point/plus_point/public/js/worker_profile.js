@@ -22,11 +22,11 @@
   if(frm.__pp_worker_name!==name){frm.__pp_worker_name=name;frm.__pp_worker_edit=false;}
   frm.form_wrapper.find('.form-layout,.form-tabs-list,.form-dashboard').hide();
   if(frm.__pp_worker_edit)frm.enable_save();else{frm.__pp_worker_groups=null;frm.disable_save();frm.page.clear_primary_action();}
-  root.innerHTML=`<p role="status">${esc(__('Loading worker overview…'))}</p>`;
+  delete root.dataset.ready;root.dataset.building='true';root.innerHTML=plus_point.loading_state('Loading worker overview…');const reveal=()=>{plus_point.enhance_feedback?.(root);delete root.dataset.building;root.dataset.ready='true';};
   try{
    const data=await plus_point.form_rpc('worker_profile.overview',{employee:name,days});
    if(sequence!==frm.__pp_worker_seq||frm.doc.name!==name)return;
-   if(frm.__pp_worker_edit){await plus_point.render_worker_editor(frm,root,data);root.dataset.ready='true';return;}
+   if(frm.__pp_worker_edit){await plus_point.render_worker_editor(frm,root,data);reveal();return;}
    frm.remove_custom_button(__('Create User'));
    const money=value=>number(value)+' '+data.currency;
    root.innerHTML=`<header class="pp-worker-heading"><div class="pp-person-heading">${plus_point.worker_avatar(data.title,data.image)}<div><p>${esc(__('Worker overview'))}</p><h2>${esc(data.title)}</h2></div></div><button type="button" class="btn btn-default pp-worker-edit">${esc(__(frm.__pp_worker_edit?'Back to overview':'Edit profile'))}</button></header>
@@ -54,9 +54,9 @@
     button.onclick=()=>{if(['Present','Half day','Absent'].includes(button.dataset.status))frappe.set_route('List','PP Work Entry',{employee:name,work_date:button.dataset.date});else plus_point.open_attendance_picker();};
     button.onkeydown=event=>{const moves={ArrowLeft:-7,ArrowRight:7,ArrowUp:-1,ArrowDown:1};if(!(event.key in moves))return;event.preventDefault();buttons.forEach(b=>b.tabIndex=-1);const target=buttons[Math.max(0,Math.min(buttons.length-1,index+moves[event.key]))];target.tabIndex=0;target.focus();};
    });
-   root.dataset.ready='true';
-  }catch(error){if(sequence!==frm.__pp_worker_seq)return;root.innerHTML=`<p class="pp-onboarding-errors" role="alert">${esc(error.message)}</p><button type="button" class="btn btn-default pp-profile-retry">${esc(__('Try again'))}</button>`;root.querySelector('button').onclick=()=>mount(frm,days);}
+   reveal();
+  }catch(error){if(sequence!==frm.__pp_worker_seq)return;delete root.dataset.building;root.innerHTML=`<p class="pp-onboarding-errors" role="alert">${esc(error.message)}</p><button type="button" class="btn btn-default pp-profile-retry">${esc(__('Try again'))}</button>`;root.querySelector('button').onclick=()=>mount(frm,days);}
  }
  plus_point.open_worker_profile=mount;
- frappe.ui.form.on('Employee',{refresh(frm){if(frappe.boot.plus_point?.is_platform||!frappe.user.has_role('System Manager'))return;if(!frm.is_new())mount(frm);else{frm.form_wrapper.find('.form-layout,.form-tabs-list,.form-dashboard').hide();if(!frm.__pp_worker?.get(0)?.isConnected)frm.__pp_worker=$('<section class="pp-worker-profile"></section>').prependTo(frm.form_wrapper);plus_point.render_worker_editor(frm,frm.__pp_worker.get(0));}}});
+ frappe.ui.form.on('Employee',{before_load(frm){if(!frappe.boot.plus_point?.is_platform&&frappe.user.has_role('System Manager'))frm.form_wrapper?.addClass('pp-worker-native-hidden');},refresh(frm){if(frappe.boot.plus_point?.is_platform||!frappe.user.has_role('System Manager'))return;if(!frm.is_new())mount(frm);else{frm.form_wrapper.find('.form-layout,.form-tabs-list,.form-dashboard').hide();if(!frm.__pp_worker?.get(0)?.isConnected)frm.__pp_worker=$('<section class="pp-worker-profile"></section>').prependTo(frm.form_wrapper);const root=frm.__pp_worker.get(0);delete root.dataset.ready;root.dataset.building='true';plus_point.render_worker_editor(frm,root).then(()=>{plus_point.enhance_feedback?.(root);delete root.dataset.building;root.dataset.ready='true';}).catch(error=>{delete root.dataset.building;root.textContent=error.message;});}}});
 })();

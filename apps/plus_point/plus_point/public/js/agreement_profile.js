@@ -2,8 +2,7 @@
 (()=>{
  frappe.provide('plus_point');
  const esc=v=>frappe.utils.escape_html(String(v??''));
- const paths={client:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8M17 4a4 4 0 0 1 0 7M22 21v-2a4 4 0 0 0-3-3.9',calendar:'M4 5h16v16H4ZM7 2v6M17 2v6M4 10h16',document:'M14 2H4v20h16V8ZM14 2v6h6M8 12h8M8 16h6',money:'M12 3c5 0 8 2 8 4s-3 4-8 4-8-2-8-4 3-4 8-4ZM4 7v5c0 2 3 4 8 4s8-2 8-4V7M4 12v5c0 2 3 4 8 4s8-2 8-4v-5',scope:'M9 4H5v17h14V4h-4M9 2h6v5H9ZM9 12h6M9 16h6',comment:'M21 11a9 9 0 0 1-9 9H5l-4 3 2-7a9 9 0 1 1 18-5ZM8 10h8M8 14h5',clock:'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18ZM12 7v6h4',send:'m22 2-7 20-4-9L2 9Zm0 0L11 13',upload:'M12 16V3M7 8l5-5 5 5M4 15v6h16v-6',edit:'m16 3 5 5M4 20l4-1L21 6l-4-4L4 15Z',truck:'M2 6h12v12H2ZM14 11h4l4 4v3h-8M5 16a3 3 0 1 1 0 6 3 3 0 0 1 0-6M18 16a3 3 0 1 1 0 6 3 3 0 0 1 0-6',back:'M19 12H5M11 6l-6 6 6 6',plus:'M12 4v16M4 12h16'};
- const icon=name=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(paths[name]||paths.document)+'"/></svg>';
+ const icon=name=>plus_point.icon(name);
  const action=(label,attr,kind='btn-default',symbol)=>'<button type="button" class="btn '+kind+'" '+attr+'>'+(symbol?icon(symbol):'')+'<span>'+esc(__(label))+'</span></button>';
  const facts=items=>plus_point.profile_facts(items);
  const card=(title,body,control='',symbol='document',attributes='')=>'<section class="pp-profile-section pp-agreement-card" '+attributes+'><header class="pp-section-heading"><div class="pp-agreement-card-title"><span class="pp-agreement-icon">'+icon(symbol)+'</span><h3>'+esc(__(title))+'</h3></div>'+control+'</header>'+body+'</section>';

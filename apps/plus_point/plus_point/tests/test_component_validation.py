@@ -77,7 +77,7 @@ class ComponentValidationTests(unittest.TestCase):
         self.case.worker(self.f.employee.name)
         values=dict(customer=self.f.customer.name,agreement_title='Past mode audit',scope='Historical work',billing_model='Daily',agreement_currency='PKR',effective_start=add_days(today(),-2),effective_end=today(),status='Active',staffing=[dict(site_name='Historical hall',designation='Event crew',phase='Event',start_date=add_days(today(),-2),end_date=today(),workers_required=1,wage_rate=200,client_rate=350)])
         before=frappe.db.count('Project',{'company':self.f.company.name})
-        with self.assertRaisesRegex(frappe.ValidationError,'Record past work'):operations.save_agreement(values)
+        with self.assertRaisesRegex(frappe.ValidationError,'Allow dates in the past'):operations.save_agreement(values)
         self.assertEqual(frappe.db.count('Project',{'company':self.f.company.name}),before)
         a=operations.save_agreement(dict(values,allow_past_dates=1));self.assertTrue(a['name'])
 

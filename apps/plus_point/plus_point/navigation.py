@@ -74,6 +74,13 @@ def product_navigation(platform):
                          'Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
         reports.update(['PLUS POINT Project Finances','PLUS POINT Worker Statement'])
+    if not platform:
+        icons={'Employee':'users','PP Daily Register':'check-square','PP Contract Terms':'document','PP Event Plan':'calendar',
+               'Warehouse':'warehouse','Vehicle':'truck','Sales Invoice':'document','PP Wage Settlement':'wallet',
+               'PP Worker Loan':'money','Payment Entry':'wallet','Purchase Invoice':'wallet',
+               'PLUS POINT Project Finances':'chart','PLUS POINT Worker Statement':'user','pp-onboarding':'settings'}
+        for item in items:
+            if item.get('type')=='Link':item['icon']=icons.get(item.get('link_to'),'home')
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
                 pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)
 

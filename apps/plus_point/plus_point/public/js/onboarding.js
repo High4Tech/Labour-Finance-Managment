@@ -353,6 +353,7 @@
                 new frappe.ui.Dropdown({trigger:$(clone),side:'top',align:'start',options:[{group:'',options:[
                     {name:'company',label:__('Your company'),onclick:()=>{const name=plus_point.dashboard_company||identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();}},
                     ...(!frappe.boot.plus_point.onboarding_complete?[{name:'setup',label:__('Guided company setup'),onclick:()=>plus_point.open_setup()}]:[]),
+                    {name:'about',label:__('About PLUS POINT'),onclick:()=>frappe.msgprint({title:__('About PLUS POINT'),message:'<p>PLUS POINT · High4Tech</p><p>Icons by <a href="https://www.streamlinehq.com/" target="_blank" rel="noopener">Streamline</a> · Core Line, CC BY 4.0.</p>'})},
                     {name:'logout',label:__('Sign out'),onclick:()=>frappe.app.logout()}]}]});
             }
             const names=document.querySelectorAll('.sidebar-user-button .avatar-name-email span');
