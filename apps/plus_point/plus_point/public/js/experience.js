@@ -42,13 +42,17 @@
   if(['Vehicle','Warehouse'].includes(list.doctype)){list.settings.get_form_link=doc=>list.doctype==='Warehouse'&&doc.is_group?'/desk/warehouse/view/list?parent_warehouse='+encodeURIComponent(doc.name):'/desk/pp-inventory?view='+(list.doctype==='Vehicle'?'vehicles':'warehouses')+'&record='+encodeURIComponent(doc.name);list.make_new_doc=()=>plus_point.open_resource(list.doctype==='Vehicle'?'vehicles':'warehouses',()=>list.refresh());return;}
   const routes={'PP Contract Terms':'pp-agreements','PP Event Plan':'pp-event-plans','Sales Invoice':'pp-client-billing'},mode=routes[list.doctype];if(!mode||list.__pp_native_operation)return;list.__pp_native_operation=true;
   list.settings.get_form_link=doc=>doc.pp_draft_name?'/desk/'+mode+'?draft='+encodeURIComponent(doc.pp_draft_name):mode==='pp-client-billing'?`/desk/${mode}?invoice=${encodeURIComponent(doc.name)}`:`/desk/${mode}?record=${encodeURIComponent(doc.name)}`;
-  if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)&&!list.fields.includes('project'))list.fields.push('project');
+  if(list.doctype==='Sales Invoice'&&Array.isArray(list.fields)){list.fields=list.fields.filter(field=>field!=='project');if(!list.fields.some(field=>Array.isArray(field)&&field[0]==='project'&&field[1]===list.doctype))list.fields.push(['project',list.doctype]);}
   list.make_new_doc=()=>frappe.set_route(mode,{record:'new'});
   // Native list filters belong to the user; opening a section adds none.
  }
  async function totals(force=false){
   if(!bar||!frappe.boot.plus_point.company_identity?.name||summaryBusy||!force&&Date.now()-lastSummary<30000||frappe.boot.plus_point.is_platform)return;
   summaryBusy=true;try{const data=await plus_point.form_rpc('dashboard.overview',{display_currency:frappe.boot.plus_point.display_currency||undefined});lastSummary=Date.now();const choice=bar.querySelector('.pp-app-currency');if(choice&&!choice.options.length){choice.innerHTML=(data.currency_options||[data.currency]).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}if(choice)choice.value=data.currency;bar.querySelector('.pp-currency-status').textContent=data.fx?.status==='unavailable'?__('Rates unavailable; showing {0}.',[data.currency]):data.fx?.status==='converted'?__('Daily rate · {0}',[String(data.fx.as_of).slice(0,10)]):'';bar.querySelector('.pp-top-totals').innerHTML=[['Revenue',data.earned_revenue],['Profit',data.contribution],['Outstanding',data.client_balance]].map(([label,n])=>`<span><small>${esc(__(label))}</small><strong>${esc(new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(n)||0))} ${esc(data.currency)}</strong></span>`).join('');}catch{}finally{summaryBusy=false;}
+ }
+ function selectNavigation(){
+  const route=frappe.get_route()||[],aliases={'pp-agreements':'pp-contract-terms','pp-event-plans':'pp-event-plan','pp-client-billing':'sales-invoice','pp-daily-register':'pp-daily-register','pp-inventory':new URL(location.href).searchParams.get('view')==='vehicles'?'vehicle':'warehouse'},target=aliases[route[0]],current=decodeURIComponent(location.pathname).replace(/\/$/,'');
+  for(const a of document.querySelectorAll('.body-sidebar .standard-sidebar-item a[href]')){const item=a.closest('.standard-sidebar-item'),url=new URL(a.href,location.href),slug=url.pathname.split('/').filter(Boolean).at(-1),selected=target?slug===target:decodeURIComponent(url.pathname).replace(/\/$/,'')===current&&url.search===location.search;if(item.classList.contains('pp-selected')!==selected)item.classList.toggle('pp-selected',selected);if(selected){if(a.getAttribute('aria-current')!=='page')a.setAttribute('aria-current','page');}else if(a.hasAttribute('aria-current'))a.removeAttribute('aria-current');}
  }
  function shell(){
   if(!frappe.boot.plus_point)return;const body=document.getElementById('body');if(!body)return;
@@ -62,7 +66,7 @@
   if(context.onboarding_required&&frappe.get_route()?.[0]!=='pp-onboarding')frappe.set_route('pp-onboarding');
   document.body.classList.toggle('pp-onboarding-required',!!context.onboarding_required);
  }
- function update(){queued=false;guidance();lists();shell();document.querySelectorAll('.pp-register-table').forEach(table=>{const labels=[...table.querySelectorAll('thead th')].map(c=>c.textContent||__('Actions'));table.querySelectorAll('tbody>tr').forEach(row=>[...row.children].forEach((cell,i)=>{if(!cell.dataset.label)cell.dataset.label=labels[i]||__('Actions');}));});}
+ function update(){queued=false;guidance();lists();shell();selectNavigation();document.querySelectorAll('.pp-register-table').forEach(table=>{const labels=[...table.querySelectorAll('thead th')].map(c=>c.textContent||__('Actions'));table.querySelectorAll('tbody>tr').forEach(row=>[...row.children].forEach((cell,i)=>{if(!cell.dataset.label)cell.dataset.label=labels[i]||__('Actions');}));});}
  function schedule(){if(queued)return;queued=true;requestAnimationFrame(update);}
  $(document).on('form-refresh.pp-experience',(_e,frm)=>{plus_point.bind_date_ranges(frm);schedule();});
  document.addEventListener('click',event=>{if(frappe.boot.plus_point?.is_platform||frappe.get_route()?.[0]!=='List'||frappe.get_route()?.[1]!=='Sales Invoice')return;const anchor=event.target.closest('a[href]');if(!anchor?.closest('.list-row-container'))return;const match=new URL(anchor.href,location.href).pathname.match(/\/(?:desk|app)\/(?:[^/]+\/)?sales-invoice\/([^/]+)$/);if(match){event.preventDefault();event.stopImmediatePropagation();frappe.set_route('pp-client-billing',{invoice:decodeURIComponent(match[1])});}},true);

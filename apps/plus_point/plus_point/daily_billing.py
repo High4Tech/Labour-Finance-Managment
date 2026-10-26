@@ -67,7 +67,7 @@ def rebase(terms):
     generated=periods(terms.effective_start,terms.effective_end,recurring['frequency'],recurring.get('payment_days',0),recurring['schedule_id'])
     old={r['id']:r for r in rows}
     if any((r.get('invoice') or r.get('supplemental_invoices')) and r['id'] not in {p['id'] for p in generated} for r in rows):frappe.throw('Keep invoiced payment periods within the agreement dates.')
-    terms.pp_daily_checkpoints=frappe.as_json([old[r['id']] if old.get(r['id'],{}).get('invoice') or old.get(r['id'],{}).get('supplemental_invoices') else r for r in generated])
+    terms.pp_daily_checkpoints=frappe.as_json([old[r['id']] if old.get(r['id'],{}).get('invoice') or old.get(r['id'],{}).get('supplemental_invoices') else dict(r,title=old.get(r['id'],{}).get('title') or r['title']) for r in generated])
 
 
 def event_terms(terms):

@@ -27,7 +27,7 @@
    if(clientChoice&&![...clientChoice.querySelectorAll('.frappe-control')].some(node=>node.style.display!=='none'))clientChoice.hidden=true;
    wrap('.pp-op-client-fields','Contact and address details','Enter the client’s contact information and address.','scope');
    fieldCard(groups.details,['agreement_title'],'Agreement basics','Set a clear name for this agreement.');
-   fieldCard(groups.details,['validity_mode','effective_start','effective_end','allow_past_dates','recurrence_note'],'Agreement dates','Set the start and end dates for the agreed work.','calendar');
+   fieldCard(groups.details,['validity_mode','effective_start','effective_end','allow_past_dates'],'Agreement dates','Set the start and end dates for the agreed work.','calendar');
    fieldCard(groups.details,['scope'],'Scope and deliverables','Describe the work included in this agreement.');
    wrap('.pp-agreement-conditions','Conditions','Add specific terms and conditions for this agreement.');
    area.querySelector('.pp-agreement-conditions>h4')?.remove();
@@ -41,7 +41,7 @@
    wrap('.pp-agreement-transport','Vehicle requirements','Optional: agree vehicle types and quantities. Assign vehicles in the event.','truck');
    const siteAdd=area.querySelector('[data-add-staffing]');if(sitesCard&&siteAdd){const tools=document.createElement('div');tools.className='pp-actions pp-builder-card-actions';tools.append(siteAdd);sitesCard.querySelector('header').append(tools);}
    const summary=card('Review summary','Review the entered details before creating your signing link.');summary.classList.add('pp-builder-review');sections.at(-1).prepend(summary);
-   wrap('.pp-signing-ready','Creation checklist','Review the details and choose whether to email the client.','send');area.querySelector('.pp-signing-ready>h4')?.remove();
+   wrap('.pp-signing-ready,.pp-agreement-sharing','Creation checklist','Review the details and choose whether to email the client.','send');area.querySelector('.pp-signing-ready>h4')?.remove();
    let lastReview='';const update=()=>{
     if(!read)return;const t=groups.terms?plus_point.draft_form(groups.terms):(read().terms||{});
     daily.hidden=t.billing_model!=='Daily';fixed.hidden=t.billing_model!=='Fixed'||!!area.querySelector('.pp-new-milestones')?.hidden;if(existing)existing.closest('.pp-builder-card').hidden=t.billing_model!=='Fixed'||existing.hidden;
@@ -64,9 +64,9 @@
    wrap('.pp-op-timeline','Event timeline','Review staffing coverage and the event schedule.','calendar');
   }
   footer.classList.add('pp-builder-footer');
-  const finish=area.querySelector('[data-create-and-sign],[data-create-plan]');if(finish)footer.querySelector('.pp-actions').append(finish);
+  const duplicate=agreement&&area.querySelector('[data-create-and-sign]');if(duplicate)duplicate.remove();const finish=agreement?null:area.querySelector('[data-create-plan]');if(finish)footer.querySelector('.pp-actions').append(finish);
   const save=area.querySelector('[data-save-project]'),home=document.createComment('event save home');if(save)save.before(home);
-  function update(){for(const card of area.querySelectorAll('[data-builder-fields]'))card.hidden=card.dataset.builderFields.split(',').every(key=>groups.project?.fields_dict[key]?.df.hidden);const current=tabs.findIndex(tab=>tab.getAttribute('aria-selected')==='true');if(finish)finish.hidden=current!==tabs.length-1;if(save){const actions=footer.querySelector('.pp-actions');if(current===tabs.length-1){if(save.parentElement!==actions)actions.append(save);}else if(home.nextSibling!==save)home.after(save);}area.dispatchEvent(new Event('pp:builder-update'));}
+  function update(){for(const card of area.querySelectorAll('[data-builder-fields]'))card.hidden=card.dataset.builderFields.split(',').every(key=>groups.project?.fields_dict[key]?.df.hidden);const current=tabs.findIndex(tab=>tab.getAttribute('aria-selected')==='true');root.dataset.finalStep=String(current===tabs.length-1);if(agreement){const next=footer.querySelector('[data-flow-next]');next.hidden=false;next.disabled=current===tabs.length-1;next.classList.toggle('btn-primary',!next.disabled);next.classList.toggle('btn-default',next.disabled);}if(finish)finish.hidden=current!==tabs.length-1;if(save){const actions=footer.querySelector('.pp-actions');if(current===tabs.length-1){if(save.parentElement!==actions)actions.append(save);}else if(home.nextSibling!==save)home.after(save);}area.dispatchEvent(new Event('pp:builder-update'));}
   area.addEventListener('pp:builder-step',update);area.addEventListener('pp:builder-state',update);update();
   const rail=root.querySelector('.pp-op-activity'),layout=root.querySelector('.pp-op-layout');
   const align=()=>{stage.querySelectorAll('.pp-staffing-calendar').forEach(node=>node.ppCalendarReveal?.());const orientation=innerWidth<=767?'horizontal':'vertical';if(nav.getAttribute('aria-orientation')!==orientation)nav.setAttribute('aria-orientation',orientation);const first=[...stage.querySelectorAll('.pp-builder-card')].find(card=>card.getClientRects().length);const top=Math.max(0,(first||stage).getBoundingClientRect().top-layout.getBoundingClientRect().top)+'px';if(rail.style.getPropertyValue('--pp-builder-top')!==top)rail.style.setProperty('--pp-builder-top',top);};

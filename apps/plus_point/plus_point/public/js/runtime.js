@@ -3,9 +3,10 @@
  frappe.provide('plus_point');
  // Native equivalents of the Empty/Skeleton composition reviewed on 21st.dev.
  // Text only: callers retain ownership of their actions and event listeners.
+ plus_point.close_dialog=d=>{const native=d.$wrapper.data('bs.modal');if(native?._isTransitioning)d.$wrapper.one('shown.bs.modal',()=>d.hide());else d.hide();};
  const escape=v=>frappe.utils.escape_html(String(v??''));
  plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;
- plus_point.loading_state=(label='Loading your records…')=>`<div class="pp-loading-state" role="status"><p>${escape(__(label))}</p><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span></div></div>`;
+ plus_point.loading_state=(label='Loading your records…')=>`<div class="pp-loading-state" role="status"><span class="sr-only">${escape(__(label))}</span><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div><img class="pp-loading-logo" src="/assets/plus_point/images/freddy/thinking.svg?v=20261027" width="88" height="88" alt="" aria-hidden="true"></div>`;
  plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;

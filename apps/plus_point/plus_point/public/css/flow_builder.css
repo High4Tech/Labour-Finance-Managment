@@ -24,8 +24,8 @@
 .pp-builder-step-help{display:block;color:var(--text-muted);font-size:12px;line-height:1.55;padding:0 8px;max-width:24ch;white-space:normal;overflow-wrap:anywhere}
 .pp-builder-stage{grid-column:2;min-width:0}
 .pp-flow-builder .pp-op-section{padding:0;border:0;margin:0}
-.pp-builder-card{background:var(--fg-color);border:1px solid var(--border-color);border-radius:8px;padding:22px;margin:0 0 18px;min-width:0}
-.pp-builder-card>header{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.pp-builder-card{background:var(--fg-color);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin:0 0 16px;min-width:0}
+.pp-builder-card>header{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
 .pp-builder-card>header h3{font-size:16px;font-weight:650;margin:0 0 4px;line-height:1.45}
 .pp-builder-card>header p{margin:0;font-size:13px;line-height:1.6;color:var(--text-muted)}
 .pp-builder-card>header>div:not(.pp-actions){flex:1;min-width:0}
@@ -64,10 +64,10 @@
 .pp-event-pay-summary:hover{background:var(--control-bg);border-radius:5px}
 .pp-flow-builder .pp-op-badge.is-warning{color:var(--pp-status-warning);background:var(--fg-color)}
 .pp-flow-builder .pp-op-badge.is-good{color:var(--pp-status-success);background:var(--fg-color)}
-.splash>img{content:url('/assets/plus_point/images/freddy/thinking.svg');width:112px!important;height:112px;animation:pp-freddy-loading 1.2s ease-in-out 3}
+.splash>img{content:url('/assets/plus_point/images/freddy/thinking.svg?v=20261027');width:112px!important;height:112px;animation:pp-freddy-loading 1.2s ease-in-out 3}
 @keyframes pp-freddy-loading{50%{transform:translateY(-7px) rotate(3deg)}}
 @media(max-width:1250px){.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr)}.pp-flow-builder .pp-op-activity{margin-top:0!important;margin-left:calc(var(--pp-builder-rail) + var(--pp-builder-gap))}}
-@media(max-width:767px){.pp-flow-builder{padding:16px;--pp-builder-rail:0px}.pp-flow-builder .pp-op-content{display:block}.pp-flow-builder .pp-flow-steps{display:flex;flex-direction:row;position:static;overflow-x:auto;gap:8px;margin-bottom:20px}.pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:0;padding:0;flex:0 0 150px}.pp-flow-builder .pp-flow-steps [role=tab]{padding:8px 8px 8px 42px;font-size:12px;min-height:48px}.pp-flow-builder .pp-flow-number{top:8px;left:4px}.pp-flow-builder .pp-flow-separator,.pp-builder-step-help{display:none}.pp-flow-builder .pp-op-activity{margin-left:0}.pp-builder-fields,.pp-builder-review-grid{grid-template-columns:minmax(0,1fr)}.pp-builder-card{padding:16px}.pp-flow-builder .pp-builder-footer{padding:14px 8px}.pp-flow-builder .pp-op-heading h2{font-size:22px}}
+@media(max-width:767px){.pp-flow-builder{padding:16px;--pp-builder-rail:0px}.pp-flow-builder .pp-op-content{display:block}.pp-flow-builder .pp-flow-steps{display:flex;flex-direction:row;position:static;overflow-x:auto;gap:8px;margin-bottom:16px}.pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:0;padding:0;flex:0 0 150px}.pp-flow-builder .pp-flow-steps [role=tab]{padding:8px 8px 8px 42px;font-size:12px;min-height:48px}.pp-flow-builder .pp-flow-number{top:8px;left:4px}.pp-flow-builder .pp-flow-separator,.pp-builder-step-help{display:none}.pp-flow-builder .pp-op-activity{margin-left:0}.pp-builder-fields,.pp-builder-review-grid{grid-template-columns:minmax(0,1fr)}.pp-builder-card{padding:16px}.pp-flow-builder .pp-builder-footer{padding:14px 8px}.pp-flow-builder .pp-op-heading h2{font-size:22px}}
 @media(prefers-reduced-motion:reduce){.splash>img{animation:none}}
 
 /* Worker native fields stay hidden from their first load; the product profile paints when ready. */
@@ -85,3 +85,25 @@
 .pp-delivery-checklist :is(.form-page,.form-section,.section-body,.form-column,.row){min-height:0!important;height:auto!important}
 .pp-delivery-checklist .form-section:has([data-fieldname=send_email]){margin-bottom:0!important;padding-bottom:0!important}
 .pp-event-payment-schedule{padding-top:20px;margin-top:20px;border-top:1px solid var(--border-color)}
+
+.pp-builder-fields>[data-fieldname=validity_mode]{grid-column:1/-1}
+.pp-flow-builder .pp-builder-fields>.frappe-control{padding:0!important;min-height:0!important}
+.pp-flow-builder .pp-builder-card .frappe-control .help-box:empty{display:none}
+.pp-flow-builder .pp-delivery-checklist .form-column{padding-block:0!important}
+.pp-flow-builder .pp-delivery-checklist .form-section{margin:0!important;padding-block:0!important}
+.pp-flow-builder .pp-delivery-checklist [data-fieldname=send_email]{margin:0!important;padding:0!important;min-height:0!important}
+.pp-flow-builder .pp-delivery-checklist .section-body:has([data-fieldname=recipient][style*="display: none"]){display:none!important}
+.pp-flow-builder .pp-delivery-checklist label{max-width:none!important;width:auto!important}
+.pp-flow-builder .pp-delivery-checklist .form-section.empty-section{display:none!important}
+
+/* Native field groups add section spacing; cards already provide that rhythm. */
+.pp-flow-builder .pp-builder-card .section-body{padding-block:0!important;margin-block:0!important}
+.pp-flow-builder .pp-builder-card .form-column>.frappe-control:last-child{margin-bottom:0!important}
+.pp-flow-builder .pp-builder-card .form-column:has(>.frappe-control:not([style*="display: none"]))>.frappe-control:not([style*="display: none"]):last-of-type{margin-bottom:0!important}
+
+.pp-builder-fields>[data-fieldname=allow_past_dates] .checkbox>label{display:flex;align-items:center;gap:8px;padding:0;min-height:24px}
+.pp-builder-fields>[data-fieldname=allow_past_dates] .input-area{display:inline-flex;align-items:center}
+.pp-builder-fields>[data-fieldname=allow_past_dates] input{position:static!important;margin:0!important}
+.pp-builder-fields>[data-fieldname=allow_past_dates] .help-box:empty{display:none}
+
+.pp-operations[data-building=true]>.pp-loading-state{inset:24px 24px auto;width:auto;min-height:240px;height:min(480px,calc(100dvh - 120px))}

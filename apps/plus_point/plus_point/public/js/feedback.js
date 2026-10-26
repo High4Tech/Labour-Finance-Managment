@@ -42,7 +42,7 @@
   if(automatic)lastAutomatic=Date.now();stop();
   const image=widget.querySelector('.pp-freddy__image'),slot=widget.querySelector('.pp-freddy__avatar');if(!image||!slot||!slot.getClientRects().length)return;
   const host=document.createElement('span');host.className='pp-freddy__motion';host.setAttribute('aria-hidden','true');slot.append(host);image.hidden=true;
-  try{const controller=pp.freddy_runtime.create(host,{animation:widget.dataset.expression,autoplay:true,loop:true,size:'100%'});active={host,image,controller};stats.animations++;stats.activeAnimations=1;}catch{host.remove();image.hidden=false;}
+  try{const controller=pp.freddy_runtime.create(host,{animation:widget.dataset.expression,autoplay:true,loop:false,size:'100%'});active={host,image,controller,timer:setTimeout(stop,4500)};stats.animations++;stats.activeAnimations=1;}catch{host.remove();image.hidden=false;}
  }
  pp.stop_freddy=stop;
  function toneOf(node,text){
@@ -58,8 +58,8 @@
  }
  const preserved='button,a,input,select,textarea,table,ul,ol,details';
  pp.freddy_feedback=(node,{message,tone,solution,rich=false,animate:play=true}={})=>{
-  if(!node||!enabled())return;const previous=states.get(node);
-  const important=node.matches('.pp-op-message,.pp-onboarding-errors,.pp-loading-state,.pp-freddy-important,.pp-freddy-action-feedback,.frappe-confirm-message,.msgprint,#agreement-status');
+  if(!node||!enabled()||node.matches('.pp-loading-state'))return;const previous=states.get(node);
+  const important=node.matches('.pp-op-message,.pp-onboarding-errors,.pp-freddy-important,.pp-freddy-action-feedback,.frappe-confirm-message,.msgprint,#agreement-status');
   if(!important){if(message!=null&&node.textContent!==String(message))node.textContent=message;return;}
   if(importantHost&&importantHost!==node){const state=states.get(importantHost);if(state){const widget=importantHost.querySelector(':scope > .pp-freddy'),details=widget?.querySelector('.pp-freddy__details');if(widget){const controls=[...widget.querySelectorAll(':scope > .pp-dismiss-message,:scope > .close')];widget.replaceWith(...(details?[...details.childNodes]:[document.createTextNode(state.original)]),...controls);}importantHost.classList.remove('pp-freddy-host');states.delete(importantHost);}stop();}importantHost=node;
   if(message!=null&&previous&&plain(message)===previous.original&&(!tone||tone===previous.tone)&&node.querySelector(':scope > .pp-freddy'))return;
@@ -71,12 +71,12 @@
   const compact=node.matches('.pp-input-hint')||!!node.closest('.frappe-control,td'),widget=document.createElement(node.matches('P,SPAN')?'span':'div');
   widget.className='pp-freddy'+(compact?' pp-freddy--compact':'');widget.dataset.tone=tone;widget.dataset.expression=tone==='error'&&/connection|reach the app|network|failed to fetch/i.test(text)?'sad':poses[tone]||'curious';
   const avatar=document.createElement('span');avatar.className='pp-freddy__avatar';avatar.setAttribute('aria-hidden','true');
-  const image=document.createElement('img');image.className='pp-freddy__image';image.src='/assets/plus_point/images/freddy/'+widget.dataset.expression+'.svg?v=20261025-2';image.alt='';image.width=64;image.height=64;image.decoding='async';avatar.append(image);
+  const image=document.createElement('img');image.className='pp-freddy__image';image.src='/assets/plus_point/images/freddy/'+widget.dataset.expression+'.svg?v=20261027';image.alt='';image.width=64;image.height=64;image.decoding='async';avatar.append(image);
   const speech=document.createElement(node.matches('P,SPAN')?'span':'div');speech.className='pp-freddy__speech';
   const dismiss=[...node.querySelectorAll(':scope > .pp-dismiss-message,:scope > .close')];dismiss.forEach(el=>el.remove());
   if(rich&&node.children.length){const intro=document.createElement('span');intro.className='pp-freddy__intro';intro.textContent=tone==='error'?translate('I found something to review; follow the details below to resolve it.'):translate('I’ve kept the details below so you can review the next step.');speech.append(intro);const details=document.createElement('div');details.className='pp-freddy__details';while(node.firstChild)details.append(node.firstChild);speech.append(details);}
   else{let copy=sentence(text,tone);if(tone==='empty'){const title=node.querySelector('strong')?.textContent.trim(),description=node.querySelector('p')?.textContent.trim(),match=title?.match(/^No (.+?) yet[.!]?$/i);if(match&&description)copy=translate('I don’t have any ')+match[1]+translate(' to show yet; ')+description[0].toLowerCase()+description.slice(1);}speech.textContent=copy+(solution?' '+plain(solution):'');}
-  const pause=document.createElement('button');pause.type='button';pause.className='pp-freddy-pause';pause.textContent=translate(paused?'Play animation':'Pause animation');pause.onclick=()=>{paused=!paused;pause.textContent=translate(paused?'Play animation':'Pause animation');if(paused)stop();else animate(widget);};widget.append(avatar,speech,...dismiss,pause);node.replaceChildren(widget);node.classList.add('pp-freddy-host');
+  widget.append(avatar,speech,...dismiss);node.replaceChildren(widget);node.classList.add('pp-freddy-host');
   states.set(node,{rendered:node.textContent,spoken:speech.textContent,tone,original:text});stats.rendered++;
   if(play)requestAnimationFrame(()=>animate(widget,true));
  };
@@ -84,7 +84,7 @@
  function enhance(scope=document){
   if(!enabled())return;if(active&&(!active.host.isConnected||!active.host.closest('.pp-freddy__avatar')?.getClientRects().length))stop();
   const candidates=[...scope.querySelectorAll(selector)].filter(node=>!node.closest('.pp-freddy')&&!node.closest('[hidden],[inert],pre,code')&&node.getClientRects().length&&plain(node.textContent));
-  const nodes=candidates.filter(node=>node.matches('.pp-op-message,.pp-onboarding-errors,.pp-loading-state,.pp-freddy-important,.pp-freddy-action-feedback,.frappe-confirm-message,.msgprint,#agreement-status')).sort((a,b)=>Number(!!b.closest('.modal'))-Number(!!a.closest('.modal'))||Number(b.getAttribute('role')==='alert')-Number(a.getAttribute('role')==='alert')).slice(0,1);
+  const nodes=candidates.filter(node=>node.matches('.pp-op-message,.pp-onboarding-errors,.pp-freddy-important,.pp-freddy-action-feedback,.frappe-confirm-message,.msgprint,#agreement-status')).sort((a,b)=>Number(!!b.closest('.modal'))-Number(!!a.closest('.modal'))||Number(b.getAttribute('role')==='alert')-Number(a.getAttribute('role')==='alert')).slice(0,1);
   // Keep a pathological error list from creating unbounded work in a single pass.
   let changed=0;for(const node of nodes){
    if(node.querySelector('.pp-freddy')&&!node.querySelector(':scope > .pp-freddy'))continue;

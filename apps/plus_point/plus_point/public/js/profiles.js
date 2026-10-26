@@ -39,7 +39,7 @@
   };
   const holder=area.querySelector('.pp-profile-milestones');
   if(data.billing_model==='Daily'){
-   const daily=plus_point.daily_checkpoints_editor(holder,{rows:JSON.parse(data.pp_daily_checkpoints||'[]'),dates:()=>({start:data.effective_start,end:data.effective_end}),currency:()=>currency,agreement:name});
+   const daily=plus_point.daily_checkpoints_editor(holder,{rows:JSON.parse(data.pp_daily_checkpoints||'[]'),dates:()=>({start:data.effective_start,end:data.effective_end}),currency:()=>currency,agreement:name,estimate:r=>data.resource_mode==='Fixed quantities'||(data.staffing||[]).length?(data.staffing||[]).reduce((sum,c)=>sum+Math.max(0,(Math.min(Date.parse(r.to_date),Date.parse(c.end_date))-Math.max(Date.parse(r.from_date),Date.parse(c.start_date)))/86400000+1)*Number(c.workers_required||0)*Number(c.client_rate||0),0):null});
    holder.addEventListener('pp:flow-change',()=>save({pp_daily_checkpoints:JSON.stringify(daily.get_value())}).catch(error=>{holder.querySelector('.pp-checkpoint-feedback').textContent=error.message;}));
   }else renderMilestones(holder,data,refreshPanel);
   area.querySelector('[data-profile-pdf]')?.addEventListener('click',async()=>plus_point.preview_document(await plus_point.form_rpc('agreement_documents.agreement_pdf',{name})));

@@ -20,8 +20,8 @@
 .pp-ui .pp-tooltip .tooltip-inner:has(.pp-freddy){background:var(--fg-color);color:var(--text-color);max-width:min(400px,calc(100vw - 24px));padding:8px;border:1px solid var(--border-color)}
 .pp-flow-position:has(.pp-freddy){flex-basis:360px}.pp-flow-position .pp-freddy{--freddy-size:44px;font-size:13px;margin:0}.pp-flow-position .pp-freddy__speech{padding:8px 10px}
 .pp-draft-status:has(.pp-freddy){margin-bottom:16px}.pp-draft-status .pp-freddy{--freddy-size:40px;font-size:13px;margin:0}.pp-draft-status .pp-freddy__speech{padding:7px 10px}
-.pp-empty-state.pp-freddy-host,.pp-loading-state.pp-freddy-host{display:block;padding:12px;background:transparent;border:0;min-height:0;text-align:start}
-.pp-empty-state .pp-freddy,.pp-loading-state .pp-freddy{max-width:64ch;margin-inline:auto}
+.pp-empty-state.pp-freddy-host{display:block;padding:12px;background:transparent;border:0;min-height:0;text-align:start}
+.pp-empty-state .pp-freddy{max-width:64ch;margin-inline:auto}
 .pp-freddy-validation{display:block;font-weight:400;font-size:13px;margin:8px 0}
 body[data-pp-freddy=true] #agreement-status.pp-freddy-host{padding:0;background:transparent;border:0}
 .pp-freddy :is(button,a):focus-visible{outline:3px solid var(--pp-accent,#116f65);outline-offset:3px}
@@ -29,5 +29,5 @@ body[data-pp-freddy=true] #agreement-status.pp-freddy-host{padding:0;background:
 @media(prefers-reduced-motion:reduce){.pp-freddy *{animation:none!important;transition:none!important}}
 .es-toast:has(.pp-freddy) .es-toast__icon{display:none}
 
-.pp-freddy-pause{min-height:32px;padding:4px 8px;border:1px solid var(--border-color);border-radius:6px;background:var(--control-bg);color:var(--text-color);font-size:11px;align-self:center}.pp-freddy-pause:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
 .pp-draft-status>span{display:inline-flex;align-items:center;gap:8px}.pp-draft-status>span:before{display:inline-block}.pp-draft-status>span:not([data-state]):before{content:none}.pp-draft-status>span[data-state=saving]:before{content:'\21bb';animation:pp-draft-spin 1s linear infinite}.pp-draft-status>span[data-state=error]:before{content:'!'}.pp-draft-status>span[data-state=saved]:before{content:'\2713'}@keyframes pp-draft-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pp-draft-status>span[data-state=saving]:before{animation:none}}

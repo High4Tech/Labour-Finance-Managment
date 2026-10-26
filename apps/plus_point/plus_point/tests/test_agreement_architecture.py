@@ -140,3 +140,16 @@ class ArchitectureTests(unittest.TestCase):
         a=self.agreement();signing.create_link(a['name']);contract=frappe.get_doc('Contract',frappe.db.get_value('PP Contract Terms',a['name'],'contract'));old=contract.contract_terms;contract.contract_terms='Unapproved native edit'
         with self.assertRaises(frappe.ValidationError):contract.save()
         self.assertEqual(frappe.db.get_value('Contract',contract.name,'contract_terms'),old)
+
+    def test_daily_milestone_title_survives_save_and_date_rebase(self):
+        from plus_point.daily_billing import periods
+        a=self.agreement();terms=frappe.get_doc('PP Contract Terms',a['name'])
+        schedule=periods(terms.effective_start,terms.effective_end,'Weekly',5)
+        schedule[0]['title']='Venue support payment'
+        op.save_agreement(dict(pp_daily_checkpoints=frappe.as_json(schedule)),a['name'])
+        saved=frappe.parse_json(op.agreement(a['name'])['pp_daily_checkpoints'])
+        self.assertEqual(saved[0]['title'],'Venue support payment')
+        op.save_agreement(dict(effective_end=add_days(terms.effective_end,7)),a['name'])
+        rebased=frappe.parse_json(op.agreement(a['name'])['pp_daily_checkpoints'])
+        self.assertEqual(rebased[0]['title'],'Venue support payment')
+        self.assertEqual(rebased[-1]['to_date'],str(add_days(terms.effective_end,7)))
