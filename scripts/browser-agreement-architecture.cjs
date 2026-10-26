@@ -26,4 +26,3 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
  }catch(error){if(page){await page.screenshot({path:path.join(out,'architecture-failure.png'),fullPage:true}).catch(()=>{});fs.writeFileSync(path.join(out,'architecture-failure.txt'),(await page.locator('body').innerText()).slice(-18000));}throw error;}
  finally{await browser?.close();const restored=fixture('end').restored;fs.writeFileSync(path.join(out,'architecture-browser-20261026.json'),JSON.stringify({checks,errors,restored},null,2));assert(restored);console.log('PASS exact architecture fixture restored');}
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
-
