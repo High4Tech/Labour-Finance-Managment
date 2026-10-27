@@ -1,5 +1,7 @@
 # Consolidated architecture and client portal — 2026-10-27
 
+Current creation UI: [Context-aware three-stage workflows and shared components](CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
+
 This is an evolution of the existing Frappe/ERPNext/HRMS app. It creates no replacement accounting, attendance, payroll, loan, warehouse ledger or Job entity. The attached specification was compared with the current implementation; existing financial engines remain authoritative.
 
 ## Relationship and workflow map

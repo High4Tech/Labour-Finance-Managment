@@ -107,3 +107,5 @@
 .pp-builder-fields>[data-fieldname=allow_past_dates] .help-box:empty{display:none}
 
 .pp-operations[data-building=true]>.pp-loading-state{inset:24px 24px auto;width:auto;min-height:240px;height:min(480px,calc(100dvh - 120px))}
+
+.pp-flow-builder .pp-ui-panel>.pp-ui-panel-heading{margin:0;padding:16px;background:var(--pp-band);border-radius:8px 8px 0 0}.pp-flow-builder .pp-ui-panel{padding:0}.pp-flow-builder .pp-ui-panel>.pp-ui-panel-body{padding:16px}

@@ -1,7 +1,7 @@
 /* Shared product controls. Native lists retain search, selection and sorting. */
 (()=>{
  frappe.provide('plus_point');const esc=v=>frappe.utils.escape_html(String(v??''));let queued=false,bar,lastSummary=0,summaryBusy=false,started=false;
- plus_point.reveal_control=control=>{const node=control?.$wrapper?.get(0),panel=node?.closest('[role=tabpanel]');if(panel?.hidden)document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`)?.click();control?.set_focus?.();};
+ plus_point.reveal_control=control=>{const node=control?.$wrapper?.get(0);for(let parent=node?.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;const panel=node?.closest('[role=tabpanel]');if(panel?.hidden)document.querySelector(`[aria-controls="${CSS.escape(panel.id)}"]`)?.click();control?.set_focus?.();};
  const ranges=[['start_date','end_date'],['effective_start','effective_end'],['from_date','to_date'],['expected_start_date','expected_end_date'],['posting_date','due_date'],['date_of_birth','date_of_joining']];
  const dateOptions=frappe.ui.form.ControlDate.prototype.set_date_options;
  frappe.ui.form.ControlDate.prototype.set_date_options=function(){dateOptions.call(this);for(const key of ['minDate','maxDate'])if(typeof this.datepicker_options[key]==='string')this.datepicker_options[key]=frappe.datetime.str_to_obj(this.datepicker_options[key]);};

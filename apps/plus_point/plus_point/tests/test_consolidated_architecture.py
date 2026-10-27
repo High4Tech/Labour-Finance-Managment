@@ -115,6 +115,21 @@ class ConsolidatedTests(unittest.TestCase):
         self.assertFalse(any(label.endswith(' overview') for label in labels))
         for old,new in SECTION_ALIASES.items():self.assertEqual(overview(old,self.f.company.name)['section'],new)
 
+    def test_new_sidebar_order_starts_with_clients_and_keeps_deliberate_v2_order(self):
+        from plus_point.navigation import product_navigation
+        original=frappe.defaults.get_user_default
+        def legacy(key,*args,**kwargs):
+            if key=='pp_section_order_v1':return frappe.as_json(['Daily work','Clients and billing'])
+            if key=='pp_section_order_v2':return None
+            return original(key,*args,**kwargs)
+        with patch('frappe.defaults.get_user_default',side_effect=legacy):
+            self.assertEqual(product_navigation(False)['groups'][:2],['Clients and work','Workforce and resources'])
+        def personal(key,*args,**kwargs):
+            if key=='pp_section_order_v2':return frappe.as_json(['Finance','Clients and work','Workforce and resources','Reports and analytics'])
+            return original(key,*args,**kwargs)
+        with patch('frappe.defaults.get_user_default',side_effect=personal):
+            self.assertEqual(product_navigation(False)['groups'][0],'Finance')
+
     def test_event_extension_rechecks_full_period_bookings_and_is_atomic(self):
         from plus_point.tests.test_events import EventTests
         from plus_point import events

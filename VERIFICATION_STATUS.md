@@ -1,5 +1,7 @@
 # Verification status — 2026-10-22
 
+Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
+
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).
 
 ## Agreement-led hierarchy, worker allocation and billing - October 22
@@ -308,3 +310,10 @@ A read-only customer-workspace check passed the actual agreement/event/billing t
 33 browser checks passed across portal/navigation, resource allocation and existing event/agreement profiles, with exact QA cleanup and zero browser runtime errors. The client portal was verified while signed out, including actual dummy acceptance, signed-state reuse, invalid token denial, privacy and responsive AA. Sidebar/search, resource popups and both profiles passed their scoped automated AA matrices in light/dark and desktop/mobile. A two-session reservation race admitted one quantity-8 booking and rejected the other against quantity-12 stock. Real stock posting/valuation tests remain separate rollback evidence.
 
 A read-only working-account smoke passed and preserved business record counts, including all 50 workers. Before schema changes, a native database/public/private-file backup and Git recovery tag were saved. Existing financial and signed history were retained. Three additive fields on existing DocTypes support honest planning state and scoped encrypted client grants; no new accounting, loan, stock or attendance engine was introduced. Full human usability validation and production security/load certification are not claimed.
+
+
+## Context-aware UX release — 27 October 2026
+
+See [the implementation and evidence report](docs/CONTEXT_AWARE_UX_2026-10-27.md). Full backend regression: **297/297 passed**. Final commercial follow-up: **20/20 passed** (overlapping subset). New three-stage/browser journey: **19/19 passed**. Equipment/vehicle browser regression: **7/7 passed**. Working account read-only smoke: five checks passed, no browser errors, no automated sidebar AA violations in either theme, and matching before/after business-record and draft counts including 50 workers.
+
+The client portal was tested with both Guest and an authenticated Desk session. Acceptance without the session CSRF token remains rejected. A deliberately failed client lookup retained the entered phone number and recovered through Retry. All QA fixtures reported exact cleanup. Native financial approval, posting, currency, attendance, draft and tenancy protections remain in the full regression. Automated accessibility results apply to tested views; no complete manual accessibility certification or production load test is claimed.

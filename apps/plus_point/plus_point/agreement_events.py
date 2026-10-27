@@ -139,7 +139,7 @@ def linked_events(name):
     from plus_point.operations import terms_doc
     terms=terms_doc(name)
     ids=[name]+frappe.get_list('PP Contract Terms',filters={'governing_agreement':name,'event_basis':1},pluck='name',limit_page_length=0)
-    rows=frappe.get_list('PP Event Plan',filters={'contract_terms':['in',ids]},fields=['name','event_name','project','start_date','end_date','planning_state'],order_by='start_date desc',limit_page_length=200)
+    rows=frappe.get_list('PP Event Plan',filters={'contract_terms':['in',ids]},fields=['name','pp_reference','event_name','project','start_date','end_date','planning_state'],order_by='start_date desc',limit_page_length=200)
     from plus_point.events import lifecycle
     for row in rows:row.status=lifecycle(row,frappe.db.get_value('Project',row.project,'pp_archived'),frappe.db.get_value('Project',row.project,'status')=='Cancelled')
     return rows

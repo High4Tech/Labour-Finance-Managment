@@ -59,6 +59,7 @@
  const preserved='button,a,input,select,textarea,table,ul,ol,details';
  pp.freddy_feedback=(node,{message,tone,solution,rich=false,animate:play=true}={})=>{
   if(!node||!enabled()||node.matches('.pp-loading-state'))return;const previous=states.get(node);
+  if(pp.ui&&!node.matches('.pp-freddy-important')){const text=message??read(node);if(node.matches('.pp-flow-position,.pp-draft-status>span,.pp-input-hint,.pp-date-error,.pp-freddy-validation')||node.closest('.frappe-control')){if(message!=null)node.textContent=message;return;}pp.ui.feedback(node,{message:text,tone:tone||toneOf(node,plain(text)),rich});return;}
   const important=node.matches('.pp-op-message,.pp-onboarding-errors,.pp-freddy-important,.pp-freddy-action-feedback,.frappe-confirm-message,.msgprint,#agreement-status');
   if(!important){if(message!=null&&node.textContent!==String(message))node.textContent=message;return;}
   if(importantHost&&importantHost!==node){const state=states.get(importantHost);if(state){const widget=importantHost.querySelector(':scope > .pp-freddy'),details=widget?.querySelector('.pp-freddy__details');if(widget){const controls=[...widget.querySelectorAll(':scope > .pp-dismiss-message,:scope > .close')];widget.replaceWith(...(details?[...details.childNodes]:[document.createTextNode(state.original)]),...controls);}importantHost.classList.remove('pp-freddy-host');states.delete(importantHost);}stop();}importantHost=node;

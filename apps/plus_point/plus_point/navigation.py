@@ -33,7 +33,9 @@ COMMON_DEPENDENCIES = ['Address', 'Contact', 'Currency', 'Country', 'Fiscal Year
 
 def product_navigation(platform):
     groups = PLATFORM_GROUPS if platform else CUSTOMER_GROUPS
-    saved = json.loads(frappe.defaults.get_user_default('pp_section_order_v1') or '[]')
+    # Tenant v2 starts with Clients and work; platform and new deliberate ordering remain personal.
+    preference='pp_section_order_v1' if platform else 'pp_section_order_v2'
+    saved = json.loads(frappe.defaults.get_user_default(preference) or '[]')
     ordered = list(dict.fromkeys(section_name(label) for label in saved if section_name(label) in dict(groups)))
     ordered += [label for label,_ in groups if label not in ordered]
     groups = [(label,dict(groups)[label]) for label in ordered]
@@ -100,5 +102,5 @@ def save_section_order(order):
     allowed=[label for label,_ in (PLATFORM_GROUPS if frappe.conf.get('pp_control_plane') else CUSTOMER_GROUPS)]
     if not isinstance(values,list) or len(values)!=len(allowed) or set(values)!=set(allowed):
         frappe.throw('Include each available section once')
-    frappe.defaults.set_user_default('pp_section_order_v1',json.dumps(values))
+    frappe.defaults.set_user_default('pp_section_order_v1' if frappe.conf.get('pp_control_plane') else 'pp_section_order_v2',json.dumps(values))
     return product_navigation(bool(frappe.conf.get('pp_control_plane')))

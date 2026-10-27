@@ -1,5 +1,7 @@
 # Using PLUS POINT
 
+Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
+
 Start at **PLUS POINT → Event operations**. Customer logins open this workspace by default unless an administrator has chosen another starting app. The overview groups everyday work into attendance, workers and work sites, client billing, and worker payments.
 
 The overview starts with a dashboard. Choose your **Company** and use **Refresh figures** for the latest saved records. PLUS POINT shows approved worker-days today, active workers/sites, earned revenue, unpaid wages and the client invoice balance. The work chart switches between 7, 14, 30 and 91 days; the finance chart compares earned revenue, wages, other costs and operational contribution. Financial totals are lifetime figures for projects with PLUS POINT billing terms; the attendance chart counts approved worker-days. Draft attendance is excluded. All existing work links remain under **Work tools**. The overview cards use visual animations only; the workflow illustration does not approve work, issue invoices or send payments. Reduced-motion system preferences show the same information without animation.

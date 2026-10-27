@@ -1,5 +1,7 @@
 # PLUS POINT
 
+Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
+
 Event operations, crew and finances on **Frappe v16, ERPNext v16 and Frappe HRMS v16**. Existing customer, employee, accounting, invoice, payment, authentication and REST functionality comes from upstream. PLUS POINT adds sites, allocations, bulk worker-day attendance, wage snapshots, fixed milestones and operational reporting in native Desk.
 
 This is a **local development application**, not a production SaaS release. See [verification](VERIFICATION_STATUS.md) for actual evidence and gaps, and [architecture](MVP_ARCHITECTURE.md) for the source of truth.

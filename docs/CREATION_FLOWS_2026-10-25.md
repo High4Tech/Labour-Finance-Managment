@@ -1,5 +1,7 @@
 # Agreement and event creation layouts
 
+Current creation UI: [Context-aware three-stage workflows and shared components](CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
+
 The supplied references are implemented as one shared editor scaffold in `flow_builder.js` and `flow_builder.css`: a vertical step rail, original form controls grouped into cards, comments/activity to the right, and a sticky Previous/Next footer. On small screens the rail becomes a scrollable row and the activity panel follows the editor. Existing teal action colors, typography and native fields are retained; the reference's unsupported DocuSign integration is not presented as a feature.
 
 ## Agreement
