@@ -3,7 +3,7 @@
  frappe.provide('plus_point');
  plus_point.form_rpc=async(method,args={})=>{
   const response=await fetch('/api/method/plus_point.'+method,{method:'POST',headers:{'Content-Type':'application/json','X-Frappe-CSRF-Token':frappe.csrf_token},body:JSON.stringify(args)}),data=await response.json();
-  if(!response.ok||data.exc_type){let message=__('Could not load or save. Please try again.');try{message=JSON.parse(data._server_messages).map(v=>JSON.parse(v).message).join(' ');}catch{}throw new Error(message.replace(/<[^>]*>/g,''));}return data.message;
+  if(!response.ok||data.exc_type){let message=__('Could not load or save. Please try again.');try{message=JSON.parse(data._server_messages).map(v=>JSON.parse(v).message).join(' ');}catch{}const error=new Error(message.replace(/<[^>]*>/g,''));error.field_errors=data.field_errors||{};throw error;}return data.message;
  };
  plus_point.bind_country_currency=async form=>{let seq=0;const suggest=async()=>{const own=++seq,before=form.get_value('default_currency');try{const data=await plus_point.setup_rpc('plus_point.locations.country_defaults',{country:form.get_value('country')});if(own===seq&&form.get_value('default_currency')===before)await form.set_value('default_currency',data.currency);}catch{form.set_df_property('default_currency','description',__('Choose the currency you bill this client in.'));}};form.fields_dict.country.df.onchange=suggest;if(!form.get_value('default_currency'))await suggest();};
  plus_point.enhance_selectors=layout=>{

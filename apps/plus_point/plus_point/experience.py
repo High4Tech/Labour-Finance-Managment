@@ -11,6 +11,20 @@ def save_venue(plan,values):
     from plus_point.operations import add_requirement,ensure_event_role
     doc=plan_doc(plan,True);terms_doc(doc.contract_terms)
     v=frappe._dict(frappe.parse_json(values) or {})
+    from frappe.utils import getdate
+    dates={key:v.get(key) or doc.get(key) for key in ('start_date','end_date')}
+    errors={}
+    for key,value in dates.items():
+        try:
+            if not getdate(doc.start_date)<=getdate(value)<=getdate(doc.end_date):
+                errors[key]=f'Choose a date from {doc.start_date} to {doc.end_date} for this event.'
+        except (ValueError,TypeError):errors[key]='Enter a valid date.'
+    if not errors and getdate(dates['end_date'])<getdate(dates['start_date']):errors['end_date']='Choose an end date on or after the start date.'
+    frappe.local.response.pop('field_errors',None)
+    if errors:
+        frappe.local.response['field_errors']=errors
+        frappe.throw('Keep crew dates within the event period; review the highlighted dates.')
+    v.update(dates)
     frappe.db.savepoint('pp_venue')
     try:
         site=v.get('site')

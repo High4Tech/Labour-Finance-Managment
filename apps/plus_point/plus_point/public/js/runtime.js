@@ -10,6 +10,8 @@
  plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
+  const kind=labels.includes('Attendance period')?'payments':labels.includes('Event pay')?'crew':'',weights=kind==='payments'?[16,21,12,14,14,9,30]:kind==='crew'?[24,10,10,14,12,16,10,22]:null;
+  if(weights?.length===labels.length){const table=template.content.querySelector('table'),cols=document.createElement('colgroup'),total=weights.reduce((sum,n)=>sum+n,0);table.dataset.tableKind=kind;for(const n of weights){const col=document.createElement('col');col.style.width=(n/total*100)+'%';cols.append(col);}table.prepend(cols);}
   template.content.querySelectorAll('tbody>tr:not(.pp-table-empty)').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';}));
   return template.innerHTML;
  };

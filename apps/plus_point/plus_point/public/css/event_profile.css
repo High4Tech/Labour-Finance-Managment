@@ -1,7 +1,7 @@
 /* Operational event profile: reference hierarchy, existing teal action system. */
 .pp-op-layout:has(.pp-event-overview){display:block}
 .pp-operations:has(.pp-event-overview){padding:16px 20px 28px;background:var(--bg-color)}
-.pp-event-overview{--event-tint:color-mix(in srgb,var(--pp-accent) 9%,var(--fg-color));--event-ink:var(--pp-action-primary);min-width:0}
+.pp-event-overview{--event-tint:color-mix(in srgb,var(--pp-accent) 9%,var(--fg-color));--event-ink:var(--pp-action-primary);--agreement-tint:var(--event-tint);min-width:0}
 html[data-theme=dark] .pp-event-overview{--event-ink:var(--pp-accent)}
 .pp-event-shell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
 .pp-event-main,.pp-event-panel{min-width:0}.pp-event-panel[hidden]{display:none!important}
@@ -40,7 +40,7 @@ html[data-theme=dark] .pp-event-overview{--event-ink:var(--pp-accent)}
 .pp-event-overview .pp-profile-facts dt{font-size:14px;line-height:1.6;font-weight:400;color:var(--text-muted);margin:0 0 3px}
 .pp-event-overview .pp-profile-facts dd{font-size:14px;line-height:1.65;margin:0;white-space:pre-line;overflow-wrap:anywhere;color:var(--text-color)}
 .pp-event-notes{border-top:1px solid var(--border-color);padding-top:12px;font-size:14px;line-height:1.7}
-.pp-event-notes>span{display:flex;gap:10px;align-items:center;color:var(--text-muted);font-size:14px}.pp-event-notes svg{width:17px;height:17px;flex:0 0 17px}.pp-event-notes p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0}
+.pp-event-notes>span{display:flex;gap:10px;align-items:center;color:var(--text-muted);font-size:14px}.pp-event-notes svg{margin:0;width:17px;height:17px;flex:0 0 17px}.pp-event-notes p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0}
 .pp-event-overview .pp-venue-card{padding:0;margin:0 0 18px;border:0}.pp-event-overview .pp-venue-card:last-child{margin-bottom:0}
 .pp-event-overview .pp-venue-card>header{margin:0 0 8px}.pp-event-overview .pp-venue-card h3{font-size:14px;color:var(--text-muted);line-height:1.6;font-weight:500}
 .pp-event-overview .pp-register-table{font-size:14px;min-width:730px}
@@ -100,3 +100,17 @@ html[data-theme=dark] .pp-event-overview{--event-ink:var(--pp-accent)}
 body.pp-ui .pp-operations:has(.pp-event-overview){background:var(--subtle-fg,#f3f5f5)}
 .pp-event-card,.pp-event-rail>section{box-shadow:0 2px 8px #142b2510}
 .pp-event-card>.pp-section-heading{background:var(--control-bg);border-radius:8px 8px 0 0;padding:10px 16px}
+
+.pp-event-overview .pp-event-summary{grid-template-columns:repeat(5,minmax(0,1fr));padding:0;margin:0 0 16px;gap:12px}
+.pp-event-overview .pp-event-context-item{align-items:center;text-decoration:none;padding:14px 16px;gap:12px}
+.pp-event-overview .pp-event-context-item>div{min-width:0}
+.pp-event-overview .pp-event-context-item .pp-agreement-metric-icon{width:40px;height:40px;flex-basis:40px}
+.pp-event-overview .pp-event-context-item svg{width:24px;height:24px;flex-basis:auto;margin:0}
+.pp-event-overview .pp-event-context-item strong{font-size:15px;font-weight:600;color:var(--text-color)}
+.pp-event-overview .pp-event-context-item :is(small,div>span){font-size:14px;color:var(--text-muted)}
+.pp-event-overview .pp-event-menu>summary{width:var(--pp-action-height);height:var(--pp-action-height);padding:0;flex:none}
+.pp-event-notes>span{justify-content:flex-start;text-align:start}
+.pp-event-notes .pp-info{margin-left:0}
+.pp-event-main{container-type:inline-size}
+@media(max-width:1300px){.pp-event-overview .pp-event-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:767px){.pp-event-overview .pp-event-summary{grid-template-columns:minmax(0,1fr)}}

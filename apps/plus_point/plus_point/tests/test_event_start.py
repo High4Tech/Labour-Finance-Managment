@@ -72,3 +72,15 @@ class EventStartTests(unittest.TestCase):
             a=self.agreement();d=drafts.event_for_agreement(a['name'])
             with self.assertRaises(frappe.ValidationError):drafts.configure_event(d['name'],dict(action='Now',event_name='Invalid budget',budget=value))
             frappe.db.rollback(save_point='invalid_event_budget')
+
+    def test_venue_dates_are_validated_before_a_site_is_created(self):
+        from plus_point.experience import save_venue
+        from frappe.utils import add_days
+        a=self.agreement();name=self.event(a);plan=op.plan(name)
+        before=frappe.db.count('PP Site',{'project':plan['project']})
+        values=dict(site_name='Invalid dated venue',country='Pakistan',city='Lahore',address_line1='10 Expo Road',designation=self.role,workers_required=1,wage_rate=100,client_rate=1500,start_date=add_days(plan['start_date'],-1),end_date=add_days(plan['end_date'],1))
+        try:
+            with self.assertRaises(frappe.ValidationError):save_venue(name,values)
+            self.assertEqual(set(frappe.local.response['field_errors']),{'start_date','end_date'})
+            self.assertEqual(frappe.db.count('PP Site',{'project':plan['project']}),before)
+        finally:frappe.local.response.pop('field_errors',None)

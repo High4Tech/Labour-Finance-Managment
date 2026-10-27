@@ -56,12 +56,12 @@
    const group=groups.project;
    if(group){fieldCard(group,['event_path','customer','event_name','contract_terms','start_date','end_date','billing_model','fixed_amount','commercial_status','commercial_source','budget'],'Event basics','These details are used across planning, staffing and reporting.','calendar');fieldCard(group,['enforce_budget'],'Budget control','Choose whether spending above the budget is blocked.','money');fieldCard(group,['notes'],'Event notes','Add information your team needs during the event.');}
    else wrap('.pp-op-new-plan','Event basics','Choose an agreement and name the event. Dates and crew requirements follow the selected agreement.','calendar');
-   const board=area.querySelector('.pp-venue-board');if(board){const box=card('Venue and staffing plan','Define venues, select workers and set their event pay.','client');board.before(box);const body=box.lastElementChild;const tools=document.createElement('div');tools.className='pp-actions';for(const sel of ['[data-auto-crew]','[data-add-venue]']){const button=area.querySelector(sel);if(button)tools.append(button);}body.append(tools,board);}
+   const board=area.querySelector('.pp-venue-board');if(board){const box=card('Venue and staffing plan','Define venues, select workers and set their event pay.','client');board.before(box);const body=box.lastElementChild;const tools=document.createElement('div');tools.className='pp-actions';for(const sel of ['[data-add-venue]','[data-auto-crew]']){const button=area.querySelector(sel);if(button){if(sel==='[data-add-venue]'){button.classList.remove('btn-default');button.classList.add('btn-primary');}tools.append(button);}}tools.classList.add('pp-builder-card-actions');box.querySelector('header').append(tools);body.append(board);}
    const reservations=area.querySelector('.pp-op-reservations'),demand=reservations?.previousElementSibling;if(demand?.tagName==='SECTION')demand.classList.add('pp-builder-card');
    wrap('.pp-op-reservations','Transport and equipment','Assign vehicles and reserve warehouse equipment for this event.','truck');
    wrap('.pp-new-plan-review','Venue and staffing plan','Review the crew requirements carried over from the agreement.','client');
    wrap('.pp-new-plan-transport','Vehicle requirements','Review agreed transport before assigning individual vehicles.','truck');
-   wrap('.pp-op-timeline','Event timeline','Review staffing coverage and the event schedule.','calendar');
+   wrap('.pp-op-timeline','Staffing schedule','See coverage by date. Select crew to assign workers or open attendance.','calendar');
   }
   footer.classList.add('pp-builder-footer');
   const duplicate=agreement&&area.querySelector('[data-create-and-sign]');if(duplicate)duplicate.remove();const finish=agreement?null:area.querySelector('[data-create-plan]');if(finish)footer.querySelector('.pp-actions').append(finish);

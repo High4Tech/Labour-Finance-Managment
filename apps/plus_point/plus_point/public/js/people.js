@@ -19,7 +19,7 @@
  document.addEventListener('click',e=>{if(info&&!info.node.contains(e.target)&&!info.button.contains(e.target)){info.node.remove();info.button.setAttribute('aria-expanded','false');info=null;}});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&info){info.node.remove();info.button.setAttribute('aria-expanded','false');info.button.focus();info=null;}});
  let active;
- plus_point.close_action_popup=()=>{if(!active)return Promise.resolve();const previous=active;return new Promise(resolve=>{previous.dialog.$wrapper.one('hidden.bs.modal',resolve);previous.dialog.hide();});};
+ plus_point.close_action_popup=()=>{if(!active)return Promise.resolve();const previous=active;return new Promise(resolve=>{previous.dialog.$wrapper.one('hidden.bs.modal',resolve);plus_point.close_dialog(previous.dialog);});};
  plus_point.action_popup=async(target,title,{size='extra-large'}={})=>{
   if(!target?.isConnected)return;
   const heading=target.querySelector(':scope>h4');if(heading)heading.hidden=true;

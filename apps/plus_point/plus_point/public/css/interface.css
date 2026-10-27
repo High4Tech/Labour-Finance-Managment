@@ -281,3 +281,34 @@ body.pp-ui .body-sidebar:has(.pp-selected) .active-sidebar:not(.pp-selected){bac
 body.pp-ui .body-sidebar:has(.pp-selected) .active-sidebar:not(.pp-selected) :is(a,span,svg){color:var(--text-color)!important;--icon-stroke:currentColor}
 
 @media(max-width:767px),(pointer:coarse){body.pp-ui .pp-choice-field label{height:44px;min-height:44px}body.pp-ui :is(.pp-operations,.modal-dialog) :is(input.form-control,select.form-control){height:44px;min-height:44px}}
+
+/* Profile canvas -> white cards -> faint header, with visible grey support actions. */
+body.pp-ui .page-container:has(:is(.pp-agreement-document,.pp-event-overview)),body.pp-ui .page-container:has(:is(.pp-agreement-document,.pp-event-overview)) .layout-main-section{background:var(--pp-profile-canvas,#f1f4f3)}
+body.pp-ui .pp-operations:has(:is(.pp-agreement-document,.pp-event-overview)){background:transparent}
+body.pp-ui .pp-agreement-main{background:transparent;border:0;padding:0;box-shadow:none}
+body.pp-ui :is(.pp-agreement-card,.pp-event-card){--pp-card-padding:16px;background:var(--fg-color);box-shadow:0 2px 8px #142b2510}
+body.pp-ui :is(.pp-agreement-document,.pp-event-overview) :is(.pp-agreement-card,.pp-event-card)>.pp-section-heading{background:var(--pp-profile-heading,#f7f9f8);margin-inline:calc(-1 * var(--pp-card-padding));padding:10px var(--pp-card-padding);border-bottom:0;border-radius:8px 8px 0 0}
+body.pp-ui :is(.pp-agreement-document,.pp-event-overview) .pp-section-heading .btn-default{background:var(--pp-heading-action,#e5eae7);border-color:var(--pp-heading-action-border,#c6d0ca);color:var(--text-color)}
+body.pp-ui .pp-register-table :is(th,td){font-size:15px;line-height:1.6;overflow-wrap:normal}
+body.pp-ui .pp-register-table thead th{font-size:14px;font-weight:600}
+body.pp-ui .pp-register-table th small{font-size:13px;max-width:none}
+body.pp-ui .pp-operations .pp-register-table[data-table-kind]{width:100%;table-layout:fixed}
+body.pp-ui .pp-register-table .pp-actions{gap:8px;white-space:normal}
+body.pp-ui .pp-register-table .pp-actions .btn+.btn{margin-left:0}
+.pp-date-range{white-space:normal;overflow-wrap:normal}
+body.pp-ui .pp-register-table[data-table-kind=payments]{min-width:1040px!important}
+body.pp-ui .pp-register-table[data-table-kind=crew]{min-width:1040px!important}
+body.pp-ui .frappe-control.has-error :is(input,select,textarea,[contenteditable=true]){border-color:var(--pp-status-danger,#b42335)!important}
+body.pp-ui .pp-choice-control.has-error .pp-choice-field label{border-color:var(--pp-status-danger,#b42335)}
+body.pp-ui .modal .pp-freddy,body.pp-ui .modal .pp-freddy__speech{max-width:none;width:100%}
+body.pp-ui .modal .pp-op-message{width:100%;max-width:none}
+html[data-theme=dark] body.pp-ui{--pp-profile-canvas:#17211e;--pp-profile-heading:#22312b;--pp-heading-action:#34483e;--pp-heading-action-border:#577365}
+@media(max-width:767px){body.pp-ui :is(.pp-agreement-card,.pp-event-card){--pp-card-padding:12px}}
+@container(max-width:700px){body.pp-ui .pp-venue-card .pp-register-table[data-table-kind=crew]{min-width:0!important}body.pp-ui .pp-venue-card .pp-register-table colgroup{display:none}}
+
+body.pp-ui :is(.pp-agreement-tabs,.pp-event-tabs) [role=tab][aria-selected=true]{color:var(--pp-tab-active,#0d655b)}
+html[data-theme=dark] body.pp-ui{--pp-tab-active:#9be3d0}
+
+.pp-venue-grid>[data-fieldname=site_name],.pp-venue-grid>[data-fieldname=phase]{grid-column:1/-1}
+
+body.pp-ui .pp-operations .pp-op-message .pp-freddy[data-tone=error]{max-width:none;width:100%}
