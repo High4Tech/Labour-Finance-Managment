@@ -5,7 +5,7 @@
  const icon=name=>plus_point.icon(name);
  const action=(label,attr,kind='btn-default',symbol)=>'<button type="button" class="btn '+kind+'" '+attr+'>'+(symbol?icon(symbol):'')+'<span>'+esc(__(label))+'</span></button>';
  const facts=items=>plus_point.profile_facts(items);
- const card=(title,body,control='',symbol='document',attributes='')=>'<section class="pp-profile-section pp-agreement-card" '+attributes+'><header class="pp-section-heading"><div class="pp-agreement-card-title"><span class="pp-agreement-icon">'+icon(symbol)+'</span><h3>'+esc(__(title))+'</h3></div>'+control+'</header>'+body+'</section>';
+ const card=(title,body,control='',symbol='document',attributes='')=>'<section class="pp-profile-section pp-agreement-card" '+attributes+'>'+plus_point.ui.heading(title,{symbol,actions:control})+body+'</section>';
  function date(value){if(!value)return '—';const parsed=new Date(String(value).slice(0,10)+'T12:00:00');if(Number.isNaN(parsed.valueOf()))return String(value);let format;try{format=new Intl.DateTimeFormat((frappe.boot.lang||'en').replace('_','-'),{month:'short',day:'2-digit',year:'numeric'});}catch{format=new Intl.DateTimeFormat('en',{month:'short',day:'2-digit',year:'numeric'});}return format.format(parsed);}
  const timestamp=value=>value?frappe.datetime.str_to_user(value):'';
  const commentText=value=>{const node=document.createElement('textarea');node.innerHTML=String(value||'').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'');return node.value;};

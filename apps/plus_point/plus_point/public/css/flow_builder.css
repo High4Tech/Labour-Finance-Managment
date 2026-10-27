@@ -2,12 +2,12 @@
 .pp-operations[data-building=true]{position:relative;min-height:240px}
 .pp-operations[data-building=true]>.pp-op-layout{visibility:hidden;pointer-events:none}
 .pp-operations[data-building=true]>.pp-loading-state{position:absolute;inset:24px;z-index:1}
-.pp-flow-builder{--pp-builder-rail:180px;--pp-builder-gap:20px;background:var(--bg-color);padding:24px}
-.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr) 260px;gap:var(--pp-builder-gap);align-items:start}
+.pp-flow-builder{--pp-builder-rail:clamp(248px,16vw,320px);--pp-builder-activity:clamp(288px,20vw,400px);--pp-builder-gap:24px;max-width:none;margin:0;background:var(--pp-canvas);padding:var(--pp-page-gutter,24px)}
+.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr) var(--pp-builder-activity);gap:var(--pp-builder-gap);align-items:start}
 .pp-flow-builder .pp-op-content{max-width:none!important;display:grid;grid-template-columns:var(--pp-builder-rail) minmax(0,1fr);gap:0 var(--pp-builder-gap)}
 .pp-flow-builder .pp-op-back,.pp-flow-builder .pp-op-heading,.pp-flow-builder .pp-builder-footer,.pp-flow-builder .pp-draft-status{grid-column:1/-1}
-.pp-flow-builder .pp-op-heading{min-height:72px;align-items:center;margin-bottom:24px}
-.pp-flow-builder .pp-op-heading h2{font-size:25px;line-height:1.3;margin:0 0 8px}
+.pp-flow-builder .pp-op-heading{grid-column:1/-1;min-height:80px;align-items:center;margin-bottom:24px}
+.pp-flow-builder .pp-op-heading h2{font-size:var(--pp-type-page);line-height:1.2;margin:0 0 8px}
 .pp-flow-builder .pp-op-heading .pp-op-save{position:static;background:transparent;align-self:center}
 .pp-flow-builder .pp-op-heading .btn{min-height:40px;white-space:normal}
 .pp-flow-builder .pp-op-activity{margin-top:var(--pp-builder-top,116px)!important;position:static!important;border:1px solid var(--border-color);border-radius:8px;background:var(--fg-color);padding:22px;min-width:0;max-height:none!important;overflow:visible!important}
@@ -15,13 +15,13 @@
 .pp-flow-builder .pp-op-activity textarea{min-height:120px;margin-block:12px}
 .pp-flow-builder .pp-flow-steps{grid-column:1;position:sticky;top:20px;display:flex;flex-direction:column;align-self:start;overflow:visible;border:0;margin:0;padding:0;gap:0;background:transparent}
 .pp-flow-builder .pp-flow-steps .pp-op-tab-item{display:block;flex:none;min-height:104px;padding:0 0 24px 42px;position:relative}
-.pp-flow-builder .pp-flow-steps [role=tab]{display:block;position:static;border:0!important;border-radius:6px;padding:9px 8px;color:var(--text-color);min-height:38px;width:100%;font-size:13px;font-weight:650;white-space:normal!important;background:transparent}
+.pp-flow-builder .pp-flow-steps [role=tab]{display:block;position:static;border:0!important;border-radius:6px;padding:9px 8px;color:var(--text-color);min-height:38px;width:100%;font-size:16px;font-weight:650;white-space:normal!important;background:transparent}
 .pp-flow-builder .pp-flow-steps [role=tab]>span:last-child{position:static!important;clip-path:none!important;width:auto!important;height:auto!important;white-space:normal!important}
 .pp-flow-builder .pp-flow-steps [aria-selected=true]{background:color-mix(in srgb,var(--pp-action-primary) 9%,var(--fg-color));color:var(--text-color)}
 .pp-flow-builder .pp-flow-number{position:absolute;left:0;top:4px;width:32px;height:32px;font-size:13px;background:var(--fg-color);z-index:1}
 .pp-flow-builder .pp-flow-steps .is-complete .pp-flow-number{background:var(--pp-action-primary);color:var(--pp-action-on-primary)}
 .pp-flow-builder .pp-flow-separator{position:absolute;left:15px;top:40px;bottom:4px;width:1px;height:auto;margin:0;min-width:1px}
-.pp-builder-step-help{display:block;color:var(--text-muted);font-size:12px;line-height:1.55;padding:0 8px;max-width:24ch;white-space:normal;overflow-wrap:anywhere}
+.pp-builder-step-help{display:block;color:var(--text-muted);font-size:14px;line-height:1.55;padding:0 8px;max-width:none;white-space:normal;overflow-wrap:anywhere}
 .pp-builder-stage{grid-column:2;min-width:0}
 .pp-flow-builder .pp-op-section{padding:0;border:0;margin:0}
 .pp-builder-card{background:var(--fg-color);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin:0 0 16px;min-width:0}
@@ -64,16 +64,10 @@
 .pp-event-pay-summary:hover{background:var(--control-bg);border-radius:5px}
 .pp-flow-builder .pp-op-badge.is-warning{color:var(--pp-status-warning);background:var(--fg-color)}
 .pp-flow-builder .pp-op-badge.is-good{color:var(--pp-status-success);background:var(--fg-color)}
-.splash>img{content:url('/assets/plus_point/images/freddy/thinking.svg?v=20261027');width:112px!important;height:112px;animation:pp-freddy-loading 1.2s ease-in-out 3}
-@keyframes pp-freddy-loading{50%{transform:translateY(-7px) rotate(3deg)}}
-@media(max-width:1250px){.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr)}.pp-flow-builder .pp-op-activity{margin-top:0!important;margin-left:calc(var(--pp-builder-rail) + var(--pp-builder-gap))}}
-@media(max-width:767px){.pp-flow-builder{padding:16px;--pp-builder-rail:0px}.pp-flow-builder .pp-op-content{display:block}.pp-flow-builder .pp-flow-steps{display:flex;flex-direction:row;position:static;overflow-x:auto;gap:8px;margin-bottom:16px}.pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:0;padding:0;flex:0 0 150px}.pp-flow-builder .pp-flow-steps [role=tab]{padding:8px 8px 8px 42px;font-size:12px;min-height:48px}.pp-flow-builder .pp-flow-number{top:8px;left:4px}.pp-flow-builder .pp-flow-separator,.pp-builder-step-help{display:none}.pp-flow-builder .pp-op-activity{margin-left:0}.pp-builder-fields,.pp-builder-review-grid{grid-template-columns:minmax(0,1fr)}.pp-builder-card{padding:16px}.pp-flow-builder .pp-builder-footer{padding:14px 8px}.pp-flow-builder .pp-op-heading h2{font-size:22px}}
-@media(prefers-reduced-motion:reduce){.splash>img{animation:none}}
 
-/* Worker native fields stay hidden from their first load; the product profile paints when ready. */
-.pp-worker-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
-.pp-worker-profile[data-building=true]{position:relative;min-height:240px}
-.pp-worker-profile[data-building=true]>:not(.pp-loading-state){visibility:hidden;pointer-events:none}
+@media(max-width:1599px){.pp-flow-builder .pp-op-layout.has-activity{grid-template-columns:minmax(0,1fr)}.pp-flow-builder .pp-op-activity{margin-top:0!important;margin-left:calc(var(--pp-builder-rail) + var(--pp-builder-gap))}}
+@media(max-width:767px){.pp-flow-builder{padding:16px;--pp-builder-rail:0px}.pp-flow-builder .pp-op-content{display:block}.pp-flow-builder .pp-flow-steps{display:flex;flex-direction:row;position:static;overflow-x:auto;gap:8px;margin-bottom:16px}.pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:0;padding:0;flex:0 0 150px}.pp-flow-builder .pp-flow-steps [role=tab]{padding:8px 8px 8px 42px;font-size:12px;min-height:48px}.pp-flow-builder .pp-flow-number{top:8px;left:4px}.pp-flow-builder .pp-flow-separator,.pp-builder-step-help{display:none}.pp-flow-builder .pp-op-activity{margin-left:0}.pp-builder-fields,.pp-builder-review-grid{grid-template-columns:minmax(0,1fr)}.pp-builder-card{padding:16px}.pp-flow-builder .pp-builder-footer{padding:14px 8px}.pp-flow-builder .pp-op-heading h2{font-size:22px}}
+
 
 /* Commercial steps use the product green, independent of black form actions. */
 .pp-flow-builder .pp-flow-number{border-color:#116f65!important;color:#116f65!important;background:var(--fg-color)!important}
@@ -108,4 +102,5 @@
 
 .pp-operations[data-building=true]>.pp-loading-state{inset:24px 24px auto;width:auto;min-height:240px;height:min(480px,calc(100dvh - 120px))}
 
-.pp-flow-builder .pp-ui-panel>.pp-ui-panel-heading{margin:0;padding:16px;background:var(--pp-band);border-radius:8px 8px 0 0}.pp-flow-builder .pp-ui-panel{padding:0}.pp-flow-builder .pp-ui-panel>.pp-ui-panel-body{padding:16px}
+
+@media(min-width:1600px){.pp-flow-builder:has(.pp-op-layout.has-activity) :is(.pp-op-heading,.pp-op-back,.pp-builder-footer){width:calc(100% + var(--pp-builder-activity) + var(--pp-builder-gap));max-width:none}.pp-flow-builder .pp-builder-footer{box-sizing:border-box}}

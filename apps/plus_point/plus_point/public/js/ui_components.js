@@ -6,9 +6,12 @@
  const icon=name=>pp.icon?.(name)||'<svg width=24 height=24 viewBox="0 0 24 24" aria-hidden="true"><use href="/assets/plus_point/images/tabler.svg#'+name+'"></use></svg>';
  const tones={green:'success',red:'error',orange:'warning',yellow:'warning',blue:'info'};
  pp.ui={
+  heading(title,{description='',symbol='',actions='',className=''}={}){
+   return '<header class="pp-ui-section-heading pp-section-heading '+esc(className)+'"><div class="pp-ui-heading-title pp-agreement-card-title">'+(symbol?'<span class="pp-ui-heading-icon pp-agreement-icon" aria-hidden="true">'+icon(symbol)+'</span>':'')+'<div><h3>'+esc(__(title))+'</h3>'+(description?'<p>'+esc(__(description))+'</p>':'')+'</div></div>'+actions+'</header>';
+  },
   panel(title,description='',symbol='document'){
    const section=document.createElement('section');section.className='pp-ui-panel pp-builder-card';
-   section.innerHTML='<header class="pp-ui-panel-heading"><span class="pp-builder-icon" aria-hidden="true">'+(pp.record_profile_ui?.icon(symbol)||icon(symbol))+'</span><div><h3>'+esc(__(title))+'</h3>'+(description?'<p>'+esc(__(description))+'</p>':'')+'</div></header><div class="pp-ui-panel-body pp-builder-card-body"></div>';return section;
+   section.innerHTML=pp.ui.heading(title,{description,symbol,className:'pp-ui-panel-heading'})+'<div class="pp-ui-panel-body pp-builder-card-body"></div>';return section;
   },
   badge(label,tone='neutral'){return '<span class="pp-ui-badge" data-tone="'+esc(tone)+'">'+esc(__(label))+'</span>';},
   metric(symbol,value,label,note='',href=''){
@@ -28,7 +31,20 @@
    const box=document.createElement('details');box.className='pp-ui-disclosure';box.open=open;
    const summary=document.createElement('summary');summary.textContent=__(title);node.before(box);box.append(summary,node);return box;
   },
+  nativeFilters(scope){
+   if(!document.body.classList.contains('pp-customer-app'))return;
+   for(const bar of scope.querySelectorAll('.page-form .filter-section')){
+    if(bar.querySelector('.pp-native-filter-tools'))continue;
+    const controls=[...bar.children].filter(node=>node.matches('.filter-selector,.sort-selector'));
+    if(!controls.length)continue;
+    const details=document.createElement('details');details.className='pp-native-filter-tools';
+    const summary=document.createElement('summary');summary.innerHTML=esc(__('More filters'))+icon('down');
+    const content=document.createElement('div');content.className='pp-native-filter-content';details.append(summary,content);controls[0].before(details);content.append(...controls);
+   }
+  },
   enhance(scope=document){
+   if(scope===document){for(const root of [document.querySelector('.page-container:not([style*="display: none"])'),...document.querySelectorAll('.modal.show')])if(root)pp.ui.enhance(root);return;}
+   pp.ui.nativeFilters(scope);
    for(const dialog of scope.querySelectorAll('.modal-content:not([data-pp-ui])')){
     dialog.dataset.ppUi='true';dialog.classList.add('pp-ui-dialog');
    }

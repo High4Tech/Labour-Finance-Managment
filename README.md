@@ -1,5 +1,7 @@
 # PLUS POINT
 
+Current design refinement: [Wider shared builders, native controls and measured performance](docs/DESIGN_REFINEMENT_2026-10-27.md). Native Frappe/ERPNext/HRMS functionality is preserved.
+
 Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
 
 Event operations, crew and finances on **Frappe v16, ERPNext v16 and Frappe HRMS v16**. Existing customer, employee, accounting, invoice, payment, authentication and REST functionality comes from upstream. PLUS POINT adds sites, allocations, bulk worker-day attendance, wage snapshots, fixed milestones and operational reporting in native Desk.
@@ -14,7 +16,7 @@ Start with [the user guide](USER_GUIDE.md) for which app to use and the event-or
 
 **Display currency** converts overview money figures at the latest published daily exchange rate and shows its source/update time. The app keeps company books and approval limits in their original currency. The overview inherits the existing Desk theme and keeps the animated card/chart presentation.
 
-**Forms and record cleanup:** record choices load fully in A–Z order with centered arrows. Shared input rules accept valid names/numbers/phones and block unsuitable characters. Saved event details and optional client-address reuse reduce repeated typing. Records have Delete actions, and lists support confirmed atomic deletion; approved work, posted history and native dependencies remain protected.
+**Forms and record cleanup:** record choices use searchable native pickers with on-demand result pages; Load more results keeps the full result set accessible. Shared input rules accept valid names/numbers/phones and block unsuitable characters. Saved event details and optional client-address reuse reduce repeated typing. Records have Delete actions, and lists support confirmed atomic deletion; approved work, posted history and native dependencies remain protected.
 
 **Business reports** opens native project financial/deployment views and worker statements with assignment history, dated wages/payments and opening/closing balances. See [research alignment](RESEARCH_ALIGNMENT.md) for the October 17 business-context review, corrections and remaining MVP gaps.
 

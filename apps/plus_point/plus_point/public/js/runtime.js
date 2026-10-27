@@ -10,10 +10,18 @@
  plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
+  template.content.querySelectorAll('thead th').forEach((cell,i)=>{if(/^(amount|rate|daily wage|client rate|balance|revenue|cost|outstanding|paid|estimated total|approved to invoice|wages|fixed contract value)/i.test(labels[i]||''))cell.dataset.numeric='true';});
   const kind=labels.includes('Attendance period')?'payments':labels.includes('Event pay')?'crew':'',weights=kind==='payments'?[16,21,12,14,14,9,30]:kind==='crew'?[24,10,10,14,12,16,10,22]:null;
   if(weights?.length===labels.length){const table=template.content.querySelector('table'),cols=document.createElement('colgroup'),total=weights.reduce((sum,n)=>sum+n,0);table.dataset.tableKind=kind;for(const n of weights){const col=document.createElement('col');col.style.width=(n/total*100)+'%';cols.append(col);}table.prepend(cols);}
-  template.content.querySelectorAll('tbody>tr:not(.pp-table-empty)').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';}));
+  template.content.querySelectorAll('tbody>tr:not(.pp-table-empty)').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';if(/^(amount|rate|daily wage|client rate|balance|revenue|cost|outstanding|paid|estimated total|approved to invoice|wages|fixed contract value)/i.test(labels[i]||''))cell.dataset.numeric='true';}));
   return template.innerHTML;
+ };
+ // Only call before discarding a PLUS POINT-owned FieldGroup, never native cached forms.
+ plus_point.dispose_owned_forms=root=>{
+  if(!root)return;const nodes=[...(root.matches?.('[data-pp-form]')?[root]:[]),...root.querySelectorAll('[data-pp-form]')];
+  for(const node of nodes){const group=node.pp_form;if(!group||group.pp_disposed)continue;group.pp_disposed=true;
+   for(const control of Object.values(group.fields_dict||{})){control.ppDisposePicker?.();if(control.datepicker?.destroy){control.datepicker.destroy();control.datepicker=null;}}
+  }
  };
  const watchers=new Map();let timer,observer,running=false,bursts=0,lastRun=0;
  const stats=plus_point.runtime_stats={passes:0,suppressed:0,watchers:0};

@@ -1,5 +1,7 @@
 # Verification status — 2026-10-22
 
+Latest interface release: [27 October shared design and safe loading verification](docs/DESIGN_REFINEMENT_2026-10-27.md): 297 backend regression tests, 42 QA browser checks and 5 read-only working-site checks passed. Existing native capabilities and company records are preserved.
+
 Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
 
 Executed against Docker Desktop Linux engine on this Windows machine. This supersedes the original starter's unexecuted environment claims (preserved in docs/archive).

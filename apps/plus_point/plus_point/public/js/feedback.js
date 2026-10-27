@@ -37,7 +37,8 @@
  pp.freddy_sentence=sentence;
  function stop(){if(!active)return;clearTimeout(active.timer);active.controller?.destroy();active.host?.remove();if(active.image?.isConnected)active.image.hidden=false;active=null;stats.activeAnimations=0;}
  function animate(widget,automatic=false){
-  if(!widget?.isConnected||widget.parentElement!==importantHost||paused||document.hidden||motion.matches||!pp.freddy_runtime)return;
+  if(!widget?.isConnected||widget.parentElement!==importantHost||paused||document.hidden||motion.matches)return;
+  if(!pp.freddy_runtime){pp.load_feature?.('freddy_runtime')?.then(()=>animate(widget,automatic)).catch(()=>{});return;}
   if(active?.host&&widget.contains(active.host))return;
   if(automatic)lastAutomatic=Date.now();stop();
   const image=widget.querySelector('.pp-freddy__image'),slot=widget.querySelector('.pp-freddy__avatar');if(!image||!slot||!slot.getClientRects().length)return;

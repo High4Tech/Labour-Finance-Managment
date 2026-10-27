@@ -1,17 +1,17 @@
 /* PLUS POINT shared surface, control and feedback system. */
-body.pp-ui{--pp-canvas:#f1f4f3;--pp-surface:var(--fg-color,#fff);--pp-band:#f7f9f8;--pp-support:#e5eae7;--pp-input-border:#81928a;--pp-danger:#b42335;--pp-positive:#08745d;--pp-info:#175cd3;--pp-warning:#8a5300;--pp-focus:#116f65;--pp-control-height:40px}
+body.pp-ui{--pp-space-1:4px;--pp-space-2:8px;--pp-space-3:12px;--pp-space-4:16px;--pp-space-5:20px;--pp-space-6:24px;--pp-space-8:32px;--pp-page-gutter:clamp(16px,1.5vw,40px);--pp-type-page:clamp(28px,1.2vw + 16px,44px);--pp-type-section:clamp(20px,1vw + 10px,28px);--pp-type-card:clamp(18px,.35vw + 14px,22px);--pp-type-metric:clamp(28px,1.5vw + 12px,48px);--pp-motion-press:100ms;--pp-motion-hover:150ms;--pp-motion-reveal:180ms;--pp-radius:8px;--pp-elevation:0 2px 8px #142b2510;--pp-canvas:#f1f4f3;--pp-surface:var(--fg-color,#fff);--pp-band:#f7f9f8;--pp-support:#e5eae7;--pp-input-border:#81928a;--pp-danger:#b42335;--pp-positive:#08745d;--pp-info:#175cd3;--pp-warning:#8a5300;--pp-focus:#116f65;--pp-control-height:40px}
 html[data-theme=dark] body.pp-ui{--pp-canvas:#17211e;--pp-band:#22312b;--pp-support:#34483e;--pp-input-border:#61746b;--pp-danger:#ff9ba7;--pp-positive:#8ce1c0;--pp-info:#9bc1ff;--pp-warning:#f6ce82;--pp-focus:#8ce1c0}
 body.pp-ui .page-container:has(.pp-flow-builder),body.pp-ui .page-container:has(.pp-flow-builder) .layout-main-section,body.pp-ui .pp-flow-builder{background:var(--pp-canvas)}
-body.pp-ui .pp-flow-builder .pp-flow-steps{background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;padding:16px 12px;box-shadow:0 2px 8px #142b2510}
+body.pp-ui .pp-flow-builder .pp-flow-steps{background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;padding:16px 12px;box-shadow:var(--pp-elevation)}
 body.pp-ui .pp-flow-builder .pp-flow-steps .pp-op-tab-item{min-height:108px;padding-bottom:20px}
 body.pp-ui .pp-flow-builder .pp-flow-steps .pp-op-tab-item:last-child{min-height:76px;padding-bottom:0}
-body.pp-ui .pp-ui-panel{padding:0;overflow:visible;background:var(--pp-surface);box-shadow:0 2px 8px #142b2510}
+body.pp-ui .pp-ui-panel{padding:0;overflow:visible;background:var(--pp-surface);box-shadow:var(--pp-elevation)}
 body.pp-ui .pp-ui-panel>.pp-ui-panel-heading{margin:0;border-radius:8px 8px 0 0;background:var(--pp-band);padding:16px;align-items:center;gap:12px}
 body.pp-ui .pp-ui-panel>.pp-ui-panel-body{padding:16px}
 body.pp-ui .pp-ui-panel-heading :is(h3,p){margin:0}
 body.pp-ui .pp-ui-panel-heading p{margin-top:4px}
 body.pp-ui .pp-ui-panel-heading .btn-default{background:var(--pp-support);border-color:var(--pp-input-border)}
-body.pp-ui .pp-flow-builder .pp-op-activity{padding:0 16px 16px;background:var(--pp-surface);box-shadow:0 2px 8px #142b2510}
+body.pp-ui .pp-flow-builder .pp-op-activity{padding:0 16px 16px;background:var(--pp-surface);box-shadow:var(--pp-elevation)}
 body.pp-ui .pp-flow-builder .pp-op-activity>h3{margin:0 -16px 16px;padding:16px;border-radius:8px 8px 0 0;background:var(--pp-band)}
 body.pp-ui .pp-ui-disclosure{border:1px solid var(--border-color);border-radius:8px;background:var(--pp-surface);margin-bottom:16px;min-width:0}
 body.pp-ui .pp-ui-disclosure>summary{padding:14px 16px;min-height:48px;font-weight:600;cursor:pointer;color:var(--text-color)}
@@ -20,7 +20,7 @@ body.pp-ui .pp-ui-disclosure>.pp-builder-card>header{border-radius:0}
 body.pp-ui .pp-stage-panel>.pp-op-section{padding:0;margin:0;border:0}
 body.pp-ui .pp-client-compact{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:0}
 body.pp-ui .pp-client-compact p{margin:0;overflow-wrap:anywhere}
-body.pp-ui .pp-ui-metric{display:flex;align-items:center;gap:12px;min-width:0;padding:16px;background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;box-shadow:0 2px 8px #142b2510;text-decoration:none}
+body.pp-ui .pp-ui-metric{display:flex;align-items:center;gap:12px;min-width:0;padding:16px;background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--pp-elevation);text-decoration:none}
 body.pp-ui .pp-ui-metric>.pp-agreement-metric-icon{display:grid!important;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--pp-focus) 9%,var(--pp-surface));color:var(--pp-focus)}
 body.pp-ui .pp-ui-metric>.pp-agreement-metric-icon>svg{display:block;width:24px;height:24px;margin:0;flex:none}
 body.pp-ui .pp-ui-metric>div{min-width:0;display:grid;gap:3px}
@@ -31,7 +31,7 @@ body.pp-ui textarea.form-control{font-size:15px;line-height:1.5;border:1px solid
 body.pp-ui .form-control:hover:not(:disabled){border-color:var(--text-muted)}
 body.pp-ui .form-control:focus{border-color:var(--pp-focus);box-shadow:0 0 0 2px color-mix(in srgb,var(--pp-focus) 18%,transparent)}
 body.pp-ui .form-control:disabled{background:var(--control-bg);color:var(--text-muted)}
-body.pp-ui :is([aria-invalid=true],.has-error .form-control){border-color:var(--pp-danger)!important;background:color-mix(in srgb,var(--pp-danger) 3%,var(--pp-surface))}
+body.pp-ui .frappe-control :is([aria-invalid=true],.has-error .form-control){border-color:var(--pp-danger)!important;background:color-mix(in srgb,var(--pp-danger) 3%,var(--pp-surface))}
 body.pp-ui .pp-input-hint{color:var(--pp-danger);font-size:14px;line-height:1.5;margin-top:6px}
 body.pp-ui :is(input[type=checkbox],input[type=radio]){accent-color:#116f65;flex:none}
 body.pp-ui :is(.standard-filter-section,.filter-section,.page-form,.list-filters) :is(.btn,.form-control,.sort-selector-button,.filter-button){height:var(--pp-control-height);min-height:var(--pp-control-height);line-height:20px;font-size:14px;box-sizing:border-box}
@@ -68,7 +68,7 @@ body.pp-ui :is(.pp-ui-disclosure>summary,.pp-ui-metric,.modal-content button):fo
 
 /* Native worker/resource and accounting forms share the same creation surfaces. */
 body.pp-ui .page-container:has(.form-layout) .layout-main-section{background:var(--pp-canvas)}
-body.pp-ui .form-layout>.form-page>.form-section,body.pp-ui .pp-worker-edit-body>[role=tabpanel]{background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px #142b2510}
+body.pp-ui .form-layout>.form-page>.form-section,body.pp-ui .pp-worker-edit-body>[role=tabpanel]{background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:var(--pp-elevation)}
 body.pp-ui .form-layout>.form-page>.form-section>.section-head{margin:-20px -20px 20px;padding:14px 20px;background:var(--pp-band);border-radius:8px 8px 0 0}
 body.pp-ui .pp-worker-edit-body>[role=tabpanel]::before{content:attr(data-worker-panel);display:block;margin:-20px -20px 20px;padding:14px 20px;background:var(--pp-band);font-size:17px;font-weight:600;border-radius:8px 8px 0 0}
 body.pp-ui .page-container:has(.pp-worker-edit-body) .pp-worker-profile{background:var(--pp-canvas);padding:20px}
@@ -98,3 +98,51 @@ body.pp-ui .frappe-control :is(.pp-input-hint,.pp-date-error){position:static!im
 body.pp-ui .frappe-control :is(.pp-input-hint,.pp-date-error):empty{display:none}
 
 body.pp-ui .pp-event-overview .pp-op-project-fields>.pp-profile-facts{grid-template-columns:repeat(2,minmax(0,1fr))}@media(max-width:767px){body.pp-ui .pp-event-overview .pp-op-project-fields>.pp-profile-facts{grid-template-columns:minmax(0,1fr)}}
+
+/* Owned typography and motion; native editors and accounting tables keep their type roles. */
+body.pp-customer-app :is(.pp-op-heading h2,.pp-person-heading h2,.pp-dashboard-toolbar h3){font-size:var(--pp-type-page);line-height:1.2;letter-spacing:-.025em;overflow-wrap:anywhere}
+body.pp-customer-app .pp-ui-panel-heading h3,body.pp-customer-app .pp-ui-section-heading h3{font-size:var(--pp-type-card);line-height:1.4;font-weight:650}
+body.pp-customer-app :is(.pp-dashboard-metric dd,.pp-finance-stat strong,.pp-report-summary-value){font-size:var(--pp-type-metric);line-height:1.2;font-variant-numeric:tabular-nums}
+body.pp-customer-app :is(.pp-register-table td,.pp-profile-facts dd,.pp-report-money){font-variant-numeric:tabular-nums}
+body.pp-customer-app .pp-ui-section-heading{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:var(--pp-band);padding:16px 20px}
+body.pp-customer-app .pp-ui-heading-title{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+body.pp-customer-app .pp-ui-heading-title>div{min-width:0}
+body.pp-customer-app .pp-ui-heading-title :is(h3,p){margin:0}
+body.pp-customer-app .pp-ui-heading-title p{margin-top:4px;font-size:14px;line-height:1.5;color:var(--text-muted)}
+body.pp-customer-app .pp-ui-heading-icon{width:36px;height:36px;display:grid;place-items:center;flex:none;color:var(--pp-focus);background:color-mix(in srgb,var(--pp-focus) 8%,var(--pp-surface));border-radius:8px}
+body.pp-customer-app .pp-ui-heading-icon svg{width:24px;height:24px}
+body.pp-customer-app :is(.pp-ui-disclosure>summary,.pp-ui-metric,.pp-choice-field label,.pp-search-picker .form-control){transition:border-color var(--pp-motion-hover) ease,box-shadow var(--pp-motion-hover) ease}
+body.pp-customer-app .pp-register-table tbody tr:hover{background:color-mix(in srgb,var(--pp-focus) 3%,var(--pp-surface))}
+body.pp-customer-app .pp-register-table [data-numeric=true]{text-align:end;font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){body.pp-customer-app :is(.pp-ui-disclosure>summary,.pp-ui-metric,.pp-choice-field label,.pp-search-picker .form-control){transition:none}}
+
+/* Disclosure moves existing native filter/sort controls without replacing their behavior. */
+body.pp-customer-app .pp-native-filter-tools{position:relative;align-self:center}
+body.pp-customer-app .pp-native-filter-tools>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:var(--pp-control-height);padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--control-bg);font-size:14px;line-height:20px}
+body.pp-customer-app .pp-native-filter-tools>summary::-webkit-details-marker{display:none}
+body.pp-customer-app .pp-native-filter-tools>summary svg{width:18px;height:18px;flex:none}
+body.pp-customer-app .pp-native-filter-tools>summary:focus-visible{outline:2px solid var(--pp-focus);outline-offset:3px}
+body.pp-customer-app .pp-native-filter-content{position:absolute;top:calc(100% + 8px);right:0;display:flex;gap:8px;padding:12px;background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--pp-elevation);z-index:11;max-width:calc(100vw - 32px)}
+body.pp-customer-app .pp-native-filter-content .filter-selector{display:flex}
+body.pp-customer-app .pp-picker-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+body.pp-customer-app .pp-picker-tools:has(>button[hidden]):not(:has(.pp-picker-create)){display:none}
+body.pp-customer-app .pp-picker-tools button[hidden]{display:none!important}
+@media(max-width:767px){body.pp-customer-app .pp-native-filter-content{flex-wrap:wrap;min-width:240px}}
+
+body.pp-customer-app .pp-native-filter-tools:not([open])>.pp-native-filter-content{display:none}
+
+/* Existing product splash belongs to the shared loader, including deferred editor routes. */
+.splash>img{content:url('/assets/plus_point/images/freddy/thinking.svg?v=20261027');width:112px!important;height:112px;animation:pp-freddy-loading 1.2s ease-in-out 3}
+@keyframes pp-freddy-loading{50%{transform:translateY(-7px) rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){.splash>img{animation:none}}
+
+/* Picker commands sit above results; the native list keeps its selection semantics. */
+body.pp-customer-app .pp-search-picker .pp-picker-tools{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;z-index:1061;background:var(--pp-surface);border:1px solid var(--border-color);border-bottom:0;border-radius:8px 8px 0 0}
+body.pp-customer-app .pp-search-picker.pp-picker-open.pp-picker-has-tools .pp-picker-tools{display:flex}
+body.pp-customer-app .pp-search-picker.pp-picker-open.pp-picker-has-tools .awesomplete>ul{margin-top:calc(var(--pp-picker-tools-height,48px) + 4px);border-radius:0 0 8px 8px}
+body.pp-customer-app .pp-picker-tools .btn{flex:1;white-space:normal;min-height:40px}
+
+/* Worker native fields stay hidden from their first load; the product profile paints when ready. */
+.pp-worker-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
+.pp-worker-profile[data-building=true]{position:relative;min-height:240px}
+.pp-worker-profile[data-building=true]>:not(.pp-loading-state){visibility:hidden;pointer-events:none}
