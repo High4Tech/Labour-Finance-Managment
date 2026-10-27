@@ -19,7 +19,9 @@
     "proposed_values",
     "base_modified",
     "approval_method",
-    "change_summary"
+    "change_summary",
+    "portal_event",
+    "access_token"
   ],
   "fields": [
     {
@@ -115,6 +117,22 @@
       "fieldtype": "Small Text",
       "label": "Update summary",
       "read_only": 1
+    },
+    {
+      "fieldname": "portal_event",
+      "label": "Client portal event",
+      "fieldtype": "Link",
+      "options": "PP Event Plan",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "access_token",
+      "label": "Encrypted client access token",
+      "fieldtype": "Password",
+      "read_only": 1,
+      "hidden": 1,
+      "no_copy": 1
     }
   ],
   "permissions": [

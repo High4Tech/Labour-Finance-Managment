@@ -6,6 +6,7 @@
   "track_changes": 1,
   "field_order": [
     "event_name",
+    "planning_state",
     "project",
     "company",
     "contract_terms",
@@ -26,6 +27,14 @@
       "fieldtype": "Data",
       "reqd": 1,
       "in_list_view": 1
+    },
+    {
+      "fieldname": "planning_state",
+      "label": "Planning state",
+      "fieldtype": "Select",
+      "options": "Draft\nReady",
+      "default": "Ready",
+      "read_only": 1
     },
     {
       "fieldname": "project",

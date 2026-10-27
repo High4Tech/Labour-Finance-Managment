@@ -4,6 +4,7 @@ Plans create no work, wages, invoices or stock movements. ERPNext owns stock.
 """
 from collections import defaultdict
 from decimal import Decimal
+from contextlib import contextmanager
 import json
 
 import frappe
@@ -19,6 +20,40 @@ def span(start,end):
     return [str(add_days(start,i)) for i in range((end-start).days+1)]
 
 
+def lifecycle(doc,archived=False,cancelled=False):
+    """Completion precedes date status. Existing records remain Ready by default."""
+    if cancelled:return 'Cancelled'
+    if archived:return 'Archived'
+    if doc.get('planning_state')=='Draft':return 'Draft'
+    if getdate(doc.end_date)<getdate(today()):return 'Completed'
+    return 'Upcoming' if getdate(doc.start_date)>getdate(today()) else 'Active'
+
+
+def project_cancelled(doc,method=None):
+    """Cancellation releases planning capacity without moving physical stock."""
+    if doc.status!='Cancelled' or not doc.has_value_changed('status'):return
+    for doctype in ('PP Equipment Booking','PP Vehicle Booking'):
+        for name in frappe.get_all(doctype,filters={'project':doc.name,'status':'Planned','end_date':['>=',today()]},pluck='name'):
+            booking=frappe.get_doc(doctype,name);booking.status='Cancelled';booking.save()
+
+
+def complete_plan(doc):
+    """Explicitly finish planning; preparing a draft never approves any work."""
+    if not doc.contract_terms:frappe.throw('Choose a client and confirm the event commercial terms before finishing the event.')
+    if not doc.staffing and not any(frappe.db.exists(dt,{'project':doc.project,'status':'Planned'}) for dt in ('PP Equipment Booking','PP Vehicle Booking')):
+        frappe.local.response['field_errors']={'staffing':'Add a venue and crew requirement, or reserve the equipment or vehicle needed for this event.'}
+        frappe.throw('Add the event requirements in Venues and crew or Transport and equipment before finishing. You can keep this event as a draft.')
+    doc.planning_state='Ready'
+
+
+@contextmanager
+def reservation_bounds(project,start,end):
+    previous=frappe.flags.get('pp_reservation_bounds')
+    frappe.flags.pp_reservation_bounds=(project,start,end)
+    try:yield
+    finally:frappe.flags.pp_reservation_bounds=previous
+
+
 def positive(value,label,whole=False,allow_zero=False):
     try:number=as_decimal(value or 0)
     except ValueError:frappe.throw(f'{label} must be a finite number')
@@ -30,6 +65,7 @@ def positive(value,label,whole=False,allow_zero=False):
 def context(doc):
     require_customer()
     project=linked('Project',doc.project)
+    if project.status=='Cancelled' and doc.get('status')!='Cancelled':frappe.throw('This event is cancelled. Reopen the project before reserving resources.')
     linked('Company',project.company)
     doc.company=project.company
     if doc.get('site'):
@@ -38,6 +74,9 @@ def context(doc):
             frappe.throw('Choose an active event site in this project')
     span(doc.start_date,doc.end_date)
     bounds=frappe.db.get_value('PP Event Plan',{'project':project.name},['start_date','end_date','contract_terms'],as_dict=True,for_update=True)
+    if not bounds and doc.get('status')!='Cancelled':frappe.throw('Create a dated event before reserving equipment or vehicles. Agreement requirements do not reserve real resources.')
+    override=frappe.flags.get('pp_reservation_bounds')
+    if bounds and override and override[0]==project.name:bounds.start_date,bounds.end_date=override[1:]
     if bounds and not bounds.contract_terms and doc.get('status')!='Cancelled':frappe.throw('Select a replacement agreement for this event before assigning workers or resources.')
     if bounds and (getdate(doc.start_date)<getdate(bounds.start_date) or getdate(doc.end_date)>getdate(bounds.end_date)):
         frappe.throw('Resource dates must be inside the event plan')
@@ -382,7 +421,7 @@ def save_resource(kind,company,values):
 
 
 def summary(company):
-    plans=frappe.get_list('PP Event Plan',filters={'company':company,'end_date':['>=',today()]},
+    plans=frappe.get_list('PP Event Plan',filters={'company':company,'planning_state':['!=','Draft'],'end_date':['>=',today()]},
         fields=['name','event_name','start_date','end_date','crew_allocated'],order_by='start_date',limit_page_length=4)
     return [dict(row,duration=len(span(row.start_date,row.end_date))) for row in plans]
 

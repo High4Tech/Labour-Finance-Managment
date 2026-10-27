@@ -115,13 +115,13 @@ class EventTests(unittest.TestCase):
         self.assertTrue(resources.overview('warehouses',warehouse)['history'])
 
     @patch("plus_point.resources.company")
-    def test_optional_resources_can_be_added_before_event_plan(self,business):
+    def test_agreement_requirements_cannot_reserve_resources_before_dated_event(self,business):
         business.return_value=self.f.company
         from plus_point import resources
         frappe.db.set_single_value('PP Workspace Settings','company',self.f.company.name)
         vehicle=self.vehicle();args=dict(site=self.f.site.name,vehicle=vehicle.name,purpose='Crew',crew_count=1,start_date=today(),end_date=today(),status='Planned')
-        saved=resources.save_booking(self.f.project.name,'vehicle',args)
-        self.assertTrue(saved['name'])
+        with self.assertRaises(frappe.ValidationError):resources.save_booking(self.f.project.name,'vehicle',args)
+        self.assertFalse(frappe.db.exists('PP Vehicle Booking',{'project':self.f.project.name}))
         self.assertFalse(frappe.db.exists('PP Event Plan',{'project':self.f.project.name}))
         with self.assertRaises(frappe.ValidationError):resources.save_booking(self.f.project.name,'vehicle',dict(args,start_date='1900-01-01'))
 
@@ -512,3 +512,35 @@ class EventTests(unittest.TestCase):
         crew.assign(other_plan.project,other_plan.staffing[0].site,other_plan.contract_terms,other_plan.start_date,other_plan.end_date,100,150,[self.worker.name])
         with self.assertRaises(frappe.ValidationError):events.allocate_crew(plan.name)
         self.assertFalse(frappe.db.exists('PP Assignment',{'pp_event_plan':plan.name}))
+
+    @patch('plus_point.resources.company')
+    def test_item_first_warehouse_suggestions_include_date_availability_and_own_edit(self,business):
+        from plus_point import resources
+        business.return_value=self.f.company
+        item,warehouse,_=self.equipment();result=self.event();args=self.booking(result,item=item.name,warehouse=warehouse,quantity=7)
+        booking=insert('PP Equipment Booking',**args)
+        choices=resources.booking_options(result['project'],'equipment',args['start_date'],args['end_date'],item.name)
+        self.assertEqual(len(choices),1);self.assertEqual(Decimal(choices[0]['available']),5)
+        edited=resources.booking_options(result['project'],'equipment',args['start_date'],args['end_date'],item.name,booking.name)
+        self.assertEqual(Decimal(edited[0]['available']),12)
+        later=resources.booking_options(result['project'],'equipment',add_days(args['end_date'],1),add_days(args['end_date'],2),item.name)
+        self.assertEqual(Decimal(later[0]['available']),12)
+
+    def test_cancelled_event_releases_bookings_without_stock_or_valuation_movement(self):
+        item,warehouse,_=self.equipment();result=self.event();args=self.booking(result,item=item.name,warehouse=warehouse,quantity=7)
+        equipment=insert('PP Equipment Booking',**args);vehicle=self.vehicle();transport=insert('PP Vehicle Booking',**self.booking(result,vehicle=vehicle.name,purpose='Crew',crew_count=1))
+        before=frappe.db.get_value('Bin',{'item_code':item.name,'warehouse':warehouse},['actual_qty','valuation_rate','stock_value'])
+        project=frappe.get_doc('Project',result['project']);project.status='Cancelled';project.save()
+        self.assertEqual(frappe.db.get_value('PP Equipment Booking',equipment.name,'status'),'Cancelled')
+        self.assertEqual(frappe.db.get_value('PP Vehicle Booking',transport.name,'status'),'Cancelled')
+        self.assertEqual(Decimal(events.stock_available(item.name,warehouse,args['start_date'],args['end_date'])['available']),12)
+        self.assertEqual(before,frappe.db.get_value('Bin',{'item_code':item.name,'warehouse':warehouse},['actual_qty','valuation_rate','stock_value']))
+        with self.assertRaises(frappe.ValidationError):insert('PP Equipment Booking',**args)
+
+    def test_date_edit_conflict_keeps_previous_equipment_booking(self):
+        item,warehouse,_=self.equipment();result=self.event(start=add_days(today(),2),end=add_days(today(),7));args=self.booking(result,item=item.name,warehouse=warehouse,quantity=10)
+        first=insert('PP Equipment Booking',**dict(args,end_date=add_days(today(),3)))
+        insert('PP Equipment Booking',**dict(args,start_date=add_days(today(),4)))
+        first.end_date=add_days(today(),4)
+        with self.assertRaises(frappe.ValidationError):first.save()
+        self.assertEqual(str(frappe.db.get_value('PP Equipment Booking',first.name,'end_date')),str(add_days(today(),3)))

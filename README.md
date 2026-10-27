@@ -4,7 +4,7 @@ Event operations, crew and finances on **Frappe v16, ERPNext v16 and Frappe HRMS
 
 This is a **local development application**, not a production SaaS release. See [verification](VERIFICATION_STATUS.md) for actual evidence and gaps, and [architecture](MVP_ARCHITECTURE.md) for the source of truth.
 
-Start with [the user guide](USER_GUIDE.md) for which app to use and the event-organizer workflow. PLUS POINT's Desk home opens with a company dashboard: six summary figures, a compact action inbox, selectable work history, revenue/cost comparisons, client activity calendars and project figures. The existing attendance, workers/sites, client billing and payment links stay underneath. **Mark attendance** prepares or reopens a register for review. Business setup is a collapsed sidebar group. **Help** contains workflow guidance and optional guided setup; established businesses see no setup, import or tour prompts on the overview. Only the product workflow appears in navigation and search. Unrelated ERP/HR workspaces and app-switching menus are hidden.
+Start with [the user guide](USER_GUIDE.md) for which app to use and the event-organizer workflow. PLUS POINT's Desk home opens with a company dashboard: six summary figures, a compact action inbox, selectable work history, revenue/cost comparisons, client activity calendars and project figures. The existing attendance, workers/sites, client billing and payment links stay underneath. **Mark attendance** prepares or reopens a register for review. Authorized supporting setup stays in contextual tools. **Help** contains workflow guidance and optional guided setup; established businesses see no setup, import or tour prompts on the overview. Only the product workflow appears in navigation and search. Unrelated ERP/HR workspaces and app-switching menus are hidden.
 
 **Arrange sections** in the sidebar menu saves your preferred section order for your login. Section headings open live summaries and work-list counts; charts stay on the main overview. Client and company forms show approved work calendars on their front page.
 
@@ -88,3 +88,6 @@ Run `node scripts/browser-experience.cjs` with Playwright and Google Chrome inst
 ### Agreement revisions and worker benefits
 
 Agreements use Client details, Agreement details, Pricing and milestones, Sites and crew, and Send and sign. Sites contain editable category tables; Fixed pricing hides wage columns. Currency changes preserve accounting value and issued invoices. Worker profiles include activation, Salary and leaves, dated leave, eligibility-checked loans, accounting-backed loan recovery, and worker-specific event assignment with explicit extra crew. See [worker benefits and revision workflow](WORKER_BENEFITS.md). Run `node scripts/browser-worker-flows.cjs` for the new isolated QA flow.
+
+
+Current customer navigation, explicit event drafts and the online client portal are described in [the consolidated architecture release](docs/CONSOLIDATED_ARCHITECTURE_2026-10-27.md). Existing company data and financial engines are preserved.

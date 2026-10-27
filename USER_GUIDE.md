@@ -247,3 +247,14 @@ After creating an agreement, choose **Enter event details** or **Send to client 
 
 
 Crew requirement rows default to **Event crew**. The availability banner shows workers in the selected category who can cover the selected dates; changing the category or dates refreshes the number. Workers booked to the same agreement remain available to its own event, while external bookings, leave and employment dates still affect availability. If that category is short, **Add crew** opens a worker form inside the same dialog with the category preselected. Save the worker to refresh the count and continue the requirement. Creating a worker does not assign them to an event.
+
+
+## Current navigation, drafts and client portal — October 27
+
+Attendance is directly below Overview. Expand Clients and work, Workforce and resources, Finance, or Reports and analytics to open their lists. Click the section heading for its summary; click its arrow to expand/collapse. There is no duplicate overview child link.
+
+Unfinished events show Draft in Jobs and events. Open one to continue editing and choose Save event when its requirements are ready. Upcoming means planning is finished and the event start date has not arrived. You can save draft attendance marks, but finish the event before approving earnings.
+
+On a created agreement or event, choose Copy client link. Share that private online link with the client so they can read/sign the agreement and see confirmed event progress. It is separate from the PDF and expires after seven days. Event links show that occurrence; agreement links show associated confirmed events. Refresh progress reads current scheduling information. It does not expose worker pay, loans, budgets or internal notes.
+
+For equipment, select the item and quantity, then a warehouse with enough stock for the event dates. Available capacity returns automatically after the reserved period; this does not confirm a physical return or add consumed stock back. See [the complete release map](docs/CONSOLIDATED_ARCHITECTURE_2026-10-27.md).

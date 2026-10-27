@@ -7,6 +7,7 @@ import frappe
 from frappe.utils import getdate, today, add_days
 from plus_point.setup_flow import require_customer, linked
 from plus_point.finance import money
+from plus_point.benefits import atomic
 
 EVENT_ROLES = ('Event manager', 'Site supervisor', 'Crew leader', 'Event crew', 'Stagehand',
     'Electrician', 'Lighting technician', 'Sound technician', 'AV technician', 'Rigger',
@@ -358,6 +359,8 @@ def plan(name):
     result['allocations']=allocations;result['coverage']=coverage(doc)
     result['files']=frappe.get_list('File',filters={'attached_to_doctype':'PP Event Plan','attached_to_name':doc.name},fields=['name','file_name','file_url'],limit_page_length=100)
     result.update(archived=bool(project.get('pp_archived')),budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)
+    from plus_point.events import lifecycle
+    result['event_status']=lifecycle(doc,result['archived'],project.status=='Cancelled')
     result['reservations']=[]
     for kind,label in [('PP Vehicle Booking','vehicle'),('PP Equipment Booking','item')]:
         for row in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['name',label,'site','start_date','end_date'],limit_page_length=0):
@@ -366,6 +369,7 @@ def plan(name):
 
 
 @frappe.whitelist(methods=['POST'])
+@atomic
 def save_project(name,values):
     from plus_point.events import plan_doc
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
@@ -383,6 +387,17 @@ def save_project(name,values):
             else:
                 if getdate(row.end_date)<first or getdate(row.start_date)>last:frappe.throw('Move or remove crew requirements outside the new event period first.')
                 row.start_date=max(first,getdate(row.start_date));row.end_date=min(last,getdate(row.end_date))
+        from plus_point.events import reservation_bounds
+        # Full-event reservations follow its new period; partial reservations keep
+        # their deliberately chosen dates. Any conflict rolls this entire edit back.
+        with reservation_bounds(doc.project,first,last):
+            for doctype in ('PP Equipment Booking','PP Vehicle Booking'):
+                for booking_name in frappe.get_list(doctype,filters={'project':doc.project,'status':'Planned'},pluck='name',limit_page_length=0):
+                    booking=linked(doctype,booking_name);booking.check_permission('write')
+                    if (getdate(booking.start_date),getdate(booking.end_date))==(getdate(doc.start_date),getdate(doc.end_date)):
+                        booking.start_date=first;booking.end_date=last;booking.save()
+                    elif getdate(booking.start_date)<first or getdate(booking.end_date)>last:
+                        frappe.throw('Move or cancel partial resource bookings outside the new event period first. No event or booking dates were changed.')
     project=linked('Project',doc.project);project.check_permission('write')
     if 'budget' in data:project.estimated_costing=data.budget
     if 'enforce_budget' in data:project.pp_enforce_spending_budget=frappe.utils.cint(data.enforce_budget)
@@ -399,6 +414,9 @@ def save_project(name,values):
         from plus_point.daily_billing import rebase
         rebase(terms)
         terms.save()
+    if frappe.utils.cint(data.get('complete')):
+        from plus_point.events import complete_plan
+        complete_plan(doc)
     doc.save();return dict(name=doc.name)
 
 

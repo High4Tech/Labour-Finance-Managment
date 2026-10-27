@@ -11,6 +11,39 @@ from plus_point.benefits import atomic
 KINDS={'vehicle':'PP Vehicle Booking','equipment':'PP Equipment Booking'}
 
 
+@frappe.whitelist()
+def assignable_events():
+    business=company()
+    projects=frappe.get_list('Project',filters={'company':business.name,'status':'Open','pp_archived':0},pluck='name',limit_page_length=0)
+    return frappe.get_list('PP Event Plan',filters={'company':business.name,'project':['in',projects or ['']]},fields=['name','event_name','pp_reference','project','start_date','end_date'],order_by='start_date desc,event_name',limit_page_length=1000)
+
+
+@frappe.whitelist()
+def booking_options(project,kind,start_date,end_date,item=None,name=None):
+    """Permission-scoped suggestions; the booking save still locks and rechecks."""
+    doc=project_doc(project)
+    if kind not in KINDS:frappe.throw('Choose equipment or a vehicle.')
+    span(start_date,end_date)
+    if name:
+        current=linked(KINDS[kind],name,doc.company)
+        if current.project!=project:frappe.throw('Choose a reservation in this event.')
+    if kind=='vehicle':
+        vehicles=frappe.get_list('Vehicle',filters={'company':doc.company,'pp_event_enabled':1},fields=['name','license_plate','make','model','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom'],order_by='license_plate,name',limit_page_length=1000)
+        booked=set(frappe.get_list('PP Vehicle Booking',filters={'company':doc.company,'status':'Planned','name':['!=',name or ''],'start_date':['<=',end_date],'end_date':['>=',start_date]},pluck='vehicle',limit_page_length=0))
+        return [dict(v,available=v.name not in booked) for v in vehicles]
+    if not item:return []
+    equipment=linked('Item',item)
+    if equipment.disabled or not equipment.is_stock_item:frappe.throw('Choose active reusable equipment.')
+    warehouses=frappe.get_list('Warehouse',filters={'company':doc.company,'is_group':0,'disabled':0},fields=['name','warehouse_name'],order_by='warehouse_name,name',limit_page_length=1000)
+    from plus_point.events import stock_available
+    result=[]
+    for warehouse in warehouses:
+        amounts=stock_available(item,warehouse.name,start_date,end_date,exclude=name)
+        if Decimal(amounts['on_hand'])>0:
+            result.append(dict(warehouse=warehouse.name,title=warehouse.warehouse_name,uom=equipment.stock_uom,**amounts))
+    return result
+
+
 def install_agreement_transport():
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
     create_custom_fields({'PP Contract Terms':[dict(fieldname='pp_transport_requirements',label='Vehicle requirements',fieldtype='Long Text',hidden=1)]})

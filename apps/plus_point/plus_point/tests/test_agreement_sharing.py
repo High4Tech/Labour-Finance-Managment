@@ -35,7 +35,7 @@ class AgreementSharingTests(unittest.TestCase):
         vehicle=insert('Vehicle',license_plate='QA-'+self.f.company.abbr,make='Toyota',model='Hiace',last_odometer=0,acquisition_date=today(),uom='Litre',company=self.f.company.name,pp_event_enabled=1,pp_crew_seats=12)
         fleet=resources.agreement_vehicle_options(today(),add_days(today(),4))
         row=next(v for v in fleet if v['name']==vehicle.name);self.assertEqual(row['vehicle_type'],'Toyota Hiace');self.assertTrue(row['available'])
-        a=self.agreement();site=op.agreement(a['name'])['venues'][0]['name']
+        a=self.agreement();op.create_plan(a['name'],'Dated fleet event');site=op.agreement(a['name'])['venues'][0]['name']
         resources.save_booking(a['project'],'vehicle',dict(vehicle=vehicle.name,site=site,purpose='Crew',crew_count=1,start_date=today(),end_date=add_days(today(),4),status='Planned'))
         self.assertFalse(next(v for v in resources.agreement_vehicle_options(today(),add_days(today(),4)) if v['name']==vehicle.name)['available'])
         self.assertTrue(next(v for v in resources.agreement_vehicle_options(today(),add_days(today(),4),a['name']) if v['name']==vehicle.name)['available'])

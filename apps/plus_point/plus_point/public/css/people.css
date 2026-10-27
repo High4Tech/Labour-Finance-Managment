@@ -30,3 +30,26 @@ body.pp-ui :is(.pp-actions,.pp-op-actions,.pp-op-save,.pp-worker-benefits-action
 .pp-day-leave{background:var(--blue-100,#e2eaf7)!important;border:1px solid var(--blue-400,#89aade)!important}
 @media(max-width:767px){.pp-ui .pp-top-controls{display:grid;grid-template-columns:72px 44px minmax(0,1fr);gap:8px;align-items:center}.pp-ui .pp-top-controls .pp-language{display:none!important}.pp-ui .pp-top-controls .pp-top-appearance>.pp-theme-toggle{width:44px!important;min-width:44px;padding:0!important;justify-content:center!important}.pp-ui .pp-top-appearance .pp-theme-toggle>span:not(.pp-theme-symbol){display:none!important}.pp-ui .pp-top-appearance .pp-theme-symbol{display:inline-flex!important}.pp-ui .pp-app-currency{min-width:68px;min-height:44px!important;height:44px!important}.pp-ui .pp-top-controls .pp-global-help{white-space:normal;min-width:0;height:auto!important;min-height:44px;padding-block:6px!important}}
 body.pp-ui .standard-filter-section .input-group{display:flex;align-items:center;flex-wrap:nowrap;gap:8px}body.pp-ui .standard-filter-section .input-group>input.form-control{flex:1 1 0;width:0;min-width:0;border-radius:var(--pp-action-radius)!important}body.pp-ui .standard-filter-section .input-group>.input-group-btn{flex:0 0 auto;width:auto;padding:0}body.pp-ui .standard-filter-section .match-type-dropdown-btn{margin:0!important;min-width:var(--pp-action-height);border-radius:var(--pp-action-radius)!important}
+
+/* Native quick search controls share one baseline and one target size. */
+body.pp-ui .standard-filter-section{align-items:center;gap:12px}
+body.pp-ui .standard-filter-section .frappe-control{margin-block:0!important;min-width:0}
+body.pp-ui .standard-filter-section .input-group{align-items:stretch!important;gap:8px}
+body.pp-ui .standard-filter-section :is(input.form-control,select.form-control,.match-type-dropdown-btn){box-sizing:border-box;height:40px!important;min-height:40px!important;line-height:20px!important;padding-block:9px!important;margin-block:0!important;font-size:14px!important}
+body.pp-ui .standard-filter-section .input-group-btn{display:flex;align-items:stretch}
+body.pp-ui .standard-filter-section .match-type-dropdown-btn{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;padding:0!important}
+body.pp-ui .body-sidebar .section-break .sidebar-item-label{cursor:pointer}
+.pp-resource-availability{padding:12px;background:var(--control-bg,#f1f5f3);border-radius:6px}.pp-resource-availability dl{display:flex;gap:24px;flex-wrap:wrap;margin-block:8px}.pp-resource-availability dd{margin:0;font-size:18px;font-weight:600}.pp-resource-availability p{margin-bottom:0}
+@media(max-width:767px){body.pp-ui .standard-filter-section :is(input.form-control,select.form-control,.match-type-dropdown-btn){height:44px!important;min-height:44px!important}.pp-resource-availability dl{gap:16px}}
+
+body.pp-ui .standard-filter-section{display:flex;flex:1 1 auto;flex-wrap:wrap;min-width:0}
+body.pp-ui .standard-filter-section .frappe-control{flex:0 1 240px!important;width:240px!important;max-width:100%!important;padding-inline:0!important}
+body.pp-ui .standard-filter-section .input-group{width:100%}
+
+/* Sidebar navigation remains legible and named in both native themes. */
+.body-sidebar button.drop-icon{min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center}
+html[data-theme=dark] body.pp-ui .body-sidebar{background:#17211e;--bg-color:#17211e;--fg-color:#17211e;--sidebar-bg:#17211e;--control-bg:#24382e;--text-color:#d7e8e0;--text-muted:#b6cdc1}
+html[data-theme=dark] body.pp-ui .body-sidebar :is(.sidebar-item-label,.header-title,.dropdown-navbar-user .d-block){color:#d7e8e0!important}
+html[data-theme=dark] body.pp-ui .body-sidebar :is(.pp-selected,.selected) .sidebar-item-label{color:#fff!important}
+
+html[data-theme=dark] body.pp-ui .body-sidebar :is(.sidebar-header,.standard-sidebar-item:not(.pp-selected):not(.selected):not(.active-sidebar),.dropdown-navbar-user){background-color:#17211e!important}

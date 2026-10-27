@@ -52,6 +52,8 @@ class PPWorkEntry(Document):
             frappe.throw("Invalid work entry status")
         if self.status == "Approved" and "System Manager" not in frappe.get_roles():
             frappe.throw("Only System Manager can approve work entries", frappe.PermissionError)
+        if self.status=='Approved' and (not old or old.status!='Approved') and frappe.db.exists('PP Event Plan',{'project':self.project,'planning_state':'Draft'}):
+            frappe.throw('Finish and save this draft event before approving attendance. Your attendance marks can remain saved as a draft.')
         if old and old.assignment != self.assignment:
             frappe.throw("Assignment cannot change after a work entry is created")
         if not old:

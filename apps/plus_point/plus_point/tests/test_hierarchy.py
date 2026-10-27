@@ -69,9 +69,9 @@ class HierarchyTests(unittest.TestCase):
         from plus_point.navigation import product_navigation
         nav=product_navigation(False);labels=[r['label'] for r in nav['items']]
         self.assertNotIn('Accounts',labels);self.assertNotIn('Business setup',labels)
-        self.assertIn('Business reports',labels);self.assertIn('Project finances',labels);self.assertIn('Worker statement',labels)
+        self.assertIn('Reports and analytics',labels);self.assertIn('Job and event finances',labels);self.assertIn('Worker statement',labels)
         self.assertNotIn('Expense claims',labels);self.assertNotIn('Wages earned',labels)
-        self.assertIn('Worker loans',labels);self.assertIn('Expenses',labels)
+        self.assertIn('Worker loans and advances',labels);self.assertIn('Expenses',labels)
         self.assertIn('Account',nav['doctypes']);self.assertIn('Expense Claim',nav['doctypes'])
         self.assertIn('PLUS POINT Worker Statement',nav['reports'])
 
@@ -316,8 +316,8 @@ class HierarchyTests(unittest.TestCase):
     def test_navigation_has_four_client_billing_links_and_no_separate_entities(self):
         from plus_point.navigation import product_navigation
         nav=product_navigation(False);labels=[r['label'] for r in nav['items']]
-        self.assertIn('Client agreements',labels);self.assertIn('Billing and finances',labels)
-        for title in ('Clients','Event projects','Event sites','Assign workers','Client invoices','Fixed milestones','Your company'):self.assertNotIn(title,labels)
+        self.assertIn('Agreements',labels);self.assertIn('Billing and invoices',labels)
+        for title in ('Event projects','Event sites','Assign workers','Client invoices','Fixed milestones','Your company'):self.assertNotIn(title,labels)
     def test_guest_cannot_use_hierarchy(self):
         frappe.set_user('Guest')
         with self.assertRaises(frappe.PermissionError):op.catalogue()

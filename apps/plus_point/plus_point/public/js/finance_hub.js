@@ -6,7 +6,7 @@
     const number=value=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(value)||0);
     const money=(value,currency)=>esc(number(value)+' '+currency);
     const refreshList=()=>window.cur_list?.refresh();
-    const hub=()=>frappe.set_route('pp-section',{section:'Payments and costs'});
+    const hub=()=>frappe.set_route('pp-section',{section:'Finance'});
     let activeLoanForm;
 
     plus_point.new_worker_loan=async after=>{

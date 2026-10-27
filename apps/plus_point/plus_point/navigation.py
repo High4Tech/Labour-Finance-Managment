@@ -3,14 +3,19 @@ import frappe
 import json
 
 CUSTOMER_GROUPS = [
-    ('Daily work', [('PP Daily Register', 'Attendance'), ('Employee', 'Workers')]),
-    ('Inventory and transport', [('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
-    ('Clients and billing', [('PP Contract Terms', 'Client agreements'), ('PP Event Plan','Events'),('Sales Invoice', 'Billing and finances')]),
-    ('Payments and costs', [('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans'),
+    ('Clients and work', [('Customer', 'Clients'), ('PP Contract Terms', 'Agreements'), ('PP Event Plan','Jobs and events')]),
+    ('Workforce and resources', [('Employee', 'Workers'), ('Item','Inventory and equipment'), ('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
+    ('Finance', [('Sales Invoice', 'Billing and invoices'), ('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans and advances'),
                            ('Payment Entry', 'Receipts and payments'), ('Purchase Invoice', 'Expenses')]),
-    ('Business reports', [('Report:PLUS POINT Project Finances', 'Project finances'),
+    ('Reports and analytics', [('Report:PLUS POINT Project Finances', 'Job and event finances'),
                           ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
 ]
+SECTION_ALIASES = {'Daily work':'Workforce and resources','Inventory and transport':'Workforce and resources',
+    'Clients and billing':'Clients and work','Payments and costs':'Finance','Business reports':'Reports and analytics'}
+
+
+def section_name(value):
+    return value if frappe.conf.get('pp_control_plane') else SECTION_ALIASES.get(value,value)
 PLATFORM_GROUPS = [
     ('PLUS POINT customers', [('PP Signup Request', 'Signup approvals'), ('PP Tenant', 'Customer accounts'), ('PP Support Request', 'Customer support')]),
     ('Pricing and access', [('Subscription Plan', 'Pricing plans'), ('Subscription', 'Subscriptions')]),
@@ -29,12 +34,13 @@ COMMON_DEPENDENCIES = ['Address', 'Contact', 'Currency', 'Country', 'Fiscal Year
 def product_navigation(platform):
     groups = PLATFORM_GROUPS if platform else CUSTOMER_GROUPS
     saved = json.loads(frappe.defaults.get_user_default('pp_section_order_v1') or '[]')
-    ordered = [label for label in saved if label in dict(groups)]
+    ordered = list(dict.fromkeys(section_name(label) for label in saved if section_name(label) in dict(groups)))
     ordered += [label for label,_ in groups if label not in ordered]
     groups = [(label,dict(groups)[label]) for label in ordered]
     home = 'High4Tech' if platform else 'PLUS POINT'
     items = [dict(type='Link', link_type='Workspace', link_to=home, label='Overview', is_default_module=1)]
     if not platform:
+        items.append(dict(type='Link',link_type='DocType',link_to='PP Daily Register',label='Attendance',is_default_module=1))
         from plus_point.event_setup import current
         state=current()
         if state.get('step')!='done' and not state.get('skipped'):items.append(dict(type='Link',link_type='Page',link_to='pp-onboarding',label='Onboarding',is_default_module=1))
@@ -58,24 +64,25 @@ def product_navigation(platform):
                 if is_report:
                     report=frappe.get_doc('Report',target)
                     item['report']=dict(report_type=report.report_type,ref_doctype=report.ref_doctype)
-                if name=='Item' and not platform:item['route_options']=json.dumps({'is_stock_item':int(title=='Inventory items')})
+                if name=='Item' and not platform:item['route_options']=json.dumps({'is_stock_item':1})
                 visible.append(item)
         if visible:
             items.append(dict(type='Section Break', label=label, collapsible=1,
                               keep_closed=int(label in ('Business setup', 'Billing setup'))))
-            items.append(dict(type='Link',link_type='Page',link_to='pp-section',label=label+' overview',
-                route_options=json.dumps({'section':label}),child=1,is_default_module=1))
+            if platform:
+                items.append(dict(type='Link',link_type='Page',link_to='pp-section',label=label+' overview',
+                    route_options=json.dumps({'section':label}),child=1,is_default_module=1))
             items.extend(visible)
     # Native forms open these related records; they are not extra sidebar modules.
     if not platform:
         # Supporting ledgers and reimbursements remain available from their
         # workflow, without duplicating the same task in the sidebar.
-        doctypes.update(['PP Planning Draft','Account','Supplier','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
+        doctypes.update(['PP Daily Register','PP Planning Draft','Account','Supplier','PP Work Entry','Expense Claim','PP Worker Loan','PP Loan Recovery','PP Worker Leave',
                          'Vehicle','Warehouse','Item','Stock Reconciliation','PP Vehicle Booking','PP Equipment Booking','Employee Advance', 'Designation', 'Gender', 'Department', 'Employment Type',
                          'Branch', 'Employee Grade', 'Holiday List', 'PP Import Record', 'Company','Customer','Contract','Project','PP Contract Terms','PP Event Plan','PP Site','PP Assignment','PP Milestone','Sales Invoice','PP Agreement Staffing'])
         reports.update(['PLUS POINT Project Finances','PLUS POINT Worker Statement'])
     if not platform:
-        icons={'Employee':'users','PP Daily Register':'check-square','PP Contract Terms':'document','PP Event Plan':'calendar',
+        icons={'Customer':'users','Item':'package','Employee':'users','PP Daily Register':'check-square','PP Contract Terms':'document','PP Event Plan':'calendar',
                'Warehouse':'warehouse','Vehicle':'truck','Sales Invoice':'document','PP Wage Settlement':'wallet',
                'PP Worker Loan':'money','Payment Entry':'wallet','Purchase Invoice':'wallet',
                'PLUS POINT Project Finances':'chart','PLUS POINT Worker Statement':'user','pp-onboarding':'settings'}

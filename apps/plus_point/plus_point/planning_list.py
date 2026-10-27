@@ -119,21 +119,34 @@ def rows(doctype, fields=None, filters=None, order_by=None, start=0, page_length
     wanted = list(dict.fromkeys([field_name(field, doctype) for field in native_fields] + ['name', 'pp_reference', *[key for key, _ in order]]))
     query_fields = [*native_fields, 'name', 'pp_reference', *[key for key, _ in order]]
     if doctype == 'PP Event Plan':
-        query_fields.append('project.pp_archived as pp_record_archived')
+        query_fields.extend(['project.pp_archived as pp_record_archived','project.status as pp_project_status','planning_state'])
+        wanted.append('planning_state')
     if status == 'Draft':
-        native_filters.append([doctype, 'status', '=', 'Draft'] if doctype == 'PP Contract Terms' else [doctype, 'name', '=', '__pp_drafts_only__'])
-    elif status == 'Created' and doctype == 'PP Contract Terms':
-        native_filters.append([doctype, 'status', '!=', 'Draft'])
+        native_filters.append([doctype, 'status', '=', 'Draft'] if doctype == 'PP Contract Terms' else [doctype, 'planning_state', '=', 'Draft'])
+    elif status == 'Created':
+        native_filters.append([doctype, 'status' if doctype=='PP Contract Terms' else 'planning_state', '!=', 'Draft'])
     native = frappe.get_list(doctype, fields=query_fields, filters=native_filters,
                   order_by=','.join(key + ' ' + direction for key, direction in order), limit_start=0, limit_page_length=start + length)
     native_total = frappe.get_list(doctype, fields=[{'COUNT':'name','as':'total'}], filters=native_filters)[0].total
     for row in native:
         row['pp_draft_name'] = None
+    if doctype=='PP Event Plan':
+        unfinished=[row.name for row in native if row.planning_state=='Draft']
+        if unfinished and frappe.has_permission('PP Planning Draft','read'):
+            owner='' if 'System Manager' in frappe.get_roles() else ' AND owner=%s'
+            params=[business.name,*unfinished]+([] if not owner else [frappe.session.user])
+            edits=frappe.db.sql("SELECT name,title,JSON_UNQUOTE(JSON_EXTRACT(payload,'$.record')) AS record FROM `tabPP Planning Draft` WHERE company=%s AND kind='Event' AND status IN ('Draft','Failed') AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.record')) IN ("+','.join(['%s']*len(unfinished))+")"+owner+' ORDER BY modified DESC',params,as_dict=True)
+            latest={}
+            for edit in edits:latest.setdefault(edit.record,edit)
+            for row in native:
+                if row.name in latest:
+                    row.pp_draft_name=latest[row.name].name
+                    row.event_name=latest[row.name].title
     drafts, draft_total = [], 0
     if status != 'Created' and frappe.has_permission('PP Planning Draft', 'read'):
         mapping = expressions(TYPES[doctype])
         params = [business.name, TYPES[doctype]]
-        where = ["d.company=%s", "d.kind=%s", "d.status IN ('Draft','Scheduled','Failed')"]
+        where = ["d.company=%s", "d.kind=%s", "d.status IN ('Draft','Scheduled','Failed')", "NOT EXISTS (SELECT 1 FROM `tabPP Event Plan` ep WHERE ep.planning_state='Draft' AND ep.name=JSON_UNQUOTE(JSON_EXTRACT(d.payload,'$.record')))" ]
         if 'System Manager' not in frappe.get_roles():
             where.append('d.owner=%s')
             params.append(frappe.session.user)
@@ -157,5 +170,5 @@ def rows(doctype, fields=None, filters=None, order_by=None, start=0, page_length
     # Native BaseList accepts a dictionary array. Preserve draft source metadata
     # without pretending these IDs belong to the agreement/event DocType.
     page = result[start:start + length]
-    keys = list(dict.fromkeys([*wanted, 'pp_draft_name', 'pp_draft_status', 'pp_scheduled_for', 'pp_draft_error', 'pp_record_archived']))
+    keys = list(dict.fromkeys([*wanted, 'pp_draft_name', 'pp_draft_status', 'pp_scheduled_for', 'pp_draft_error', 'pp_record_archived','pp_project_status']))
     return dict(rows=page, keys=keys, values=[[row.get(key) for key in keys] for row in page], total=cint(native_total) + cint(draft_total))

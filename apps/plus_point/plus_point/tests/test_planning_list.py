@@ -87,4 +87,4 @@ class PlanningListTests(unittest.TestCase):
         from plus_point.navigation import product_navigation
         labels=[row['label'] for row in product_navigation(False)['items']]
         self.assertNotIn('Drafts',labels)
-        self.assertIn('Client agreements',labels);self.assertIn('Events',labels)
+        self.assertIn('Agreements',labels);self.assertIn('Jobs and events',labels)

@@ -50,3 +50,8 @@ Rollback accounting tests: `bench --site demo.localhost execute plus_point.testi
 Browser flow: `node scripts/browser-finance.cjs`, with Playwright and Edge (or
 `PP_TEST_BROWSER` for another installed Chromium browser). The browser run uses
 an exact disposable QA company and unpaid draft; it never posts customer money.
+
+
+## Consolidated Finance navigation — October 27
+
+Billing and invoices, worker payments, worker loans and advances, receipts/payments and expenses are grouped under Finance. Reports remain separate under Reports and analytics. Loan balances, native postings, monthly recovery caps, partial wage settlements and report calculations are reused. Wage payments settle approved earnings; a recoverable loan/advance requires a repayment obligation and its own native disbursement. Non-repayable assistance must use the appropriate existing payroll/expense workflow. No new accounting engine or automated posting is introduced. Draft event attendance can remain marked, but new earnings require the event to be finished first.

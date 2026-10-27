@@ -13,3 +13,8 @@ Agreement → Sites and crew → Transport and inventory remains optional. The r
 Resources use current requests on entry/save. Browser page-script compatibility is checked without clearing other preferences. Shared UI observation and stale-response guards remain in place; resources have no background polling loop.
 
 Verification: `plus_point.testing.run_events` checks actual rollback stock postings, unchanged valuation, bulk atomicity, stale data, ownership and reservation protection. `scripts/browser-resources.cjs` checks native list navigation, company-free dialogs, single-page profiles and inline/bulk request payloads (stock writes are intercepted in the UI test; real posting is covered by backend tests). Set `PP_TEST_BROWSER=msedge` when Chrome is unavailable. `scripts/browser-resource-cache.cjs` checks old page-cache recovery.
+
+
+## Current simplified resources — October 27
+
+Agreement requirements do not reserve stock or vehicles. An actual dated event is required for new reservations. Choose equipment and quantity first, then a warehouse with availability for those dates. The popup shows on hand, reserved and available stock. Expired reservations stop reducing future planning availability without a stock-return operation. Full-event reservations follow a date edit only after conflict checks; a failed edit restores all prior dates. Cancelling an event releases future capacity without altering physical stock or valuation. Vehicle assignment from its profile now selects actual events, including standalone events.

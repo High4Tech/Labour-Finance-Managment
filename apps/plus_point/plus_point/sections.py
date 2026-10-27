@@ -2,13 +2,14 @@
 import json
 import frappe
 from urllib.parse import quote, urlencode
-from plus_point.navigation import CUSTOMER_GROUPS, PLATFORM_GROUPS
+from plus_point.navigation import CUSTOMER_GROUPS, PLATFORM_GROUPS, section_name
 
 
 @frappe.whitelist()
 def overview(section,company=None):
     from plus_point.dashboard import overview as dashboard
     data=dashboard(company)
+    section=section_name(section)
     groups=PLATFORM_GROUPS if data['is_platform'] else CUSTOMER_GROUPS
     if section not in dict(groups):
         frappe.throw('Choose an available section')
@@ -31,7 +32,7 @@ def overview(section,company=None):
             continue
         meta=frappe.get_meta(target)
         filters={}
-        if target=='Item' and not data['is_platform']:filters['is_stock_item']=int(title=='Inventory items')
+        if target=='Item' and not data['is_platform']:filters['is_stock_item']=1
         if meta.has_field('company'):
             filters['company']=company
         elif meta.has_field('project') and not data['is_platform']:
@@ -50,9 +51,9 @@ def overview(section,company=None):
         else:
             count=0
         query=urlencode({key:json.dumps(value) if isinstance(value,list) else value for key,value in filters.items()}) if company else ''
-        path='/desk/'+frappe.scrub(target).replace('_','-')+('/view/list' if section=='Payments and costs' and not data['is_platform'] else ('?' + query if query else ''))
+        path='/desk/'+frappe.scrub(target).replace('_','-')+('/view/list' if section=='Finance' and not data['is_platform'] else ('?' + query if query else ''))
         links.append(dict(title=title,doctype=target,path=path,count=count))
-    if section=='Inventory and transport' and not data['is_platform']:
+    if section=='Workforce and resources' and not data['is_platform']:
         counts={row['title']:row['count'] for row in links}
         reservations=0
         if company:
@@ -62,7 +63,7 @@ def overview(section,company=None):
                         fields=[{'COUNT':'name','as':'total'}],limit_page_length=1,order_by=None)
                     reservations+=int(rows[0].total if rows else 0)
         data['resources']=dict(items=frappe.db.count('Item',{'is_stock_item':1,'disabled':0}),warehouses=frappe.db.count('Warehouse',{'company':company,'is_group':0}),vehicles=frappe.db.count('Vehicle',{'company':company}),reservations=reservations)
-    if section=='Payments and costs' and not data['is_platform']:
+    if section=='Finance' and not data['is_platform']:
         from plus_point.finance_hub import summary
         data['loans']=summary(company) if company else dict(enabled=False)
         data['related_links']=[]

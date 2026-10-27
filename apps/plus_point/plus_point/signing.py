@@ -83,13 +83,19 @@ def public_doc(token,lock=False):
 @rate_limit(limit=30,seconds=60)
 def review(token):
     doc=public_doc(token)
-    return dict(html=doc.snapshot,status=doc.status,signed_by=doc.signed_by,signed_on=doc.signed_on,reference=doc.name,digest=doc.digest,change_summary=doc.get('change_summary'),approval_method=doc.get('approval_method'))
+    from plus_point.client_portal import progress
+    evidence=doc
+    if not doc.get('proposed_values') and doc.status=='Pending':
+        signed=frappe.db.get_value('PP Agreement Share',{'contract_terms':doc.contract_terms,'digest':doc.digest,'status':'Signed'},'name')
+        if signed:evidence=frappe.get_doc('PP Agreement Share',signed)
+    return dict(html=doc.snapshot,status=evidence.status,signed_by=evidence.signed_by,signed_on=evidence.signed_on,reference=doc.name,digest=doc.digest,change_summary=doc.get('change_summary'),approval_method=evidence.get('approval_method'),events=progress(doc))
 
 @frappe.whitelist(allow_guest=True,methods=['POST'])
 @rate_limit(limit=8,seconds=60)
 def accept(token,signer,email,consent,signature=None):
     doc=public_doc(token,True)
     if doc.status!='Pending':frappe.throw('This agreement has already been signed.')
+    if not doc.get('proposed_values') and frappe.db.exists('PP Agreement Share',{'contract_terms':doc.contract_terms,'digest':doc.digest,'status':'Signed'}):frappe.throw('This agreement version has already been approved. Refresh the client portal to see its signing status.')
     signer=str(signer or '').strip()
     from plus_point.input_rules import check
     check('contact_name',signer)

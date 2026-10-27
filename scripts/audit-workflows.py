@@ -45,8 +45,9 @@ def main():
     if not frappe.conf.get('allow_tests'):raise RuntimeError('Tests must be enabled')
     frappe.flags.in_test=True
     names=['test_signup'] if site=='platform.localhost' else ['test_finance','test_register','test_operations','test_events','test_attendance','test_currency_billing','test_forms','test_hierarchy','test_setup_imports','test_full_workflow','test_component_validation','test_planning','test_drafts']
-    if '--architecture-regression' in sys.argv:names=['test_agreement_architecture','test_agreement_sharing','test_event_controls','test_hierarchy','test_component_validation','test_event_start','test_drafts','test_planning_list','test_full_workflow','test_planning','test_profiles_billing','test_operations','test_events','test_register','test_finance','test_attendance','test_currency_billing']
+    if '--architecture-regression' in sys.argv:names=['test_consolidated_architecture','test_agreement_architecture','test_agreement_sharing','test_event_controls','test_hierarchy','test_component_validation','test_event_start','test_drafts','test_planning_list','test_full_workflow','test_planning','test_profiles_billing','test_operations','test_events','test_register','test_finance','test_attendance','test_currency_billing']
     if '--architecture-final' in sys.argv:names=['test_agreement_architecture','test_profiles_billing','test_event_start','test_drafts','test_agreement_sharing','test_currency_billing']
+    if '--consolidated' in sys.argv:names=['test_consolidated_architecture','test_planning_list','test_events','test_agreement_sharing']
     if '--architecture' in sys.argv:names=['test_agreement_architecture']
     if '--journey' in sys.argv:names=['test_full_workflow']
     if '--components' in sys.argv:names=['test_component_validation']

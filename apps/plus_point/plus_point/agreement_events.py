@@ -13,6 +13,7 @@ def install():
     for name in ('pp_contract_terms','pp_event_plan','pp_agreement_share'):
         frappe.reload_doc('plus_point','doctype',name)
     frappe.db.sql("UPDATE `tabPP Contract Terms` SET validity_mode=IF(effective_end IS NULL,'Ongoing','Fixed period') WHERE IFNULL(validity_mode,'')=''")
+    frappe.db.sql("UPDATE `tabPP Event Plan` SET planning_state='Ready' WHERE IFNULL(planning_state,'')=''")
     frappe.db.add_index('PP Contract Terms',['governing_agreement','event_basis'],'pp_agreement_events')
     frappe.clear_cache()
 
@@ -138,8 +139,9 @@ def linked_events(name):
     from plus_point.operations import terms_doc
     terms=terms_doc(name)
     ids=[name]+frappe.get_list('PP Contract Terms',filters={'governing_agreement':name,'event_basis':1},pluck='name',limit_page_length=0)
-    rows=frappe.get_list('PP Event Plan',filters={'contract_terms':['in',ids]},fields=['name','event_name','project','start_date','end_date'],order_by='start_date desc',limit_page_length=200)
-    for row in rows:row.status='Completed' if getdate(row.end_date)<getdate(today()) else 'Upcoming' if getdate(row.start_date)>getdate(today()) else 'Active'
+    rows=frappe.get_list('PP Event Plan',filters={'contract_terms':['in',ids]},fields=['name','event_name','project','start_date','end_date','planning_state'],order_by='start_date desc',limit_page_length=200)
+    from plus_point.events import lifecycle
+    for row in rows:row.status=lifecycle(row,frappe.db.get_value('Project',row.project,'pp_archived'),frappe.db.get_value('Project',row.project,'status')=='Cancelled')
     return rows
 
 

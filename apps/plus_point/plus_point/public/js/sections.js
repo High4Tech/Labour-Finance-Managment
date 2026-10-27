@@ -34,8 +34,7 @@
     plus_point.enhance_sections=()=>{
         const groups=frappe.boot.plus_point?.navigation.groups||[];
         document.querySelectorAll('.body-sidebar .section-item > .standard-sidebar-item .section-break > .sidebar-item-label').forEach(label=>{
-            if(label.dataset.ppHub)return;
-            const section=groups.find(name=>label.textContent.trim()===name||label.textContent.trim()===__(name));if(!section)return;
+            const section=label.dataset.ppHub||groups.find(name=>label.textContent.trim()===name||label.textContent.trim()===__(name));if(!section)return;const toggle=label.closest('.standard-sidebar-item')?.querySelector('button.drop-icon');if(toggle&&!toggle.hasAttribute('aria-label'))toggle.setAttribute('aria-label',__('Expand or collapse {0}',[__(section)]));if(label.dataset.ppHub)return;
             label.dataset.ppHub=section;label.setAttribute('role','link');label.tabIndex=0;
             const open=event=>{event.preventDefault();event.stopPropagation();if(Date.now()<(plus_point.section_drag_until||0))return;frappe.set_route('pp-section',{section});};
             label.addEventListener('click',open);label.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key))open(event);});
@@ -76,6 +75,7 @@
         try{
             const data=(await frappe.call({method:'plus_point.sections.overview',args:{section,company:plus_point.dashboard_company},silent:true})).message;
             if(sequence!==wrapper.__pp_section_seq)return;
+            section=data.section;wrapper.page.set_title(__(section));
             plus_point.dashboard_company=data.company;
             if(!data.company){
                 root.innerHTML=`<p>${esc(__('Add your business to see a section overview.'))}</p><a href="/desk/company">${esc(__('Set up company'))}</a>`;
@@ -83,13 +83,13 @@
             }
             const metrics=data.is_platform?[
                 ['Software customers',data.customers],['On trial',data.trials],['Invoiced this month',data.invoiced_month,data.currency],['Unpaid invoices',data.client_balance,data.currency]
-            ]:section==='Inventory and transport'?[
-                ['Equipment types',data.resources.items],['Warehouses',data.resources.warehouses],['Vehicles',data.resources.vehicles],['Upcoming reservations',data.resources.reservations]
-            ]:section==='Clients and billing'?[
+            ]:section==='Workforce and resources'?[
+                ['Active workers',data.workers],['Equipment types',data.resources.items],['Warehouses',data.resources.warehouses],['Vehicles',data.resources.vehicles]
+            ]:section==='Clients and work'?[
                 ['Client companies',data.activity.client_count],['Open projects',data.open_projects],['Invoiced net',data.invoiced_net,data.currency],['Client balance',data.client_balance,data.currency]
-            ]:section==='Payments and costs'?[
+            ]:section==='Finance'?[
                 ['Wages unpaid',data.wages_unpaid,data.currency],['Wages paid',data.wages_paid,data.currency],['Client cash received',data.cash_received,data.currency],['Client balance',data.client_balance,data.currency]
-            ]:section==='Business reports'?[
+            ]:section==='Reports and analytics'?[
                 ['Revenue earned',data.earned_revenue,data.currency],['Wages unpaid',data.wages_unpaid,data.currency],['Client balance',data.client_balance,data.currency],['Operational contribution',data.contribution,data.currency]
             ]:[['Active workers',data.workers],['Active work sites',data.active_sites],['Open projects',data.open_projects],['Worker-days today',data.attendance.at(-1).units]];
             root.innerHTML=`<div class="pp-section-intro"><p>${esc(__('Your section at a glance. Choose a work list below to continue.'))}</p>${data.is_platform?`<label>${esc(__('Company'))}<select class="form-control pp-section-company">${data.companies.map(c=>`<option value="${esc(c.name)}" ${c.name===data.company?'selected':''}>${esc(c.company_name||c.name)}</option>`).join('')}</select></label>`:''}</div>

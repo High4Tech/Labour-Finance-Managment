@@ -77,6 +77,8 @@ def create_event_from_draft(doc,data,terms=None):
             if not amount.is_finite() or amount<0:frappe.throw('Enter a valid spending budget of zero or more.')
             changes['budget']=float(amount)*float((terms.get('pp_agreement_rate') if terms else 1) or 1)
         if changes:save_project(event['name'],changes)
+    if not event['existing']:
+        frappe.db.set_value('PP Event Plan',event['name'],'planning_state','Draft')
     move_comments(doc,'PP Event Plan',event['name'])
     doc.event=event['name'];doc.status='Completed';doc.payload='{}';doc.last_error=''
     return event

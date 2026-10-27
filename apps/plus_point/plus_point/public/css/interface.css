@@ -304,7 +304,7 @@ body.pp-ui .modal .pp-freddy,body.pp-ui .modal .pp-freddy__speech{max-width:none
 body.pp-ui .modal .pp-op-message{width:100%;max-width:none}
 html[data-theme=dark] body.pp-ui{--pp-profile-canvas:#17211e;--pp-profile-heading:#22312b;--pp-heading-action:#34483e;--pp-heading-action-border:#577365}
 @media(max-width:767px){body.pp-ui :is(.pp-agreement-card,.pp-event-card){--pp-card-padding:12px}}
-@container(max-width:700px){body.pp-ui .pp-venue-card .pp-register-table[data-table-kind=crew]{min-width:0!important}body.pp-ui .pp-venue-card .pp-register-table colgroup{display:none}}
+@container(max-width:1040px){body.pp-ui .pp-venue-card .pp-register-table[data-table-kind=crew]{min-width:0!important}body.pp-ui .pp-venue-card .pp-register-table colgroup{display:none}}
 
 body.pp-ui :is(.pp-agreement-tabs,.pp-event-tabs) [role=tab][aria-selected=true]{color:var(--pp-tab-active,#0d655b)}
 html[data-theme=dark] body.pp-ui{--pp-tab-active:#9be3d0}
@@ -312,3 +312,5 @@ html[data-theme=dark] body.pp-ui{--pp-tab-active:#9be3d0}
 .pp-venue-grid>[data-fieldname=site_name],.pp-venue-grid>[data-fieldname=phase]{grid-column:1/-1}
 
 body.pp-ui .pp-operations .pp-op-message .pp-freddy[data-tone=error]{max-width:none;width:100%}
+
+@container(max-width:1040px){body.pp-ui :is(.pp-venue-card,.pp-staffing-list) .pp-register-table td:before{font-size:13px}}
