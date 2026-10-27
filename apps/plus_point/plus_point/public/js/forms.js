@@ -32,6 +32,7 @@
   if(feedback.length){if(!feedback.attr('id'))feedback.attr('id','pp-field-error-'+(++errorSequence));if(feedback.get(0).dataset.message!==message){feedback.get(0).dataset.message=message;if(message&&plus_point.freddy_feedback){plus_point.freddy_feedback(feedback.get(0),{message,tone:'error'});if(!feedback.get(0).children.length)feedback.text(message);}else feedback.text(message);}feedback.prop('hidden',!message);}
   const input=control.$input||control.$wrapper.find('[contenteditable]').first(),node=input.get(0),ids=new Set((input.attr('aria-describedby')||'').split(/\s+/).filter(Boolean));if(feedback.length)ids.add(feedback.attr('id'));
   input.attr({'aria-describedby':[...ids].join(' '),'aria-invalid':String(!!message)});node?.setCustomValidity?.(message);if(control.ppChoiceInputs)control.ppChoiceInputs.attr({'aria-invalid':String(!!message),'aria-describedby':[...ids].join(' ')});
+  plus_point.ui?.sync_select(node);
  };
  function error(control,required=true){
   const {df}=control,raw=String(control.$input.val()??'').trim();
@@ -53,6 +54,7 @@
  plus_point.enhance_inputs=layout=>{
   for(const control of Object.values(layout.fields_dict||{})){
    const {df,$input:input}=control;if(!input)continue;
+   if(rule(df)==='email')control.$wrapper?.addClass('pp-field-email');
    const autocomplete=({customer_name:'organization',company_name:'organization',email:'email',personal_email:'email',address_line1:'address-line1',address_line2:'address-line2',city:'address-level2',state:'address-level1',postal_code:'postal-code'})[df.fieldname];if(autocomplete&&df.fieldtype==='Data')input.attr('autocomplete',autocomplete);
    if(control.pp_input_rule||!input.get(0)?.setCustomValidity)continue;
    control.pp_input_rule=true;const kind=rule(df),node=input.get(0);

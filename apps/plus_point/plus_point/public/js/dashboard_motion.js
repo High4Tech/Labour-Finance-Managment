@@ -9,8 +9,7 @@
     window.addEventListener('pagehide',cleanup);
 
     plus_point.dashboard_workflow=()=>`<section class="pp-workflow-card">
-        <div><p class="pp-workflow-kicker">${esc(__('Your daily workflow'))}</p><h3>${esc(__('From work to earnings. One clear view.'))}</h3>
-        <p>${esc(__('Record attendance, review earnings, then manage client billing and worker payments. You stay in control of each approval.'))}</p></div>
+        <p class="sr-only">${esc(__('Attendance is approved before it contributes to worker earnings and client billing.'))}</p>
         <svg class="pp-workflow-graphic" viewBox="0 0 462 164" aria-hidden="true" focusable="false">
             <g class="pp-flow-connectors"><path d="M116 78H156"/><path d="M288 78C313 78 313 39 338 39"/><path d="M288 78C313 78 313 123 338 123"/></g>
             <g class="pp-flow-signals"><path pathLength="100" d="M116 78H156"/><path pathLength="100" d="M288 78C313 78 313 39 338 39"/><path pathLength="100" d="M288 78C313 78 313 123 338 123"/></g>
@@ -26,22 +25,7 @@
     plus_point.present_dashboard=root=>{
         cleanup();
         if(!root.classList.contains('pp-motion-dashboard'))return;
-        const cards=[...root.querySelectorAll('.pp-workforce-metrics>.pp-dashboard-metric,.pp-action-inbox,.pp-dashboard-panels>.pp-dashboard-panel,.pp-workflow-card,.pp-client-activity,.pp-dashboard-projects')];
-        const entering=!root.dataset.presentationReady;
         const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if(!reduced&&'IntersectionObserver' in window){
-            revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
-                if(!entry.isIntersecting)return;
-                entry.target.classList.add('pp-motion-visible');revealObserver.unobserve(entry.target);
-            }),{threshold:0.08});
-        }
-        cards.forEach((card,index)=>{
-            card.style.setProperty('--pp-enter-delay',`${Math.min(index%6,5)*65}ms`);
-            if(entering&&!reduced)card.classList.add('pp-motion-enter');
-            if(revealObserver)revealObserver.observe(card);else card.classList.add('pp-motion-visible');
-        });
-        root.querySelectorAll('.pp-chart-column').forEach((column,index)=>column.style.setProperty('--pp-bar-delay',`${Math.min(index,30)*14}ms`));
-        root.querySelectorAll('.pp-dashboard-projects tbody tr').forEach((row,index)=>row.style.setProperty('--pp-row-delay',`${index*70}ms`));
         const flow=activeFlow=root.querySelector('.pp-workflow-card');
         if(flow&&!reduced&&'IntersectionObserver' in window){
             flowObserver=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('pp-flow-in-view',entry.isIntersecting)));

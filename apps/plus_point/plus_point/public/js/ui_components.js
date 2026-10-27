@@ -9,6 +9,30 @@
   heading(title,{description='',symbol='',actions='',className=''}={}){
    return '<header class="pp-ui-section-heading pp-section-heading '+esc(className)+'"><div class="pp-ui-heading-title pp-agreement-card-title">'+(symbol?'<span class="pp-ui-heading-icon pp-agreement-icon" aria-hidden="true">'+icon(symbol)+'</span>':'')+'<div><h3>'+esc(__(title))+'</h3>'+(description?'<p>'+esc(__(description))+'</p>':'')+'</div></div>'+actions+'</header>';
   },
+  amount(value){
+   const raw=String(value??0),match=raw.match(/^(-?)(\d+)(?:\.(\d+))?$/);if(!match)return '—';
+   const whole=new Intl.NumberFormat(undefined,{maximumFractionDigits:0}).format(BigInt(match[1]+match[2]));
+   const decimal=new Intl.NumberFormat().formatToParts(1.1).find(p=>p.type==='decimal')?.value||'.';
+   return (match[1]&&BigInt(match[2])===0n?'-':'')+whole+(match[3]&&/[1-9]/.test(match[3])?decimal+match[3].slice(0,2):'');
+  },
+  kpi(label,value,{symbol='money',unit='',note='',href='',tone='neutral'}={}){
+   return '<a class="pp-kpi" data-tone="'+esc(tone)+'" href="'+esc(href)+'"><span class="pp-kpi-icon" aria-hidden="true">'+icon(symbol)+'</span><div class="pp-kpi-content"><span class="pp-kpi-label">'+esc(__(label))+'</span><strong class="pp-kpi-value" data-fit-number>'+esc(pp.ui.amount(value))+'</strong>'+(unit?'<span class="pp-kpi-unit">'+esc(unit)+'</span>':'')+'<small>'+esc(__(note))+'</small></div></a>';
+  },
+  fit_numbers(root){
+   const nodes=[...root.querySelectorAll('[data-fit-number]')];nodes.forEach(n=>{n.style.fontSize='32px';n.closest('.pp-kpi')?.classList.remove('is-long');});
+   nodes.forEach(n=>{const range=document.createRange();range.selectNodeContents(n);if(32*(n.clientWidth-2)/Math.max(1,range.getBoundingClientRect().width)<20)n.closest('.pp-kpi')?.classList.add('is-long');});
+   const sizes=nodes.map(n=>{const range=document.createRange();range.selectNodeContents(n);const width=range.getBoundingClientRect().width;return Math.max(12,Math.min(32,32*(n.clientWidth-2)/Math.max(1,width)));});
+   nodes.forEach((n,i)=>n.style.fontSize=sizes[i]+'px');
+  },
+  analytics_card(title,symbol,body,{actions='',className=''}={}){
+   return '<section class="pp-analytics-card '+esc(className)+'">'+pp.ui.heading(title,{symbol,actions})+'<div class="pp-analytics-body">'+body+'</div></section>';
+  },
+  bind_input(input,df){
+   if(input.ppField)return input.ppField;
+   const wrapper=input.closest('label')||input.parentElement;wrapper.classList.add('frappe-control');input.type='text';input.setAttribute('aria-label',df.label);
+   const control={df,$input:$(input),$wrapper:$(wrapper),set_focus:()=>input.focus()};input.ppField=control;
+   pp.enhance_inputs({fields_dict:{[df.fieldname]:control}});return control;
+  },
   panel(title,description='',symbol='document'){
    const section=document.createElement('section');section.className='pp-ui-panel pp-builder-card';
    section.innerHTML=pp.ui.heading(title,{description,symbol,className:'pp-ui-panel-heading'})+'<div class="pp-ui-panel-body pp-builder-card-body"></div>';return section;
@@ -45,6 +69,7 @@
   enhance(scope=document){
    if(scope===document){for(const root of [document.querySelector('.page-container:not([style*="display: none"])'),...document.querySelectorAll('.modal.show')])if(root)pp.ui.enhance(root);return;}
    pp.ui.nativeFilters(scope);
+   pp.ui.selects(scope);
    for(const dialog of scope.querySelectorAll('.modal-content:not([data-pp-ui])')){
     dialog.dataset.ppUi='true';dialog.classList.add('pp-ui-dialog');
    }
@@ -54,6 +79,32 @@
    }
   }
  };
+ // Figma Select/Menu contract, backed by the original native <select>. One menu,
+ // no polling, and no changes to native field parsing, options or permissions.
+ let menu,owner,active=0,items=[],search,selectSequence=0,typed='',typedAt=0;
+ const closeSelect=(focus=false)=>{const previous=owner;menu?.remove();menu=owner=search=null;items=[];if(previous){previous.button.setAttribute('aria-expanded','false');previous.button.removeAttribute('aria-activedescendant');previous.button.removeAttribute('aria-controls');if(focus&&previous.button.isConnected)previous.button.focus();}};
+ const moveSelect=index=>{if(!items.length)return;active=(index+items.length)%items.length;items.forEach((row,i)=>row.node.classList.toggle('is-active',i===active));const row=items[active];(search||owner.button).setAttribute('aria-activedescendant',row.node.id);row.node.scrollIntoView({block:'nearest'});};
+ const selectKeys=event=>{if(!owner)return;if(['ArrowDown','ArrowUp','Home','End','Enter','Escape','Tab'].includes(event.key)){if(event.key!=='Tab'){event.preventDefault();event.stopPropagation();}if(event.key==='Escape'||event.key==='Tab')closeSelect(event.key==='Escape');else if(event.key==='Enter')items[active]?.node.click();else moveSelect(event.key==='Home'?0:event.key==='End'?items.length-1:active+(event.key==='ArrowDown'?1:-1));}else if(!search&&event.key.length===1&&!event.ctrlKey&&!event.metaKey&&!event.altKey){event.preventDefault();typed=Date.now()-typedAt>600?event.key:typed+event.key;typedAt=Date.now();const found=items.findIndex(r=>r.option.text.toLocaleLowerCase().startsWith(typed.toLocaleLowerCase()));if(found>=0)moveSelect(found);}};
+ const openSelect=component=>{
+  closeSelect();if(component.source.disabled)return;owner=component;menu=document.createElement('div');menu.className='pp-select-menu';menu.id='pp-select-menu-'+(++selectSequence);const list=document.createElement('div');list.role='listbox';list.id=menu.id+'-list';list.setAttribute('aria-label',component.button.getAttribute('aria-label'));component.button.setAttribute('aria-controls',list.id);component.button.setAttribute('aria-expanded','true');
+  const options=[...component.source.options];
+  const draw=term=>{items=[];list.replaceChildren();for(const option of options){if(option.disabled||option.parentElement?.disabled||option.hidden||term&&!option.text.toLocaleLowerCase().includes(term))continue;const row=document.createElement('div');row.role='option';row.id=list.id+'-'+items.length;row.setAttribute('aria-selected',String(option.selected));row.className='pp-select-option';const label=document.createElement('span');label.textContent=option.text||__('Choose…');row.append(label);if(option.selected){const check=document.createElement('span');check.className='pp-select-check';check.setAttribute('aria-hidden','true');row.append(check);}row.onpointermove=()=>{active=items.findIndex(i=>i.node===row);items.forEach(i=>i.node.classList.toggle('is-active',i.node===row));};row.onmousedown=e=>e.preventDefault();row.onclick=()=>{component.source.value=option.value;component.source.dispatchEvent(new Event('change',{bubbles:true}));component.sync();closeSelect(true);};list.append(row);items.push({node:row,option});}if(!items.length){const empty=document.createElement('p');empty.className='pp-select-empty';empty.textContent=__('No matches. Try another search.');list.append(empty);}moveSelect(Math.max(0,items.findIndex(r=>r.option.selected)));};
+  if(options.length>8){search=document.createElement('input');search.type='search';search.className='form-control pp-select-search';search.placeholder=__('Search choices…');search.setAttribute('aria-label',__('Search {0}',[component.button.getAttribute('aria-label')]));search.setAttribute('role','combobox');search.setAttribute('aria-controls',list.id);search.setAttribute('aria-expanded','true');search.oninput=()=>draw(search.value.trim().toLocaleLowerCase());search.onkeydown=selectKeys;menu.append(search);}
+  menu.append(list);document.body.append(menu);const bounds=component.button.getBoundingClientRect();component.openBounds={top:bounds.top,left:bounds.left};const width=Math.min(Math.max(bounds.width,240),innerWidth-24);menu.style.width=width+'px';menu.style.left=Math.max(12,Math.min(bounds.left,innerWidth-width-12))+'px';const availableBelow=innerHeight-bounds.bottom-12,availableAbove=bounds.top-12,below=availableBelow>=Math.min(320,availableAbove);menu.style.maxHeight=Math.max(120,Math.min(360,below?availableBelow:availableAbove))+'px';if(below)menu.style.top=bounds.bottom+4+'px';else menu.style.bottom=innerHeight-bounds.top+4+'px';draw('');search?.focus();
+ };
+ pp.ui.selects=scope=>{
+  if(!document.body.classList.contains('pp-customer-app'))return;if(owner&&!owner.source.isConnected)closeSelect();
+  for(const source of scope.querySelectorAll('select.form-control:not(.pp-choice-native):not([multiple])')){
+   if(source.ppSelect){source.ppSelect.sync();continue;}if(source.hidden||source.closest('.pp-choice-control,[hidden]'))continue;
+   const button=document.createElement('button');button.type='button';button.className='pp-select-trigger form-control';button.role='combobox';button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');const value=document.createElement('span');value.className='pp-select-value';const chevron=document.createElement('span');chevron.className='pp-select-chevron';chevron.setAttribute('aria-hidden','true');button.append(value,chevron);const shell=document.createElement('span');shell.className='pp-select-container';source.before(shell);shell.append(source,button);source.classList.add('pp-select-source');source.setAttribute('aria-hidden','true');source.tabIndex=-1;
+   const component={source,button,sync(){const text=source.selectedOptions[0]?.text||__('Choose…');if(value.textContent!==text)value.textContent=text;button.disabled=source.disabled;button.hidden=source.hidden||!!source.ppControl?.df.read_only;if(owner===component&&(button.disabled||button.hidden))closeSelect();const control=source.closest('.frappe-control'),label=source.getAttribute('aria-label')||source.labels?.[0]?.textContent?.trim()||control?.querySelector('.control-label')?.textContent?.trim()||__('Choose an option');button.setAttribute('aria-label',label);button.setAttribute('aria-invalid',source.getAttribute('aria-invalid')||'false');if(source.getAttribute('aria-describedby'))button.setAttribute('aria-describedby',source.getAttribute('aria-describedby'));button.setAttribute('aria-required',String(source.required||control?.classList.contains('reqd')||false));}};source.ppSelect=component;source.addEventListener('change',component.sync);source.addEventListener('focus',()=>button.focus());button.onclick=()=>owner===component?closeSelect():openSelect(component);button.onkeydown=e=>{if(owner===component)selectKeys(e);else if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();openSelect(component);}};component.sync();
+  }
+ };
+ document.addEventListener('pointerdown',event=>{if(menu&&!menu.contains(event.target)&&!owner.button.contains(event.target))closeSelect();});
+ window.addEventListener('resize',()=>closeSelect());document.addEventListener('scroll',event=>{if(menu&&!menu.contains(event.target)){const bounds=owner.button.getBoundingClientRect();if(Math.abs(bounds.top-owner.openBounds.top)>1||Math.abs(bounds.left-owner.openBounds.left)>1)closeSelect();}},true);
+ frappe.router.on('change',()=>closeSelect());$(document).on('hide.bs.modal.pp-select',()=>closeSelect());
+ pp.ui.close_select=scope=>{if(!scope||scope.contains(owner?.source))closeSelect();};
+ pp.ui.sync_select=source=>source?.ppSelect?.sync();
  const start=()=>{if(!frappe.boot?.plus_point||frappe.boot.plus_point.is_platform)return;pp.watch_ui?.('ui-components',pp.ui.enhance);pp.ui.enhance();};
  if(window.frappe?.app?.sidebar)start();else if(window.jQuery)$(document).on('app_ready.pp-components',start);
 })();

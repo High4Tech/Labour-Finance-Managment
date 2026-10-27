@@ -6,7 +6,7 @@
  plus_point.close_dialog=d=>{const native=d.$wrapper.data('bs.modal');if(native?._isTransitioning)d.$wrapper.one('shown.bs.modal',()=>d.hide());else d.hide();};
  const escape=v=>frappe.utils.escape_html(String(v??''));
  plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;
- plus_point.loading_state=(label='Loading your records…')=>`<div class="pp-loading-state" role="status"><span class="sr-only">${escape(__(label))}</span><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div><img class="pp-loading-logo" src="/assets/plus_point/images/freddy/thinking.svg?v=20261027" width="88" height="88" alt="" aria-hidden="true"></div>`;
+ plus_point.loading_state=(label='Loading your records…',{avatar=true}={})=>`<div class="pp-loading-state" role="status"><span class="sr-only">${escape(__(label))}</span><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>${avatar?'<img class="pp-loading-logo" src="/assets/plus_point/images/freddy/thinking.svg?v=20261027" width="88" height="88" alt="" aria-hidden="true">':''}</div>`;
  plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
@@ -18,7 +18,7 @@
  };
  // Only call before discarding a PLUS POINT-owned FieldGroup, never native cached forms.
  plus_point.dispose_owned_forms=root=>{
-  if(!root)return;const nodes=[...(root.matches?.('[data-pp-form]')?[root]:[]),...root.querySelectorAll('[data-pp-form]')];
+  if(!root)return;plus_point.ui?.close_select(root);const nodes=[...(root.matches?.('[data-pp-form]')?[root]:[]),...root.querySelectorAll('[data-pp-form]')];
   for(const node of nodes){const group=node.pp_form;if(!group||group.pp_disposed)continue;group.pp_disposed=true;
    for(const control of Object.values(group.fields_dict||{})){control.ppDisposePicker?.();if(control.datepicker?.destroy){control.datepicker.destroy();control.datepicker=null;}}
   }

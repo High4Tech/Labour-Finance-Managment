@@ -15,14 +15,14 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/choices.js?v=20261027-ui-2","/assets/plus_point/js/icons.js?v=20261026-controls-3","/assets/plus_point/js/runtime.js?v=20261027-refinement-1",
+app_include_js = ["/assets/plus_point/js/choices.js?v=20261028-controls-final-1","/assets/plus_point/js/icons.js?v=20261026-controls-3","/assets/plus_point/js/runtime.js?v=20261028-controls-final-1",
                   "/assets/plus_point/js/feedback.js?v=20261027-refinement-1","/assets/plus_point/js/appearance.js?v=20261027-ui-2",
-                  "/assets/plus_point/js/selectors.js?v=20261027-refinement-1",
-                  "/assets/plus_point/js/forms.js?v=20261027-event-layout-1",
+                  "/assets/plus_point/js/selectors.js?v=20261028-controls-final-1",
+                  "/assets/plus_point/js/forms.js?v=20261028-controls-final-1",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/worker_profile.js?v=20261026-ui-stability-1",
-                  "/assets/plus_point/js/dashboard_motion.js?v=20261021-complete-forms-4",
-                  "/assets/plus_point/js/dashboard.js?v=20261023-finance-3",
+                  "/assets/plus_point/js/dashboard_motion.js?v=20261028-dashboard-final-1",
+                  "/assets/plus_point/js/dashboard.js?v=20261028-dashboard-final-1",
                   "/assets/plus_point/js/activity.js?v=20261023-finance-3",
                   "/assets/plus_point/js/crew.js?v=20261027-ui-2",
                   "/assets/plus_point/js/events.js?v=20261027-refinement-1",
@@ -38,8 +38,8 @@ app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-i
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/drafts.js?v=20261027-ui-2",
                    "/assets/plus_point/js/daily_billing.js?v=20261027-ui-2"]
-app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261027-refinement-1", "/assets/plus_point/js/profiles.js?v=20261027-refinement-1", "/assets/plus_point/js/operations.js?v=20261027-refinement-1"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=20261027-event-layout-1", "/assets/plus_point/css/feedback.css?v=20261027-ui-2"]
+app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261027-refinement-1", "/assets/plus_point/js/profiles.js?v=20261027-refinement-1", "/assets/plus_point/js/operations.js?v=20261028-controls-final-1"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=20261028-controls-final-1", "/assets/plus_point/css/feedback.css?v=20261027-ui-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"],"*/15 * * * *":["plus_point.daily_billing.run_recurring"]},"hourly": ["plus_point.agreement_lifecycle.close_expired", "plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -119,7 +119,7 @@ app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261027-consolidat
 
 app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261027-ui-2"]
 
-app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261027-refinement-1"]
-app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261027-refinement-1"]
+app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261028-controls-final-1"]
+app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261028-controls-final-1"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261027-refinement-1"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261028-dashboard-final-1"]

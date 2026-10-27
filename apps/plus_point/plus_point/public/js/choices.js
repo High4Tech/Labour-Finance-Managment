@@ -2,6 +2,8 @@
 (()=>{
  frappe.provide('plus_point');let sequence=0;
  plus_point.action_class=(label,kind='btn-default')=>kind+(/\b(?:remove|delete|cancel reservation|unassign|revoke|discard)\b/i.test(label)?' pp-destructive':/\bdraft\b/i.test(label)?' pp-draft-action':'');
+ // Rates are in agreement units here; accounting conversion runs once on save.
+ plus_point.agreement_category_rate=(rows,category)=>Number(rows?.find(r=>r.designation===category)?.client_rate||0);
  plus_point.phase_values=value=>String(value||'Event').split(',').map(v=>v.trim()).filter(Boolean);
  plus_point.enhance_choices=layout=>{
   if(frappe.boot?.plus_point?.is_platform)return;

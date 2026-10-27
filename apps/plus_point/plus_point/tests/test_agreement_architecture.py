@@ -136,6 +136,33 @@ class ArchitectureTests(unittest.TestCase):
         doc=op.agreement(a['name']);self.assertEqual(frappe.parse_json(doc['rate_card'])[0]['client_rate'],2750)
         self.assertIn('10.00 USD',signing.snapshot(a['name']))
 
+    def test_rate_card_owns_crew_prices_and_preserves_existing_event_snapshot(self):
+        a=self.agreement()
+        op.save_agreement(dict(resource_mode='Rate card',rate_card=frappe.as_json([dict(designation=self.role,client_rate=800)])),a['name'])
+        self.assertEqual(op.agreement(a['name'])['staffing'][0].client_rate,800)
+        event=self.occurrence(a)
+        op.save_agreement(dict(rate_card=frappe.as_json([dict(designation=self.role,client_rate=900)])),a['name'])
+        self.assertEqual(op.agreement(a['name'])['staffing'][0].client_rate,900)
+        self.assertEqual(op.plan(event['name'])['staffing'][0].client_rate,800)
+
+    def test_rate_card_overrides_independent_price_after_one_currency_conversion(self):
+        a=self.agreement();rows=[dict(r) for r in op.agreement(a['name'])['staffing']]
+        rows[0]['client_rate']=999
+        op.save_agreement(dict(resource_mode='Rate card',rate_card=frappe.as_json([dict(designation=self.role,client_rate=10)]),agreement_currency='USD',agreement_rate=275,staffing=rows),a['name'])
+        self.assertEqual(op.agreement(a['name'])['staffing'][0].client_rate,2750)
+        self.assertIn('10.00 USD',signing.snapshot(a['name']))
+
+    def test_rate_card_requires_a_price_for_each_crew_category(self):
+        a=self.agreement()
+        with self.assertRaisesRegex(frappe.ValidationError,'rate card'):
+            op.save_agreement(dict(resource_mode='Rate card',rate_card='[]'),a['name'])
+
+    def test_signed_rate_card_still_requires_client_approval(self):
+        a=self.agreement();op.save_agreement(dict(resource_mode='Rate card',rate_card=frappe.as_json([dict(designation=self.role,client_rate=800)])),a['name'])
+        signing.create_link(a['name'])
+        with self.assertRaisesRegex(frappe.ValidationError,'Propose an agreement update'):
+            op.save_agreement(dict(rate_card=frappe.as_json([dict(designation=self.role,client_rate=900)])),a['name'])
+
     def test_native_contract_edit_cannot_bypass_agreement_approval(self):
         a=self.agreement();signing.create_link(a['name']);contract=frappe.get_doc('Contract',frappe.db.get_value('PP Contract Terms',a['name'],'contract'));old=contract.contract_terms;contract.contract_terms='Unapproved native edit'
         with self.assertRaises(frappe.ValidationError):contract.save()

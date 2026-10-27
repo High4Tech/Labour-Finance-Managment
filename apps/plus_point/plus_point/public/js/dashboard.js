@@ -28,39 +28,8 @@
             }).join('')}</div><span>${esc(label)}</span><small>${series.map(([key]) => esc(number(row[key]))).join(' / ')}</small></div>`;
         }).join('')}</div><p class="pp-chart-legend">${series.map(([,title],index) => `<span><i class="pp-series-${index}" aria-hidden="true"></i>${esc(__(title))}</span>`).join('')}</p>`;
     };
-    function customer(data,range=14) {
-        const days=(data.activity?.daily || data.attendance).slice(-range);
-        const financial=[['Revenue earned',data.earned_revenue,'revenue','earned_revenue'],['Wages earned',data.wages_earned,'wages','wages_earned'],['Other project costs',data.other_costs,'costs','other_costs'],['Operational contribution',data.contribution,'contribution','contribution']];
-        const maximum=Math.max(1,...financial.map(([,value])=>Math.abs(Number(value)||0)));
-        return `<dl class="pp-dashboard-metrics pp-workforce-metrics">
-            ${metric('Worker-days today',data.attendance.at(-1).units,'Approved work only')}
-            ${metric('Active workers',data.workers,'In your selected company')}
-            ${metric('Active work sites',data.active_sites,__('Open projects: {0}',[data.open_projects]))}
-            ${metric('Revenue earned',data.earned_revenue,'Lifetime approved work and milestones',data.currency)}
-            ${metric('Wages unpaid',data.wages_unpaid,'Lifetime approved wages less linked payments',data.currency,sign(data,'wages_unpaid')>0?'warning':'success')}
-            ${metric('Client invoice balance',data.client_balance,'Outstanding on posted project invoices',data.currency,sign(data,'client_balance')>0?'warning':'success')}</dl>
-            ${conditions(data)}
-            ${plus_point.event_summary_markup?.(data.event_plans)||''}
-            <div class="pp-dashboard-panels"><section class="pp-dashboard-panel pp-work-trend"><header class="pp-panel-heading"><h3>${esc(__('Work delivered'))}</h3><div class="pp-chart-range" aria-label="${esc(__('Activity period'))}">${[7,14,30,91].map(n=>`<button type="button" data-range="${n}" aria-pressed="${n===range}">${n}${esc(__('d'))}</button>`).join('')}</div></header>
-                <p>${esc(__('Approved worker-days. Two half-days count as one; drafts are excluded.'))}</p>
-                ${chart(days,[['units','Worker-days']])}
-                <p class="pp-dashboard-caption"><strong>${esc(number(days.reduce((n,row)=>n+Number(row.units),0)))}</strong> ${esc(__('worker-days in this period'))}</p></section>
-            <section class="pp-dashboard-panel pp-finance-chart"><h3>${esc(__('Revenue and project costs'))}</h3><p>${esc(__('Lifetime amounts in'))} ${esc(data.currency)}. ${esc(__('Earnings and cash received are separate.'))}</p>
-                <div class="pp-finance-bars">${financial.map(([label,value,key,field])=>`<div class="pp-finance-bar ${sign(data,field)<0?'pp-value-error':''}"><span>${esc(__(label))}</span><strong>${esc(number(value))}</strong><div><i class="pp-finance-${key}" style="width:${Math.abs(Number(value)||0)/maximum*100}%"></i></div></div>`).join('')}</div><p class="pp-dashboard-caption">${esc(__('Client cash received'))}: <strong>${esc(number(data.cash_received))} ${esc(data.currency)}</strong>. ${esc(__('Contribution excludes taxes, overhead and unallocated costs.'))}</p></section></div>
-            ${plus_point.dashboard_workflow?.()||''}
-            <section class="pp-activity-panel"><header class="pp-panel-heading"><div><h3>${esc(__('Client company activity'))}</h3><p>${esc(__('Last 91 days. See when and how much work was approved for each client.'))}</p></div><a href="/desk/pp-agreements">${esc(__('Client agreements'))}</a></header>${plus_point.activity_markup(data.activity,data.company)}</section>
-            <section class="pp-dashboard-panel pp-dashboard-projects"><h3>${esc(__('Project snapshot'))}</h3><p>${esc(__('Lifetime figures. Projects with unpaid wages appear first.'))}</p>
-                ${data.projects.length ? `<div class="pp-dashboard-table-wrap"><table class="pp-dashboard-table"><caption class="sr-only">${esc(__('Project financial snapshot'))}</caption>
-                    <thead><tr><th>${esc(__('Project'))}</th><th>${esc(__('Earned'))}</th><th>${esc(__('Wages unpaid'))}</th></tr></thead>
-                    <tbody>${data.projects.map(row => `<tr><th scope="row"><a href="/desk/pp-event-plans?project=${encodeURIComponent(row.name)}">${esc(row.title)}</a></th>
-                        <td>${esc(number(row.earned_revenue))}</td><td>${esc(number(row.wages_unpaid))}</td></tr>`).join('')}</tbody></table></div>`
-                    : `<p class="pp-dashboard-empty">${esc(__('No billing projects yet. Start with a client, project and billing terms below.'))} <a href="/desk/pp-agreements">${esc(__('Set up billing terms'))}</a></p>`}
-                <div class="pp-dashboard-total ${sign(data,'contribution')<0?'pp-value-error':''}"><span>${esc(__('Operational contribution'))}</span><strong>${esc(number(data.contribution))} ${esc(data.currency)}</strong></div>
-                <p class="pp-dashboard-caption">${esc(__('Earned revenue less wages and recorded project costs. Excludes taxes, overhead and unallocated costs.'))}</p>
-            </section><details class="pp-budget-disclosure"><summary>${esc(__('Spending budgets'))}</summary>${budgets(data)}</details>`;
-    }
     const stateLabels={error:'Action required',warning:'Warning',success:'Success',empty:'Next step'};
-    function conditions(data) {
+    function conditions(data,title='Action inbox') {
         const priority={error:0,warning:1,empty:2,success:3};
         const rows=[...(data.conditions || [])].sort((a,b)=>priority[a.level]-priority[b.level]);
         const unread=(data.notifications||[]).filter(row=>!row.read).length;
@@ -69,7 +38,7 @@
             ${item.amount!==undefined?`<p class="pp-value-${esc(item.level)}"><strong>${esc(number(item.amount))}</strong> / ${esc(number(item.budget_limit))} ${esc(item.currency)} ${esc(__('used'))}</p>`:''}
             <p>${esc(__(item.message))}</p></div>
             <a class="btn btn-default btn-sm pp-condition-cta" href="${esc(item.path)}" ${item.action?`data-pp-action="${esc(item.action)}"`:''}>${esc(__(item.label))}</a></div>`;
-        return rows.length ? `<section class="pp-conditions pp-action-inbox" aria-label="${esc(__('Action inbox'))}" tabindex="-1"><header class="pp-panel-heading"><div><h3>${esc(__('Action inbox'))} <span class="pp-count">${rows.length}</span></h3><p>${unread?esc(__('{0} unread updates',[unread])):esc(__('You have reviewed the latest updates. Actions remain until the underlying record is resolved.'))}</p></div>${unread?`<button type="button" class="btn btn-default btn-sm pp-mark-updates">${esc(__('Mark updates read'))}</button>`:''}</header>${rows.slice(0,2).map(row).join('')}
+        return rows.length ? `<section class="pp-conditions pp-action-inbox" aria-label="${esc(__(title))}" tabindex="-1"><header class="pp-panel-heading"><div><h3>${esc(__(title))} <span class="pp-count">${rows.length}</span></h3><p>${unread?esc(__('{0} unread updates',[unread])):esc(__('You have reviewed the latest updates. Actions remain until the underlying record is resolved.'))}</p></div>${unread?`<button type="button" class="btn btn-default btn-sm pp-mark-updates">${esc(__('Mark updates read'))}</button>`:''}</header>${rows.slice(0,2).map(row).join('')}
             ${rows.length>2?`<details><summary>${esc(__('More next actions'))} (${rows.length-2})</summary>${rows.slice(2).map(row).join('')}</details>`:''}</section>`:'';
     }
     function budgets(data) {
@@ -126,6 +95,10 @@
                 if(!data.is_platform)plus_point.ensure_attendance_today?.(data.company).catch(()=>{});
                 plus_point.dashboard_currency=data.currency;
                 root.classList.toggle('pp-motion-dashboard',!data.is_platform);
+                if(!data.is_platform&&data.company){
+                    await plus_point.load_feature('dashboard_analytics');if(!root.isConnected||current!==request)return;
+                    root.ppDashboardCleanup?.();plus_point.render_customer_dashboard(root,data,{reload:load,exchangeNote,conditions,budgets});root.dataset.ready='true';return;
+                }
                 const draw=()=>{
                 root.innerHTML=`<div class="pp-dashboard-toolbar"><div><h3>${esc(__('At a glance'))}</h3>
                     <p>${esc(frappe.datetime.str_to_user(data.date))}${data.currency ? ` · ${esc(__('Amounts in'))} ${esc(data.currency)}` : ''}</p></div>
@@ -135,7 +108,7 @@
                     <button class="btn btn-default btn-sm pp-open-updates" type="button" aria-label="${esc(__('Notifications'))}">${esc(__('Updates'))} <span class="pp-count">${(data.notifications||[]).filter(row=>!row.read).length}</span></button>
                     <button class="btn btn-default btn-sm pp-dashboard-refresh" type="button">${esc(__('Refresh figures'))}</button></div></div>
                     ${exchangeNote(data)}
-                    ${data.company ? (data.is_platform ? platform(data) : customer(data,Number(root.dataset.range)||14)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/pp-onboarding">${esc(__('Set up my business'))}</a></div>`}
+                    ${data.company ? (platform(data)) : `<div class="pp-condition pp-condition-empty"><div><h4>${esc(__('Set up your company'))}</h4><p>${esc(__('Add your business to start seeing dashboard figures.'))}</p></div><a class="btn btn-default" href="/desk/pp-onboarding">${esc(__('Set up my business'))}</a></div>`}
                     <p class="pp-dashboard-updated" role="status">${esc(__('Updated just now. Refresh to see the latest records.'))}</p>`;
                 root.querySelector('.pp-dashboard-company').addEventListener('change',event=>load(event.target.value));
                 root.querySelector('.pp-dashboard-currency').addEventListener('change',async event=>{await plus_point.form_rpc('workflows.display_currency',{currency:event.target.value});frappe.boot.plus_point.display_currency=event.target.value;document.dispatchEvent(new Event('pp:display-currency'));});
@@ -153,7 +126,8 @@
                 }));
                 root.dataset.ready='true';
                 };draw();
-            } catch {
+            } catch (error) {
+                console.warn('PLUS POINT dashboard could not load',error);
                 if (!root.isConnected || current !== request) return;
                 delete root.dataset.ready;
                 root.innerHTML=`<div class="pp-condition pp-condition-error" role="alert"><div><h4>${esc(__('Dashboard could not load'))}</h4><p>${esc(__('Check your connection and permissions, then try again. Your work tools are still available below.'))}</p></div>
@@ -163,7 +137,7 @@
                 if (current === request) root.setAttribute('aria-busy','false');
             }
         }
-        root.innerHTML=`<p role="status">${esc(__('Loading your dashboard…'))}</p>`;
+        root.innerHTML=frappe.boot.plus_point?.is_platform?`<p role="status">${esc(__('Loading your dashboard…'))}</p>`:plus_point.loading_state('Loading your dashboard…');
         if(root.ppCurrencyHandler)document.removeEventListener('pp:display-currency',root.ppCurrencyHandler);root.ppCurrencyHandler=()=>{if(root.isConnected&&$(root).is(':visible'))load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);};document.addEventListener('pp:display-currency',root.ppCurrencyHandler);load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
     };
 })();

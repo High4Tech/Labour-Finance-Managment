@@ -115,6 +115,10 @@ def present(data, display_currency=None):
         convert(row, ('invoiced', 'receipts'))
     for row in result.get('activity', {}).get('daily', []):
         convert(row, ('wages',))
+    for row in result.get('dashboard_snapshot', {}).get('payments', []):
+        convert(row, ('amount',))
+    for row in result.get('finance_series', []):
+        convert(row, ('revenue', 'wages'))
     result['currency'] = target
     result['fx'] = dict(status='converted', requested=target, source=source, target=target, rate=str(rate),
         source_per_target=str(source_rate / target_rate),

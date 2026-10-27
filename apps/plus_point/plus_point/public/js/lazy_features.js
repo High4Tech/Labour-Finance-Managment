@@ -2,6 +2,7 @@
 (()=>{
  frappe.provide('plus_point');const pp=plus_point,pending=new Map();
  const features={
+  dashboard_analytics:{file:'dashboard_analytics',css:true,ready:()=>typeof pp.render_customer_dashboard==='function'},
   imports:{file:'imports',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,ready:()=>pp.render_event_timeline?.ppCalendarVersion===4},
   flow_builder:{file:'flow_builder',css:true,ready:()=>typeof pp.flow_builder==='function'},

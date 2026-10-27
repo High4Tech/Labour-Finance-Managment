@@ -41,7 +41,7 @@ def overview(company=None, display_currency=None):
 
 def _customer(company):
     from plus_point.reporting import project_finances
-    rows = project_finances(dict(company=company))[1]
+    rows = project_finances(dict(company=company, display_currency=frappe.db.get_value('Company', company, 'default_currency')))[1]
     names = [row['project'] for row in rows]
     projects = {row.name: row for row in frappe.get_list('Project', filters={'company': company},
         fields=['name', 'project_name', 'status', 'is_active'], limit_page_length=0)}
@@ -95,9 +95,9 @@ def _customer(company):
             fields=['employee','end_date'],limit_page_length=0)
         assigned = any(row.employee in workers and (not row.end_date or getdate(row.end_date)>=getdate(today())) for row in assignments)
         if not assigned:
-            condition('empty','No workers assigned for today','Add a dated worker assignment before preparing today’s attendance.','Assign workers','/desk/pp-assignment','new:PP Assignment')
+            condition('empty','No workers assigned for today','Add a dated worker assignment before preparing todayâ€™s attendance.','Assign workers','/desk/pp-assignment','new:PP Assignment')
         else:
-            condition('warning', 'No approved attendance today', 'Review today’s register if work took place. Saved drafts do not count as approved work.',
+            condition('warning', 'No approved attendance today', 'Review todayâ€™s register if work took place. Saved drafts do not count as approved work.',
                 'Review attendance', '/desk/pp-daily-register?work_date='+today())
     elif attendance[days[-1]]:
         condition('success', 'Attendance recorded today', 'Approved worker-days are included in the chart and wage totals.', 'View attendance', '/desk/pp-daily-register')
@@ -110,7 +110,8 @@ def _customer(company):
     elif rows:
         condition('success', 'No unpaid approved wages', 'All currently approved earnings are covered by linked wage payments, or no wages have been approved yet.', 'View worker statement', '/desk/query-report/PLUS%20POINT%20Worker%20Statement')
     from plus_point.events import summary as event_summary
-    return dict(workers=len(workers), active_sites=len(sites),event_plans=event_summary(company),
+    from plus_point.dashboard_analytics import snapshot
+    return dict(workers=len(workers), active_sites=len(sites),event_plans=event_summary(company), dashboard_snapshot=snapshot(company,names,workers),
         budgets=budgets, conditions=conditions, activity=activity,
         open_projects=sum(1 for row in rows if projects[row['project']].status == 'Open' and projects[row['project']].is_active == 'Yes'),
         wages_unpaid=total('wages_outstanding'), client_balance=total('client_outstanding_gross'),

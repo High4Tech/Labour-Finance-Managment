@@ -40,6 +40,17 @@ def validate_terms(doc):
         from plus_point.events import positive
         positive(row.get('client_rate'),'Client rate',allow_zero=doc.billing_model=='Fixed')
         seen.add(row['designation'])
+    # A formal rate-card agreement has one price per category. Event snapshots
+    # deliberately keep their agreed prices when the parent is amended later.
+    if not doc.get('event_basis') and doc.get('resource_mode')=='Rate card' and doc.billing_model=='Daily':
+        negotiated={r['designation']:money(r['client_rate']) for r in rates}
+        for row in doc.get('staffing') or []:
+            if row.designation not in negotiated:
+                frappe.throw(f'Add {row.designation} to the rate card before adding its crew requirement.')
+            if money(row.client_rate)!=negotiated[row.designation] and doc.get_doc_before_save():
+                from plus_point.agreement_updates import guard
+                guard(doc.get_doc_before_save())
+            row.client_rate=negotiated[row.designation]
     if doc.get('event_basis') and doc.get('governing_agreement'):
         from plus_point.operations import terms_doc
         parent=terms_doc(doc.governing_agreement)
