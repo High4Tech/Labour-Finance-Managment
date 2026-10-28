@@ -126,3 +126,88 @@ class WorkflowRepairsTests(unittest.TestCase):
         resources.save_booking(doc.project,'equipment',dict(site=doc.staffing[0].site,warehouse=warehouse,item=item.name,quantity=3,start_date=today(),end_date=today(),status='Planned'))
         stock=next(r for r in resources.equipment_profile(item.name)['stock'] if r['warehouse']==warehouse)
         self.assertEqual(float(stock['on_hand']),10);self.assertEqual(float(stock['reserved']),3);self.assertEqual(float(stock['available']),7)
+
+
+    def test_completion_payment_is_one_bounded_period_with_payment_terms(self):
+        from plus_point.daily_billing import periods
+        rows=periods('2026-10-29','2027-02-12','Completion',7)
+        self.assertEqual(len(rows),1)
+        self.assertEqual((rows[0]['from_date'],rows[0]['to_date'],rows[0]['due_date']),('2026-10-29','2027-02-12','2027-02-19'))
+        self.assertEqual(rows[0]['title'],'Pay after completion')
+        for frequency in ('Daily','Weekly','Biweekly','Monthly','Quarterly'):
+            rows=periods('2026-10-29','2027-02-12',frequency)
+            self.assertEqual(rows[-1]['to_date'],'2027-02-12')
+
+    def test_role_auto_preview_is_read_only_and_custom_daily_rate_is_confirmed(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name
+        settings={role:dict(basis='Daily',amount=125)}
+        before=frappe.db.count('PP Assignment',{'project':doc.project})
+        preview=op.auto_assign_preview(event,[role],settings)
+        self.assertEqual(before,frappe.db.count('PP Assignment',{'project':doc.project}))
+        self.assertTrue(preview['assignments'])
+        self.assertTrue(all(r['requirement']==role and r['pp_pay_amount']==125 for r in preview['assignments']))
+        saved=op.auto_assign(event,requirements=[role],payments=settings,expected=preview['snapshot'])
+        self.assertTrue(saved['assignments'])
+        self.assertTrue(all(frappe.db.get_value('PP Assignment',k,'wage_rate')==125 for k in saved['assignments']))
+
+    def test_role_auto_monthly_uses_profile_and_rejects_foreign_roles(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name
+        worker=frappe.get_doc('Employee',self.worker.name);worker.pp_monthly_rate=3000;worker.save()
+        preview=op.auto_assign_preview(event,[role],{role:dict(basis='Monthly')})
+        mine=next(r for r in preview['assignments'] if r['employee']==worker.name)
+        self.assertEqual(mine['pp_pay_amount'],3000);self.assertEqual(mine['wage_rate'],100)
+        with self.assertRaises(frappe.ValidationError):op.auto_assign_preview(event,['unknown-role'],{})
+        with self.assertRaises(frappe.ValidationError):op.auto_assign_preview(event,[role],{role:dict(basis='Monthly',amount=20)})
+        with self.assertRaises(frappe.ValidationError):op.auto_assign_preview(event,[role],{role:dict(basis='Daily',amount=-5)})
+
+    def test_auto_preview_changed_pay_requires_new_review(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name
+        preview=op.auto_assign_preview(event,[role],{role:dict(basis='Daily',amount=125)})
+        with self.assertRaises(frappe.ValidationError):op.auto_assign(event,requirements=[role],payments={role:dict(basis='Daily',amount=126)},expected=preview['snapshot'])
+        self.assertFalse(frappe.db.exists('PP Assignment',{'project':doc.project}))
+
+    def test_auto_selection_is_scoped_to_requested_role(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        existing=doc.staffing[0]
+        doc.append('staffing',dict(site=existing.site,designation='Driver',phase=existing.phase,start_date=existing.start_date,end_date=existing.end_date,workers_required=1,wage_rate=100,client_rate=200));doc.save()
+        role=next(r for r in doc.staffing if r.designation=='Driver')
+        result=op.auto_assign_preview(event,[role.name],{role.name:dict(basis='Daily',amount=100)})
+        self.assertFalse(result['assignments'])
+        self.assertEqual(result['shortages'][0]['designation'],'Driver')
+        self.assertEqual(result['shortages'][0]['missing'],1)
+
+
+    def test_customer_completion_requires_payment_terms_without_changing_native_draft_work(self):
+        from plus_point.daily_billing import periods
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        with self.assertRaises(frappe.ValidationError):op.save_project(event,dict(complete=1,require_payment_plan=1))
+        terms=frappe.get_doc('PP Contract Terms',doc.contract_terms)
+        terms.pp_daily_checkpoints=frappe.as_json(periods(terms.effective_start,terms.effective_end,'Completion'));terms.save()
+        self.assertEqual(op.save_project(event,dict(complete=1,require_payment_plan=1))['name'],event)
+        fixed=self.agreement('Fixed payment validation',fixed=True);terms=frappe.get_doc('PP Contract Terms',fixed['name'])
+        with self.assertRaises(frappe.ValidationError):op.require_payments(terms)
+        op.save_milestone(terms.name,dict(milestone_title='Pay after completion',due_date=terms.effective_end,amount=10000,status='Planned'))
+        op.require_payments(terms)
+
+
+    def test_ongoing_master_uses_dated_event_payment_terms(self):
+        from plus_point import agreement_events as ae
+        from plus_point.daily_billing import periods
+        master=op.save_agreement(dict(customer=self.f.customer.name,agreement_title='Ongoing service',scope='Services on request',effective_start=today(),validity_mode='Ongoing',resource_mode='Per event',billing_model='Daily',status='Active',require_payment_plan=1))
+        result=ae.create_event(agreement=master['name'],event_name='Dated occurrence',start_date=today(),end_date=add_days(today(),2))
+        plan=op.plan(result['name']);self.assertTrue(plan['event_payment_terms']);self.assertFalse(plan['payment_plan_defined'])
+        terms=frappe.get_doc('PP Contract Terms',result['contract_terms'])
+        with self.assertRaises(frappe.ValidationError):op.require_payments(terms)
+        ae.save_schedule(result['name'],periods(today(),add_days(today(),2),'Completion'))
+        terms.reload();op.require_payments(terms);self.assertTrue(op.plan(result['name'])['payment_plan_defined'])
+
+
+    def test_event_snapshot_blocker_routes_to_its_event_profile(self):
+        from plus_point import agreement_events as ae
+        master=self.agreement()
+        event=ae.create_event(agreement=master['name'],event_name='Linked delivery',start_date=today(),end_date=add_days(today(),2))
+        links=[dict(reference_doctype='PP Contract Terms',reference_docname=event['contract_terms'])]
+        with patch('frappe.model.delete_doc.get_linked_docs',return_value=links),patch('frappe.model.delete_doc.get_dynamic_linked_docs',return_value=[]):
+            review=actions.review('PP Contract Terms',master['name'])
+        self.assertEqual(review['dependency']['doctype'],'PP Event Plan')
+        self.assertEqual(review['dependency']['name'],event['name'])

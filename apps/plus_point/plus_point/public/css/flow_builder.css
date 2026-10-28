@@ -86,7 +86,6 @@
 .pp-flow-builder .pp-delivery-checklist .form-column{padding-block:0!important}
 .pp-flow-builder .pp-delivery-checklist .form-section{margin:0!important;padding-block:0!important}
 .pp-flow-builder .pp-delivery-checklist [data-fieldname=send_email]{margin:0!important;padding:0!important;min-height:0!important}
-.pp-flow-builder .pp-delivery-checklist .section-body:has([data-fieldname=recipient][style*="display: none"]){display:none!important}
 .pp-flow-builder .pp-delivery-checklist label{max-width:none!important;width:auto!important}
 .pp-flow-builder .pp-delivery-checklist .form-section.empty-section{display:none!important}
 

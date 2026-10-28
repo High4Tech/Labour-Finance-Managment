@@ -69,7 +69,12 @@ def review(doctype,name):
             reference=frappe.get_doc(link['reference_doctype'],link['reference_docname'])
             title=reference.get_title() if reference.has_permission('read') else link['reference_doctype']
             blocked=f"Used by {link['reference_doctype']}: {title}. Remove the unused linked record first; stock movements and posted financial records must be retained."
-            if reference.has_permission('read'):dependency=dict(doctype=reference.doctype,name=reference.name,title=title)
+            if reference.has_permission('read'):
+                dependency=dict(doctype=reference.doctype,name=reference.name,title=title)
+                if reference.doctype=='PP Contract Terms' and reference.get('event_basis'):
+                    event=frappe.db.get_value('PP Event Plan',{'contract_terms':reference.name},'name')
+                    if event and frappe.has_permission('PP Event Plan','read',doc=event):
+                        dependency.update(doctype='PP Event Plan',name=event,title=frappe.db.get_value('PP Event Plan',event,'event_name'))
     title=doc.get_title()
     if doctype=='PP Assignment':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.start_date} – {doc.end_date or 'ongoing'}"
     if doctype=='PP Work Entry':title=f"{frappe.db.get_value('Employee',doc.employee,'employee_name')} · {doc.work_date} · {doc.status}"

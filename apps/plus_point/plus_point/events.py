@@ -238,7 +238,7 @@ def plan_doc(name,write=False):
     return doc
 
 
-def crew_proposal(doc,lock=False):
+def crew_proposal(doc,lock=False,requirements=None,payments=None):
     people=frappe.get_list('Employee',filters={'company':doc.company,'status':'Active'},fields=['name','employee_name','date_of_joining','relieving_date','designation'],order_by='name',limit_page_length=0)
     if len(people)>2000:frappe.throw('Use a smaller active crew pool for this local planner')
     if doc.get('selected_crew'):
@@ -256,7 +256,7 @@ def crew_proposal(doc,lock=False):
     from plus_point.benefits import installed
     leaves=frappe.get_list('PP Worker Leave',filters={'employee':['in',[p.name for p in people] or ['']],'docstatus':1,'leave_date':['between',[doc.start_date,doc.end_date]]},fields=['employee','leave_date'],limit_page_length=0) if installed() else []
     proposal,shortages=[],[];existing_coverage=0
-    for phase in sorted(doc.staffing,key=lambda r:(str(r.start_date),str(r.end_date),r.site)):
+    for phase in sorted((r for r in doc.staffing if requirements is None or r.name in requirements),key=lambda r:(str(r.start_date),str(r.end_date),r.site)):
         first,last=getdate(phase.start_date),getdate(phase.end_date)
         eligible=[p for p in people if not any(r.employee==p.name and first<=getdate(r.leave_date)<=last for r in leaves) and (not phase.get('designation') or p.designation==phase.designation) and (not p.date_of_joining or getdate(p.date_of_joining)<=first) and (not p.relieving_date or getdate(p.relieving_date)>=last)]
         covered=[p for p in eligible if any(r.project==doc.project and r.site==phase.site and getdate(r.start_date)<=first and getdate(r.end_date or '9999-12-31')>=last for r in commitments[p.name])
@@ -268,8 +268,9 @@ def crew_proposal(doc,lock=False):
         for person in chosen:
             from plus_point.planning import pay_values
             worker=frappe.get_doc('Employee',person.name)
-            pay=pay_values(worker,worker.get('pp_salary_basis') or 'Daily',fallback=phase.get('wage_rate') or doc.wage_rate)
-            proposal.append(dict(employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),**pay,client_rate=phase.get('client_rate') or doc.client_rate))
+            setting=(payments or {}).get(phase.name,{})
+            pay=pay_values(worker,setting.get('basis') or worker.get('pp_salary_basis') or 'Daily',setting.get('amount'),fallback=phase.get('wage_rate') or doc.wage_rate)
+            proposal.append(dict(requirement=phase.name,employee=person.name,worker=person.employee_name,site=phase.site,start_date=str(first),end_date=str(last),designation=phase.get('designation'),**pay,client_rate=phase.get('client_rate') or doc.client_rate))
             busy[person.name].append((first,last))
     if len(proposal)>1000:frappe.throw('Split this event into smaller plans (maximum 1,000 generated assignments)')
     return dict(assignments=proposal,shortages=shortages,existing_coverage=existing_coverage)

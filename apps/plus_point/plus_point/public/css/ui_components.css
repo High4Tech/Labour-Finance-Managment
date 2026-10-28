@@ -157,7 +157,7 @@ body.pp-ui .page-form .frappe-control[data-fieldname=pp_record_scope]{width:220p
 body.pp-customer-app .page-form{--pp-control-height:40px}
 body.pp-customer-app.pp-ui .page-form .form-control{height:var(--pp-control-height);min-height:var(--pp-control-height);font-size:14px;line-height:20px;padding-block:9px}
 @media(max-width:767px){body.pp-customer-app .page-form{--pp-control-height:44px}}
-body.pp-ui .pp-ui-feedback{--pp-tone:var(--pp-info);display:flex!important;align-items:flex-start;gap:12px;width:100%;max-width:none;padding:14px 16px;background:color-mix(in srgb,var(--pp-tone) 5%,var(--pp-surface));border:1px solid color-mix(in srgb,var(--pp-tone) 28%,var(--pp-surface));border-left:3px solid var(--pp-tone);border-radius:7px;line-height:1.5;color:var(--text-color)}
+body.pp-ui .pp-ui-feedback{--pp-tone:var(--pp-info);display:flex!important;align-items:flex-start;gap:12px;width:100%;max-width:none;padding:14px 16px;background:color-mix(in srgb,var(--pp-tone) 5%,var(--pp-surface));border:1px solid color-mix(in srgb,var(--pp-tone) 28%,var(--pp-surface));border-left:3px solid var(--pp-tone);border-radius:0;line-height:1.5;color:var(--text-color)}
 body.pp-ui .pp-ui-feedback[data-tone=error]{--pp-tone:var(--pp-danger)}
 body.pp-ui .pp-ui-feedback[data-tone=success]{--pp-tone:var(--pp-positive)}
 body.pp-ui .pp-ui-feedback[data-tone=warning]{--pp-tone:var(--pp-warning)}
@@ -335,3 +335,34 @@ body.pp-ui .pp-disclosure-actions[hidden]{display:none!important}
 @media(max-width:767px){body.pp-ui .pp-disclosure-shell.has-actions{background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px}body.pp-ui .pp-disclosure-shell.has-actions>.pp-ui-disclosure{border:0}body.pp-ui .pp-disclosure-shell.has-actions>.pp-ui-disclosure>summary{padding-right:16px;min-height:48px}body.pp-ui .pp-disclosure-shell>.pp-disclosure-actions{position:static;max-width:none;padding:0 16px 12px;justify-content:flex-end}}
 
 body.pp-ui .pp-profile-highlight{margin-bottom:16px}
+
+/* Commercial workflow variants of the authoritative shared controls. */
+body.pp-customer-app .pp-blocking-link{color:var(--pp-accent);text-decoration:underline;text-underline-offset:3px;font-weight:500}
+body.pp-customer-app .pp-cc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px 16px;align-items:start}
+body.pp-customer-app .pp-delivery-grid{display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,2fr);gap:16px;align-items:start;margin-top:12px}
+body.pp-customer-app .pp-delivery-primary{display:grid;gap:12px;align-content:start}
+body.pp-customer-app .pp-delivery-primary>.btn{justify-self:start}
+body.pp-customer-app .pp-record-filter-host>.form-group{display:none}
+body.pp-customer-app .pp-record-filter-choices{display:flex;flex-direction:column;gap:12px;min-width:180px;border:0;margin:0;padding:0}
+body.pp-customer-app .pp-record-filter-choices legend{font-size:14px;font-weight:600;border:0;margin-bottom:12px}
+body.pp-customer-app .pp-record-filter-choices label{display:flex;align-items:center;gap:10px;margin:0;cursor:pointer}
+body.pp-customer-app .pp-native-filter-content{width:min(440px,calc(100vw - 32px));flex-wrap:wrap;align-items:start;gap:16px}
+body.pp-customer-app .pp-native-filter-content .pp-record-filter-host{width:100%;margin:0}
+body.pp-customer-app .pp-record-filter-host .pp-select{display:none}
+body.pp-customer-app .pp-auto-pay-dialog .pp-register-table{min-width:720px}
+body.pp-customer-app .pp-auto-pay-dialog .pp-auto-pay-field{min-width:150px}
+body.pp-customer-app .pp-auto-pay-dialog .pp-auto-pay-field .frappe-control{margin:0}
+body.pp-customer-app .pp-auto-pay-dialog .pp-auto-client{min-width:130px}
+body.pp-customer-app .pp-auto-role-actions{display:flex;gap:8px;align-items:center}
+body.pp-customer-app .pp-op-table-scroll:focus:not(:focus-visible){outline:none}
+body.pp-customer-app .pp-op-table-scroll:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+body.pp-ui .es-toast{border-radius:0}
+@media(max-width:767px){body.pp-customer-app .pp-delivery-grid{grid-template-columns:1fr}}
+
+body.pp-customer-app #alert-container .desk-alert{border-radius:0}
+
+body.pp-customer-app .pp-auto-pay-dialog .pp-auto-pay-field .control-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+body.pp-customer-app .pp-auto-pay-dialog .pp-register-table th:first-child{min-width:140px}
+body.pp-customer-app .pp-auto-pay-dialog .pp-register-table td:nth-child(2){min-width:160px}
+
+body.pp-customer-app .pp-delivery-grid[hidden]{display:none!important}

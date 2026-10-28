@@ -7,7 +7,7 @@
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,ready:()=>pp.render_event_timeline?.ppCalendarVersion===4},
-  flow_builder:{file:'flow_builder',css:true,ready:()=>typeof pp.flow_builder==='function'},
+  flow_builder:{file:'flow_builder',css:true,version:'20261029-commercial-flow-3',ready:()=>typeof pp.flow_builder==='function'},
   freddy_runtime:{file:'freddy-runtime',ready:()=>!!pp.freddy_runtime}
  };
  pp.load_feature=name=>{
@@ -22,8 +22,8 @@
     // A failed native load is cached too, so explicit retries get a fresh key.
     const attempt=attempts.get(name)||0,key=attempt?path.replace(/([^/]+)$/,'retry-'+attempt+'/$1'):path;
     await frappe.assets.load_asset(key,path+'?v='+feature.version+(attempt?'&retry='+attempt:''));
-   }else await frappe.require(path);
-   if(feature.css&&!document.querySelector('link[href*="/assets/plus_point/css/'+feature.file+'.css"]')){const css='/assets/plus_point/css/'+feature.file+'.css';if(feature.nonblocking)await frappe.assets.load_asset(css,css+'?v='+feature.version);else await frappe.require(css);}
+   }else if(feature.version){const attempt=attempts.get(name)||0,key=attempt?path.replace(/([^/]+)$/,'retry-'+attempt+'/$1'):path;await frappe.assets.load_asset(key,path+'?v='+feature.version+(attempt?'&retry='+attempt:''));}else await frappe.require(path);
+   if(feature.css&&!document.querySelector('link[href*="/assets/plus_point/css/'+feature.file+'.css"]')){const css='/assets/plus_point/css/'+feature.file+'.css';if(feature.nonblocking)await frappe.assets.load_asset(css,css+'?v='+feature.version);else if(feature.version)await frappe.assets.load_asset(css,css+'?v='+feature.version);else await frappe.require(css);}
    if(!feature.ready())throw Error(__('This tool could not load. Try opening it again.'));
   })().catch(error=>{pending.delete(name);attempts.set(name,(attempts.get(name)||0)+1);throw error;});pending.set(name,request);return request;
  };

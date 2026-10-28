@@ -289,6 +289,7 @@ def save_agreement(values,name=None):
                 frappe.delete_doc('PP Site',venue.name)
         for row in values.get('milestones',[]):
             if str(row.get('milestone_title') or '').strip():save_milestone(doc.name,row)
+        if values.get('require_payment_plan') and doc.status!='Draft':require_payments(doc)
         return dict(name=doc.name,project=project.name)
     except Exception:
         frappe.db.rollback(save_point='pp_agreement_save');raise
@@ -351,6 +352,8 @@ def plan(name):
     from plus_point.agreement_events import governing
     result.update(governing_agreement=governing(frappe.get_doc('PP Contract Terms',doc.contract_terms)),standalone=bool(result['agreement'].get('event_basis') and not result['agreement'].get('governing_agreement')))
     if result['governing_agreement']:result['governing_title']=frappe.db.get_value('PP Contract Terms',result['governing_agreement'],'agreement_title')
+    source=payment_source(terms_doc(doc.contract_terms))
+    result.update(payment_plan_defined=payment_defined(source),payment_terms_owner=source.name,event_payment_terms=source.name==doc.contract_terms and bool(result['agreement'].get('event_basis')))
     workers={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','employee_name','designation','image'],limit_page_length=0)}
     allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate','pp_pay_basis','pp_pay_amount'],order_by='start_date,employee',limit_page_length=0)
     used=set(frappe.get_list('PP Work Entry',filters={'project':doc.project},pluck='assignment',limit_page_length=0))
@@ -367,6 +370,25 @@ def plan(name):
         for row in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['name',label,'site','start_date','end_date'],limit_page_length=0):
             result['reservations'].append(dict(name=row.name,title=row[label],site=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(row.start_date),end=str(row.end_date)))
     return result
+
+
+def payment_source(terms):
+    parent=terms_doc(terms.governing_agreement) if terms.get('governing_agreement') else None
+    return parent if parent and parent.effective_end else terms
+
+
+def payment_defined(terms):
+    return bool(frappe.parse_json(terms.get('pp_daily_checkpoints') or '[]')) if terms.billing_model=='Daily' else bool(frappe.db.exists('PP Milestone',{'contract_terms':terms.name}))
+
+
+def require_payments(terms):
+    # Ongoing master agreements set dated payment schedules on each occurrence.
+    if not terms.effective_end:return
+    source=payment_source(terms)
+    defined=payment_defined(source)
+    if not defined:
+        frappe.local.response['field_errors']={'payment_schedule':'Define a payment milestone or choose Pay after completion.'}
+        frappe.throw('Define a payment milestone in the commercial terms before completing this record. You can choose Pay after completion.')
 
 
 @frappe.whitelist(methods=['POST'])
@@ -417,6 +439,7 @@ def save_project(name,values):
         terms.save()
     if frappe.utils.cint(data.get('complete')):
         from plus_point.events import complete_plan
+        if data.get('require_payment_plan'):require_payments(terms)
         complete_plan(doc)
     doc.save();return dict(name=doc.name)
 
@@ -449,15 +472,49 @@ def coverage(doc):
     return rows
 
 
+def auto_settings(doc,requirements,payments):
+    keys={r.name for r in doc.staffing}
+    if requirements is not None:
+        requirements=frappe.parse_json(requirements)
+        if not isinstance(requirements,list) or not requirements or len(requirements)>100 or any(not isinstance(k,str) or k not in keys for k in requirements) or len(set(requirements))!=len(requirements):
+            frappe.throw('Choose existing crew roles from this event only.')
+    payments=frappe.parse_json(payments) if payments is not None else {}
+    if not isinstance(payments,dict) or len(payments)>100 or any(k not in (requirements or keys) or not isinstance(v,dict) for k,v in payments.items()):frappe.throw('Review pay settings for the selected event roles.')
+    if payments and set(payments)!=set(requirements or keys):frappe.throw('Choose pay settings for every selected role.')
+    for value in payments.values():
+        if value.get('basis') not in ('Daily','Monthly'):frappe.throw('Choose Daily or Monthly pay for each role.')
+        if value['basis']=='Monthly' and value.get('amount') not in (None,''):frappe.throw('Monthly pay uses each worker’s profile salary.')
+        if value.get('amount') not in (None,''):
+            from plus_point.events import positive
+            positive(value['amount'],'Daily rate')
+    return requirements,payments
+
+
+def auto_snapshot(proposal):
+    return [dict((k,r.get(k)) for k in ('requirement','employee','start_date','end_date','pp_pay_basis','pp_pay_amount','client_rate')) for r in proposal['assignments']]
+
+
+@frappe.whitelist()
+def auto_assign_preview(name,requirements=None,payments=None):
+    from plus_point.events import plan_doc,crew_proposal
+    from plus_point.planning import cost_warning
+    doc=plan_doc(name);terms=terms_doc(doc.contract_terms)
+    requirements,payments=auto_settings(doc,requirements,payments)
+    doc.selected_crew='';proposal=crew_proposal(doc,requirements=requirements,payments=payments)
+    return dict(**proposal,snapshot=auto_snapshot(proposal),warning=cost_warning(terms,proposal['assignments']))
+
+
 @frappe.whitelist(methods=['POST'])
-def auto_assign(name,confirm_over_budget=0):
+def auto_assign(name,confirm_over_budget=0,requirements=None,payments=None,expected=None):
     from plus_point.events import plan_doc,crew_proposal,validate_plan
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
     from plus_point.budget import lock_project
     lock_project(doc.project)
     frappe.db.get_value('PP Event Plan',name,'name',for_update=True);doc.reload()
     # Select only matching available categories; existing allocations count as cover.
-    doc.selected_crew='';proposal=crew_proposal(doc,lock=True)
+    requirements,payments=auto_settings(doc,requirements,payments)
+    doc.selected_crew='';proposal=crew_proposal(doc,lock=True,requirements=requirements,payments=payments)
+    if expected is not None and frappe.parse_json(expected)!=auto_snapshot(proposal):frappe.throw('Crew availability or profile pay changed. Review the selection again before assigning.')
     frappe.db.savepoint('pp_auto_staff')
     try:
         from plus_point.planning import cost_warning

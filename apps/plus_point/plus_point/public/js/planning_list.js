@@ -24,6 +24,7 @@
   document.addEventListener('pp:planning-draft-saved',invalidate);document.addEventListener('pp:data-changed',invalidate);
   const filter=list.page.add_field({fieldtype:'Select',fieldname:'pp_planning_status',label:__('Record status'),options:[{label:__('All records'),value:''},{label:__('Draft'),value:'Draft'},{label:__('Created'),value:'Created'}],default:'',change:()=>{list.ppPlanningStatus=filter.get_value();list.start=0;list.last_args=null;list.refresh();}});
   filter.$input.attr('aria-label',__('Record status'));
+  const choices=document.createElement('fieldset');choices.className='pp-record-filter-choices';choices.innerHTML='<legend>'+frappe.utils.escape_html(__('Record status'))+'</legend>'+[['','All records'],['Draft','Draft'],['Created','Created']].map(([value,label])=>'<label><input type="radio" name="record-status-'+list.doctype.replaceAll(' ','-')+'" value="'+value+'" '+(!value?'checked':'')+'>'+frappe.utils.escape_html(__(label))+'</label>').join('');filter.$wrapper.get(0).append(choices);filter.$wrapper.addClass('pp-record-filter-host');choices.onchange=event=>filter.set_value(event.target.value);plus_point.ui.nativeFilters(list.page.wrapper.get(0));
   accessible();
   list.$result.on('click.pp-draft-source','.list-row-container a[data-name]',event=>{const doc=list.data.find(row=>row.name===event.currentTarget.dataset.name);if(!doc?.pp_draft_name)return;event.preventDefault();event.stopImmediatePropagation();frappe.set_route(route(list.doctype),{draft:doc.pp_draft_name});});
  }

@@ -4,13 +4,13 @@ import frappe
 from frappe.utils import getdate,today,add_days,add_months,cint
 from plus_point.finance import money
 
-FREQUENCIES=('Daily','Weekly','Biweekly','Monthly','Quarterly')
+FREQUENCIES=('Daily','Weekly','Biweekly','Monthly','Quarterly','Completion')
 
 
 @frappe.whitelist()
 def periods(start,end,frequency='Weekly',payment_days=0,schedule_id=None):
     """Derive bounded, contiguous billing periods from the agreement, not a second calendar."""
-    if frequency not in FREQUENCIES:frappe.throw('Choose daily, weekly, biweekly, monthly or quarterly payments.')
+    if frequency not in FREQUENCIES:frappe.throw('Choose daily, weekly, biweekly, monthly, quarterly or completion payments.')
     if not start or not end or getdate(start)>getdate(end):frappe.throw('Choose valid agreement dates before setting payments.')
     if schedule_id is not None and (not isinstance(schedule_id,str) or len(schedule_id)>80):frappe.throw('Choose a valid payment schedule reference.')
     if str(payment_days or 0) != str(cint(payment_days or 0)) or not 0<=cint(payment_days)<=90:frappe.throw('Payment terms must be a whole number from 0 to 90 days.')
@@ -18,9 +18,9 @@ def periods(start,end,frequency='Weekly',payment_days=0,schedule_id=None):
     while cursor<=last:
         if len(result)>=400:frappe.throw('Use a longer payment frequency. An agreement supports up to 400 billing periods.')
         index=len(result)+1
-        following=getdate(add_months(first,index*(3 if frequency=='Quarterly' else 1))) if frequency in ('Monthly','Quarterly') else getdate(add_days(first,index*({'Daily':1,'Weekly':7,'Biweekly':14}[frequency])))
+        following=getdate(add_days(last,1)) if frequency=='Completion' else getdate(add_months(first,index*(3 if frequency=='Quarterly' else 1))) if frequency in ('Monthly','Quarterly') else getdate(add_days(first,index*({'Daily':1,'Weekly':7,'Biweekly':14}[frequency])))
         through=min(last,getdate(add_days(following,-1)))
-        result.append(dict(id=key+':'+str(cursor),schedule_id=key,title=frequency+' payment '+str(index),frequency=frequency,
+        result.append(dict(id=key+':'+str(cursor),schedule_id=key,title='Pay after completion' if frequency=='Completion' else frequency+' payment '+str(index),frequency=frequency,
             from_date=str(cursor),to_date=str(through),due_date=str(add_days(through,cint(payment_days))),payment_days=cint(payment_days),automatic=1))
         cursor=following
     return result

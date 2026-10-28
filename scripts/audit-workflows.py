@@ -63,6 +63,8 @@ def main():
     if '--ui-stability' in sys.argv:names=['test_component_validation','test_event_start','test_drafts','test_planning_list']
     if '--planning' in sys.argv:names=['test_planning']
     if '--crew-regression' in sys.argv:names=['test_planning','test_hierarchy','test_events']
+    if '--commercial-final' in sys.argv:names=['test_workflow_repairs','test_agreement_architecture','test_hierarchy']
+    if '--commercial-flow' in sys.argv:names=['test_workflow_repairs','test_planning','test_events','test_component_validation','test_agreement_architecture','test_hierarchy']
     if '--workflow-repairs' in sys.argv:names=['test_workflow_repairs','test_drafts','test_planning','test_operations']
     if '--profiles' in sys.argv:names=['test_profiles_billing','test_drafts','test_hierarchy','test_component_validation']
     if '--planning-repairs' in sys.argv:names=['test_setup_imports','test_planning','test_attendance']
