@@ -267,15 +267,18 @@ def event_positions(employee,plan):
     if worker.company!=event.company:frappe.throw('Choose an event in this worker’s company.')
     from plus_point.operations import coverage
     days=coverage(event);positions=[]
+    bookings=frappe.get_list('PP Assignment',filters={'employee':worker.name,'start_date':['<=',event.end_date]},fields=['name','project','start_date','end_date'],limit_page_length=0)
+    bookings=[r for r in bookings if not r.end_date or getdate(r.end_date)>=max(getdate(today()),getdate(event.start_date))]
     for row in event.staffing:
         start=max(getdate(today()),getdate(row.start_date))
         if start>getdate(row.end_date) or row.designation!=worker.designation:continue
+        if any(getdate(r.start_date)<=getdate(row.end_date) and (not r.end_date or getdate(r.end_date)>=start) for r in bookings):continue
         free=min((d['missing'] for d in days if d['site']==row.site and d['designation']==row.designation and start<=getdate(d['date'])<=getdate(row.end_date)),default=0)
         if free>0:positions.append(dict(name=row.name,site=row.site,title=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(start),end=str(row.end_date),free=free))
     from plus_point.planning import worker_rates
     for position in positions:
         row=next(r for r in event.staffing if r.name==position['name']);position['client_rate']=row.client_rate or event.client_rate
-    return dict(positions=positions,sites=[dict(name=r.name,title=r.site_name) for r in frappe.get_list('PP Site',filters={'project':event.project,'is_active':1},fields=['name','site_name'],limit_page_length=0)],designation=worker.designation,default_wage=str(wage(worker)),pay_rates=worker_rates(worker),pay_basis=worker.get('pp_salary_basis') or 'Daily',fixed=frappe.db.get_value('PP Contract Terms',event.contract_terms,'billing_model')=='Fixed')
+    return dict(positions=positions,booked=bool(bookings),booking_message='This worker already has a booking during these event dates. Choose different dates or release the unused booking first.' if bookings else '',sites=[dict(name=r.name,title=r.site_name) for r in frappe.get_list('PP Site',filters={'project':event.project,'is_active':1},fields=['name','site_name'],limit_page_length=0)],designation=worker.designation,default_wage=str(wage(worker)),pay_rates=worker_rates(worker),pay_basis=worker.get('pp_salary_basis') or 'Daily',fixed=frappe.db.get_value('PP Contract Terms',event.contract_terms,'billing_model')=='Fixed')
 
 
 @frappe.whitelist(methods=['POST'])
@@ -291,6 +294,7 @@ def assign_event(employee,plan,position=None,extra=False,site=None,wage_rate=0,c
     if not worker.designation:frappe.throw('Set this worker’s category in Work details first.')
     if frappe.db.exists('PP Assignment',{'employee':worker.name,'project':event.project,'end_date':['>=',today()]}):frappe.throw('This worker is already assigned to this event.')
     options=event_positions(employee,plan)
+    if options['booked'] and not options['positions']:frappe.throw(options['booking_message'])
     choice=next((r for r in options['positions'] if r['name']==position),None)
     if not choice and not cint(extra):frappe.throw('No available position matches this worker’s category. Choose Add as extra crew to record a separate event requirement.')
     if choice:

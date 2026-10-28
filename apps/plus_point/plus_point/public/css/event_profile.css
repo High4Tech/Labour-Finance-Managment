@@ -13,8 +13,6 @@ html[data-theme=dark] .pp-event-overview{--event-ink:var(--pp-accent)}
 .pp-event-label{display:table;padding:3px 8px;border-radius:5px;background:var(--event-tint);color:var(--event-ink);font-size:14px;font-weight:600;margin-bottom:6px}
 .pp-event-header .pp-op-heading h2{font-size:27px;font-weight:650;line-height:1.25;letter-spacing:-.025em;margin:0 0 8px;overflow-wrap:anywhere;color:var(--text-color)}
 .pp-event-header .pp-reference{display:inline;font-size:14px;color:var(--text-color);margin-right:12px}
-.pp-event-header [data-event-status]{font-size:14px;background:var(--event-tint);color:var(--event-ink);border:0;margin:0;padding:3px 9px;border-radius:20px}
-.pp-event-header [data-event-status][data-state=Completed],.pp-event-header [data-event-status][data-state=Archived]{color:var(--text-muted);background:var(--control-bg)}
 .pp-event-context{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:5px 0 14px}
 .pp-event-context-item{display:flex;align-items:flex-start;gap:12px;min-width:0;color:var(--text-color)}
 .pp-event-context-item svg{flex:0 0 20px;width:20px;height:20px;margin-top:2px}
@@ -81,9 +79,6 @@ html[data-theme=dark] .pp-event-overview{--event-ink:var(--pp-accent)}
 .pp-event-header.pp-record-hero :is(.pp-op-back,.pp-op-heading h2,.pp-reference,.pp-event-context-item){color:#fff}
 .pp-event-header.pp-record-hero .pp-op-back{margin-bottom:8px}
 .pp-event-header.pp-record-hero .pp-event-label{color:#e7f3f0;background:rgba(255,255,255,.09)}
-.pp-event-header.pp-record-hero [data-event-status]{background:#07564c;color:#fff}
-.pp-event-header.pp-record-hero [data-event-status][data-state=Upcoming]{background:#574719;color:#fff}
-.pp-event-header.pp-record-hero [data-event-status]:is([data-state=Completed],[data-state=Archived]){background:#34494c;color:#fff}
 .pp-event-header.pp-record-hero .pp-event-context-item small{color:#d2e7e2}
 .pp-event-header.pp-record-hero .pp-event-context{grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.14);padding:16px 0 0;gap:18px}
 .pp-event-header.pp-record-hero .pp-event-menu>summary{background:rgba(255,255,255,.08);border-color:#759e97;color:#fff}

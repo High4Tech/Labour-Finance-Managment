@@ -31,20 +31,30 @@ def worker_rates(worker):
 
 
 @frappe.whitelist()
-def recent_sites(customer, exclude=None):
+def recent_sites(customer=None, exclude=None, customer_name=None):
     from plus_point.operations import company
-    business=company();linked('Customer',customer)
+    business=company()
+    # A typed existing client name is useful before the new agreement is saved.
+    # Resolve only a unique, exact match with a project in this company.
+    if not customer and customer_name:
+        clients=frappe.get_list('Customer',filters={'customer_name':str(customer_name).strip()},pluck='name',limit_page_length=0)
+        clients=frappe.get_list('Project',filters={'company':business.name,'customer':['in',clients or ['']],'pp_archived':0},pluck='customer',limit_page_length=0)
+        if len(set(clients))==1:customer=clients[0]
+    if not customer:return []
+    linked('Customer',customer)
     projects=frappe.get_list('Project',filters={'company':business.name,'customer':customer,'pp_archived':0},pluck='name',limit_page_length=0)
     terms=frappe.get_list('PP Contract Terms',filters={'project':['in',projects or ['']],'name':['!=',exclude or '']},
-        fields=['name','project','agreement_title','modified','pp_agreement_currency','currency'],order_by='modified desc,name desc',limit_page_length=40)
+        fields=['name','project','agreement_title','modified','pp_agreement_currency','currency','pp_transport_requirements'],order_by='modified desc,name desc',limit_page_length=40)
     result=[]
     for record in terms:
         linked('PP Contract Terms',record.name)
-        sites=frappe.get_list('PP Site',filters={'project':record.project,'is_active':1},fields=['name','site_name'],order_by='site_name,name',limit_page_length=12)
+        sites=frappe.get_list('PP Site',filters={'project':record.project,'is_active':1},fields=['name','site_name','city','address_line1'],order_by='modified desc,name desc',limit_page_length=12)
+        vehicles=frappe.parse_json(record.pp_transport_requirements or '[]')
         for site in sites:
-            if frappe.db.exists('PP Agreement Staffing',{'parent':record.name,'site':site.name}):
-                result.append(dict(agreement=record.name,title=record.agreement_title,site=site.name,site_name=site.site_name,
-                    modified=str(record.modified),currency=record.pp_agreement_currency or record.currency))
+            has_plan=bool(frappe.db.exists('PP Agreement Staffing',{'parent':record.name,'site':site.name}) or any(not r.get('site_name') or r.get('site_name')==site.site_name for r in vehicles))
+            result.append(dict(agreement=record.name,title=record.agreement_title,site=site.name,site_name=site.site_name,
+                customer=customer,city=site.city,address_line1=site.address_line1,has_plan=has_plan,
+                modified=str(record.modified),currency=record.pp_agreement_currency or record.currency))
             if len(result)>=20:return result
     return result
 
@@ -148,6 +158,25 @@ def save_pay(assignment, basis, amount, confirm_over_budget=0):
     worker=linked('Employee',doc.employee,doc.company if doc.get('company') else linked('Project',doc.project).company)
     doc.update(pay_values(worker,basis,amount));doc.pp_cost_override=cint(confirm_over_budget);doc.save()
     return dict(name=doc.name)
+
+
+@frappe.whitelist(methods=['POST'])
+def save_pay_batch(plan,assignments,basis,amount=None,confirm_over_budget=0):
+    from plus_point.events import plan_doc
+    from plus_point.budget import lock_project
+    from plus_point.record_actions import selected
+    event=plan_doc(plan,True);lock_project(event.project)
+    names=selected(assignments)
+    for name in names:
+        doc=linked('PP Assignment',name);doc.check_permission('write')
+        if doc.project!=event.project:frappe.throw('Choose workers in this event only.',frappe.PermissionError)
+        if frappe.db.exists('PP Work Entry',{'assignment':name}):frappe.throw('Recorded attendance locks this worker’s pay. Select unused bookings only.')
+    frappe.db.savepoint('pp_bulk_event_pay')
+    try:
+        for name in names:save_pay(name,basis,None if basis=='Monthly' else amount,confirm_over_budget)
+    except Exception:
+        frappe.db.rollback(save_point='pp_bulk_event_pay');raise
+    return dict(updated=names)
 
 
 def ensure_unused_event(event):

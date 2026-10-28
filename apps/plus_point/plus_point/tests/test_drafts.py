@@ -34,7 +34,7 @@ class DraftTests(unittest.TestCase):
         self.assertEqual(drafts.load(a['name'])['payload']['event_name'],'First')
 
     def test_drafts_cannot_cross_company_or_change_through_native_api(self):
-        a=drafts.save('Agreement',{},client_key='private')
+        a=drafts.save('Agreement',dict(details=dict(agreement_title='Private draft')),client_key='private')
         with patch('plus_point.operations.company',return_value=frappe._dict(name='Different company')):
             with self.assertRaises(frappe.PermissionError):drafts.load(a['name'])
         doc=frappe.get_doc(drafts.DT,a['name']);doc.title='Native bypass'

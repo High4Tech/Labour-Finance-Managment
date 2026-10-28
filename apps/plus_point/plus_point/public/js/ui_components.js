@@ -39,7 +39,7 @@
   },
   badge(label,tone='neutral'){return '<span class="pp-ui-badge" data-tone="'+esc(tone)+'">'+esc(__(label))+'</span>';},
   metric(symbol,value,label,note='',href=''){
-   const tag=href?'a':'div';return '<'+tag+(href?' href="'+esc(href)+'"':'')+' class="pp-ui-metric pp-agreement-metric"><span class="pp-agreement-metric-icon" aria-hidden="true">'+(pp.record_profile_ui?.icon(symbol)||icon(symbol))+'</span><div><span>'+esc(__(label))+'</span><strong>'+esc(value||'—')+'</strong>'+(note?'<small>'+esc(note)+'</small>':'')+'</div></'+tag+'>';
+   const tag=href?'a':'div';return '<'+tag+(href?' href="'+esc(href)+'"':'')+' class="pp-ui-metric pp-agreement-metric"><span class="pp-agreement-metric-icon" aria-hidden="true">'+(pp.record_profile_ui?.icon(symbol)||icon(symbol))+'</span><div><span>'+esc(__(label))+'</span><strong title="'+esc(value||'—')+'">'+esc(value||'—')+'</strong><small'+(!note?' aria-hidden="true" class="pp-metric-note-empty"':'')+'>'+esc(note||'\u00a0')+'</small></div></'+tag+'>';
   },
   feedback(node,{message,tone='info',rich=false}={}){
    if(!node)return;tone=tones[tone]||tone;const text=String(message??node.textContent).trim();
@@ -112,7 +112,7 @@
   }
   const text=hint?.textContent.trim();let help=root.querySelector('.pp-control-help');
   if(text&&!help){help=document.createElement('button');help.type='button';help.className='pp-control-help';help.setAttribute('aria-label',__('Help: {0}',[df.label]));help.append(asset('help-circle'));help.onclick=e=>{e.preventDefault();e.stopPropagation();pp.show_info?.(help,hint.textContent.trim());};if(input.tagName==='TEXTAREA')label?.append(help);else shell.append(help);}
-  if(help){help.hidden=!text;if(input.tagName!=='TEXTAREA')shell.classList.toggle('has-help',!!text);}
+  if(help){help.hidden=!text;const atLabel=input.tagName==='TEXTAREA'||['Int','Date','Link','Dynamic Link'].includes(df.fieldtype);if(atLabel&&label&&help.parentElement!==label)label.append(help);shell.classList.toggle('has-help',!!text&&!atLabel);}
   if(input.tagName==='TEXTAREA'){shell.classList.add('pp-textarea-shell');if(!input.ppFigmaSized){input.style.height=(df.pp_size==='sm'?108:df.pp_size==='lg'?180:128)+'px';input.ppFigmaSized=true;}if(!shell.querySelector('.pp-resize-handle'))shell.append(asset('resize','pp-resize-handle'));}
   else if(!shell.querySelector('.pp-control-error'))shell.append(asset('alert-circle','pp-control-error'));
  };

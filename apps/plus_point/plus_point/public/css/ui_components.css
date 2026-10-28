@@ -45,17 +45,19 @@ body.pp-customer-app .pp-action-dialog .pp-crew-capacity-note:empty{display:bloc
 body.pp-customer-app .pp-action-dialog .modal-body{scrollbar-gutter:stable;overflow-anchor:none}
 body.pp-customer-app .pp-op-staffing .pp-op-capacity,body.pp-customer-app .pp-builder-card-body>.pp-op-capacity{max-width:none;margin:0 0 16px;padding:0}
 body.pp-customer-app .pp-cc-rows{display:grid;gap:12px}
-body.pp-customer-app .pp-cc-row{display:flex;align-items:flex-start;gap:8px}
+body.pp-customer-app .pp-cc-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:start;gap:12px}
 body.pp-customer-app .pp-cc-row .frappe-control{flex:1;min-width:0;margin-bottom:0}
-body.pp-customer-app .pp-cc-row .btn{flex:none}
+body.pp-customer-app .pp-cc-row .btn{width:40px;min-height:40px;margin-top:28px;padding:8px;display:grid;place-items:center}
+body.pp-customer-app .pp-cc-rows>.btn{justify-self:start;margin-top:4px;width:auto}
 body.pp-ui .pp-stage-panel>.pp-op-section{padding:0;margin:0;border:0}
 body.pp-ui .pp-client-compact{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:0}
 body.pp-ui .pp-client-compact p{margin:0;overflow-wrap:anywhere}
 body.pp-ui .pp-ui-metric{display:flex;align-items:center;gap:12px;min-width:0;padding:16px;background:var(--pp-surface);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--pp-elevation);text-decoration:none}
 body.pp-ui .pp-ui-metric>.pp-agreement-metric-icon{display:grid!important;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:color-mix(in srgb,var(--pp-focus) 9%,var(--pp-surface));color:var(--pp-focus)}
 body.pp-ui .pp-ui-metric>.pp-agreement-metric-icon>svg{display:block;width:24px;height:24px;margin:0;flex:none}
-body.pp-ui .pp-ui-metric>div{min-width:0;display:grid;gap:3px}
-body.pp-ui .pp-ui-metric strong{font-size:15px;line-height:1.5;overflow-wrap:anywhere;color:var(--text-color)}
+body.pp-ui .pp-ui-metric>div{min-width:0;display:grid;grid-template-rows:21px minmax(44px,auto) 21px;gap:4px;flex:1}
+body.pp-ui .pp-ui-metric strong{font-size:16px;line-height:22px;overflow-wrap:anywhere;color:var(--text-color);align-self:start;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+body.pp-ui .pp-ui-metric .pp-metric-note-empty{visibility:hidden}
 body.pp-ui .pp-ui-metric :is(small,div>span){font-size:14px;line-height:1.5;color:var(--text-muted)}
 /* Figma library: Input field 3531:403016, Select 7953:158048,
    Textarea 1238:358, Checkbox/Radio 1100:328/1424. Teal is the brand variant.
@@ -253,11 +255,50 @@ body.pp-customer-app .pp-native-filter-tools:not([open])>.pp-native-filter-conte
 @keyframes pp-freddy-loading{50%{transform:translateY(-7px) rotate(3deg)}}
 @media(prefers-reduced-motion:reduce){.splash>img{animation:none}}
 
-/* Picker commands sit above results; the native list keeps its selection semantics. */
-body.pp-customer-app .pp-search-picker .pp-picker-tools{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;z-index:1061;background:var(--pp-surface);border:1px solid var(--border-color);border-bottom:0;border-radius:8px 8px 0 0}
-body.pp-customer-app .pp-search-picker.pp-picker-open.pp-picker-has-tools .pp-picker-tools{display:flex}
-body.pp-customer-app .pp-search-picker.pp-picker-open.pp-picker-has-tools .awesomplete>ul{margin-top:calc(var(--pp-picker-tools-height,48px) + 4px);border-radius:0 0 8px 8px}
-body.pp-customer-app .pp-picker-tools .btn{flex:1;white-space:normal;min-height:40px}
+/* One anchored panel retains the native list and keeps paging after its results. */
+body.pp-customer-app .pp-picker-panel{display:none;position:absolute;inset:calc(100% + 4px) 0 auto;z-index:1061;background:var(--pp-field-bg);border:1px solid var(--border-color);border-radius:8px;box-shadow:var(--pp-elevation);overflow:hidden}
+body.pp-customer-app .pp-search-picker.pp-picker-open .pp-picker-panel{display:block}
+body.pp-customer-app .pp-picker-panel:has(ul[hidden]):not(:has(.pp-picker-create)){display:none}
+body.pp-customer-app .pp-picker-panel .pp-picker-tools{position:static;margin:0;padding:4px;display:flex}
+body.pp-customer-app .pp-picker-panel .pp-picker-tools:empty{display:none}
+body.pp-customer-app .pp-picker-panel>ul{position:static!important;max-height:280px;overflow-y:auto;margin:0!important;padding:6px;border:0;border-radius:0;box-shadow:none;background:var(--pp-field-bg)}
+body.pp-customer-app .pp-picker-panel>ul>li{font-size:16px;line-height:24px;padding:8px;min-height:40px;border-radius:6px;color:var(--pp-field-text)}
+body.pp-customer-app .pp-picker-panel>ul>li[aria-selected=true]{background:var(--pp-field-hover);color:var(--pp-field-text)}
+body.pp-customer-app .pp-picker-paging{padding:8px;border-top:1px solid var(--border-color)}
+body.pp-customer-app .pp-picker-paging:has(button[hidden]){display:none}
+body.pp-customer-app :is(.pp-picker-tools,.pp-picker-paging) .btn{flex:1;width:100%;white-space:normal;min-height:40px}
+
+/* Legacy native alerts are toasts too; inline section feedback stays full width. */
+body.pp-customer-app #alert-container{left:auto;right:16px;top:72px;bottom:auto;width:min(420px,calc(100vw - 32px));max-width:calc(100vw - 32px);z-index:1100}
+body.pp-customer-app #alert-container .alert-message{width:100%;max-width:100%;margin:0 0 8px;padding:12px 40px 12px 16px;border-radius:8px;box-shadow:var(--pp-elevation);overflow-wrap:anywhere}
+body.pp-customer-app #alert-container .pp-ui-feedback{padding:0;background:none;border:0}
+body.pp-customer-app .pp-info-portal.pp-ui-feedback{width:max-content;max-width:min(400px,calc(100vw - 24px));padding:12px 16px}
+
+/* One status-pill contract for native lists and composed record screens. */
+body.pp-customer-app :is(.pp-ui-badge,.pp-op-badge,.indicator-pill){display:inline-flex;align-items:center;gap:6px;padding:4px 10px;min-height:28px;border:0;border-radius:999px;font-size:13px;font-weight:600;line-height:20px;white-space:nowrap}
+body.pp-customer-app :is(.pp-ui-badge,.pp-op-badge,.indicator-pill)::before{display:none}
+body.pp-customer-app :is(.pp-ui-badge,.pp-op-badge){color:var(--text-muted);background:var(--control-bg)}
+body.pp-customer-app :is(.pp-ui-badge[data-tone=success],.pp-op-badge.is-good,.pp-op-badge[data-status=Active],.pp-ui-badge[data-status=Active]){color:var(--pp-status-success,#08634c);background:color-mix(in srgb,var(--pp-status-success,#08634c) 12%,var(--pp-surface))}
+body.pp-customer-app :is(.pp-ui-badge[data-tone=warning],.pp-op-badge.is-warning,.pp-op-badge.is-extra){color:var(--pp-status-warning,#976318);background:color-mix(in srgb,var(--pp-status-warning,#976318) 14%,var(--pp-surface))}
+body.pp-customer-app .pp-ui-badge[data-tone=error]{color:var(--pp-danger);background:color-mix(in srgb,var(--pp-danger) 10%,var(--pp-surface))}
+body.pp-customer-app .pp-ui-badge[data-tone=info]{color:var(--pp-info);background:color-mix(in srgb,var(--pp-info) 10%,var(--pp-surface))}
+body.pp-customer-app .pp-list-actions{min-width:88px;gap:8px;flex-direction:row;align-items:center}
+body.pp-customer-app .pp-list-action{display:inline-flex;justify-content:center;align-items:center;width:36px;min-width:36px;height:36px;padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--pp-surface);font-size:14px;color:var(--pp-focus)}
+body.pp-customer-app .pp-list-action:hover{background:var(--control-bg)}
+body.pp-customer-app .pp-list-action:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+body.pp-customer-app .pp-list-action svg{width:20px;height:20px;flex:none}
+body.pp-customer-app .pp-worker-list-tabs{display:flex;align-items:center;gap:20px;margin:0 0 16px;padding:0 4px;border-bottom:1px solid var(--border-color)}
+body.pp-customer-app .pp-worker-list-tabs a{display:flex;align-items:center;min-height:44px;padding:8px 0;color:var(--text-muted);border-bottom:2px solid transparent;text-decoration:none;font-size:16px}
+body.pp-customer-app .pp-worker-list-tabs a[aria-current=page]{color:var(--pp-focus);border-bottom-color:var(--pp-focus);font-weight:600}
+body.pp-customer-app .pp-worker-list-tabs a:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+body.pp-customer-app .pp-crew-table-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+body.pp-customer-app .pp-crew-table-actions>[role=status]{margin-right:auto}
+body.pp-customer-app .pp-crew-table-person{display:flex;align-items:center;gap:12px}
+body.pp-customer-app .pp-event-worker-table-dialog .pp-register-table{min-width:680px}
+body.pp-customer-app .pp-event-worker-table-dialog .pp-register-table td:first-child{width:48px}
+body.pp-customer-app .pp-icon-action{display:inline-grid;place-items:center;width:40px;min-height:40px;padding:8px}
+body.pp-customer-app .pp-number-shell>.pp-control-error,body.pp-customer-app .pp-search-picker .pp-control-error{right:42px}
+body.pp-customer-app.pp-ui .pp-figma-field.has-error :is(.pp-number-shell,.awesomplete.pp-control-shell)>input.form-control{padding-right:68px}
 
 /* Worker native fields stay hidden from their first load; the product profile paints when ready. */
 .pp-worker-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}

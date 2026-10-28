@@ -1,5 +1,5 @@
 """Read-only dashboard periods, scope, snapshots and conversion on native business fixtures."""
-import unittest
+import unittest,uuid
 from decimal import Decimal
 from unittest.mock import patch
 import frappe
@@ -27,7 +27,9 @@ class DashboardAnalyticsTests(unittest.TestCase):
         self.assertLess(period_dates('last_month')[1],period_dates('month')[0])
     def test_assignment_distribution_does_not_claim_unique_workers(self):
         site=insert('PP Site',site_name='Second dashboard venue',project=self.f.project.name)
-        insert('PP Assignment',employee=self.f.employee.name,site=site.name,project=self.f.project.name,contract_terms=self.f.terms.name,start_date=today(),wage_rate=2000,client_rate=3000)
+        # Legacy overlaps remain reportable; new overlapping bookings are refused.
+        legacy=frappe.get_doc(dict(doctype='PP Assignment',employee=self.f.employee.name,site=site.name,project=self.f.project.name,contract_terms=self.f.terms.name,start_date=today(),wage_rate=2000,client_rate=3000))
+        legacy.name='legacy-dashboard-'+uuid.uuid4().hex[:10];legacy.db_insert()
         data=snapshot(self.f.company.name,[self.f.project.name],[self.f.employee.name]);self.assertEqual(data['assignment_total'],2);self.assertEqual(sum(r['value'] for r in data['assignments']),2)
     def test_outstanding_wages_have_no_invented_due_date(self):
         self.work();data=snapshot(self.f.company.name,[self.f.project.name],[self.f.employee.name])

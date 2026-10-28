@@ -8,6 +8,20 @@ from frappe.utils import get_datetime, now_datetime, getdate, today
 DT='PP Planning Draft'
 
 
+def has_content(kind,data):
+    """Ignore setup defaults; a partial draft needs an actual business detail."""
+    import re
+    def text(value):return bool(re.sub(r'<[^>]*>|&nbsp;',' ',str(value or '')).strip())
+    if data.get('record') or data.get('contract_terms'):return True
+    if kind=='Event':return any(text(data.get(k)) for k in ('event_name','notes','customer'))
+    details=data.get('details') or {}
+    if any(text(details.get(k)) for k in ('agreement_title','scope')):return True
+    if any(data.get(k) for k in ('customer','staffing','sites','transport','milestones','daily_checkpoints','rate_card')):return True
+    if any(text(v) for v in data.get('conditions') or []):return True
+    client=data.get('client') or {}
+    return data.get('client_mode')=='Add new client' and any(text(client.get(k)) for k in ('customer_name','contact_name','email','phone','city','address_line1','address_line2','state','postal_code'))
+
+
 def install():
     frappe.reload_doc('plus_point','doctype','pp_planning_draft')
     from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
@@ -93,6 +107,7 @@ def save(kind,payload,name=None,client_key=None,revision=None):
     from plus_point.operations import company
     business=company();data=frappe.parse_json(payload)
     if kind not in ('Agreement','Event') or not isinstance(data,dict):frappe.throw('Choose an agreement or event draft.')
+    if not name and not has_content(kind,data):return dict(name=None,revision=0,status='Empty',skipped=True)
     if data.get('record'):
         if kind=='Event':
             from plus_point.events import plan_doc

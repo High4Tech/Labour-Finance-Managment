@@ -12,6 +12,45 @@ KINDS={'vehicle':'PP Vehicle Booking','equipment':'PP Equipment Booking'}
 
 
 @frappe.whitelist()
+def equipment_profile(name):
+    business=company();item=linked('Item',name)
+    if not item.is_stock_item:frappe.throw('Open service and accounting items in the advanced Item view.')
+    warehouses=frappe.get_list('Warehouse',filters={'company':business.name,'is_group':0,'disabled':0},fields=['name','warehouse_name'],limit_page_length=200)
+    names=[w.name for w in warehouses]
+    quantities={r.warehouse:Decimal(str(r.actual_qty)) for r in frappe.get_all('Bin',filters={'warehouse':['in',names or ['']],'item_code':name},fields=['warehouse','actual_qty'])}
+    reserved=defaultdict(Decimal)
+    for booking in frappe.get_list('PP Equipment Booking',filters={'company':business.name,'item':name,'warehouse':['in',names or ['']],'status':'Planned','start_date':['<=',today()],'end_date':['>=',today()]},fields=['warehouse','quantity'],limit_page_length=0):reserved[booking.warehouse]+=Decimal(str(booking.quantity))
+    stock=[]
+    for warehouse in warehouses:
+        actual=quantities.get(warehouse.name,Decimal(0));held=reserved[warehouse.name]
+        values=dict(on_hand=str(actual),reserved=str(held),available=str(actual-held))
+        if Decimal(str(values['on_hand'])) or Decimal(str(values['reserved'])):
+            stock.append(dict(warehouse=warehouse.name,title=warehouse.warehouse_name,**values))
+    bookings=booking_rows(item=item.name)
+    price=frappe.db.get_value('Item Price',{'item_code':item.name,'price_list':'Event daily hire '+business.default_currency,'currency':business.default_currency,'selling':1,'uom':item.stock_uom},'price_list_rate')
+    return dict(name=item.name,title=item.item_name,reference=item.get('pp_reference'),uom=item.stock_uom,disabled=item.disabled,description=item.description,stock=stock,bookings=bookings,currency=business.default_currency,daily_rate=str(price or 0))
+
+
+@frappe.whitelist(methods=['POST'])
+@atomic
+def save_equipment_rate(name,amount):
+    """A native Item Price default, separate from stock valuation and invoices."""
+    business=company();item=linked('Item',name);item.check_permission('write')
+    if not item.is_stock_item:frappe.throw('Choose reusable event equipment.')
+    from plus_point.finance import money
+    amount=money(amount)
+    if amount<0:frappe.throw('Enter a daily hire rate of zero or more.')
+    frappe.db.get_value('Item',name,'name',for_update=True)
+    price_list='Event daily hire '+business.default_currency
+    if not frappe.db.exists('Price List',price_list):
+        frappe.get_doc(dict(doctype='Price List',price_list_name=price_list,selling=1,buying=0,enabled=1,currency=business.default_currency)).insert()
+    key=frappe.db.get_value('Item Price',{'item_code':name,'price_list':'Event daily hire '+business.default_currency,'currency':business.default_currency,'selling':1,'uom':item.stock_uom},'name')
+    price=frappe.get_doc('Item Price',key) if key else frappe.new_doc('Item Price')
+    price.update(dict(item_code=name,price_list=price_list,currency=business.default_currency,uom=item.stock_uom,price_list_rate=float(amount)))
+    price.save();return dict(name=price.name,daily_rate=str(amount))
+
+
+@frappe.whitelist()
 def assignable_events():
     business=company()
     projects=frappe.get_list('Project',filters={'company':business.name,'status':'Open','pp_archived':0},pluck='name',limit_page_length=0)
@@ -73,12 +112,12 @@ def project_doc(project,write=False):
     business=company();doc=linked('Project',project,business.name)
     doc.check_permission('write' if write else 'read');return doc
 
-def booking_rows(project=None,vehicle=None,warehouse=None):
+def booking_rows(project=None,vehicle=None,warehouse=None,item=None):
     result=[];business=company().name
     for kind,doctype in KINDS.items():
-        if vehicle and kind!='vehicle' or warehouse and kind!='equipment':continue
+        if vehicle and kind!='vehicle' or (warehouse or item) and kind!='equipment':continue
         filters={'company':business}
-        for key,value in [('project',project),('vehicle',vehicle),('warehouse',warehouse)]:
+        for key,value in [('project',project),('vehicle',vehicle),('warehouse',warehouse),('item',item)]:
             if value:filters[key]=value
         fields=['name','project','site','start_date','end_date','status','notes']+(['vehicle','purpose','crew_count','cargo_load','cargo_uom'] if kind=='vehicle' else ['item','warehouse','quantity','stock_uom'])
         result.extend(dict(row,kind=kind) for row in frappe.get_list(doctype,filters=filters,fields=fields,order_by='start_date desc',limit_page_length=200))

@@ -95,10 +95,9 @@ class OperationsTests(unittest.TestCase):
     def test_full_day_across_sites_rejected(self):
         self.work()
         site = insert('PP Site', site_name='Second QA site', project=self.f.project.name)
-        assignment = insert('PP Assignment', employee=self.f.employee.name, site=site.name,
-            project=self.f.project.name, contract_terms=self.f.terms.name, start_date=today(), wage_rate=2000, client_rate=3000)
         with self.assertRaises(frappe.ValidationError):
-            self.work(0.5, assignment=assignment)
+            insert('PP Assignment', employee=self.f.employee.name, site=site.name,
+                project=self.f.project.name, contract_terms=self.f.terms.name, start_date=today(), wage_rate=2000, client_rate=3000)
 
     def test_snapshot_cannot_be_changed(self):
         work = insert('PP Work Entry', assignment=self.f.assignment.name, work_date=today(), units=1)
@@ -230,8 +229,9 @@ class OperationsTests(unittest.TestCase):
 
     def test_deployment_report_deduplicates_workers_without_claiming_attendance(self):
         site = insert('PP Site', site_name='Second statement QA site', project=self.f.project.name)
-        insert('PP Assignment', employee=self.f.employee.name, site=site.name, project=self.f.project.name,
-            contract_terms=self.f.terms.name, start_date=today(), wage_rate=2000, client_rate=3000)
+        # Reports still handle historical overlaps imported before booking protection.
+        legacy=frappe.get_doc(dict(doctype='PP Assignment',employee=self.f.employee.name,site=site.name,project=self.f.project.name,contract_terms=self.f.terms.name,start_date=today(),wage_rate=2000,client_rate=3000))
+        legacy.name='legacy-report-'+uuid.uuid4().hex[:10];legacy.db_insert()
         report = project_finances(dict(company=self.f.company.name, view='Deployment overview'))
         self.assertEqual(len(report[1]), 1)
         self.assertEqual(report[1][0]['active_sites'], 2)

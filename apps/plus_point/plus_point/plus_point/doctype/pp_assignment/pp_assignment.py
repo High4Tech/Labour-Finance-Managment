@@ -62,12 +62,15 @@ class PPAssignment(Document):
             frappe.throw("Daily-billing assignments require a client rate")
         if terms.billing_model == "Fixed" and as_decimal(self.client_rate or 0) != 0:
             frappe.throw("Fixed contracts must use zero worker-day client rates")
-        overlaps = frappe.db.sql('''SELECT name FROM `tabPP Assignment`
-            WHERE employee=%s AND site=%s AND name!=%s
+        overlaps = frappe.db.sql('''SELECT name,project,start_date,end_date FROM `tabPP Assignment`
+            WHERE employee=%s AND name!=%s
               AND start_date<=%s AND (end_date IS NULL OR end_date>=%s)
-            LIMIT 1''', (self.employee, self.site, self.name or '',
-                                    self.end_date or '9999-12-31', self.start_date))
+            ORDER BY start_date,name LIMIT 1''', (self.employee, self.name or '',
+                                    self.end_date or '9999-12-31', self.start_date),as_dict=True)
         if overlaps:
-            frappe.throw('This worker already has an overlapping assignment at this site. Close it before adding a new dated rate or assignment.')
+            booking=overlaps[0]
+            title=frappe.utils.escape_html(frappe.db.get_value('Project',booking.project,'project_name') or 'another event')
+            frappe.local.response['field_errors']={'employee':'This worker is already booked for these dates.'}
+            frappe.throw(f'{frappe.utils.escape_html(employee.employee_name)} is already booked for {title} from {booking.start_date} through {booking.end_date or "an open end date"}. Choose another worker or dates outside that booking.')
         from plus_point.planning import validate_assignment
         validate_assignment(self,terms)

@@ -353,8 +353,9 @@ def plan(name):
     if result['governing_agreement']:result['governing_title']=frappe.db.get_value('PP Contract Terms',result['governing_agreement'],'agreement_title')
     workers={r.name:r for r in frappe.get_list('Employee',filters={'company':doc.company},fields=['name','employee_name','designation','image'],limit_page_length=0)}
     allocations=frappe.get_list('PP Assignment',filters={'project':doc.project},fields=['name','employee','site','start_date','end_date','wage_rate','client_rate','pp_pay_basis','pp_pay_amount'],order_by='start_date,employee',limit_page_length=0)
+    used=set(frappe.get_list('PP Work Entry',filters={'project':doc.project},pluck='assignment',limit_page_length=0))
     for row in allocations:
-        person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '')
+        person=workers.get(row.employee);row.update(worker=person.employee_name if person else row.employee,designation=person.designation if person else '',image=person.image if person else '',has_attendance=row.name in used)
     project=linked('Project',doc.project)
     result['allocations']=allocations;result['coverage']=coverage(doc)
     result['files']=frappe.get_list('File',filters={'attached_to_doctype':'PP Event Plan','attached_to_name':doc.name},fields=['name','file_name','file_url'],limit_page_length=100)
@@ -798,12 +799,28 @@ def set_photo(employee,file_url=None):
 @frappe.whitelist()
 def worker_states():
     business=company();day=getdate(today());result={}
-    projects=frappe.get_list('Project',filters={'company':business.name,'status':'Open'},pluck='name',limit_page_length=0)
+    projects=frappe.get_list('Project',filters={'company':business.name},pluck='name',limit_page_length=0)
     for row in frappe.get_list('PP Assignment',filters={'project':['in',projects or ['']]},fields=['employee','start_date','end_date'],limit_page_length=0):
         if row.end_date and getdate(row.end_date)<day:continue
         state='Assigned' if getdate(row.start_date)<=day else 'Scheduled'
         if result.get(row.employee)!='Assigned':result[row.employee]=state
     return result
+
+
+@frappe.whitelist()
+def worker_filter(state):
+    business=company()
+    if state not in ('Available','Assigned','Scheduled','Inactive'):frappe.throw('Choose a worker availability status.')
+    workers=frappe.get_list('Employee',filters={'company':business.name},fields=['name','status'],limit_page_length=0)
+    # Booking dates, including future bookings, drive availability; not a hidden
+    # default employee filter or the list's current page of results.
+    projects=frappe.get_list('Project',filters={'company':business.name},pluck='name',limit_page_length=0)
+    day=getdate(today());states={}
+    for row in frappe.get_list('PP Assignment',filters={'project':['in',projects or ['']]},fields=['employee','start_date','end_date'],limit_page_length=0):
+        if row.end_date and getdate(row.end_date)<day:continue
+        value='Assigned' if getdate(row.start_date)<=day else 'Scheduled'
+        if states.get(row.employee)!='Assigned':states[row.employee]=value
+    return [w.name for w in workers if ('Inactive' if w.status!='Active' else states.get(w.name,'Available'))==state]
 
 
 @frappe.whitelist(methods=['POST'])

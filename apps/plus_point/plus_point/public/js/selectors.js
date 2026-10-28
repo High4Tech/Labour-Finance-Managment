@@ -26,10 +26,10 @@
    input.get(0).addEventListener('keyup',event=>{if(event.key==='Enter')selectingWithEnter=false;},true);
 
    const status=$('<span class="pp-picker-status" role="status"></span>').appendTo(control.$wrapper);
-   const picker=control.$input_area.find('.awesomplete').first(),tools=$('<div class="pp-picker-tools"></div>').appendTo(picker),more=$('<button type="button" class="btn btn-default btn-sm pp-picker-more" hidden>'+__('Load more results')+'</button>').appendTo(tools);
+   const picker=control.$input_area.find('.awesomplete').first(),panel=$('<div class="pp-picker-panel"></div>').appendTo(picker),tools=$('<div class="pp-picker-tools"></div>').appendTo(panel),more=$('<button type="button" class="btn btn-default btn-sm pp-picker-more" hidden>'+__('Load more results')+'</button>').appendTo($('<div class="pp-picker-paging"></div>').appendTo(panel));panel.get(0).insertBefore(awesomplete.ul,panel.find('.pp-picker-paging').get(0));
    const toggle=$('<button type="button" class="pp-picker-toggle" tabindex="-1"><img src="/assets/plus_point/images/figma/chevron-down.svg" alt="" aria-hidden="true"></button>').attr('aria-label',__('Choose {0}',[__(control.df.label||control.df.options)])).appendTo(control.$input_area.find('.link-field'));
    let controller,found=new Map(),cursor=0,currentTerm='',hasMore=false,skipFocus=false;
-   const sizeTools=()=>{const active=tools.find('button:not([hidden])').length>0;control.$wrapper.toggleClass('pp-picker-has-tools',active);if(active)picker.get(0).style.setProperty('--pp-picker-tools-height',tools.get(0).offsetHeight+'px');};
+   const sizeTools=()=>{const active=tools.find('button:not([hidden])').length>0;control.$wrapper.toggleClass('pp-picker-has-tools',active);};
    const search=async(term,append=false)=>{
     if(control.df.read_only||control.df.hidden)return;controller?.abort();controller=new AbortController();const own=++sequence,args=control.get_search_args(term);if(!args)return;
     if(!append){found=new Map();cursor=0;currentTerm=term;}status.text(__('Loading choices…'));more.prop('disabled',true);
@@ -39,7 +39,7 @@
      for(const row of result.rows)found.set(row.value,row);hasMore=!!result.more;cursor=result.next_start;
      const rows=control.merge_duplicates([...found.values()]).sort((a,b)=>String(a.label||a.value).localeCompare(String(b.label||b.value),undefined,{sensitivity:'base',numeric:true})||String(a.value).localeCompare(String(b.value)));
      rows.forEach(row=>frappe.utils.add_link_title(control.get_options(),row.value,row.label||row.value));awesomplete.list=rows;awesomplete.evaluate();if(rows.length)awesomplete.open();
-     more.prop('hidden',!hasMore);sizeTools();status.text(rows.length?__('{0} choices shown',[rows.length])+(hasMore?' · '+__('Search to narrow results, or load more.'):''):__('No matches. Try another search.'));
+     more.prop('hidden',true);sizeTools();status.text(rows.length?__('{0} choices shown',[rows.length])+(hasMore?' · '+__('Search to narrow results, or load more.'):''):__('No matches. Try another search.'));
     }catch(error){if(error.name!=='AbortError'&&own===sequence)status.text(__('Search could not load. Try again.'));}finally{if(own===sequence)more.prop('disabled',false);}
    };
    control.ppDisposePicker=()=>{sequence++;controller?.abort();control._debounced_input_handler?.cancel();};
@@ -47,8 +47,11 @@
    control._debounced_input_handler=frappe.utils.debounce(()=>search(input.val()),180);
    input.on('input.pp-picker',()=>{sequence++;controller?.abort();awesomplete.close();control._debounced_input_handler();});
    input.on('focus.pp-picker',()=>{if(control.df.read_only)return;control.$wrapper.addClass('pp-picker-open');sizeTools();if(skipFocus){skipFocus=false;return;}input.get(0).select();search('');});
-   input.on('blur.pp-picker',()=>{sequence++;controller?.abort();control._debounced_input_handler?.cancel();status.text('');requestAnimationFrame(()=>{if(!tools.get(0).contains(document.activeElement)){control.$wrapper.removeClass('pp-picker-open');more.prop('hidden',true);}});});
+   input.on('blur.pp-picker',()=>{sequence++;controller?.abort();control._debounced_input_handler?.cancel();status.text('');requestAnimationFrame(()=>{if(!panel.get(0).contains(document.activeElement)){control.$wrapper.removeClass('pp-picker-open');more.prop('hidden',true);}else{awesomplete.open();control.$wrapper.addClass('pp-picker-open');}});});
+   input.get(0).addEventListener('keydown',event=>{if(event.key==='Tab'&&!event.shiftKey&&!more.prop('hidden')&&awesomplete.opened){event.preventDefault();more.get(0).focus();}},true);
+   panel.on('focusout',()=>requestAnimationFrame(()=>{if(!panel.get(0).contains(document.activeElement)&&!input.is(':focus')){awesomplete.close();control.$wrapper.removeClass('pp-picker-open');}}));
    toggle.on('mousedown',event=>event.preventDefault()).on('click',()=>{if(input.is(':focus')){if(awesomplete.opened)awesomplete.close();else search(input.val());}else input.trigger('focus');});
+   $(awesomplete.ul).on('scroll.pp-paging',()=>{const list=awesomplete.ul;more.prop('hidden',!(hasMore&&list.scrollTop+list.clientHeight>=list.scrollHeight-8));});
    more.on('mousedown',event=>event.preventDefault()).on('click',()=>{if(!input.is(':focus')){skipFocus=true;input.get(0).focus();}search(currentTerm,true);});
    const creatable={Customer:['clients','Client'],Item:['inventory_items','Inventory item'],Warehouse:['warehouses','Warehouse'],Vehicle:['vehicles','Vehicle']},creation=creatable[control.df.options];
    if(creation&&(!originalOnlySelect||control.df.pp_allow_create)&&(control.df.options!=='Item'||control.get_search_args('').filters?.is_stock_item===1)&&frappe.model.can_create(control.df.options)&&typeof plus_point.open_resource==='function'){
