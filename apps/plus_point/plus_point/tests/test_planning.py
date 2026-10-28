@@ -19,6 +19,46 @@ class PlanningTests(unittest.TestCase):
     agreement=hierarchy.HierarchyTests.agreement
     event=hierarchy.HierarchyTests.event
 
+    def test_partial_auto_selection_is_idempotent_and_undo_preserves_earlier_work(self):
+        a=self.agreement();event=self.event(a);doc=frappe.get_doc('PP Event Plan',event)
+        frappe.db.set_value('PP Event Staffing',doc.staffing[0].name,'workers_required',2)
+        result=op.auto_assign(event)
+        self.assertEqual(result['created'],1)
+        self.assertEqual(result['shortages'][0]['missing'],1)
+        self.assertEqual(result['shortages'][0]['designation'],self.role)
+        self.assertEqual(frappe.db.get_value('PP Event Plan',event,'crew_allocated'),0)
+        self.assertEqual(op.auto_assign(event)['created'],0)
+        self.assertTrue(frappe.db.exists('PP Assignment',self.f.assignment.name))
+        self.assertEqual(op.undo_auto_assign(event,result['assignments'])['released'],1)
+        self.assertTrue(frappe.db.exists('PP Assignment',self.f.assignment.name))
+        self.assertFalse(frappe.db.exists('PP Assignment',result['assignments'][0]))
+
+    def test_auto_undo_rejects_other_event_and_recorded_attendance(self):
+        event=self.event();result=op.auto_assign(event);assignment=result['assignments'][0]
+        with self.assertRaises(frappe.ValidationError):op.undo_auto_assign(event,[self.f.assignment.name])
+        self.assertTrue(frappe.db.exists('PP Assignment',assignment))
+        insert('PP Work Entry',assignment=assignment,work_date=today(),units=1,status='Draft')
+        with self.assertRaises(frappe.ValidationError):op.undo_auto_assign(event,[assignment])
+        self.assertTrue(frappe.db.exists('PP Assignment',assignment))
+
+    def test_undo_of_second_auto_batch_keeps_first_batch_in_same_event(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        frappe.db.set_value('PP Event Staffing',doc.staffing[0].name,'workers_required',3)
+        first=op.auto_assign(event)
+        insert('Employee',first_name='Second Event Manager',gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active',designation=self.role,pp_daily_rate=1000)
+        second=op.auto_assign(event)
+        self.assertEqual((first['created'],second['created']),(1,1))
+        op.undo_auto_assign(event,second['assignments'])
+        self.assertTrue(frappe.db.exists('PP Assignment',first['assignments'][0]))
+        self.assertFalse(frappe.db.exists('PP Assignment',second['assignments'][0]))
+
+    def test_monthly_preview_uses_profile_salary_when_no_amount_is_supplied(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        frappe.db.set_value('Employee',self.worker.name,'pp_monthly_rate',9000)
+        preview=planning.pay_preview(event,doc.staffing[0].name,[self.worker.name],{self.worker.name:dict(basis='Monthly',amount=None)})
+        self.assertEqual(preview['rows'][0]['pp_pay_amount'],9000)
+        self.assertEqual(preview['rows'][0]['wage_rate'],300)
+
     def test_capacity_counts_only_the_selected_category_and_its_date_window(self):
         from plus_point import crew,people
         driver=crew.add_worker(self.f.company.name,dict(first_name='Sana',gender='Female',date_of_birth='1990-01-01',date_of_joining='2020-01-01',designation='Driver'))

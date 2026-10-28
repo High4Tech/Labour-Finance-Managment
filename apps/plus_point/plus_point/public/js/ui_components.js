@@ -53,7 +53,13 @@
   optional(node,title,{open=false}={}){
    if(!node||node.closest('.pp-ui-disclosure'))return;
    const box=document.createElement('details');box.className='pp-ui-disclosure';box.open=open;
-   const summary=document.createElement('summary');summary.textContent=__(title);node.before(box);box.append(summary,node);return box;
+   const shell=document.createElement('div');shell.className='pp-disclosure-shell';
+   const summary=document.createElement('summary'),label=document.createElement('span'),actions=document.createElement('div');label.textContent=__(title);actions.className='pp-disclosure-actions pp-actions';summary.append(label);node.before(shell);shell.append(box,actions);box.append(summary,node);
+   // Move the real controls, never clone handlers or maintain a second action state.
+   let source,home;
+   const sync=()=>{const current=node.querySelector('.pp-resource-heading .pp-actions')||node.querySelector(':scope > header .pp-builder-card-actions,:scope > header .pp-actions')||node.querySelector('[data-add-condition]');if(current&&current!==source){source?.remove();home?.remove();source=current;home=document.createComment('disclosure actions');source.before(home);}actions.hidden=box.open||!source;shell.classList.toggle('has-actions',!!source&&!box.open);if(!source||!home?.isConnected)return;if(box.open)home.after(source);else if(source.parentElement!==actions)actions.replaceChildren(source);};
+   box.ppActionsSync=sync;box.addEventListener('toggle',sync);actions.addEventListener('click',event=>{event.stopPropagation();if(event.target.closest('button,a'))box.open=true;});sync();
+   return box;
   },
   nativeFilters(scope){
    if(!document.body.classList.contains('pp-customer-app'))return;
@@ -102,7 +108,7 @@
   const leading=df.options==='Email'||['email','personal_email'].includes(df.fieldname)?'mail':df.fieldtype==='Date'?'calendar':['Link','Dynamic Link'].includes(df.fieldtype)?'search':null;
   if(leading&&!shell.querySelector(':scope > .pp-control-leading')){const mark=document.createElement('span');mark.className='pp-control-leading';mark.append(asset(leading));shell.append(mark);shell.classList.add('has-leading');}
   if(df.fieldtype==='Int'&&!shell.querySelector('.pp-number-step')){
-   shell.classList.add('pp-number-shell');for(const [direction,name] of [[-1,'minus'],[1,'plus']]){const button=document.createElement('button');button.type='button';button.className='pp-number-step '+(direction<0?'is-minus':'is-plus');button.setAttribute('aria-label',__(direction<0?'Decrease {0}':'Increase {0}',[df.label]));button.append(asset(name));button.onmousedown=e=>e.preventDefault();button.onclick=async()=>{if(input.disabled||input.readOnly||df.read_only)return;const raw=Number(String(input.value||0).replaceAll(',','')),step=Number(df.step)||1,next=raw+direction*step,min=df.min??input.getAttribute('min'),max=df.max??input.getAttribute('max');if(min!=null&&next<Number(min)||max!=null&&next>Number(max))return;await control.set_value(next);input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();};shell.append(button);}
+   shell.classList.add('pp-number-shell');for(const [direction,name] of [[-1,'minus'],[1,'plus']]){const button=document.createElement('button');button.type='button';button.className='pp-number-step '+(direction<0?'is-minus':'is-plus');button.setAttribute('aria-label',__(direction<0?'Decrease {0}':'Increase {0}',[df.label]));button.append(asset(name));button.onmousedown=e=>e.preventDefault();button.onclick=async()=>{if(input.disabled||input.readOnly||df.read_only)return;const raw=Number(String(input.value||0).replaceAll(',','')),step=Number(df.step)||1,next=raw+direction*step,min=df.min??input.getAttribute('min'),max=df.max??input.getAttribute('max');if(min!=null&&next<Number(min)||max!=null&&next>Number(max))return;await control.set_value(next);input.dispatchEvent(new Event('input',{bubbles:true}));input.focus({preventScroll:true});};shell.append(button);}
   }
   const text=hint?.textContent.trim();let help=root.querySelector('.pp-control-help');
   if(text&&!help){help=document.createElement('button');help.type='button';help.className='pp-control-help';help.setAttribute('aria-label',__('Help: {0}',[df.label]));help.append(asset('help-circle'));help.onclick=e=>{e.preventDefault();e.stopPropagation();pp.show_info?.(help,hint.textContent.trim());};if(input.tagName==='TEXTAREA')label?.append(help);else shell.append(help);}

@@ -457,23 +457,49 @@ def auto_assign(name,confirm_over_budget=0):
     frappe.db.get_value('PP Event Plan',name,'name',for_update=True);doc.reload()
     # Select only matching available categories; existing allocations count as cover.
     doc.selected_crew='';proposal=crew_proposal(doc,lock=True)
-    if proposal['shortages']:
-        detail='; '.join(f"{r['designation']}: {r['missing']} missing ({r['from_date']} to {r['to_date']})" for r in proposal['shortages'])
-        frappe.throw('Not enough available crew. '+detail+'. Add workers or revise the requirements.')
     frappe.db.savepoint('pp_auto_staff')
     try:
         from plus_point.planning import cost_warning
         warning=cost_warning(terms_doc(doc.contract_terms),proposal['assignments'])
         if warning and not frappe.utils.cint(confirm_over_budget):frappe.throw(warning)
+        added=[]
         for row in proposal['assignments']:
-            frappe.get_doc(dict(doctype='PP Assignment',employee=row['employee'],project=doc.project,site=row['site'],contract_terms=doc.contract_terms,
+            assignment=frappe.get_doc(dict(doctype='PP Assignment',employee=row['employee'],project=doc.project,site=row['site'],contract_terms=doc.contract_terms,
                 start_date=row['start_date'],end_date=row['end_date'],wage_rate=row['wage_rate'],client_rate=row['client_rate'],pp_event_plan=name,
                 pp_pay_basis=row.get('pp_pay_basis'),pp_pay_amount=row.get('pp_pay_amount'),
                 pp_cost_override=frappe.utils.cint(confirm_over_budget))).insert()
-        frappe.db.set_value('PP Event Plan',name,'crew_allocated',1)
-        return dict(created=len(proposal['assignments']))
+            added.append(assignment.name)
+        frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not row['missing'] for row in coverage(doc))))
+        return dict(created=len(added),assignments=added,shortages=proposal['shortages'])
     except Exception:
         frappe.db.rollback(save_point='pp_auto_staff');raise
+
+
+@frappe.whitelist(methods=['POST'])
+def undo_auto_assign(name,assignments):
+    """Release only the named new allocations, never recorded work or other events."""
+    from plus_point.events import plan_doc
+    from plus_point.budget import lock_project
+    doc=plan_doc(name,True);terms_doc(doc.contract_terms);lock_project(doc.project)
+    names=list(dict.fromkeys(frappe.parse_json(assignments) or []))
+    if not names or len(names)>1000:frappe.throw('Choose the assignments from this auto-selection.')
+    frappe.db.savepoint('pp_undo_auto_staff')
+    try:
+        records=[]
+        for assignment in sorted(names):
+            row=frappe.get_doc('PP Assignment',assignment,for_update=True);row.check_permission('delete')
+            if row.project!=doc.project or row.pp_event_plan!=doc.name:frappe.throw('Only assignments in this event can be released.')
+            frappe.db.get_value('Employee',row.employee,'name',for_update=True)
+            if frappe.db.exists('PP Work Entry',{'assignment':row.name}):
+                frappe.throw('Attendance already references this worker. Review that record before releasing the assignment.')
+            records.append(row)
+        # The native on_trash hook removes blank auto-rosters and rejects marked
+        # or submitted attendance. The savepoint keeps bulk undo all-or-nothing.
+        for row in records:frappe.delete_doc('PP Assignment',row.name)
+        frappe.db.set_value('PP Event Plan',name,'crew_allocated',int(all(not row['missing'] for row in coverage(doc))))
+        return dict(released=len(records))
+    except Exception:
+        frappe.db.rollback(save_point='pp_undo_auto_staff');raise
 
 
 @frappe.whitelist()

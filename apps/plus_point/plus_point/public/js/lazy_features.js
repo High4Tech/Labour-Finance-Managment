@@ -2,8 +2,8 @@
 (()=>{
  frappe.provide('plus_point');const pp=plus_point,pending=new Map(),attempts=new Map();
  const features={
-  dashboard_analytics:{file:'dashboard_analytics',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261028-echarts-2',ready:()=>typeof pp.render_customer_dashboard==='function'},
-  dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261028-echarts-2',ready:()=>!!pp.charts},
+  dashboard_analytics:{file:'dashboard_analytics',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261028-workflow-refinement-1',ready:()=>typeof pp.render_customer_dashboard==='function'},
+  dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261028-workflow-refinement-1',ready:()=>!!pp.charts},
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,ready:()=>pp.render_event_timeline?.ppCalendarVersion===4},

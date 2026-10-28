@@ -39,7 +39,7 @@ body.pp-ui .pp-agreement-hero .btn[data-delete-record]:not(.btn-reset):hover{bac
 .pp-agreement-metric small:empty{display:none}
 .pp-agreement-body{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
 .pp-agreement-main{min-width:0;padding:0 16px 16px;background:var(--fg-color);border:1px solid var(--border-color);border-radius:8px}
-.pp-agreement-tabs{display:flex;align-items:center;gap:22px;overflow:auto;border-bottom:1px solid var(--border-color);margin-bottom:14px;scrollbar-width:thin}
+.pp-agreement-tabs{display:flex;align-items:center;gap:22px;overflow:auto;border-bottom:1px solid var(--border-color);margin-bottom:14px;scrollbar-width:thin;width:100%}
 .pp-agreement-tabs [role=tab]{flex:0 0 auto;position:relative;min-height:44px;padding:12px 3px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-muted);font-size:14px;font-weight:450;white-space:nowrap}
 .pp-agreement-tabs [role=tab][aria-selected=true]{color:var(--pp-accent);font-weight:600;border-bottom-color:var(--pp-accent)}
 .pp-agreement-tabs [role=tab]:focus-visible,.pp-agreement-upload:focus-visible,.pp-agreement-file-count:focus-visible,.pp-agreement-hero a:focus-visible{outline:3px solid var(--pp-accent);outline-offset:-3px;border-radius:4px}

@@ -14,7 +14,7 @@
    return plus_point.ui.panel(title,description,icon);
   }
   function wrap(selector,title,description,icon){const node=area.querySelector(selector);if(!node)return;const box=card(title,description,icon);node.before(box);box.lastElementChild.append(node);
-   const sync=()=>{const inner=node.querySelector(':scope > .pp-section-heading,:scope > .pp-resource-heading');if(!inner)return;const header=box.querySelector(':scope > header');let actions=header.querySelector('[data-card-actions]');if(!actions){actions=document.createElement('div');actions.className='pp-actions pp-builder-card-actions';actions.dataset.cardActions='true';header.append(actions);}actions.replaceChildren(...inner.querySelectorAll('button,a.btn'));inner.remove();const note=node.querySelector(':scope > p:not([role])');if(note){header.querySelector('p').textContent=node.dataset.cardSummary||__(description);note.remove();}};
+   const sync=()=>{const inner=node.querySelector(':scope > .pp-section-heading,:scope > .pp-resource-heading');if(!inner)return;const header=box.querySelector(':scope > header');let actions=header.querySelector('[data-card-actions]')||box.closest('.pp-disclosure-shell')?.querySelector(':scope>.pp-disclosure-actions [data-card-actions]');if(!actions){actions=document.createElement('div');actions.className='pp-actions pp-builder-card-actions';actions.dataset.cardActions='true';header.append(actions);}actions.replaceChildren(...inner.querySelectorAll('button,a.btn'));inner.remove();const note=node.querySelector(':scope > p:not([role])');if(note){header.querySelector('p').textContent=node.dataset.cardSummary||__(description);note.remove();}};
    node.addEventListener('pp:component-render',sync);sync();return box;}
 
   function fieldCard(group,keys,title,description,icon){
@@ -36,9 +36,9 @@
    const daily=wrap('.pp-daily-checkpoints','Payment schedule','Payment periods follow the agreement dates automatically.','calendar');
    const fixed=wrap('.pp-new-milestones','Milestones','Define the agreed payments and when they are due.','calendar');
    const existing=area.querySelector('.pp-op-milestones');if(existing)wrap('.pp-op-milestones','Existing milestones','Review and approve the payments already saved.');
-   wrap('.pp-op-capacity','Crew availability','Availability is checked for the selected dates and category.','client');
    wrap('.pp-op-resource-policy','Resource commitment','Choose quantities now, a rate card, or confirm requirements per event.','client');
    const sitesCard=wrap('.pp-op-staffing','Sites and crew','Add a site, then define its crew categories and daily requirements.','scope');
+   const capacity=area.querySelector('.pp-op-capacity');if(sitesCard&&capacity)sitesCard.lastElementChild.prepend(capacity);
    wrap('.pp-agreement-transport','Vehicle requirements','Optional: agree vehicle types and quantities. Assign vehicles in the event.','truck');
    const siteAdd=area.querySelector('[data-add-staffing]');if(sitesCard&&siteAdd){const tools=document.createElement('div');tools.className='pp-actions pp-builder-card-actions';tools.append(siteAdd);sitesCard.querySelector('header').append(tools);}
    const summary=card('Review summary','Review the entered details before creating your signing link.');summary.classList.add('pp-builder-review');sections.at(-1).prepend(summary);
@@ -79,8 +79,8 @@
   area.addEventListener('pp:client-loaded',compactClient);if(agreement)compactClient();
   const optional=(selector,title,open=false)=>plus_point.ui.optional(area.querySelector(selector)?.closest('.pp-builder-card'),title,{open});
   if(agreement){
-   for(const [selector,title] of [['.pp-agreement-conditions','Conditions'],['.pp-op-capacity','Crew availability'],['.pp-op-resource-policy','Resource commitments and rate card'],['.pp-op-staffing','Sites and crew'],['.pp-agreement-transport','Vehicle requirements']])optional(selector,title,!!area.querySelector(selector)?.querySelector('tbody tr:not(.pp-table-empty)'));
-   const scope=groups.details?.fields_dict.scope,toolbar=scope?.$wrapper?.[0]?.querySelector('.ql-toolbar');if(toolbar){toolbar.hidden=true;const format=document.createElement('button');format.type='button';format.className='btn btn-default btn-sm';format.textContent=__('Formatting');format.setAttribute('aria-expanded','false');format.onclick=()=>{toolbar.hidden=!toolbar.hidden;format.setAttribute('aria-expanded',String(!toolbar.hidden));};scope.$wrapper[0].prepend(format);}
+   for(const [selector,title] of [['.pp-agreement-conditions','Conditions'],['.pp-op-staffing','Sites and crew'],['.pp-agreement-transport','Vehicle requirements']])optional(selector,title,!!area.querySelector(selector)?.querySelector('tbody tr:not(.pp-table-empty)'));
+   const scope=groups.details?.fields_dict.scope,toolbar=scope?.$wrapper?.[0]?.querySelector('.ql-toolbar');if(toolbar){toolbar.hidden=false;const shell=toolbar.parentElement;shell.classList.add('pp-rich-editor');}
   }else{
    optional('.pp-op-reservations','Vehicles and equipment',!!area.querySelector('.pp-op-reservations tbody tr:not(.pp-table-empty)'));
    optional('[data-builder-fields=enforce_budget]','Spending controls',!!groups.project?.get_value('enforce_budget'));

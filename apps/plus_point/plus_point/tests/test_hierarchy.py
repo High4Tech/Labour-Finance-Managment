@@ -219,10 +219,13 @@ class HierarchyTests(unittest.TestCase):
         self.assertTrue(frappe.db.exists('PP Work Entry',work.name))
         from plus_point.worker_profile import overview
         self.assertEqual(overview(self.worker.name)['earned'],'0.00')
-    def test_shortage_rolls_back_all_categories(self):
+    def test_shortage_keeps_available_crew_and_reports_remaining_demand(self):
         name=self.event();doc=frappe.get_doc('PP Event Plan',name);doc.staffing[0].workers_required=2;doc.save()
-        with self.assertRaises(frappe.ValidationError):op.auto_assign(name)
-        self.assertEqual(frappe.db.count('PP Assignment',{'project':doc.project}),0)
+        result=op.auto_assign(name)
+        self.assertEqual(result['created'],1)
+        self.assertEqual(result['shortages'][0]['missing'],1)
+        self.assertEqual(frappe.db.count('PP Assignment',{'project':doc.project}),1)
+        self.assertEqual(frappe.db.get_value('PP Event Plan',name,'crew_allocated'),0)
     def test_manual_selection_refuses_wrong_category_and_labels_extra(self):
         name=self.event();doc=frappe.get_doc('PP Event Plan',name);row=doc.staffing[0]
         frappe.db.set_value('Employee',self.f.employee.name,'designation','Electrician')

@@ -16,7 +16,7 @@
 .pp-op-badge{display:inline-block;padding:5px 8px;font-size:11px;border-radius:5px;background:var(--control-bg);color:var(--text-color)}.pp-op-badge.is-extra,.pp-op-badge.is-warning{color:var(--yellow-700,#976318);border:1px solid currentColor}.pp-op-badge.is-good{color:var(--pp-accent)}
 .pp-op-crew-picker:empty,.pp-op-transfer:empty{display:none}.pp-op-crew-picker,.pp-op-transfer,.pp-op-milestone-editor:not(:empty),.pp-op-invoice-editor:not(:empty){padding:20px;background:var(--control-bg);border:1px solid var(--border-color);border-radius:10px;margin-top:20px}
 .pp-op-crew-options{max-height:340px;overflow-y:auto;margin:16px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.pp-op-crew-options>label{display:flex;align-items:center;gap:12px;padding:12px;background:var(--fg-color);border-radius:6px;font-size:13px;margin:0}.pp-op-crew-options small{display:block;font-size:11px;color:var(--text-muted);margin-top:4px}.pp-op-crew-options input{width:18px;height:18px;accent-color:var(--pp-accent)}
+.pp-op-crew-options>label{display:flex;align-items:center;gap:12px;padding:12px;background:var(--fg-color);border-radius:6px;font-size:13px;margin:0}.pp-op-crew-options small{display:block;font-size:11px;color:var(--text-muted);margin-top:4px}.pp-op-crew-options input[type=checkbox]{width:20px;height:20px;accent-color:var(--pp-accent)}
 .pp-op-crew-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.pp-op-tag{border:1px solid var(--border-color);color:var(--text-color);background:var(--fg-color);border-radius:16px;padding:6px 12px;font-size:12px}
 .pp-op-extra{margin:24px 0}.pp-op-extra summary{font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px}
 .pp-op-layout .form-section{padding:0!important;border:0!important}.pp-op-section .frappe-control[data-fieldtype="Table"]{min-width:0}.pp-op-section .grid-body{overflow:auto}.pp-op-crew-picker>.btn,.pp-op-transfer .btn,.pp-op-milestone-editor .btn{margin-right:8px}
@@ -123,3 +123,17 @@
 .pp-ui .pp-op-success{color:var(--text-color)}
 .pp-op-table-scroll:focus-visible{outline:3px solid var(--pp-accent);outline-offset:3px;border-radius:4px}
 .pp-ui .pp-timeline-empty{opacity:1;color:var(--text-color);background:var(--control-bg)}
+
+/* Shared event picker: one pay policy, readable rows and an explicit opt-in override. */
+.pp-op-crew-picker .pp-op-crew-options{display:flex;flex-direction:column;gap:12px;max-height:44dvh;min-height:160px;padding:4px 12px 4px 0;scrollbar-gutter:stable}
+.pp-event-worker-option{flex:none;padding:16px;box-shadow:none}
+.pp-event-worker-option>.pp-worker-selection{display:flex;align-items:center;gap:16px;margin:0;min-height:40px}
+.pp-event-worker-option .pp-person-capsule{gap:12px}
+.pp-event-worker-option .pp-worker-override{display:flex;align-items:center;gap:12px;margin:12px 0 0 36px;font-size:14px}
+.pp-event-worker-option .pp-worker-custom-rate{display:grid;gap:6px;margin:12px 0 0 36px;max-width:320px;width:calc(100% - 36px)}
+.pp-event-worker-option .pp-worker-custom-rate input{width:100%;height:40px;min-width:140px}
+.pp-event-worker-option .pp-worker-monthly{margin:12px 0 0 36px}
+.pp-worker-monthly [role=alert]{display:block;color:var(--pp-danger)}
+.pp-crew-common-pay{display:grid;gap:12px;margin:0 0 16px}
+.pp-auto-crew-result{margin:0 0 16px}.pp-auto-crew-result ul{margin:0;padding-left:20px}.pp-auto-crew-result li{margin:8px 0}
+.pp-auto-crew-result .btn{margin-left:8px}
