@@ -38,8 +38,8 @@ app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-i
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/drafts.js?v=20261027-ui-2",
                    "/assets/plus_point/js/daily_billing.js?v=20261027-ui-2"]
-app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261028-workflow-refinement-1", "/assets/plus_point/js/profiles.js?v=20261027-refinement-1", "/assets/plus_point/js/operations.js?v=20261028-workflow-refinement-1"]
-app_include_css += ["/assets/plus_point/css/operations.css?v=20261028-workflow-refinement-1", "/assets/plus_point/css/feedback.css?v=20261027-ui-2"]
+app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261028-workflow-refinement-2", "/assets/plus_point/js/profiles.js?v=20261027-refinement-1", "/assets/plus_point/js/operations.js?v=20261028-workflow-refinement-2"]
+app_include_css += ["/assets/plus_point/css/operations.css?v=20261028-workflow-refinement-2", "/assets/plus_point/css/feedback.css?v=20261027-ui-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"],"*/15 * * * *":["plus_point.daily_billing.run_recurring"]},"hourly": ["plus_point.agreement_lifecycle.close_expired", "plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
 
@@ -110,16 +110,16 @@ app_include_css += ["/assets/plus_point/css/finance_hub.css?v=20261023-finance-3
 app_include_js += ["/assets/plus_point/js/business_reports.js?v=20261023-report-layout-2"]
 app_include_css += ["/assets/plus_point/css/business_reports.css?v=20261023-report-layout-2"]
 
-app_include_css += ["/assets/plus_point/css/agreement_profile.css?v=20261028-workflow-refinement-1"]
+app_include_css += ["/assets/plus_point/css/agreement_profile.css?v=20261028-workflow-refinement-2"]
 
-app_include_js += ["/assets/plus_point/js/event_profile.js?v=20261028-workflow-refinement-1"]
-app_include_css += ["/assets/plus_point/css/event_profile.css?v=20261028-workflow-refinement-1"]
+app_include_js += ["/assets/plus_point/js/event_profile.js?v=20261028-workflow-refinement-2"]
+app_include_css += ["/assets/plus_point/css/event_profile.css?v=20261028-workflow-refinement-2"]
 
 app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261027-consolidated-3"]
 
-app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261028-workflow-refinement-1"]
+app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261028-workflow-refinement-2"]
 
-app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261028-workflow-refinement-1"]
-app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261028-workflow-refinement-1"]
+app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261028-workflow-refinement-2"]
+app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261028-workflow-refinement-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261028-workflow-refinement-1"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261028-workflow-refinement-2"]
