@@ -1,0 +1,16 @@
+{
+  "library": "Apache ECharts",
+  "version": "6.1.0",
+  "modules": [
+    "LineChart",
+    "BarChart",
+    "PieChart",
+    "GridComponent",
+    "TooltipComponent",
+    "AriaComponent",
+    "SVGRenderer"
+  ],
+  "bytes": 553704,
+  "gzipBytes": 191940,
+  "sha256": "e5df5cf052abef5c7130cac0316e51fd91695725fb0e627c46b237350dc05245"
+}

@@ -3,7 +3,7 @@
     frappe.provide('plus_point');
     const modes = {light:__('Light'), dark:__('Dark'), automatic:__('System')};
     const root = document.documentElement;
-    let started = false, pending = false, scheduled = false;
+    let started = false, pending = false, scheduled = false, lastTheme;
     const mode = () => root.getAttribute('data-theme-mode') || 'light';
     const icon = dark => {const slug=dark?'clear-night':'clear-day',base='/assets/plus_point/images/meteocons/'+slug;return '<span class="pp-theme-animated" aria-hidden="true"><img class="pp-meteo-static" alt="" src="'+base+'-static.svg"><img class="pp-meteo-motion" alt="" src="'+base+'.svg"></span>';};
 
@@ -26,6 +26,7 @@
 
     function render() {
         if (!frappe.boot?.plus_point) return;
+        const theme=root.getAttribute('data-theme');if(theme!==lastTheme){lastTheme=theme;document.dispatchEvent(new Event('pp:theme-changed'));}
         document.body.classList.add('pp-ui');
         const footer = document.querySelector('.body-sidebar-bottom');
         if (!footer) return;

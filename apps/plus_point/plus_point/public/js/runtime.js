@@ -34,7 +34,7 @@
   try{for(const callback of watchers.values())try{callback();}catch(error){console.warn('PLUS POINT enhancement',error);}stats.passes++;}
   finally{running=false;observer.observe(document.body,{childList:true,subtree:true});}
  }
- plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(records=>{if(records.some(record=>!(record.target.nodeType===1?record.target:record.target.parentElement)?.closest('[contenteditable=true],.pp-freddy__motion')))schedule();});observer.observe(document.body,{childList:true,subtree:true});}schedule();};
+ plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(records=>{if(records.some(record=>!(record.target.nodeType===1?record.target:record.target.parentElement)?.closest('[contenteditable=true],.pp-freddy__motion,.pp-chart-plot')))schedule();});observer.observe(document.body,{childList:true,subtree:true});}schedule();};
  const wake=()=>{bursts=0;schedule();};
  document.addEventListener('visibilitychange',wake);document.addEventListener('pp:data-changed',wake);
  // Typing and pointer movement do not require rescanning every screen. DOM changes and routes wake the enhancements.

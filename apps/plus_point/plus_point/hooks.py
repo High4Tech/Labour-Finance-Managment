@@ -15,8 +15,8 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/choices.js?v=20261028-figma-parity-1","/assets/plus_point/js/icons.js?v=20261026-controls-3","/assets/plus_point/js/runtime.js?v=20261028-controls-final-1",
-                  "/assets/plus_point/js/feedback.js?v=20261027-refinement-1","/assets/plus_point/js/appearance.js?v=20261027-ui-2",
+app_include_js = ["/assets/plus_point/js/choices.js?v=20261028-figma-parity-1","/assets/plus_point/js/icons.js?v=20261026-controls-3","/assets/plus_point/js/runtime.js?v=20261028-echarts-2",
+                  "/assets/plus_point/js/feedback.js?v=20261027-refinement-1","/assets/plus_point/js/appearance.js?v=20261028-echarts-2",
                   "/assets/plus_point/js/selectors.js?v=20261028-figma-parity-1",
                   "/assets/plus_point/js/forms.js?v=20261028-figma-parity-1",
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
@@ -122,4 +122,4 @@ app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261027-ui-2"]
 app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261028-figma-parity-1"]
 app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261028-figma-parity-1"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261028-dashboard-final-1"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261028-echarts-2"]

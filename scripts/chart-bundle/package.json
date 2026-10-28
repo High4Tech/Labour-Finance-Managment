@@ -1,0 +1,9 @@
+{
+  "name": "plus-point-dashboard-charts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-only dependencies for the self-hosted modular ECharts dashboard engine",
+  "scripts": {"build": "node build.cjs"},
+  "dependencies": {"echarts": "6.1.0"},
+  "devDependencies": {"esbuild": "0.28.2"}
+}

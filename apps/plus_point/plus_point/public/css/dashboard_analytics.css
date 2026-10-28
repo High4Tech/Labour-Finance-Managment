@@ -35,10 +35,6 @@ body.pp-customer-app .pp-overview .pp-ui-section-heading h3{font-size:18px;line-
 .pp-overview .pp-chart-host{min-width:0;min-height:220px;position:relative}
 .pp-overview .pp-chart-host .pp-loading-state{min-height:220px;max-height:220px;padding:0}
 .pp-overview .pp-chart-host .pp-loading-logo{width:56px;height:56px}
-.pp-overview .chart-container{font-family:inherit}
-.pp-overview .chart-container text{fill:var(--text-muted);font-size:12px}
-.pp-overview .chart-container .axis line{stroke:var(--border-color)}
-.pp-overview .graph-svg-tip{font-family:inherit;font-size:14px;background:#122c26;color:#fff}
 .pp-overview .pp-card-note{font-size:13px;line-height:1.5;color:var(--text-muted);margin:0 0 8px}
 .pp-overview .pp-chart-data{font-size:13px;margin-top:10px}
 .pp-overview .pp-chart-data>summary{cursor:pointer;min-height:32px;color:var(--pp-focus);display:flex;align-items:center}
@@ -92,7 +88,7 @@ body.pp-customer-app .pp-overview .pp-ui-section-heading h3{font-size:18px;line-
 @media(prefers-reduced-motion:reduce){.pp-overview :is(.pp-kpi,.pp-quick-tile){transition:none}}
 /* Respond to available card space, including a visible Desk sidebar. */
 body.pp-customer-app .pp-welcome:has(.pp-overview){padding:0;border:0;background:var(--pp-canvas)}
-.pp-overview .pp-chart-host .pp-donut-total{position:absolute;left:50%;top:calc(50% + 12px);transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;font-size:12px;line-height:1.4;pointer-events:none;margin:0}
+.pp-overview .pp-chart-host .pp-donut-total{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;font-size:12px;line-height:1.4;pointer-events:none;margin:0}
 body.pp-ui .pp-overview,body.pp-ui .pp-overview .pp-motion-dashboard{--pp-warning:#8a5300}
 .pp-overview .pp-kpi.is-long{position:relative;display:block}
 .pp-overview .pp-kpi.is-long .pp-kpi-icon{position:absolute;right:16px;top:16px;width:32px;height:32px}

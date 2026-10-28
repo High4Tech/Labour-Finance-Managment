@@ -1,0 +1,7 @@
+/* Shared ECharts component tokens; native framework charts are unaffected. */
+body.pp-customer-app{--pp-chart-color-0:#087f65;--pp-chart-color-1:#b67b12;--pp-chart-color-2:#567f9a;--pp-chart-color-3:#8062ac;--pp-chart-color-4:#b65669}
+html[data-theme=dark] body.pp-customer-app{--pp-chart-color-0:#53d5b1;--pp-chart-color-1:#f1bd50;--pp-chart-color-2:#93b9db;--pp-chart-color-3:#bcb0ef;--pp-chart-color-4:#f29da6}
+body.pp-customer-app .pp-chart-plot{width:100%;height:220px;min-width:0;outline-offset:-2px}
+body.pp-customer-app .pp-chart-plot:focus-visible{outline:2px solid var(--pp-focus);border-radius:6px}
+body.pp-customer-app .pp-chart-plot svg{display:block;max-width:100%}
+body.pp-customer-app .pp-chart-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;flex:none;background:var(--pp-swatch-color,var(--pp-chart-color-0));vertical-align:middle;margin-right:6px}
