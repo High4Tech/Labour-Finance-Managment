@@ -289,6 +289,7 @@
     }
 
     function addFieldTips(frm) {
+        if (!platform()) { Object.values(frm.fields_dict).forEach(field => plus_point.ui?.field(field)); return; }
         if (!screens[frm.doctype] || !frm.doctype.startsWith('PP ')) return;
         Object.values(frm.fields_dict).forEach(field => {
             if (!field.df.description || !field.$wrapper?.is(':visible')) return;

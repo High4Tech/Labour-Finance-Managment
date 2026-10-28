@@ -26,44 +26,94 @@ body.pp-ui .pp-ui-metric>.pp-agreement-metric-icon>svg{display:block;width:24px;
 body.pp-ui .pp-ui-metric>div{min-width:0;display:grid;gap:3px}
 body.pp-ui .pp-ui-metric strong{font-size:15px;line-height:1.5;overflow-wrap:anywhere;color:var(--text-color)}
 body.pp-ui .pp-ui-metric :is(small,div>span){font-size:14px;line-height:1.5;color:var(--text-muted)}
-body.pp-ui :is(input.form-control,select.form-control,.awesomplete>.form-control){min-height:var(--pp-control-height);height:var(--pp-control-height);font-size:15px;border:1px solid var(--pp-input-border);border-radius:6px;background:var(--pp-surface)}
-body.pp-ui textarea.form-control{font-size:15px;line-height:1.5;border:1px solid var(--pp-input-border);border-radius:6px;min-height:88px;background:var(--pp-surface)}
-body.pp-customer-app.pp-ui{--pp-control-height:42px}
-body.pp-customer-app.pp-ui :is(input.form-control,select.form-control,.awesomplete>.form-control,.pp-select-trigger){min-height:42px;height:42px;font-size:16px;line-height:24px;padding:8px 12px;border:1px solid var(--pp-input-border);border-radius:8px;background:var(--pp-surface);box-shadow:0 1px 2px #0000000d;box-sizing:border-box}
-body.pp-customer-app.pp-ui textarea.form-control{font-size:16px;line-height:24px;padding:12px 14px;border:1px solid var(--pp-input-border);border-radius:8px;min-height:128px;background:var(--pp-surface);box-shadow:0 1px 2px #0000000d;resize:vertical}
-body.pp-ui .form-control:hover:not(:disabled){border-color:var(--text-muted)}
-body.pp-ui .form-control:focus{border-color:var(--pp-focus);box-shadow:0 0 0 2px color-mix(in srgb,var(--pp-focus) 18%,transparent)}
-body.pp-ui .form-control:disabled{background:var(--control-bg);color:var(--text-muted)}
-body.pp-customer-app.pp-ui .frappe-control>.control-label,body.pp-customer-app.pp-ui .frappe-control .control-label{font-size:14px;line-height:20px;font-weight:500;margin-bottom:6px}
-body.pp-customer-app.pp-ui .frappe-control .help-box{font-size:14px;line-height:20px;margin-top:6px;color:var(--text-muted)}
+/* Figma library: Input field 3531:403016, Select 7953:158048,
+   Textarea 1238:358, Checkbox/Radio 1100:328/1424. Teal is the brand variant.
+   Authoritative controls: scoped to the company app, leaving native admin views intact. */
+body.pp-customer-app.pp-ui{--pp-control-height:40px;--pp-field-border:#cbd5e1;--pp-field-bg:#fff;--pp-field-text:#0b2538;--pp-field-label:#314354;--pp-field-hint:#4b5563;--pp-field-placeholder:#6b7280;--pp-field-disabled:#f8fafc;--pp-field-error:#dc2626;--pp-field-error-border:#fca5a5;--pp-field-hover:#f8fafc;--pp-field-font:'Neue Haas Grotesk Text Pro',Arial,sans-serif}
+html[data-theme=dark] body.pp-customer-app.pp-ui{--pp-field-border:#475569;--pp-field-bg:#182623;--pp-field-text:#f1f5f9;--pp-field-label:#e2e8f0;--pp-field-hint:#cbd5e1;--pp-field-placeholder:#a4b3be;--pp-field-disabled:#23322e;--pp-field-error:#fda4af;--pp-field-error-border:#fb7185;--pp-field-hover:#253730}
+body.pp-customer-app.pp-ui :is(input.form-control,select.form-control,textarea.form-control,.pp-select-trigger){box-sizing:border-box;height:40px;min-height:40px;border:1px solid var(--pp-field-border);border-radius:8px;background:var(--pp-field-bg);color:var(--pp-field-text);font-family:var(--pp-field-font);font-weight:400;font-size:16px;line-height:24px;letter-spacing:0;padding:7px 11px;box-shadow:0 1px 2px #0000000d;transition:border-color 100ms ease;max-width:100%}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field :is(input.form-control,select.form-control,textarea.form-control,.pp-select-trigger){font-weight:400;background-image:none}
+body.pp-customer-app.pp-ui textarea.form-control,body.pp-customer-app.pp-ui .frappe-control.pp-figma-field textarea.form-control{height:128px;min-height:128px;padding:11px 13px;resize:vertical}
+body.pp-customer-app.pp-ui :is(input.form-control,textarea.form-control)::placeholder{color:var(--pp-field-placeholder);opacity:1;font-weight:400}
+body.pp-customer-app.pp-ui .form-control:hover:not(:disabled){border-color:#94a3b8}
+body.pp-customer-app.pp-ui .form-control:is(:focus,:focus-visible),body.pp-customer-app.pp-ui .pp-select-trigger[aria-expanded=true]{outline:2px solid var(--pp-focus);outline-offset:-1px;border-color:var(--pp-focus);box-shadow:0 1px 2px #0000000d}
+body.pp-customer-app.pp-ui .form-control:is(:disabled,[readonly]){background:var(--pp-field-disabled);color:var(--pp-field-placeholder);cursor:default}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field .control-label{font:500 14px/20px var(--pp-field-font);letter-spacing:0;color:var(--pp-field-label);padding:0!important;min-height:20px;margin:0 0 6px;display:inline-flex;align-items:center;gap:2px;width:auto;max-width:100%;white-space:normal}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field .control-label.reqd:after{content:none}
+body.pp-customer-app .pp-required-mark{color:var(--pp-focus)}
+body.pp-customer-app .has-error .pp-required-mark{color:var(--pp-field-error)}
+body.pp-customer-app .pp-required-mark[hidden]{display:none}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field :is(.help-box,.pp-input-hint){display:block;font:400 14px/20px var(--pp-field-font);letter-spacing:0;color:var(--pp-field-hint);padding:0;min-height:0;margin:6px 0 0;max-width:none;white-space:normal}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field .help-box:empty{display:none}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field .help-box:not(:empty){display:block}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field.has-error .help-box{display:none}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field.has-error .pp-input-hint{color:var(--pp-field-error);line-height:20px!important}
+body.pp-customer-app.pp-ui .frappe-control.pp-figma-field .pp-input-hint .pp-freddy-validation{font:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
+body.pp-customer-app .pp-control-shell{position:relative;min-width:0;width:100%}
+body.pp-customer-app .pp-control-leading{position:absolute;left:12px;top:10px;pointer-events:none;display:flex;align-items:center}
+body.pp-customer-app .pp-control-leading img{display:block;flex:none}
+body.pp-customer-app.pp-ui .pp-figma-field .pp-control-shell.has-leading>input.form-control{padding-left:39px}
+body.pp-customer-app.pp-ui .pp-figma-field .pp-control-shell.has-help>input.form-control{padding-right:39px}
+body.pp-customer-app .pp-control-help{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:24px;height:24px;min-height:24px;padding:4px;border:0;border-radius:4px;background:transparent;cursor:help}
+body.pp-customer-app .pp-control-help img{display:block}
+body.pp-customer-app .control-label>.pp-control-help{position:static;margin-left:2px;margin-block:-2px;flex:none}
+body.pp-customer-app .pp-control-help:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+body.pp-customer-app .pp-control-error{display:none;position:absolute;right:12px;top:12px;pointer-events:none}
+body.pp-customer-app .pp-figma-field.has-error .pp-control-error{display:block}
+body.pp-customer-app .pp-figma-field.has-error .pp-control-shell>.pp-control-help{visibility:hidden}
+body.pp-customer-app.pp-ui .pp-figma-field.has-error .form-control{border-color:var(--pp-field-error-border)!important;background-color:var(--pp-field-bg);padding-right:39px}
+body.pp-customer-app.pp-ui .pp-figma-field.has-error .form-control:is(:focus,:focus-visible){border-color:#ef4444!important;outline-color:#ef4444}
+body.pp-customer-app .pp-resize-handle{position:absolute;right:5px;bottom:5px;pointer-events:none;display:block}
+body.pp-customer-app .pp-textarea-shell textarea::-webkit-resizer{background:transparent}
+body.pp-customer-app .pp-number-step{position:absolute;top:8px;display:grid;place-items:center;width:24px;height:24px;min-height:24px;border:0;background:transparent;padding:2px;border-radius:4px;cursor:pointer}
+body.pp-customer-app .pp-number-step.is-minus{left:8px}
+body.pp-customer-app .pp-number-step.is-plus{right:8px}
+body.pp-customer-app .pp-number-step:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+body.pp-customer-app.pp-ui .pp-figma-field .pp-number-shell>input.form-control{text-align:center;padding-inline:39px;font-variant-numeric:tabular-nums}
+body.pp-customer-app .pp-number-shell:has(>input:is(:disabled,[readonly])) .pp-number-step{pointer-events:none;opacity:.45}
 body.pp-customer-app .pp-select-container{display:block;position:relative;min-width:0;width:100%}
 body.pp-customer-app select.pp-select-source{position:absolute;inset:0;width:100%;opacity:0;pointer-events:none}
-body.pp-customer-app .pp-select-trigger{display:flex;align-items:center;gap:8px;text-align:left;font-weight:500;width:100%;color:var(--text-color);cursor:pointer}
+body.pp-customer-app.pp-ui .pp-select-trigger,body.pp-customer-app.pp-ui .pp-figma-field .pp-select-trigger{display:flex;align-items:center;gap:8px;text-align:left;font-weight:500;width:100%;cursor:pointer}
 body.pp-customer-app .pp-select-trigger[hidden]{display:none}
 body.pp-customer-app .pp-select-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-body.pp-customer-app .pp-select-chevron{flex:none;width:16px;height:16px;background:var(--text-muted);mask:url('/assets/plus_point/images/figma/chevron-down.svg') center/contain no-repeat}
+body.pp-customer-app .pp-select-chevron{flex:none;display:block;mask:none;background:none}
 body.pp-customer-app .frappe-control:has(select.pp-select-source) .select-icon{display:none}
-body.pp-customer-app .pp-select-trigger[aria-expanded=true]{border-color:var(--pp-focus);box-shadow:0 0 0 1px var(--pp-focus)}
-body.pp-customer-app .pp-select-trigger:focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
-body.pp-customer-app .pp-select-menu{position:fixed;z-index:1080;padding:6px;border:1px solid var(--border-color);border-radius:8px;background:var(--pp-surface);box-shadow:0 12px 16px -4px #00000014,0 4px 6px -2px #00000008;overflow-y:auto;overscroll-behavior:contain}
+body.pp-customer-app .pp-select-menu{position:fixed;z-index:1080;padding:6px;border:1px solid #e2e8f0;border-radius:8px;background:var(--pp-field-bg);box-shadow:0 12px 16px -4px #00000014,0 4px 6px -2px #00000008,0 2px 2px -1px #0000000a;overflow-y:auto;overscroll-behavior:contain;font-family:var(--pp-field-font)}
 body.pp-customer-app .pp-select-menu .pp-select-search{margin-bottom:6px;position:sticky;top:0;z-index:1}
-body.pp-customer-app .pp-select-option{display:flex;align-items:center;gap:8px;min-height:42px;padding:8px 10px;border-radius:6px;color:var(--text-color);font-size:16px;line-height:24px;cursor:pointer;overflow-wrap:anywhere}
+body.pp-customer-app .pp-select-option{display:flex;align-items:center;gap:8px;height:42px;min-height:42px;padding:8px;border-radius:6px;color:var(--pp-field-text);font-size:16px;line-height:24px;cursor:pointer;overflow-wrap:anywhere}
 body.pp-customer-app .pp-select-option>span:first-child{flex:1;min-width:0}
-body.pp-customer-app .pp-select-option:is(.is-active,[aria-selected=true]){background:var(--pp-band)}
-body.pp-customer-app .pp-select-option.is-active{outline:1px solid var(--pp-input-border);outline-offset:-1px}
-body.pp-customer-app .pp-select-check{width:20px;height:20px;flex:none;background:var(--pp-focus);mask:url('/assets/plus_point/images/figma/check.svg') center/contain no-repeat}
-body.pp-customer-app .pp-select-empty{font-size:14px;line-height:20px;padding:12px;margin:0;color:var(--text-muted)}
-body.pp-customer-app .awesomplete>ul,body.pp-customer-app .dropdown-menu{border-radius:8px;padding:6px;box-shadow:0 12px 16px -4px #00000014,0 4px 6px -2px #00000008;background:var(--pp-surface)}
-body.pp-customer-app .awesomplete>ul>li,body.pp-customer-app .dropdown-menu .dropdown-item{font-size:16px;line-height:24px;padding:8px 10px;min-height:42px;border-radius:6px;color:var(--text-color)}
-body.pp-customer-app .awesomplete>ul>li[aria-selected=true],body.pp-customer-app .dropdown-menu .dropdown-item:hover{background:var(--pp-band);color:var(--text-color)}
-body.pp-customer-app .pp-field-email input.form-control{background-image:url('/assets/plus_point/images/figma/mail.svg');background-position:12px center;background-repeat:no-repeat;background-size:20px;padding-left:40px}
-body.pp-customer-app .frappe-control.has-error :is(input.form-control,textarea.form-control){background-image:url('/assets/plus_point/images/figma/alert-circle.svg');background-position:right 12px top 12px;background-repeat:no-repeat;background-size:16px;padding-right:36px}
-body.pp-customer-app .pp-field-email.has-error input.form-control{background-image:url('/assets/plus_point/images/figma/mail.svg'),url('/assets/plus_point/images/figma/alert-circle.svg');background-position:12px center,right 12px center;background-size:20px,16px}
-body.pp-customer-app .pp-choice-field>label{min-height:42px;line-height:24px}
-body.pp-customer-app :is(.pp-field-tip,.pp-info-trigger){display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;min-width:24px;min-height:24px;padding:4px;border:0;border-radius:4px;background:transparent;color:var(--text-muted);font-size:0;line-height:1}
-body.pp-customer-app :is(.pp-field-tip,.pp-info-trigger)::before{content:'';display:block;width:16px;height:16px;flex:none;background:currentColor;mask:url('/assets/plus_point/images/figma/help-circle.svg') center/contain no-repeat}
-body.pp-customer-app :is(.pp-field-tip,.pp-info-trigger):focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
-body.pp-ui .frappe-control :is([aria-invalid=true],.has-error .form-control){border-color:var(--pp-danger)!important;background:color-mix(in srgb,var(--pp-danger) 3%,var(--pp-surface))}
+body.pp-customer-app .pp-select-option:is(.is-active,[aria-selected=true]){background:var(--pp-field-hover);outline:0}
+body.pp-customer-app .pp-select-option[aria-selected=true]{font-weight:500}
+body.pp-customer-app .pp-select-check{width:20px;height:20px;flex:none;display:grid;place-items:center}
+body.pp-customer-app .pp-select-empty{font-size:14px;line-height:20px;padding:12px;margin:0;color:var(--pp-field-hint)}
+body.pp-customer-app .awesomplete>ul,body.pp-customer-app .dropdown-menu{border:1px solid #e2e8f0;border-radius:8px;padding:6px;box-shadow:0 12px 16px -4px #00000014,0 4px 6px -2px #00000008,0 2px 2px -1px #0000000a;background:var(--pp-field-bg);font-family:var(--pp-field-font)}
+body.pp-customer-app .awesomplete>ul>li,body.pp-customer-app .dropdown-menu .dropdown-item{font-size:16px;line-height:24px;padding:8px;min-height:40px;border-radius:6px;color:var(--pp-field-text)}
+body.pp-customer-app .awesomplete>ul>li[aria-selected=true],body.pp-customer-app .dropdown-menu .dropdown-item:hover{background:var(--pp-field-hover);color:var(--pp-field-text)}
+body.pp-customer-app .pp-search-picker .pp-picker-toggle{top:8px;right:8px;transform:none;height:24px;width:24px;min-height:24px;padding:4px}
+body.pp-customer-app .pp-search-picker .pp-picker-toggle svg{width:16px;height:16px}
+body.pp-customer-app .pp-search-picker .pp-control-help{right:32px}
+body.pp-customer-app.pp-ui .pp-search-picker .pp-control-shell.has-help>input.form-control{padding-right:63px}
+/* Simple choices are the library's Checkbox and Radio, not invented outlined chips. */
+body.pp-customer-app.pp-ui .pp-figma-field .pp-choice-field{min-height:66px;gap:8px 24px;margin:0;padding:0;align-content:start}
+body.pp-customer-app.pp-ui .pp-figma-field .pp-choice-field legend{font:500 14px/20px var(--pp-field-font);color:var(--pp-field-label);min-height:20px;margin:0 0 6px;padding:0}
+body.pp-customer-app.pp-ui .pp-figma-field .pp-choice-field>label{display:flex;align-items:center;gap:12px;height:40px;min-height:40px;padding:0;border:0;border-radius:0;background:transparent;font:500 16px/24px var(--pp-field-font);color:var(--pp-field-label)}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]){appearance:none;position:relative;display:inline-grid;place-items:center;width:20px!important;height:20px;min-width:20px;min-height:20px;padding:0;margin:0!important;flex:none;border:1px solid var(--pp-field-border);border-radius:6px;background:var(--pp-field-bg);box-shadow:none;vertical-align:middle;cursor:pointer}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):before{content:none;position:static;inset:auto;border:0;margin:0;transform:none;box-shadow:none}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=radio]{border-radius:9999px}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):checked{background:#116f65;border-color:#116f65}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=radio]:checked:before{content:'';display:block;width:8px;height:8px;border-radius:50%;background:#fff}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=checkbox]:checked:before{content:'';display:block;width:14px;height:14px;background:url('/assets/plus_point/images/figma/check-checkbox.svg') center no-repeat}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):focus-visible{outline:2px solid var(--pp-focus);outline-offset:3px}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):disabled{background:var(--pp-field-disabled);border-color:var(--pp-field-border);cursor:default}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio])[aria-invalid=true]{border-color:var(--pp-field-error)}
+body.pp-customer-app.pp-ui .pp-figma-field[data-fieldtype=Check] label{font:500 16px/24px var(--pp-field-font);color:var(--pp-field-label);display:flex;align-items:center;gap:12px;min-height:24px}
+body.pp-customer-app.pp-ui .pp-figma-field[data-fieldtype=Check] .help-box{margin:2px 0 0 32px;font-size:16px;line-height:24px}
+body.pp-customer-app.pp-ui .pp-figma-field[data-fieldtype=Check] .checkbox{margin:0}
+body.pp-customer-app.pp-ui .pp-figma-field.has-error .control-label.reqd:after{color:var(--pp-field-error)}
+@media(max-width:767px){body.pp-customer-app.pp-ui :is(input.form-control,select.form-control,.pp-select-trigger){min-height:44px;height:44px}body.pp-customer-app .pp-control-leading{top:12px}body.pp-customer-app .pp-control-help,body.pp-customer-app .pp-number-step{top:10px}body.pp-customer-app .pp-control-error{top:14px}body.pp-customer-app.pp-ui .pp-figma-field .pp-choice-field>label{height:44px;min-height:44px}body.pp-customer-app .pp-select-option{min-height:44px;height:auto}}
+@media(prefers-contrast:more){body.pp-customer-app.pp-ui{--pp-field-border:#64748b}}
+@media(prefers-reduced-motion:reduce){body.pp-customer-app.pp-ui :is(input.form-control,select.form-control,textarea.form-control,.pp-select-trigger){transition:none}}
+@media(forced-colors:active){body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]){appearance:auto}body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):before{display:none}}
 body.pp-ui .pp-input-hint{color:var(--pp-danger);font-size:14px;line-height:1.5;margin-top:6px}
 body.pp-ui :is(input[type=checkbox],input[type=radio]){accent-color:#116f65;flex:none}
 body.pp-ui :is(.standard-filter-section,.filter-section,.page-form,.list-filters) :is(.btn,.form-control,.sort-selector-button,.filter-button){height:var(--pp-control-height);min-height:var(--pp-control-height);line-height:20px;font-size:14px;box-sizing:border-box}
@@ -187,3 +237,10 @@ body.pp-customer-app .pp-picker-tools .btn{flex:1;white-space:normal;min-height:
 body.pp-customer-app [data-pp-form] .section-body>.form-column:only-child{flex:0 0 100%;max-width:100%;width:100%}
 body.pp-customer-app .pp-derived-rate-note{display:block;margin-top:6px;font-size:14px;line-height:20px;color:var(--text-muted)}
 body.pp-customer-app .pp-derived-rate-note[hidden]{display:none}
+
+body.pp-customer-app.pp-ui .pp-figma-choice-label{font-family:var(--pp-field-font);font-size:16px;line-height:24px}
+
+body.pp-customer-app.pp-ui .pp-select-trigger.is-placeholder{font-weight:400;color:var(--pp-field-placeholder)}
+
+/* Figma Help icon tooltip 1052:587: top, no arrow. */
+body.pp-customer-app .pp-info-portal.pp-field-tooltip{background:#001f33;color:#fff;border:0;border-radius:8px;padding:8px 12px;font:600 12px/18px var(--pp-field-font);text-align:center;max-width:min(320px,calc(100vw - 24px));box-shadow:0 12px 16px -4px #00000014,0 4px 6px -2px #00000008,0 2px 2px -1px #0000000a}

@@ -8,6 +8,7 @@
  plus_point.bind_country_currency=async form=>{let seq=0;const suggest=async()=>{const own=++seq,before=form.get_value('default_currency');try{const data=await plus_point.setup_rpc('plus_point.locations.country_defaults',{country:form.get_value('country')});if(own===seq&&form.get_value('default_currency')===before)await form.set_value('default_currency',data.currency);}catch{form.set_df_property('default_currency','description',__('Choose the currency you bill this client in.'));}};form.fields_dict.country.df.onchange=suggest;if(!form.get_value('default_currency'))await suggest();};
  plus_point.enhance_selectors=layout=>{
   plus_point.enhance_inputs?.(layout);plus_point.bind_category_choice?.(layout);plus_point.enhance_choices?.(layout);
+  for(const c of Object.values(layout.fields_dict||{}))plus_point.ui?.field(c);
   for(const c of Object.values(layout.fields_dict||{}))if(c.df.fieldtype==='Select'&&c.$input&&!c.ppChoices&&!c.ppSelectBound){c.ppSelectBound=true;c.$input.get(0).ppControl=c;const native=c.set_input.bind(c);c.set_input=(...args)=>{const result=native(...args);queueMicrotask(()=>{plus_point.ui?.selects(c.$wrapper.get(0));plus_point.ui?.sync_select(c.$input?.get(0));});return result;};const refresh=c.refresh.bind(c);c.refresh=(...args)=>{const result=refresh(...args);plus_point.ui?.sync_select(c.$input?.get(0));return result;};c.set_focus=()=>{const input=c.$input?.get(0);(input?.ppSelect?.button||input)?.focus();};plus_point.ui?.selects(c.$wrapper.get(0));}
   for(const control of Object.values(layout.fields_dict||{})){
    if(control.df.label)control.$input?.attr('aria-label',control.df.label);
@@ -26,7 +27,7 @@
 
    const status=$('<span class="pp-picker-status" role="status"></span>').appendTo(control.$wrapper);
    const picker=control.$input_area.find('.awesomplete').first(),tools=$('<div class="pp-picker-tools"></div>').appendTo(picker),more=$('<button type="button" class="btn btn-default btn-sm pp-picker-more" hidden>'+__('Load more results')+'</button>').appendTo(tools);
-   const toggle=$('<button type="button" class="pp-picker-toggle" tabindex="-1">'+plus_point.icon('down')+'</button>').attr('aria-label',__('Choose {0}',[__(control.df.label||control.df.options)])).appendTo(control.$input_area.find('.link-field'));
+   const toggle=$('<button type="button" class="pp-picker-toggle" tabindex="-1"><img src="/assets/plus_point/images/figma/chevron-down.svg" alt="" aria-hidden="true"></button>').attr('aria-label',__('Choose {0}',[__(control.df.label||control.df.options)])).appendTo(control.$input_area.find('.link-field'));
    let controller,found=new Map(),cursor=0,currentTerm='',hasMore=false,skipFocus=false;
    const sizeTools=()=>{const active=tools.find('button:not([hidden])').length>0;control.$wrapper.toggleClass('pp-picker-has-tools',active);if(active)picker.get(0).style.setProperty('--pp-picker-tools-height',tools.get(0).offsetHeight+'px');};
    const search=async(term,append=false)=>{
