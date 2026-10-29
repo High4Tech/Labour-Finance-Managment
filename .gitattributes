@@ -8,3 +8,6 @@
 *.yml text eol=lf
 *.md text eol=lf
 *.cmd text eol=crlf
+# Preserve the supplied SVG bytes used by the design-asset integrity manifest.
+apps/plus_point/plus_point/public/images/design-system/*.svg -text
+apps/plus_point/plus_point/public/images/design-system/**/*.svg -text

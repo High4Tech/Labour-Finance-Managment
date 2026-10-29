@@ -41,7 +41,7 @@
     </div></div></div>`;
    root.querySelector('.pp-worker-edit').onclick=()=>{frm.__pp_worker_edit=true;mount(frm,days);};
    root.querySelector('.pp-worker-period').onchange=event=>mount(frm,Number(event.target.value));
-   root.querySelector('.pp-worker-photo').onclick=()=>new frappe.ui.FileUploader({doctype:'Employee',docname:name,make_attachments_public:false,restrictions:{allowed_file_types:['image/png','image/jpeg','image/webp','image/gif']},on_success:async file=>{try{await plus_point.form_rpc('operations.set_photo',{employee:name,file_url:file.file_url});await frm.reload_doc();}catch(error){frappe.msgprint(esc(error.message));}}});
+   root.querySelector('.pp-worker-photo').onclick=()=>plus_point.open_file_upload({doctype:'Employee',docname:name,make_attachments_public:false,restrictions:{allowed_file_types:['image/png','image/jpeg','image/webp','image/gif']},on_success:async file=>{try{await plus_point.form_rpc('operations.set_photo',{employee:name,file_url:file.file_url});await frm.reload_doc();}catch(error){frappe.msgprint(esc(error.message));}}});
    root.querySelector('.pp-remove-photo')?.addEventListener('click',async()=>{await plus_point.form_rpc('operations.set_photo',{employee:name});await frm.reload_doc();});
    root.querySelectorAll('.pp-worker-assign').forEach(button=>button.onclick=()=>plus_point.worker_assign?plus_point.worker_assign(frm,()=>mount(frm,days)):frappe.msgprint(__('The worker assignment update is awaiting installation. Refresh after the update is installed.')));
    root.querySelector('[data-activate-worker]')?.addEventListener('click',async()=>{await plus_point.form_rpc('benefits.activate',{employee:name});await frm.reload_doc();});

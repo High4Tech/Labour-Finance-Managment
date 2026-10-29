@@ -1,0 +1,61 @@
+/* Uploaded design kit: one compact upload surface, real native controls and theme tokens. */
+body.pp-customer-app .pp-file-type-icon{display:block;width:40px;height:40px;object-fit:contain;flex:none}
+body.pp-customer-app .pp-agreement-files>li{grid-template-columns:40px minmax(0,1fr) 44px}
+body.pp-customer-app .pp-country-flag{display:inline-block;width:24px;height:16px;object-fit:cover;border-radius:2px;flex:none;vertical-align:middle}
+body.pp-customer-app .pp-country-option{display:flex!important;align-items:center;gap:12px}
+body.pp-customer-app .pp-country-option>p{min-width:0;margin:0!important;flex:1}
+body.pp-customer-app .pp-control-shell>.pp-country-flag{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);pointer-events:none}
+body.pp-customer-app .pp-control-shell.has-country-flag>.pp-control-leading{visibility:hidden}
+body.pp-customer-app .pp-control-shell.has-country-flag>input{padding-inline-start:48px!important}
+body.pp-customer-app .pp-upload-asset{width:40px;height:40px;display:block}
+body.pp-customer-app .pp-import-dropzone{min-height:148px;gap:8px;padding:20px;border:1px solid var(--border-color);border-radius:12px;background:var(--card-bg,var(--bg-color));color:var(--text-color)}
+body.pp-customer-app .pp-import-dropzone .pp-upload-symbol{margin:0 0 4px;width:40px;height:40px}
+body.pp-customer-app .pp-upload-prompt{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:0 4px;font-size:14px;line-height:1.5}
+body.pp-customer-app .pp-upload-prompt [data-upload-choose]{background:transparent!important;border:0!important;color:var(--pp-accent)!important;box-shadow:none!important;font-size:14px;font-weight:600;padding:4px 0!important;min-height:32px;line-height:1.5}
+body.pp-customer-app .pp-upload-prompt [data-upload-choose]:focus-visible{outline:2px solid var(--pp-accent);outline-offset:3px}
+body.pp-customer-app .pp-import-dropzone>p{font-size:13px;line-height:1.5}
+body.pp-customer-app .pp-import-dropzone:hover,body.pp-customer-app .pp-import-dropzone.is-dragging{border-color:var(--pp-accent);background:var(--pp-choice-active-bg,var(--control-bg))}
+body.pp-customer-app .pp-import-dropzone[aria-disabled=true]{opacity:.6;pointer-events:none}
+body.pp-customer-app .pp-import-dropzone.has-error{border-color:var(--pp-status-danger)}
+body.pp-customer-app .pp-import-selected{padding:16px;gap:16px;background:var(--card-bg,var(--bg-color));border-radius:12px}
+body.pp-customer-app .pp-import-selected>span{display:flex!important;align-items:center;flex:none}
+body.pp-customer-app .pp-import-selected strong{font-size:14px;line-height:1.5}
+body.pp-customer-app .pp-import-selected [data-upload-size],body.pp-customer-app .pp-import-selected [data-upload-state]{font-size:13px;line-height:1.5}
+body.pp-customer-app .pp-import-selected [data-upload-state]{color:var(--pp-accent)}
+body.pp-customer-app .pp-import-selected[data-upload-status=error]{border-color:var(--pp-status-danger)}
+body.pp-customer-app .pp-import-selected[data-upload-status=error] [data-upload-state]{color:var(--pp-status-danger)}
+body.pp-customer-app .pp-import-selected [data-upload-remove]{align-self:start;flex:none;width:40px;height:40px;padding:8px}
+body.pp-customer-app .pp-import-progress,body.pp-customer-app .pp-upload-track{height:8px;background:var(--control-bg);border-radius:8px;overflow:hidden}
+body.pp-customer-app .pp-import-progress>span,body.pp-customer-app .pp-upload-track>span{display:block;height:100%;background:var(--pp-accent);border-radius:inherit}
+body.pp-customer-app .pp-import-progress[hidden]{display:none}
+/* Native uploader variant. Library, links, camera and configured Drive access stay intact. */
+body.pp-customer-app .pp-upload-dialog .file-uploader{padding:0;min-height:0}
+body.pp-customer-app .pp-upload-dialog .file-upload-area{border:1px solid var(--border-color);border-radius:12px;background:var(--card-bg,var(--bg-color));padding:20px;min-height:148px;color:var(--text-color)}
+body.pp-customer-app .pp-upload-dialog .file-upload-area::before{content:'';display:block;width:40px;height:40px;margin:0 auto 16px;background:url('/assets/plus_point/images/design-system/upload.svg') center/contain no-repeat}
+body.pp-customer-app .pp-upload-dialog .file-upload-area:hover{border-color:var(--pp-accent)}
+body.pp-customer-app .pp-upload-dialog .file-upload-area .mt-3{margin-top:12px!important;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+body.pp-customer-app .pp-upload-dialog .btn-file-upload{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;min-height:40px;background:var(--control-bg);border:1px solid var(--border-color);border-radius:8px;color:var(--text-color)}
+body.pp-customer-app .pp-upload-dialog .btn-file-upload>svg{width:20px;height:20px}
+body.pp-customer-app .pp-upload-dialog .btn-file-upload>.mt-1{margin:0!important}
+body.pp-customer-app .pp-upload-dialog .file-preview-container{padding:0;display:grid;gap:12px}
+body.pp-customer-app .pp-upload-dialog .file-preview-outline{padding:16px;margin:0;border:1px solid var(--border-color);border-radius:12px;background:var(--card-bg,var(--bg-color))}
+body.pp-customer-app .pp-upload-dialog .file-preview{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:16px;align-items:start}
+body.pp-customer-app .pp-upload-dialog .file-preview .file-icon{width:40px;height:40px;background:transparent}
+body.pp-customer-app .pp-upload-dialog .file-preview .file-name{font-size:14px;line-height:1.5;overflow-wrap:anywhere;white-space:normal}
+body.pp-customer-app .pp-upload-dialog .file-preview .file-size{font-size:13px;line-height:1.5;color:var(--text-color);opacity:1}
+body.pp-customer-app .pp-upload-dialog .file-preview .config-area{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+body.pp-customer-app .pp-upload-dialog .file-preview .config-area label{display:inline-flex;gap:8px;margin:0;align-items:center;color:var(--text-color);opacity:1}
+body.pp-customer-app .pp-upload-dialog .pp-native-upload-progress{display:flex;gap:12px;align-items:center;margin-top:12px}
+body.pp-customer-app .pp-upload-dialog .pp-native-upload-progress[hidden]{display:none}
+body.pp-customer-app .pp-upload-dialog .pp-upload-track{flex:1}
+body.pp-customer-app .pp-upload-dialog .pp-upload-percent{font-size:13px;min-width:36px;text-align:end}
+body.pp-customer-app .pp-upload-dialog [data-upload-state=error]{border-color:var(--pp-status-danger)}
+body.pp-customer-app .pp-upload-dialog [data-upload-state=complete]{border-color:var(--pp-accent)}
+body.pp-customer-app .pp-upload-dialog .file-actions .progress-ring{display:none}
+@media(max-width:480px){
+ body.pp-customer-app .pp-import-dropzone{padding:16px}
+ body.pp-customer-app .pp-import-selected{padding:12px;gap:12px}
+ body.pp-customer-app .pp-upload-dialog .file-preview{gap:12px}
+ body.pp-customer-app .pp-agreement-files>li{gap:12px;padding:12px!important}
+}
+@media(prefers-reduced-motion:reduce){body.pp-customer-app .pp-import-progress>span,body.pp-customer-app .pp-upload-track>span{transition:none}}

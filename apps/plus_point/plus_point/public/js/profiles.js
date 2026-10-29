@@ -46,7 +46,7 @@
   }else renderMilestones(holder,data,refreshPanel);
   area.querySelector('[data-profile-pdf]')?.addEventListener('click',async()=>plus_point.preview_document(await plus_point.form_rpc('agreement_documents.agreement_pdf',{name})));
   area.querySelector('[data-profile-sign]').onclick=()=>plus_point.open_agreement_signing(name);
-  area.querySelectorAll('[data-profile-upload]').forEach(button=>button.onclick=()=>new frappe.ui.FileUploader({doctype:'Contract',docname:data.contract,make_attachments_public:false,allow_multiple:false,on_success:refreshPanel}));
+  area.querySelectorAll('[data-profile-upload]').forEach(button=>button.onclick=()=>plus_point.open_file_upload({doctype:'Contract',docname:data.contract,make_attachments_public:false,allow_multiple:false,on_success:refreshPanel}));
   area.querySelector('[data-profile-event]').onclick=async()=>{if(data.status==='Draft'){frappe.set_route('pp-agreements',{record:name,edit:1});return;}try{await plus_point.open_event_draft(await plus_point.form_rpc('drafts.event_for_agreement',{agreement:name}));}catch(error){frappe.show_alert({message:error.message,indicator:'red'});}};
  };
 })();

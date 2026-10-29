@@ -58,7 +58,7 @@
         dialog=new frappe.ui.Dialog({title:__(defaultKind==='agreements'?'Import agreements':'Import records'),static:true,size:'extra-large',fields:[
             {fieldtype:'HTML',fieldname:'intro',options:`<p>${esc(__('Download a template, fill it in Excel or Google Sheets, then upload CSV or XLSX. Review every row before saving. Up to 200 rows and 2 MB per file.'))}</p>`},
             {fieldtype:'HTML',fieldname:'feedback'},
-            {fieldtype:'Link',fieldname:'company',label:__('Your company'),options:'Company',reqd:1,default:defaultCompany,hidden:!!defaultCompany,onchange:reset},
+            {fieldtype:'Link',fieldname:'company',label:__('Your company'),options:'Company',reqd:!defaultCompany,default:defaultCompany,hidden:!!defaultCompany,onchange:reset},
             {fieldtype:'Select',fieldname:'kind',label:__('What are you importing?'),options:Object.entries(kinds).map(([value,label])=>({value,label:__(label)})),default:defaultKind,reqd:1,onchange:helpText},
             {fieldtype:'HTML',fieldname:'template_actions',options:`<div class="pp-import-tools"><button class="btn btn-primary pp-download-template" type="button">${esc(__('Download template'))}</button><button class="btn btn-default pp-download-ids" type="button">${esc(__('Download reference IDs'))}</button></div>`},
             {fieldtype:'HTML',fieldname:'instructions'},
@@ -76,7 +76,7 @@
             dialog.$wrapper.find('.pp-import-confirmation-hint').text(waiting?__('Tick the review box to enable import.'):__('Ready to import the reviewed records.'));
         }
         function setBusy(value){
-            busy=value;updateReady();dialog.get_secondary_btn().prop('disabled',value);
+            busy=value;zone?.attr('aria-disabled',String(value));updateReady();dialog.get_secondary_btn().prop('disabled',value);
             dialog.$wrapper.find('input,select,.pp-download-template,.pp-download-ids,[data-upload-choose],[data-upload-remove]').prop('disabled',value);
         }
         function editAgreement(name){
@@ -84,17 +84,18 @@
             dialog.hide();
         }
         async function review(){
-            if(busy)return;feedback();const values=dialog.get_values(true);
+            if(busy)return;feedback();const values=dialog.get_values(true);if(values&&defaultCompany)values.company=defaultCompany;
             if(!values?.company||!values?.kind){feedback(__('Choose your company and import type first.'));return;}
             if(!file){feedback(__('Choose a CSV or XLSX file first.'));return;}
             if(file.size>2*1024*1024){feedback(__('Choose a file smaller than 2 MB.'));return;}
-            setBusy(true);
+            setBusy(true);setUploadState('Reading file',0);
             try {
                 dialog.fields_dict.preview.$wrapper.empty();
                 dialog.set_df_property('confirmed','hidden',1);
                 await dialog.set_value('confirmed',0);
-                const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=reject;reader.readAsDataURL(file);});
+                const content=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onprogress=e=>{if(e.lengthComputable)setUploadState('Reading file',Math.round(e.loaded*100/e.total));};reader.onload=()=>{setUploadState('Checking records',100);resolve(String(reader.result).split(',')[1]);};reader.onerror=reject;reader.readAsDataURL(file);});
                 preview=await request('imports.preview',{kind:values.kind,company:values.company,filename:file.name,content});
+                setUploadState(preview.valid?'Ready for your approval':'Fix the file before importing');
                 const counts=['Create','Update','Skip','Fix'].map(action=>`${preview.rows.filter(r=>r.action===action).length} ${__(action.toLowerCase())}`).join(' · ');
                 dialog.fields_dict.preview.$wrapper.html(`<section class="pp-import-preview" aria-live="polite"><h3>${esc(__(preview.valid?'Review before saving':'Fix the file before importing'))}</h3><p>${esc(counts)}.${!['employees','clients','vehicles','inventory_items','warehouses','event_sites','events','agreements'].includes(values.kind)?` ${esc(__(values.kind==='stock_balances'?'Counted stock value (not cash or the value change)':'New or updated amount'))}: <strong>${esc(preview.total)} ${esc(preview.currency)}</strong>`:''}</p>
                     ${(preview.budgets||[]).filter(b=>b.enabled).map(b=>`<div class="pp-condition pp-condition-${esc(b.level)}"><div><h4>${esc(b.title)}</h4><p>${esc(b.projected)} / ${esc(b.limit)} ${esc(b.currency)}. ${esc(__(b.blocked?'Spending limit exceeded. Reduce the rows or review the budget.':b.level==='warning'?'This import reaches at least 80% of the spending budget.':'Within the spending budget.'))}</p></div><a href="/desk/project/${encodeURIComponent(b.project)}" target="_blank" rel="noopener noreferrer">${esc(__('Review spending budget'))}</a></div>`).join('')}
@@ -107,7 +108,7 @@
                     dialog.set_df_property('confirmed','label',__(values.kind==='agreements'?'I reviewed these {0} agreements and want to save them.':values.kind==='employees'?'I reviewed these {0} worker profiles and want to save them.':values.kind==='stock_balances'?'I reviewed these {0} stock counts and values and confirm the stock posting.':'I reviewed these {0} records and confirm the listed changes and financial postings.',[preview.rows.length]));
                     dialog.set_df_property('confirmed','hidden',0);dialog.set_primary_action(__(values.kind==='agreements'?'Import agreements':values.kind==='employees'?'Import employees':['clients','vehicles','inventory_items','warehouses','event_sites','events'].includes(values.kind)?'Import records':'Import and post records'),apply);
                 }
-            }catch(error){preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file'),review);feedback(error.message||__('Could not read this file. Try again.'));}finally{setBusy(false);}
+            }catch(error){preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file'),review);setUploadState('Review failed');feedback(error.message||__('Could not read this file. Try again.'));}finally{setBusy(false);}
         }
         async function apply(){
             if(busy||!preview?.token)return;
@@ -116,7 +117,7 @@
             setBusy(true);
             try{
                 const kind=dialog.get_value('kind'),result=await request('imports.apply',{token:preview.token});
-                preview=null;finished=true;
+                preview=null;finished=true;setUploadState('Import saved');
                 const agreements=options.openAgreement&&kind==='agreements'?[...new Map(result.rows.filter(r=>r.doctype==='PP Contract Terms'&&r.document).map(r=>[r.document,r])).values()]:[];
                 if(agreements.length===1){editAgreement(agreements[0].document);return;}
                 dialog.fields_dict.preview.$wrapper.html(`<section class="pp-condition pp-condition-success"><div><h4>${esc(__('Import saved'))}</h4><p>${esc(__('{0} created, {1} updated, {2} skipped. Your dashboard and reports use the saved records.',[result.created,result.updated,result.skipped]))}</p></div><button type="button" class="btn btn-default pp-import-done">${esc(onClose?__(returnLabel):__('View updated dashboard'))}</button></section><details><summary>${esc(__('Saved records'))}</summary><ul>${result.rows.map(r=>`<li><strong>${esc(__(r.action==='Create'?'Created':r.action==='Update'?'Updated':'Skipped'))}</strong> · ${esc(r.external_id)}: <a href="${r.doctype==='PP Contract Terms'?'/desk/pp-agreements?record='+encodeURIComponent(r.document):'/desk/'+frappe.router.slug(r.doctype)+'/'+encodeURIComponent(r.document)}" target="_blank" rel="noopener noreferrer">${esc(r.document)}</a></li>`).join('')}</ul></details>`);
@@ -131,7 +132,7 @@
                 plus_point.refresh_setup_banner?.();
             }catch(error){
                 preview=null;dialog.set_df_property('confirmed','hidden',1);dialog.set_primary_action(__('Review file again'),review);
-                feedback(error.message||__('Import could not finish. Review the file again before retrying.'));
+                setUploadState('Import failed');feedback(error.message||__('Import could not finish. Review the file again before retrying.'));
             }finally{setBusy(false);}
         }
         dialog.$wrapper.one('hidden.bs.modal',()=>{file=null;upload.off('.pp-import-upload');dialog.$wrapper.remove();if(onClose)onClose();else if(finished)plus_point.refresh_setup_banner?.();});
@@ -144,15 +145,18 @@
         dialog.show();plus_point.enhance_selectors?.(dialog);for(const control of Object.values(dialog.fields_dict))if(control.df.fieldtype!=='Check')control.$input?.attr('aria-label',control.df.label||'');helpText();
         const upload=dialog.fields_dict.upload.$wrapper;
         const errorId='pp-upload-error-'+crypto.randomUUID();
-        upload.html(`<div class="pp-import-dropzone" role="group" aria-label="${esc(__('Upload import file'))}"><span class="pp-upload-symbol" aria-hidden="true">${frappe.utils.icon('upload','lg')}</span><strong>${esc(__('Drag your file here'))}</strong><p>${esc(__('CSV or Excel (.xlsx), up to 2 MB'))}</p><button type="button" class="btn btn-default" data-upload-choose aria-describedby="${errorId}">${esc(__('Upload file'))}</button><input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}" hidden></div><div class="pp-import-selected" hidden role="status"><span aria-hidden="true">${frappe.utils.icon('file','md')}</span><div><strong data-upload-name></strong><span data-upload-size></span></div><button type="button" class="btn btn-default" data-upload-remove aria-label="${esc(__('Remove selected file'))}">${esc(__('Remove'))}</button></div><p class="pp-upload-error" id="${errorId}" role="alert" hidden></p><p class="pp-upload-guidance">${esc(__('Use one worksheet, keep the template headers, and replace formulas with values. Dates use YYYY-MM-DD.'))}</p>`);
+        upload.html(`<div class="pp-import-dropzone" role="group" aria-label="${esc(__('Upload import file'))}"><span class="pp-upload-symbol" aria-hidden="true">${plus_point.assets.upload()}</span><div class="pp-upload-prompt"><button type="button" class="btn btn-link" data-upload-choose aria-label="${esc(__('Upload file'))}" aria-describedby="${errorId}">${esc(__('Click to upload'))}</button> <span>${esc(__('or drag and drop'))}</span></div><p>${esc(__('CSV or Excel (.xlsx), up to 2 MB'))}</p><input type="file" accept=".csv,.xlsx" aria-label="${esc(__('Import file'))}" hidden></div><div class="pp-import-selected" hidden role="status"><span data-upload-icon aria-hidden="true"></span><div><strong data-upload-name></strong><span data-upload-size></span><span data-upload-state></span><div class="pp-import-progress" role="progressbar" aria-label="${esc(__('Reading import file'))}" aria-valuemin="0" aria-valuemax="100" hidden><span></span></div></div><button type="button" class="btn btn-default pp-icon-button" data-upload-remove aria-label="${esc(__('Remove selected file'))}">${plus_point.icon('close')}</button></div><p class="pp-upload-error" id="${errorId}" role="alert" hidden></p><p class="pp-upload-guidance">${esc(__('Use one worksheet, keep the template headers, and replace formulas with values. Dates use YYYY-MM-DD.'))}</p>`);
         const input=upload.find('input[type=file]'),zone=upload.find('.pp-import-dropzone'),selected=upload.find('.pp-import-selected'),uploadError=upload.find('.pp-upload-error');let dragDepth=0;
+        function setUploadState(state,percent=null){
+            selected.attr('data-upload-status',/failed|^Fix/.test(state)?'error':'ready');upload.find('[data-upload-state]').text(__(state));const progress=upload.find('.pp-import-progress');progress.prop('hidden',percent===null);if(percent!==null){progress.attr('aria-valuenow',percent);progress.find('span').css('width',percent+'%');}
+        }
         function chooseFile(next,error=''){
-            if(busy)return;file=null;reset();uploadError.text('').prop('hidden',true);zone.removeClass('is-dragging has-error');selected.prop('hidden',true);
+            if(busy)return;file=null;reset();uploadError.text('').prop('hidden',true);zone.removeClass('is-dragging has-error');selected.prop('hidden',true);setUploadState('Ready to review');
             if(!error&&next&&!/\.(csv|xlsx)$/i.test(next.name))error=__('Choose a CSV or Excel (.xlsx) file.');
             if(!error&&next&&next.size>2*1024*1024)error=__('This file is larger than 2 MB. Split it into smaller files.');
             if(error){input.val('');uploadError.text(error).prop('hidden',false);zone.addClass('has-error');return;}
             file=next||null;
-            if(file){upload.find('[data-upload-name]').text(file.name);upload.find('[data-upload-size]').text(Math.max(1,Math.ceil(file.size/1024))+' KB');selected.prop('hidden',false);}else input.val('');
+            if(file){upload.find('[data-upload-icon]').html(plus_point.assets.file(file.name));upload.find('[data-upload-name]').text(file.name);upload.find('[data-upload-size]').text(Math.max(1,Math.ceil(file.size/1024))+' KB');selected.prop('hidden',false);}else input.val('');
         }
         upload.on('click.pp-import-upload','[data-upload-choose]',()=>{if(!busy)input.get(0).click();});
         upload.on('click.pp-import-upload','[data-upload-remove]',()=>{chooseFile(null);upload.find('[data-upload-choose]').trigger('focus');});
@@ -160,8 +164,8 @@
         upload.on('dragenter.pp-import-upload dragover.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();if(busy)return;if(event.type==='dragenter')dragDepth++;zone.addClass('is-dragging');});
         upload.on('dragleave.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)zone.removeClass('is-dragging');});
         upload.on('drop.pp-import-upload','.pp-import-dropzone',event=>{event.preventDefault();dragDepth=0;zone.removeClass('is-dragging');if(busy)return;const files=event.originalEvent.dataTransfer?.files;chooseFile(files?.[0],files?.length!==1?__('Choose one CSV or Excel file at a time.'):'');});
-        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else feedback(__('Choose your company first.'));});
-        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=dialog.get_value('company');if(company)download('references',{company});else feedback(__('Choose your company first.'));});
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-template').on('click',()=>{const company=defaultCompany||dialog.get_value('company');if(company)download('template',{kind:dialog.get_value('kind'),company});else feedback(__('Choose your company first.'));});
+        dialog.fields_dict.template_actions.$wrapper.find('.pp-download-ids').on('click',()=>{const company=defaultCompany||dialog.get_value('company');if(company)download('references',{company});else feedback(__('Choose your company first.'));});
         if(!defaultCompany){try{const info=await request('setup_flow.status',{});if(info.companies.length===1){dialog.set_value('company',info.companies[0].name);dialog.set_df_property('company','hidden',true);};}catch(error){feedback(error.message);}}
     };
 })();

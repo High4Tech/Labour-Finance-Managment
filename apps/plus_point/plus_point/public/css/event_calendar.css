@@ -17,21 +17,6 @@
 .pp-gantt-bar.is-short{border-color:var(--pp-status-warning,#946200);border-left-style:dashed;background:color-mix(in srgb,var(--pp-status-warning) 10%,var(--fg-color))}
 .pp-gantt-bar:focus-visible,.pp-gantt-scroll:focus-visible{outline:3px solid var(--pp-accent);outline-offset:-3px}
 .pp-staffing-calendar{min-width:0}
-.pp-staffing-calendar .pp-calendar-heading{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:0 0 12px}
-.pp-staffing-calendar .pp-calendar-heading>div:first-child{flex:1;min-width:220px}
-.pp-staffing-calendar .pp-calendar-heading h3{font-size:14px;font-weight:600;line-height:1.5;margin:0 0 8px}
-.pp-staffing-calendar .pp-timeline-summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;font-size:12px;line-height:1.7;color:var(--text-muted)}
-.pp-staffing-calendar .pp-timeline-summary>span{display:inline-flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
-.pp-staffing-calendar .pp-timeline-summary svg{width:17px;height:17px;flex:0 0 17px}
-.pp-staffing-calendar .pp-timeline-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;margin:0}
-.pp-staffing-calendar .pp-calendar-periods,.pp-staffing-calendar .pp-calendar-navigation{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-body.pp-ui .pp-staffing-calendar [data-period][aria-pressed=true]{color:var(--pp-action-on-primary);background:var(--pp-action-primary);border-color:var(--pp-action-primary)}
-.pp-staffing-calendar .pp-calendar-navigation .btn{min-width:var(--pp-action-height)}
-.pp-staffing-calendar .pp-period-label{font-size:13px;line-height:1.6;min-width:125px;margin-inline-start:8px;color:var(--text-color)}
-.pp-staffing-calendar .pp-timeline-legend{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px 18px;font-size:12px;line-height:1.6;color:var(--text-muted);margin:0 0 14px}
-.pp-staffing-calendar .pp-timeline-legend>span{display:inline-flex;align-items:center;gap:7px}
-.pp-staffing-calendar .pp-timeline-legend i{width:10px;height:10px;border-radius:50%;flex:0 0 10px;background:var(--pp-status-warning)}
-.pp-staffing-calendar .pp-timeline-legend i.is-covered{background:var(--pp-accent)}
 .pp-staffing-calendar .pp-event-site-calendar{margin-bottom:20px;min-width:0}.pp-staffing-calendar .pp-event-site-calendar:last-child{margin-bottom:0}
 .pp-staffing-calendar .pp-event-site-calendar>header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:0 0 8px}
 .pp-staffing-calendar .pp-event-site-calendar h4{font-size:13px;line-height:1.6;font-weight:600;margin:0}
@@ -69,28 +54,26 @@ body.pp-ui .pp-staffing-calendar [data-period][aria-pressed=true]{color:var(--pp
 body.pp-ui .pp-staffing-calendar .pp-timeline-grid>.pp-timeline-day{min-height:64px!important;padding:8px!important;display:flex;grid-template-rows:none;align-content:normal;gap:6px 10px;line-height:1.5}
 @media(max-width:600px){body.pp-ui .pp-staffing-calendar .pp-timeline-grid>.pp-timeline-day{min-height:72px!important;padding:7px 5px!important;gap:4px}}
 
-/* Calendar controls center the selected date; filters and coverage stay right. */
-.pp-staffing-calendar .pp-calendar-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px}
-.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{justify-self:center;min-width:0;display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
-.pp-staffing-calendar .pp-calendar-navigation>div{display:flex;flex-direction:column;align-items:center;gap:4px}
-.pp-staffing-calendar [data-work-date]{width:176px;min-height:40px}
-.pp-staffing-calendar .pp-period-label{font-size:13px;min-width:0;margin:0;text-align:center}
-.pp-staffing-calendar .pp-timeline-tools{justify-content:flex-end;max-width:100%}
-.pp-staffing-calendar .pp-timeline-tools select{width:auto;max-width:220px}
-.pp-staffing-calendar .pp-timeline-legend{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-block:8px 20px;font-size:14px}
-.pp-staffing-calendar .pp-timeline-legend>strong{margin-inline-end:4px}
-.pp-staffing-calendar .pp-timeline-legend>.pp-op-badge{padding:6px 10px;border-radius:999px;line-height:1.4}
-.pp-staffing-calendar .pp-calendar-register{margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color);min-width:0}
-.pp-staffing-calendar .pp-calendar-register>header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
-.pp-staffing-calendar .pp-calendar-register h4{font-size:16px;line-height:1.6;margin:0}
-.pp-staffing-calendar .pp-calendar-register .pp-actions{margin-top:16px}
-.pp-staffing-calendar .pp-calendar-register .text-muted{margin-top:12px}
-.pp-staffing-calendar button[data-date][aria-pressed=true]{outline:2px solid var(--pp-accent);outline-offset:-3px}
-@media(max-width:1100px){.pp-staffing-calendar .pp-calendar-heading{grid-template-columns:1fr}.pp-staffing-calendar .pp-timeline-tools{justify-content:center}}
-@media(max-width:600px){.pp-staffing-calendar .pp-calendar-periods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}.pp-staffing-calendar .pp-calendar-periods .btn{padding-inline:10px;font-size:13px}.pp-staffing-calendar .pp-timeline-legend{justify-content:flex-start;flex-wrap:wrap}.pp-staffing-calendar .pp-timeline-legend>strong{width:100%}}
 
+/* One calendar toolbar: views left, selected date centered, venue filter right. */
 .pp-staffing-calendar{container-type:inline-size}
-.pp-staffing-calendar .pp-calendar-heading{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
-.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{grid-column:2}
-.pp-staffing-calendar .pp-calendar-heading>.pp-timeline-tools{grid-column:3;justify-self:end}
-@container(max-width:940px){.pp-staffing-calendar .pp-calendar-heading{display:flex;flex-direction:column;align-items:stretch}.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{align-self:center}.pp-staffing-calendar .pp-calendar-heading>.pp-timeline-tools{align-self:flex-end}}
+.pp-staffing-calendar .pp-calendar-heading{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;margin:0 0 16px}
+.pp-staffing-calendar .pp-calendar-periods{grid-column:1;display:flex;align-items:center;gap:4px;flex-wrap:nowrap;justify-self:start}
+.pp-staffing-calendar .pp-calendar-periods .btn{flex:none;white-space:nowrap}
+body.pp-ui .pp-staffing-calendar [data-period][aria-pressed=true]{background:var(--pp-action-primary);border-color:var(--pp-action-primary);color:var(--pp-action-on-primary)}
+.pp-staffing-calendar .pp-calendar-navigation{grid-column:2;justify-self:center;display:flex;align-items:center;gap:8px;min-width:0}
+.pp-staffing-calendar .pp-calendar-navigation>.btn{width:40px;min-width:40px;padding-inline:0}
+.pp-staffing-calendar .pp-calendar-date-control{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:10px 12px;min-height:42px;width:240px;border:1px solid var(--pp-input-border);border-radius:8px;background:var(--fg-color);color:var(--text-color);cursor:pointer}
+.pp-staffing-calendar .pp-calendar-date-control:focus-within{outline:2px solid var(--pp-accent);outline-offset:2px}
+.pp-staffing-calendar .pp-calendar-date-label{font-size:14px;line-height:20px;white-space:nowrap;font-weight:500;pointer-events:none}
+.pp-staffing-calendar .pp-calendar-date-control>svg{width:18px;height:18px;flex:none;pointer-events:none}
+.pp-staffing-calendar .pp-calendar-date-control input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0}
+.pp-staffing-calendar .pp-timeline-tools{grid-column:3;justify-self:end;min-width:0}
+.pp-staffing-calendar [data-venue-filter]{max-width:220px;min-height:40px}
+.pp-staffing-calendar .pp-timeline-legend{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 16px;font-size:14px}
+.pp-staffing-calendar .pp-timeline-legend>.pp-op-badge{padding:6px 10px;border-radius:999px;line-height:1.4}
+.pp-staffing-calendar .pp-calendar-attendance{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);font-size:14px}
+.pp-staffing-calendar .pp-calendar-attendance .pp-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pp-staffing-calendar button[data-date][aria-pressed=true]{outline:2px solid var(--pp-accent);outline-offset:-3px}
+@container(max-width:1000px){.pp-staffing-calendar .pp-calendar-heading{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.pp-staffing-calendar .pp-calendar-navigation{grid-column:1/-1;grid-row:1}.pp-staffing-calendar .pp-calendar-periods{grid-row:2}.pp-staffing-calendar .pp-timeline-tools{grid-column:2;grid-row:2}}
+@container(max-width:560px){.pp-staffing-calendar .pp-calendar-periods{grid-column:1/-1;width:100%}.pp-staffing-calendar .pp-calendar-periods .btn{flex:1;min-width:0;padding-inline:8px;font-size:13px}.pp-staffing-calendar .pp-timeline-tools{grid-column:1/-1;grid-row:3;justify-self:stretch}.pp-staffing-calendar [data-venue-filter]{max-width:none;width:100%}.pp-staffing-calendar .pp-calendar-date-control{width:216px;padding-inline:8px}.pp-staffing-calendar .pp-calendar-navigation{gap:4px}.pp-staffing-calendar .pp-timeline-legend{justify-content:flex-start}.pp-staffing-calendar .pp-timeline-legend>strong{width:100%}}

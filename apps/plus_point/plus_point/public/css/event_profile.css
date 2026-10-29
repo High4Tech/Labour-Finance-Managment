@@ -109,3 +109,11 @@ body.pp-ui .pp-operations:has(.pp-event-overview){background:var(--subtle-fg,#f3
 .pp-event-main{container-type:inline-size}
 @media(max-width:1300px){.pp-event-overview .pp-event-summary{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:767px){.pp-event-overview .pp-event-summary{grid-template-columns:minmax(0,1fr)}}
+
+.pp-event-progress li{padding:12px 12px 20px;margin-bottom:8px;border-radius:8px}
+.pp-event-progress li:last-child{padding:12px;margin-bottom:0}
+.pp-event-progress li:before{inset-inline-start:21px;top:32px;bottom:-8px}
+.pp-event-progress-dot>svg{width:16px;height:16px;stroke-width:3}
+.pp-event-progress [data-state=Upcoming],.pp-event-progress [data-state="Not scheduled"]{background:var(--pp-band);color:var(--text-muted)}
+.pp-event-progress :is([data-state=Upcoming],[data-state="Not scheduled"]) :is(strong,small,.pp-event-phase-state){color:var(--text-muted)}
+.pp-event-progress :is([data-state=Upcoming],[data-state="Not scheduled"])>.pp-event-progress-dot{background:var(--control-bg);border-color:var(--border-color);color:var(--text-muted)}

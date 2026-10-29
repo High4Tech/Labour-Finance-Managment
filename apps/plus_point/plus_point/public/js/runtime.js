@@ -7,6 +7,11 @@
  const escape=v=>frappe.utils.escape_html(String(v??''));
  plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;
  plus_point.loading_state=(label='Loading your records…',{avatar=true}={})=>`<div class="pp-loading-state" role="status"><span class="sr-only">${escape(__(label))}</span><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>${avatar?'<img class="pp-loading-logo" src="/assets/plus_point/images/freddy/thinking.svg?v=20261027" width="88" height="88" alt="" aria-hidden="true">':''}</div>`;
+ function tableActions(table){
+  const heading=table?.querySelector('thead [data-table-actions]');if(!heading)return;table.dataset.stickyActions='true';const index=heading.cellIndex;
+  for(const row of table.querySelectorAll('tbody>tr:not(.pp-table-empty)')){const cell=row.children[index];if(!cell)continue;cell.dataset.tableActions='true';if(cell.querySelector(':scope>.pp-table-actions'))continue;const actions=document.createElement('div');actions.className='pp-table-actions';for(const child of [...cell.childNodes]){if(child.nodeType===1&&child.matches('p,small'))child.classList.add('pp-table-action-note');else actions.append(child);}cell.prepend(actions);}
+ }
+ plus_point.enhance_table_actions=tableActions;
  plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
@@ -14,13 +19,14 @@
   const kind=labels.includes('Attendance period')?'payments':labels.includes('Event pay')?'crew':'',weights=kind==='payments'?[16,21,12,14,14,9,30]:kind==='crew'?[24,10,10,14,12,16,10,22]:null;
   if(weights?.length===labels.length){const table=template.content.querySelector('table'),cols=document.createElement('colgroup'),total=weights.reduce((sum,n)=>sum+n,0);table.dataset.tableKind=kind;for(const n of weights){const col=document.createElement('col');col.style.width=(n/total*100)+'%';cols.append(col);}table.prepend(cols);}
   template.content.querySelectorAll('tbody>tr:not(.pp-table-empty)').forEach(row=>[...row.children].forEach((cell,i)=>{cell.dataset.label=__(labels[i]||'Actions');if(cell.tagName==='TH')cell.scope='row';if(/^(amount|rate|daily wage|client rate|balance|revenue|cost|outstanding|paid|estimated total|approved to invoice|wages|fixed contract value)/i.test(labels[i]||''))cell.dataset.numeric='true';}));
+  const actionIndex=labels.findIndex(label=>label==='Actions');if(actionIndex>=0)template.content.querySelector('thead tr').children[actionIndex].dataset.tableActions='true';tableActions(template.content.querySelector('table'));
   return template.innerHTML;
  };
  // Shared selection for owned tables. Feature owners supply permitted mutations;
  // read-only tables still support selection and copying without unlocking history.
  plus_point.table_selection=(root,{actions=[],keys=null,eligible=()=>true}={})=>{
   const table=root?.matches?.('table.pp-register-table')?root:root?.querySelector('table.pp-register-table');if(!table)return;
-  if(table.ppSelection){if(actions.length)table.ppSelection.setActions(actions);return table.ppSelection;}
+  tableActions(table);if(table.ppSelection){if(actions.length)table.ppSelection.setActions(actions);return table.ppSelection;}
   const rows=[...table.querySelectorAll('tbody>tr:not(.pp-table-empty)')];
   if(!rows.length||rows.some(row=>row.querySelector('input[type=checkbox]')))return;
   let region=table.closest('.pp-op-table-scroll');if(!region){region=document.createElement('div');region.className='pp-op-table-scroll';region.tabIndex=0;region.setAttribute('role','region');region.setAttribute('aria-label',__('Table'));table.before(region);region.append(table);}const toolbar=document.createElement('div');toolbar.className='pp-table-selection-tools';toolbar.hidden=true;region.before(toolbar);

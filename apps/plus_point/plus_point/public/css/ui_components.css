@@ -417,3 +417,24 @@ body.pp-customer-app .pp-file-description .pp-file-name{display:block;width:100%
 body.pp-customer-app .pp-file-description small{display:block;color:var(--text-muted);font-size:13px}
 body.pp-customer-app .pp-agreement-files .pp-icon-button{justify-self:end;width:40px;height:40px;margin:0}
 .pp-crew-coverage{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px;color:var(--text-color)}
+
+/* Owned tables keep a real scrollable grid and a pinned horizontal action column. */
+body.pp-customer-app .pp-op-table-scroll:has(>[data-sticky-actions]){overflow:auto;max-width:100%;isolation:isolate}
+body.pp-customer-app .pp-register-table[data-sticky-actions]{display:table!important;table-layout:auto!important;min-width:760px;width:100%;border-collapse:separate;border-spacing:0}
+body.pp-customer-app .pp-register-table[data-sticky-actions][data-table-kind=crew]{min-width:1180px}
+body.pp-customer-app .pp-register-table[data-sticky-actions][data-table-kind=payments]{min-width:1080px}
+body.pp-customer-app .pp-register-table[data-sticky-actions] thead{display:table-header-group!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] tbody{display:table-row-group!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] tr{display:table-row!important;padding:0!important;border:0!important;border-radius:0!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] :is(th,td){display:table-cell!important;vertical-align:middle;padding:12px!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] td:before{content:none!important;display:none!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] [data-table-actions]{position:sticky;inset-inline-end:0;z-index:2;min-width:max-content;background:var(--pp-surface);border-inline-start:1px solid var(--border-color)!important;box-shadow:-4px 0 8px #142b2508;text-align:start}
+body.pp-customer-app .pp-register-table[data-sticky-actions] thead [data-table-actions]{z-index:3;background:var(--control-bg)}
+body.pp-customer-app .pp-table-actions{display:flex!important;flex-direction:row!important;align-items:center;flex-wrap:nowrap!important;gap:8px;width:max-content;max-width:none;white-space:nowrap}
+body.pp-customer-app .pp-table-actions :is(.btn,a){display:inline-flex;flex:none!important;width:auto!important;margin:0!important;white-space:nowrap!important;align-items:center;justify-content:center}
+body.pp-customer-app .pp-table-actions :is(.pp-actions,.pp-op-actions){display:inline-flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:8px}
+body.pp-customer-app .pp-table-action-note{display:block;margin:8px 0 0;max-width:320px;white-space:normal;font-size:13px;line-height:1.5}
+body.pp-customer-app .pp-action-list .pp-list-actions{display:flex;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center;gap:8px}
+body.pp-customer-app .pp-table-selection-tools:has(+.pp-op-table-scroll>[data-sticky-actions]) .pp-table-select-compact{display:none!important}
+body.pp-customer-app .pp-table-selection-tools:has(+.pp-op-table-scroll>[data-sticky-actions])[hidden]{display:none!important}
+body.pp-customer-app .pp-register-table[data-sticky-actions] tr>th small{display:block!important;margin:4px 0 0!important}

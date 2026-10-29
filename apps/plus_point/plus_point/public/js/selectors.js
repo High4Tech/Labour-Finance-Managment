@@ -13,6 +13,7 @@
   for(const control of Object.values(layout.fields_dict||{})){
    if(control.df.label)control.$input?.attr('aria-label',control.df.label);
    if(!['Link','Dynamic Link'].includes(control.df.fieldtype)||!control.$input||control.pp_picker)continue;
+   plus_point.enhance_country_picker?.(control);
    const input=control.$input,awesomplete=control.awesomplete;let sequence=0;if(!awesomplete)continue;
    const originalOnlySelect=!!control.df.only_select;control.pp_picker=true;control.df.only_select=1;control.$wrapper.addClass('pp-search-picker');
    awesomplete.maxItems=Number.MAX_SAFE_INTEGER;awesomplete.minChars=0;awesomplete.sort=()=>0;awesomplete.filter=()=>true;

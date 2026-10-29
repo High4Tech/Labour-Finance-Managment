@@ -122,3 +122,7 @@
 .pp-site-copy-info svg{width:18px;height:18px}
 @media(min-width:1600px){.pp-flow-builder:has(.pp-op-layout.has-activity) .pp-builder-footer{width:calc(100% + var(--pp-builder-activity) + var(--pp-builder-gap))}}
 @media(max-width:767px){.pp-flow-builder .pp-op-content{display:flex;flex-direction:column}.pp-flow-builder .pp-builder-stage{flex:1;width:100%}.pp-flow-builder .pp-builder-footer{width:100%;align-self:stretch;padding:12px 8px}.pp-builder-review-grid{grid-template-columns:1fr}.pp-custom-phase{flex-wrap:wrap}}
+
+/* The footer spans the workspace beside the app sidebar, including the step rail. */
+.pp-flow-builder .pp-builder-footer{grid-column:1/-1;box-sizing:border-box;margin-inline:calc(-1 * var(--pp-page-gutter,24px));width:calc(100% + 2 * var(--pp-page-gutter,24px));max-width:none;padding-inline:var(--pp-page-gutter,24px)}
+@media(min-width:1600px){.pp-flow-builder:has(.pp-op-layout.has-activity) .pp-builder-footer{width:calc(100% + var(--pp-builder-activity) + var(--pp-builder-gap) + 2 * var(--pp-page-gutter,24px))}}
