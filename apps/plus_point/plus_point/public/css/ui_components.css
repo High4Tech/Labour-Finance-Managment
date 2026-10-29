@@ -366,3 +366,40 @@ body.pp-customer-app .pp-auto-pay-dialog .pp-register-table th:first-child{min-w
 body.pp-customer-app .pp-auto-pay-dialog .pp-register-table td:nth-child(2){min-width:160px}
 
 body.pp-customer-app .pp-delivery-grid[hidden]{display:none!important}
+
+/* Table controls and focused review panels share the same spacing and states. */
+body.pp-ui .pp-table-selection-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 0}
+body.pp-ui .pp-table-selection-tools[hidden]{display:none!important}
+body.pp-ui .pp-table-selection-tools>[role=status]{font-weight:600;margin-right:auto}
+body.pp-ui .pp-register-table .pp-table-select{width:44px;min-width:44px;padding:12px;text-align:center}
+body.pp-ui .pp-register-table .pp-table-select{padding:2px 4px!important}
+body.pp-ui .pp-table-checkbox-label{display:grid;place-items:center;width:36px;min-height:44px;margin:0;cursor:pointer}
+body.pp-ui .pp-table-select input{width:18px;height:18px;accent-color:var(--pp-accent);cursor:pointer}
+body.pp-ui .pp-register-table:has(.pp-table-select) th.pp-table-select{min-width:44px}
+body.pp-customer-app .pp-delete-cards{display:grid;gap:12px}
+body.pp-customer-app .pp-delete-card{border:1px solid var(--border-color);border-radius:8px;padding:16px;display:grid;gap:12px;background:var(--pp-surface)}
+body.pp-customer-app .pp-delete-card>header{display:flex;align-items:start;justify-content:space-between;gap:12px}
+body.pp-customer-app .pp-delete-card p{margin:0;max-width:none}
+body.pp-customer-app .pp-delete-card details>summary{cursor:pointer;color:var(--text-muted);font-size:14px}
+body.pp-customer-app .pp-delete-card details[open]>summary{margin-bottom:8px}
+body.pp-customer-app .pp-delete-card .btn{justify-self:start}
+body.pp-customer-app .pp-native-filter-content{display:grid;grid-template-columns:1fr;gap:20px;max-height:min(680px,75vh);overflow-y:auto;padding:20px}
+body.pp-customer-app .pp-native-filter-content [hidden]{display:none!important}
+body.pp-customer-app .pp-filter-radio-group{display:flex;flex-wrap:wrap;gap:12px 20px;border:0;padding:0;margin:0 0 16px}
+body.pp-customer-app .pp-filter-radio-group legend{font-size:14px;font-weight:600;border:0;margin-bottom:12px}
+body.pp-customer-app .pp-filter-radio-group label{display:flex;align-items:center;gap:8px;margin:0;min-height:32px;cursor:pointer}
+body.pp-customer-app .pp-native-filter-content>[data-reset-filters]{justify-self:start}
+body.pp-customer-app .pp-advanced-criteria>summary{cursor:pointer;color:var(--pp-accent);text-decoration:underline;text-underline-offset:3px}
+body.pp-customer-app .pp-advanced-criteria .filter-selector{margin-top:12px}
+body.pp-customer-app .pp-responsive-choices{display:flex;flex-wrap:wrap;gap:12px 20px;border:0;margin:0;padding:0}
+body.pp-customer-app .pp-responsive-choices legend{font-size:14px;border:0;margin:0 0 8px;padding:0}
+body.pp-customer-app .pp-responsive-choices label{display:flex;align-items:center;gap:8px;margin:0;min-height:40px;cursor:pointer}
+@media(min-width:768px){body.pp-customer-app .pp-has-responsive-choices>.form-group{display:none!important}}
+@media(max-width:767px){body.pp-customer-app .pp-responsive-choices{display:none!important}}
+body.pp-ui .pp-profile-facts>div.pp-fact-wide{grid-column:1/-1}
+body.pp-customer-app .pp-auto-pay-dialog .pp-register-table{min-width:640px}
+body.pp-customer-app .pp-auto-pay-dialog .pp-register-table th.pp-table-select{min-width:44px}
+body.pp-customer-app .pp-auto-pay-dialog .pp-auto-pay-field input{min-width:160px;width:100%}
+body.pp-ui .pp-table-selection-tools .pp-table-select-compact{display:none;align-items:center;gap:8px;margin:0;min-height:40px}
+@container(max-width:1040px){body.pp-ui .pp-venue-card .pp-table-selection-tools[hidden]{display:flex!important}body.pp-ui .pp-venue-card .pp-table-selection-tools .pp-table-select-compact{display:flex}}
+@media(max-width:600px){body.pp-ui .pp-resource-page .pp-table-selection-tools[hidden]{display:flex!important}body.pp-ui .pp-resource-page .pp-table-selection-tools .pp-table-select-compact{display:flex}}

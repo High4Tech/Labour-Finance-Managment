@@ -18,6 +18,75 @@ class WorkflowRepairsTests(unittest.TestCase):
     agreement=hierarchy.HierarchyTests.agreement
     event=hierarchy.HierarchyTests.event
 
+    def test_auto_daily_worker_overrides_keep_profile_snapshot_and_booking_checks(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name;settings={role:dict(basis='Daily')}
+        preview=op.auto_assign_preview(event,[role],settings);worker=preview['assignments'][0]['employee']
+        with self.assertRaises(frappe.ValidationError):op.auto_assign(event,requirements=[role],payments=settings,rates={'foreign-worker':125},expected=preview['snapshot'])
+        for amount in (-1,0,'NaN'):
+            with self.assertRaises(frappe.ValidationError):op.auto_assign_preview(event,[role],settings,rates={worker:amount})
+        result=op.auto_assign(event,requirements=[role],payments=settings,rates={worker:125},expected=preview['snapshot'])
+        self.assertEqual(frappe.db.get_value('PP Assignment',result['assignments'][0],'wage_rate'),125)
+
+    def test_monthly_auto_selection_rejects_daily_worker_override(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name
+        worker=frappe.get_doc('Employee',self.worker.name);worker.pp_monthly_rate=3000;worker.save()
+        settings={role:dict(basis='Monthly')};preview=op.auto_assign_preview(event,[role],settings)
+        with self.assertRaises(frappe.ValidationError):op.auto_assign(event,requirements=[role],payments=settings,expected=preview['snapshot'],rates={self.worker.name:125})
+        self.assertFalse(frappe.db.exists('PP Assignment',{'pp_event_plan':event}))
+
+    def test_bulk_requirements_rejects_foreign_rows_and_invalid_dates(self):
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name
+        with self.assertRaises(frappe.ValidationError):op.bulk_requirements(event,[role,'foreign'],dict(workers_required=2))
+        self.assertEqual(frappe.get_doc('PP Event Plan',event).staffing[0].workers_required,1)
+        with self.assertRaises(frappe.ValidationError):op.bulk_requirements(event,[role],dict(end_date=add_days(today(),-1)))
+        op.bulk_requirements(event,[role],dict(workers_required=2))
+        self.assertEqual(frappe.get_doc('PP Event Plan',event).staffing[0].workers_required,2)
+
+    def test_early_period_document_does_not_consume_attendance_or_recognize_revenue(self):
+        from plus_point import daily_billing as daily
+        agreement=self.agreement();terms=frappe.get_doc('PP Contract Terms',agreement['name'])
+        terms.pp_daily_checkpoints=frappe.as_json(daily.periods(terms.effective_start,terms.effective_end,'Completion'));terms.save();row=frappe.parse_json(terms.pp_daily_checkpoints)[0]
+        before=(frappe.db.count('Sales Invoice'),frappe.db.count('PP Work Entry'),frappe.db.count('GL Entry'))
+        with patch('plus_point.agreement_documents.pdf_content',return_value=b'pdf-rendered') as render,patch('plus_point.agreement_documents.save_pdf',return_value=dict(name='estimate',file_name='Pro forma invoice.pdf')):
+            result=daily.invoice(terms.name,row['id'])
+        self.assertIn('Estimated',render.call_args.args[0]);self.assertIn('Attendance is not finalized',render.call_args.args[0])
+        self.assertTrue(result['estimated']);self.assertIn('Pro forma invoice',result['pdf']['file_name'])
+        self.assertEqual(before,(frappe.db.count('Sales Invoice'),frappe.db.count('PP Work Entry'),frappe.db.count('GL Entry')))
+        terms.reload();self.assertFalse(frappe.parse_json(terms.pp_daily_checkpoints)[0].get('invoice'))
+
+    def test_signature_document_uses_readable_time_and_optional_verification(self):
+        from plus_point.agreement_documents import signed_body
+        html=signed_body(frappe._dict(snapshot='<h1>Agreement</h1>',status='Signed',signed_by='Sara Khan',signed_on='2026-10-29 11:54:44.808002',digest='a'*64))
+        self.assertIn('29 Oct 2026',html);self.assertNotIn('.808002',html);self.assertIn('<details>',html);self.assertNotIn('Agreement version:',html)
+
+    def test_estimate_does_not_prevent_later_actual_attendance_invoice(self):
+        from plus_point import daily_billing as daily
+        event=self.event();plan=frappe.get_doc('PP Event Plan',event);terms=frappe.get_doc('PP Contract Terms',plan.contract_terms)
+        terms.pp_daily_checkpoints=frappe.as_json(daily.periods(terms.effective_start,terms.effective_end,'Completion'));terms.save();row=frappe.parse_json(terms.pp_daily_checkpoints)[0]
+        with patch('plus_point.agreement_documents.estimated_period_invoice',return_value=dict(name='estimated-document')):
+            self.assertTrue(daily.invoice(terms.name,row['id'])['estimated'])
+        allocation=op.auto_assign(event)['assignments'][0]
+        work=insert('PP Work Entry',assignment=allocation,work_date=today(),units=1,status='Draft');work.status='Approved';work.save()
+        count=frappe.db.count('Sales Invoice')
+        with patch('plus_point.daily_billing.today',return_value=add_days(today(),10)):
+            actual=daily.invoice(terms.name,row['id'])
+            self.assertEqual(daily.invoice(terms.name,row['id'])['name'],actual['name'])
+        self.assertEqual(frappe.db.count('Sales Invoice'),count+1)
+        invoice=frappe.get_doc('Sales Invoice',actual['name']);self.assertEqual(invoice.docstatus,0)
+        self.assertEqual(float(invoice.total),1500);self.assertEqual(frappe.db.get_value('PP Work Entry',work.name,'sales_invoice'),invoice.name)
+
+    def test_bulk_milestones_are_atomic_and_cannot_touch_other_agreements(self):
+        agreement=self.agreement('Bulk fixed',fixed=True)
+        first=op.save_milestone(agreement['name'],dict(milestone_title='First',due_date=today(),amount=2000,status='Planned'))['name']
+        second=op.save_milestone(agreement['name'],dict(milestone_title='Second',due_date=today(),amount=2000,status='Planned'))['name']
+        with self.assertRaises(frappe.ValidationError):op.bulk_milestones(agreement['name'],[first,second],dict(amount=8000))
+        self.assertEqual(float(frappe.db.get_value('PP Milestone',first,'amount')),2000)
+        other=self.agreement('Other fixed',fixed=True)
+        foreign=op.save_milestone(other['name'],dict(milestone_title='Foreign',due_date=today(),amount=1000,status='Planned'))['name']
+        with self.assertRaises(frappe.ValidationError):op.bulk_milestones(agreement['name'],[first,foreign],dict(due_date=add_days(today(),1)))
+        op.bulk_milestones(agreement['name'],[first,second],dict(due_date=add_days(today(),1)))
+        self.assertEqual(str(frappe.db.get_value('PP Milestone',second,'due_date')),add_days(today(),1))
+
     def test_empty_and_default_only_agreements_do_not_create_drafts(self):
         before=frappe.db.count(drafts.DT)
         for payload in [{},dict(details=dict(effective_start=today(),effective_end=today(),scope='<p><br></p>'),client=dict(country='Pakistan',customer_type='Company'),terms=dict(billing_model='Daily',agreement_currency='PKR'),staffing=[],sites=[])]:
@@ -123,9 +192,14 @@ class WorkflowRepairsTests(unittest.TestCase):
         warehouse=frappe.db.get_value('Warehouse',{'company':self.f.company.name,'is_group':0},'name')
         resources.count_stock(warehouse,item.name,10,50,today())
         event=self.event();doc=frappe.get_doc('PP Event Plan',event)
-        resources.save_booking(doc.project,'equipment',dict(site=doc.staffing[0].site,warehouse=warehouse,item=item.name,quantity=3,start_date=today(),end_date=today(),status='Planned'))
+        booking=resources.save_booking(doc.project,'equipment',dict(site=doc.staffing[0].site,warehouse=warehouse,item=item.name,quantity=3,start_date=today(),end_date=today(),status='Planned'))
         stock=next(r for r in resources.equipment_profile(item.name)['stock'] if r['warehouse']==warehouse)
         self.assertEqual(float(stock['on_hand']),10);self.assertEqual(float(stock['reserved']),3);self.assertEqual(float(stock['available']),7)
+        with self.assertRaises(frappe.ValidationError):resources.bulk_bookings([dict(kind='equipment',name=booking['name'])],dict(end_date=add_days(today(),-1)))
+        self.assertEqual(frappe.db.get_value('PP Equipment Booking',booking['name'],'status'),'Planned')
+        resources.bulk_bookings([dict(kind='equipment',name=booking['name'])],dict(status='Cancelled'))
+        stock=next(r for r in resources.equipment_profile(item.name)['stock'] if r['warehouse']==warehouse)
+        self.assertEqual(float(stock['available']),10)
 
 
     def test_completion_payment_is_one_bounded_period_with_payment_terms(self):

@@ -7,7 +7,7 @@
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,ready:()=>pp.render_event_timeline?.ppCalendarVersion===4},
-  flow_builder:{file:'flow_builder',css:true,version:'20261029-commercial-flow-3',ready:()=>typeof pp.flow_builder==='function'},
+  flow_builder:{file:'flow_builder',css:true,version:'20261029-table-controls-3',ready:()=>typeof pp.flow_builder==='function'},
   freddy_runtime:{file:'freddy-runtime',ready:()=>!!pp.freddy_runtime}
  };
  pp.load_feature=name=>{

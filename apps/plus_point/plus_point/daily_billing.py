@@ -106,7 +106,12 @@ def invoice(agreement,checkpoint):
     rows=frappe.parse_json(terms.get('pp_daily_checkpoints') or '[]');row=next((r for r in rows if r['id']==checkpoint),None)
     if not row:frappe.throw('Reopen the agreement to select its billing checkpoint.')
     if row.get('invoice'):return dict(name=row['invoice'],existing=True)
-    if row['to_date']>today():frappe.throw('Wait until this attendance period ends before generating its invoice.')
+    has_work=frappe.db.exists('PP Work Entry',{'contract_terms':['in',event_terms(terms)],'status':'Approved','billable_amount':['>',0],'sales_invoice':['is','not set'],'work_date':['between',[row['from_date'],row['to_date']]]})
+    if row['to_date']>today() or not has_work:
+        # An estimate is a private document, never a posted sale or a claim on
+        # attendance. It does not consume work entries or close the checkpoint.
+        from plus_point.agreement_documents import estimated_period_invoice
+        return dict(estimated=True,pdf=estimated_period_invoice(terms,row))
     result=create_period_invoice(terms,row)
     row['invoice']=result['name']
     if len(result.get('invoices',[]))>1:row['supplemental_invoices']=result['invoices'][1:]

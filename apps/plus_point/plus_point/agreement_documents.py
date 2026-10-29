@@ -56,7 +56,7 @@ def save_pdf(doctype,name,title,content,identity=None):
 def signed_body(doc):
     body=doc.snapshot
     if doc.status=='Signed':
-        body+='<section class="acceptance"><h2>'+('Company-recorded client agreement (not a client signature)' if doc.get('approval_method')=='Company attested' else 'Client acceptance')+'</h2><p>'+('Recorded by ' if doc.get('approval_method')=='Company attested' else 'Signed by ')+esc(doc.signed_by)+' · '+esc(str(doc.signed_on))+'</p><p>Agreement version: '+esc(doc.digest)+'</p>'
+        body+='<section class="acceptance"><h2>'+('Company-recorded client agreement (not a client signature)' if doc.get('approval_method')=='Company attested' else 'Client acceptance')+'</h2><p>'+('Recorded by ' if doc.get('approval_method')=='Company attested' else 'Signed by ')+esc(doc.signed_by)+' · '+esc(frappe.utils.format_datetime(doc.signed_on,'d MMM yyyy, h:mm a'))+'</p><details><summary>Signature verification details</summary><p>This fingerprint identifies the exact document that was accepted.</p><code>'+esc(doc.digest)+'</code></details>'
         if doc.signature:
             import base64
             file=frappe.db.get_value('File',{'attached_to_doctype':'PP Agreement Share','attached_to_name':doc.name,'file_url':doc.signature},'name')
@@ -65,6 +65,25 @@ def signed_body(doc):
                 body+='<img alt="Client signature" src="data:image/png;base64,'+base64.b64encode(raw).decode()+'">'
         body+='</section>'
     return body
+
+
+def estimated_period_invoice(terms,row):
+    """Client-visible estimate; reconciliation stays with approved-work billing."""
+    from plus_point.operations import agreement
+    from frappe.utils import getdate,today,date_diff,format_datetime,now_datetime
+    data=agreement(terms.name);rate=float(terms.get('pp_agreement_rate') or 1)
+    currency=terms.get('pp_agreement_currency') or data['currency'];lines=[];total=0
+    for requirement in data.get('staffing',[]):
+        start=max(getdate(row['from_date']),getdate(requirement['start_date']));end=min(getdate(row['to_date']),getdate(requirement['end_date']))
+        days=max(0,date_diff(end,start)+1);quantity=days*int(requirement['workers_required']);price=float(requirement.get('client_rate') or 0)/rate
+        if not quantity:continue
+        amount=quantity*price;total+=amount
+        lines.append('<tr><td>'+esc(requirement.get('designation') or 'Crew')+'</td><td>'+str(quantity)+'</td><td>'+f'{price:,.2f}'+'</td><td>'+f'{amount:,.2f}'+'</td></tr>')
+    phase='Before the billing period' if today()<row['from_date'] else 'During the billing period' if today()<=row['to_date'] else 'After the billing period'
+    generated=format_datetime(now_datetime(),'d MMM yyyy, h:mm a')
+    body='<p class="document-meta">'+esc(terms.pp_reference or terms.name)+'</p><h1>Pro forma invoice</h1><p><strong>'+esc(row['title'])+'</strong></p><p>Client: '+esc(data.get('client',{}).get('title') or data.get('client',{}).get('customer_name') or '')+'</p><p>Currency: '+esc(currency)+'</p><p>Billing period: '+esc(row['from_date'])+' to '+esc(row['to_date'])+'</p><p>Payment due: '+esc(row['due_date'])+'</p><section class="acceptance"><strong>Estimated — '+esc(phase)+'</strong><p>Generated '+esc(generated)+'. Attendance is not finalized. Amounts use the agreed crew quantities and client rates; the final invoice will use approved attendance.</p><p>This document does not record earned revenue, a payment, or an amount owed in the accounting ledger.</p></section><table><thead><tr><th>Crew category</th><th>Worker-days</th><th>Client rate</th><th>Estimated amount</th></tr></thead><tbody>'+''.join(lines)+'</tbody></table><p><strong>Estimated total: '+(f'{total:,.2f} '+esc(currency) if lines else 'To be confirmed from event requirements')+'</strong></p>'
+    identity=body # Deduplicates identical requests; retains dated snapshots.
+    return save_pdf('Contract',terms.contract,(terms.pp_reference or terms.name)+' '+row['title']+' Pro forma invoice',pdf_content(document_html(body,terms.pp_reference or terms.name)),identity=identity)
 
 
 @frappe.whitelist(methods=['POST'])

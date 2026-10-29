@@ -191,6 +191,26 @@ def save_booking(project,kind,values,name=None):
     return dict(name=booking.name,status=booking.status)
 
 @frappe.whitelist(methods=['POST'])
+def bulk_bookings(rows,values):
+    """Apply common dates/status through the existing reservation validators."""
+    rows=frappe.parse_json(rows);values=frappe.parse_json(values)
+    if not isinstance(rows,list) or not rows or len(rows)>100 or any(not isinstance(r,dict) or r.get('kind') not in KINDS or not isinstance(r.get('name'),str) for r in rows):frappe.throw('Select up to 100 vehicle or equipment reservations.')
+    keys=[(r['kind'],r['name']) for r in rows]
+    if len(set(keys))!=len(keys):frappe.throw('Each reservation can be selected once.')
+    if not isinstance(values,dict) or not values or set(values)-{'start_date','end_date','status'}:frappe.throw('Choose reservation dates or status to change.')
+    business=company();documents=[]
+    for kind,name in sorted(keys):
+        doc=linked(KINDS[kind],name,business.name);doc.check_permission('write')
+        project_doc(doc.project,True);documents.append((kind,doc))
+    frappe.db.savepoint('pp_bulk_bookings')
+    try:
+        for kind,doc in documents:save_booking(doc.project,kind,values,doc.name)
+    except Exception:
+        frappe.db.rollback(save_point='pp_bulk_bookings');raise
+    return dict(updated=len(documents))
+
+
+@frappe.whitelist(methods=['POST'])
 def update_profile(view,name,values):
     v=frappe._dict(frappe.parse_json(values) or {});business=company()
     doctype='Vehicle' if view=='vehicles' else 'Warehouse' if view=='warehouses' else None

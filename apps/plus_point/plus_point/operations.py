@@ -494,18 +494,31 @@ def auto_snapshot(proposal):
     return [dict((k,r.get(k)) for k in ('requirement','employee','start_date','end_date','pp_pay_basis','pp_pay_amount','client_rate')) for r in proposal['assignments']]
 
 
+def auto_pay_overrides(proposal,rates):
+    """Overrides are allowed only for daily workers in the server-selected proposal."""
+    rates=frappe.parse_json(rates) if rates is not None else {}
+    if not isinstance(rates,dict) or len(rates)>1000:frappe.throw('Review the selected worker rates.')
+    rows={row['employee']:row for row in proposal['assignments']}
+    if any(key not in rows or rows[key]['pp_pay_basis']!='Daily' for key in rates):frappe.throw('Edit daily rates only for the workers in this selection.')
+    from plus_point.events import positive
+    for key,value in rates.items():
+        amount=float(positive(value,'Daily rate'))
+        rows[key].update(pp_pay_amount=amount,wage_rate=amount)
+
+
 @frappe.whitelist()
-def auto_assign_preview(name,requirements=None,payments=None):
+def auto_assign_preview(name,requirements=None,payments=None,rates=None):
     from plus_point.events import plan_doc,crew_proposal
     from plus_point.planning import cost_warning
     doc=plan_doc(name);terms=terms_doc(doc.contract_terms)
     requirements,payments=auto_settings(doc,requirements,payments)
     doc.selected_crew='';proposal=crew_proposal(doc,requirements=requirements,payments=payments)
-    return dict(**proposal,snapshot=auto_snapshot(proposal),warning=cost_warning(terms,proposal['assignments']))
+    snapshot=auto_snapshot(proposal);auto_pay_overrides(proposal,rates)
+    return dict(**proposal,snapshot=snapshot,warning=cost_warning(terms,proposal['assignments']))
 
 
 @frappe.whitelist(methods=['POST'])
-def auto_assign(name,confirm_over_budget=0,requirements=None,payments=None,expected=None):
+def auto_assign(name,confirm_over_budget=0,requirements=None,payments=None,expected=None,rates=None):
     from plus_point.events import plan_doc,crew_proposal,validate_plan
     doc=plan_doc(name,True);terms_doc(doc.contract_terms)
     from plus_point.budget import lock_project
@@ -515,6 +528,7 @@ def auto_assign(name,confirm_over_budget=0,requirements=None,payments=None,expec
     requirements,payments=auto_settings(doc,requirements,payments)
     doc.selected_crew='';proposal=crew_proposal(doc,lock=True,requirements=requirements,payments=payments)
     if expected is not None and frappe.parse_json(expected)!=auto_snapshot(proposal):frappe.throw('Crew availability or profile pay changed. Review the selection again before assigning.')
+    auto_pay_overrides(proposal,rates)
     frappe.db.savepoint('pp_auto_staff')
     try:
         from plus_point.planning import cost_warning
@@ -648,6 +662,20 @@ def update_headcount(name,requirement,workers_required):
 
 
 @frappe.whitelist(methods=['POST'])
+def bulk_requirements(name,requirements,values):
+    from plus_point.events import plan_doc
+    from plus_point.budget import lock_project
+    doc=plan_doc(name,True);terms_doc(doc.contract_terms);lock_project(doc.project)
+    frappe.db.get_value('PP Event Plan',name,'name',for_update=True);doc.reload()
+    keys=frappe.parse_json(requirements);values=frappe.parse_json(values)
+    if not isinstance(keys,list) or not keys or len(keys)>100 or len(set(keys))!=len(keys) or any(key not in {r.name for r in doc.staffing} for key in keys):frappe.throw('Select crew requirements from this event only.')
+    if not isinstance(values,dict) or not values or set(values)-{'workers_required','phase','start_date','end_date'}:frappe.throw('Choose crew quantities, phases or dates to change.')
+    for row in doc.staffing:
+        if row.name in keys:row.update(values)
+    doc.save();return dict(name=doc.name)
+
+
+@frappe.whitelist(methods=['POST'])
 def move_worker(assignment,effective_date,target_plan=None,site=None,end_date=None,confirm_over_budget=0):
     """End the old commitment before a new one; never rewrite attendance or rates."""
     business=company();old=linked('PP Assignment',assignment);old.check_permission('write');linked('Project',old.project,business.name)
@@ -697,6 +725,28 @@ def save_milestone(contract_terms,values,name=None):
     if name and doc.contract_terms!=terms.name:frappe.throw('Choose a milestone in this agreement.')
     doc.update(dict(contract_terms=terms.name,**{k:values.get(k) for k in ('milestone_title','due_date','amount','status')}));doc.save()
     return dict(name=doc.name,sales_invoice=frappe.db.get_value('PP Milestone',doc.name,'sales_invoice'))
+
+
+@frappe.whitelist(methods=['POST'])
+def bulk_milestones(contract_terms,names,values):
+    terms=terms_doc(contract_terms,True);frappe.db.get_value('PP Contract Terms',terms.name,'name',for_update=True)
+    names=frappe.parse_json(names);values=frappe.parse_json(values)
+    if not isinstance(names,list) or not names or len(names)>100 or len(set(names))!=len(names):frappe.throw('Select up to 100 milestones.')
+    if not isinstance(values,dict) or not values or set(values)-{'due_date','amount','status'}:frappe.throw('Choose payment due, amount or status to change.')
+    docs=[]
+    for name in sorted(names):
+        doc=linked('PP Milestone',name);doc.check_permission('write')
+        if doc.contract_terms!=terms.name or doc.sales_invoice:frappe.throw('Select uninvoiced milestones in this agreement only.')
+        docs.append(doc)
+    total=sum((money(values.get('amount',row.amount)) for row in frappe.get_all('PP Milestone',filters={'contract_terms':terms.name},fields=['name','amount']) if row.name in names),money(0))
+    total+=sum((money(row.amount) for row in frappe.get_all('PP Milestone',filters={'contract_terms':terms.name},fields=['name','amount']) if row.name not in names),money(0))
+    if total>money(terms.fixed_amount):frappe.throw('Milestone amounts cannot exceed the fixed contract value.')
+    frappe.db.savepoint('pp_bulk_milestones')
+    try:
+        for doc in docs:save_milestone(terms.name,dict(milestone_title=doc.milestone_title,due_date=doc.due_date,amount=doc.amount,status=doc.status)|values,doc.name)
+    except Exception:
+        frappe.db.rollback(save_point='pp_bulk_milestones');raise
+    return dict(updated=len(docs))
 
 
 def milestone_invoice(doc,method=None):

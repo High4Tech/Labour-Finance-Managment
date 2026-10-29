@@ -5,7 +5,7 @@
  const link=(doctype,doc)=>'/desk/'+route(doctype)+(doc.pp_draft_name?'?draft='+encodeURIComponent(doc.pp_draft_name):'?record='+encodeURIComponent(doc.name)+(doc.planning_state==='Draft'?'&edit=1':''));
  function attach(list){
   if(list.__pp_combined||frappe.boot.plus_point?.is_platform)return;
-  list.__pp_combined=true;list.method='plus_point.planning_list.rows';
+  list.page.wrapper[0].ppNativeList=list;list.__pp_combined=true;list.method='plus_point.planning_list.rows';
   list.page.wrapper.addClass('pp-planning-list');
   const prepare=list.prepare_data.bind(list),args=list.get_args.bind(list);
   list.prepare_data=response=>{const data=response.message||{};list.ppPlanningTotal=data.total||0;return prepare({...response,message:data.rows||[]});};
