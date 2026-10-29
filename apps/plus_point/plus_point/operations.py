@@ -363,6 +363,7 @@ def plan(name):
     result['allocations']=allocations;result['coverage']=coverage(doc)
     result['files']=frappe.get_list('File',filters={'attached_to_doctype':'PP Event Plan','attached_to_name':doc.name},fields=['name','file_name','file_url'],limit_page_length=100)
     result.update(archived=bool(project.get('pp_archived')),budget=project.estimated_costing,enforce_budget=project.pp_enforce_spending_budget)
+    result['budget_summary']=event_budget_summary(doc,allocations)
     from plus_point.events import lifecycle
     result['event_status']=lifecycle(doc,result['archived'],project.status=='Cancelled')
     result['reservations']=[]
@@ -370,6 +371,21 @@ def plan(name):
         for row in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['name',label,'site','start_date','end_date'],limit_page_length=0):
             result['reservations'].append(dict(name=row.name,title=row[label],site=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(row.start_date),end=str(row.end_date)))
     return result
+
+
+def event_budget_summary(doc,allocations):
+    """Projection includes booked crew, without counting earned wages twice."""
+    from decimal import Decimal
+    from frappe.utils import getdate,date_diff
+    from plus_point.budget import costs
+    totals=costs(doc.project);planned=Decimal(0)
+    for row in allocations:
+        first=max(getdate(doc.start_date),getdate(row.start_date))
+        last=min(getdate(doc.end_date),getdate(row.end_date or doc.end_date))
+        planned+=Decimal(str(row.wage_rate or 0))*max(0,date_diff(last,first)+1)
+    used=max(planned,totals['wages'])+totals['purchases']+totals['claims']
+    limit=Decimal(str(frappe.db.get_value('Project',doc.project,'estimated_costing') or 0))
+    return dict(planned_crew=planned,recorded=totals['total'],other_costs=totals['purchases']+totals['claims'],projected=used,limit=limit,remaining=limit-used if limit else None)
 
 
 def payment_source(terms):

@@ -35,6 +35,7 @@
   plus_point.ui?.sync_select(node);
  };
  function error(control,required=true){
+  if(control.ppValidateOther?.())return control.ppValidateOther();
   const {df}=control,raw=String(control.$input.val()??'').trim();
   if(!raw)return required&&df.reqd?__('Enter {0}.',[df.label||df.fieldname]):'';
   if(df.fieldtype==='Date'&&!moment(raw,control.date_format||frappe.defaultDateFormat,true).isValid())return __('Enter a date in {0} format.',[control.date_format||frappe.defaultDateFormat]);

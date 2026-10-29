@@ -35,7 +35,30 @@ def pdf_content(html):
 
 def pdf_filename(title,identity):
     digest=hashlib.sha256(identity.encode() if isinstance(identity,str) else identity).hexdigest()[:12]
-    return re.sub(r'[^\w .-]','_',title)[:150]+'-'+digest+'.pdf'
+    safe=re.sub(r'[^\w .-]','_',title)
+    # Native File allows 140 characters, including its six-character collision suffix.
+    if len(safe)>117:safe=safe[:68]+' - '+safe[-46:]
+    return safe+'-'+digest+'.pdf'
+
+
+def document_title(terms,kind):
+    customer=frappe.db.get_value('Project',terms.project,'customer')
+    client=frappe.db.get_value('Customer',customer,'customer_name') if customer else ''
+    return ' - '.join(str(v) for v in [terms.pp_reference or terms.name,terms.agreement_title,client,kind] if v)
+
+
+def describe_documents(rows,terms):
+    """Keep immutable file URLs; provide legible titles and download names."""
+    for row in rows:
+        if not str(row.get('file_name') or '').lower().endswith('.pdf'):continue
+        original=row.file_name
+        kind='Signed agreement' if 'signed agreement' in original.lower() else 'Pro forma invoice' if 'pro forma invoice' in original.lower() else 'Invoice' if row.get('invoice') or row.get('attached_to_doctype')=='Sales Invoice' or row.get('attached_to_name') else 'Agreement' if re.search(r' Agreement(?:-|\.)',original,re.I) else original[:-4]
+        if kind=='Invoice':kind=(row.get('invoice') or row.get('attached_to_name') or '')+' Invoice'
+        if kind=='Pro forma invoice':
+            match=re.search(r'((?:Weekly|Monthly|Quarterly|Biweekly|Completion|Payment).*?) Pro forma',original,re.I)
+            if match:kind=match.group(1)+' - '+kind
+        row['display_name']=document_title(terms,kind)+'.pdf'
+    return rows
 
 
 def find_pdf(doctype,name,filename):
@@ -48,9 +71,9 @@ def save_pdf(doctype,name,title,content,identity=None):
     from frappe.utils.file_manager import save_file
     filename=pdf_filename(title,identity if identity is not None else content)
     existing=find_pdf(doctype,name,filename)
-    if existing:return existing
+    if existing:return dict(existing,display_name=title+'.pdf')
     file=save_file(filename,content,doctype,name,is_private=1)
-    return dict(name=file.name,file_name=file.file_name,file_url=file.file_url)
+    return dict(name=file.name,file_name=file.file_name,file_url=file.file_url,display_name=title+'.pdf')
 
 
 def signed_body(doc):
@@ -83,7 +106,7 @@ def estimated_period_invoice(terms,row):
     generated=format_datetime(now_datetime(),'d MMM yyyy, h:mm a')
     body='<p class="document-meta">'+esc(terms.pp_reference or terms.name)+'</p><h1>Pro forma invoice</h1><p><strong>'+esc(row['title'])+'</strong></p><p>Client: '+esc(data.get('client',{}).get('title') or data.get('client',{}).get('customer_name') or '')+'</p><p>Currency: '+esc(currency)+'</p><p>Billing period: '+esc(row['from_date'])+' to '+esc(row['to_date'])+'</p><p>Payment due: '+esc(row['due_date'])+'</p><section class="acceptance"><strong>Estimated — '+esc(phase)+'</strong><p>Generated '+esc(generated)+'. Attendance is not finalized. Amounts use the agreed crew quantities and client rates; the final invoice will use approved attendance.</p><p>This document does not record earned revenue, a payment, or an amount owed in the accounting ledger.</p></section><table><thead><tr><th>Crew category</th><th>Worker-days</th><th>Client rate</th><th>Estimated amount</th></tr></thead><tbody>'+''.join(lines)+'</tbody></table><p><strong>Estimated total: '+(f'{total:,.2f} '+esc(currency) if lines else 'To be confirmed from event requirements')+'</strong></p>'
     identity=body # Deduplicates identical requests; retains dated snapshots.
-    return save_pdf('Contract',terms.contract,(terms.pp_reference or terms.name)+' '+row['title']+' Pro forma invoice',pdf_content(document_html(body,terms.pp_reference or terms.name)),identity=identity)
+    return save_pdf('Contract',terms.contract,document_title(terms,row['title']+' Pro forma invoice'),pdf_content(document_html(body,terms.pp_reference or terms.name)),identity=identity)
 
 
 @frappe.whitelist(methods=['POST'])
@@ -96,9 +119,9 @@ def agreement_pdf(name,share=None):
         if doc.contract_terms!=name:frappe.throw('Choose a signing record for this agreement.')
         body=signed_body(doc)
     html=document_html(body,terms.pp_reference or name)
-    title=(terms.pp_reference or name)+(' Signed agreement' if share and doc.status=='Signed' else ' Agreement');filename=pdf_filename(title,html)
+    title=document_title(terms,'Signed agreement' if share and doc.status=='Signed' else 'Agreement');filename=pdf_filename(title,html)
     existing=find_pdf('Contract',terms.contract,filename)
-    return existing or save_pdf('Contract',terms.contract,title,pdf_content(html),identity=html)
+    return dict(existing,display_name=title+'.pdf') if existing else save_pdf('Contract',terms.contract,title,pdf_content(html),identity=html)
 
 
 @frappe.whitelist(methods=['POST'])
@@ -106,8 +129,10 @@ def invoice_pdf(name):
     from plus_point.operations import invoice,invoice_pdf_content
     invoice(name);doc=frappe.get_doc('Sales Invoice',name)
     identity=doc.as_json()+str(frappe.db.get_value('Print Format','PLUS POINT Branded Invoice','modified') or '')
-    existing=find_pdf('Sales Invoice',name,pdf_filename(name+' Invoice',identity))
-    return existing or save_pdf('Sales Invoice',name,name+' Invoice',invoice_pdf_content(doc),identity=identity)
+    terms=frappe.db.get_value('PP Contract Terms',{'project':doc.project},'name') if doc.project else None
+    title=document_title(terms_doc(terms),name+' Invoice') if terms else name+' Invoice'
+    existing=find_pdf('Sales Invoice',name,pdf_filename(title,identity))
+    return dict(existing,display_name=title+'.pdf') if existing else save_pdf('Sales Invoice',name,title,invoice_pdf_content(doc),identity=identity)
 
 
 @frappe.whitelist()
@@ -119,16 +144,35 @@ def documents(name):
     if invoices:
         invoice_files=frappe.get_list('File',filters={'attached_to_doctype':'Sales Invoice','attached_to_name':['in',[row.name for row in invoices]]},fields=['name','file_name','file_url','creation','is_private','attached_to_name'],order_by='creation desc',limit_page_length=200)
         result+=invoice_files
-        printed={row.attached_to_name for row in invoice_files if re.fullmatch(re.escape(re.sub(r'[^\w .-]','_',row.attached_to_name+' Invoice')[:150])+r'-[a-f0-9]{12}(?:[a-f0-9]{6})?\.pdf',row.file_name)}
+        printed={row.attached_to_name for row in invoice_files if 'Invoice' in row.file_name and row.file_name.lower().endswith('.pdf')}
         for invoice in invoices:
             if invoice.name not in printed:result.append(frappe._dict(name='invoice:'+invoice.name,invoice=invoice.name,file_name=invoice.name+' Invoice.pdf',creation=invoice.creation,is_private=1))
     # Signed snapshots are documents already; render their PDF only when opened.
     for share in frappe.get_list('PP Agreement Share',filters={'contract_terms':name,'status':'Signed'},fields=['name','snapshot','digest','status','signed_by','signed_on','signature','approval_method'],order_by='signed_on desc',limit_page_length=10):
-        title=(terms.pp_reference or name)+' Signed agreement'
-        filename=pdf_filename(title,document_html(signed_body(share),terms.pp_reference or name))
-        if not any(re.fullmatch(re.escape(filename[:-4])+r'(?:[a-f0-9]{6})?\.pdf',r.file_name) for r in result):
+        title=document_title(terms,'Signed agreement')
+        filenames=[pdf_filename(v,document_html(signed_body(share),terms.pp_reference or name)) for v in [title,(terms.pp_reference or name)+' Signed agreement']]
+        if not any(re.fullmatch(re.escape(filename[:-4])+r'(?:[a-f0-9]{6})?\.pdf',r.file_name) for r in result for filename in filenames):
             result.append(frappe._dict(name='signed:'+share.name,file_name=title+'.pdf',share=share.name,agreement=name,creation=share.signed_on,is_private=1))
-    return sorted(result,key=lambda r:str(r.creation),reverse=True)
+    return describe_documents(sorted(result,key=lambda r:str(r.creation),reverse=True),terms)
+
+
+@frappe.whitelist()
+def event_documents(name):
+    from plus_point.events import plan_doc
+    doc=plan_doc(name)
+    result=frappe.get_list('File',filters={'attached_to_doctype':'PP Event Plan','attached_to_name':doc.name},fields=['name','file_name','file_url','creation','is_private'],order_by='creation desc',limit_page_length=100)
+    client=frappe.db.get_value('Project',doc.project,'customer')
+    client_title=frappe.db.get_value('Customer',client,'customer_name') if client else ''
+    for row in result:
+        row['origin']='Event'
+        row['display_name']=' - '.join(v for v in [doc.pp_reference or doc.name,doc.event_name,client_title,row.file_name] if v)
+    if doc.contract_terms:
+        terms=terms_doc(doc.contract_terms)
+        for source in dict.fromkeys([terms.name,terms.get('governing_agreement')]):
+            if source:result.extend(dict(row,origin='Agreement') for row in documents(source))
+    unique={}
+    for row in result:unique.setdefault(row['name'],row)
+    return sorted(unique.values(),key=lambda r:str(r.get('creation') or ''),reverse=True)
 
 
 @frappe.whitelist(methods=['POST'])
@@ -176,6 +220,9 @@ def private_pdf(name):
     elif file.attached_to_doctype=='Sales Invoice':
         from plus_point.operations import invoice
         invoice(file.attached_to_name)
+    elif file.attached_to_doctype=='PP Event Plan':
+        from plus_point.events import plan_doc
+        plan_doc(file.attached_to_name)
     else:frappe.throw('Choose an agreement or invoice document.')
     if not file.is_private or not str(file.file_url).startswith('/private/files/') or not file.file_name.lower().endswith('.pdf'):frappe.throw('Choose a private PDF document.')
     return file
@@ -186,4 +233,5 @@ def data(name):
     import base64
     file=private_pdf(name)
     content=file.get_content();content=content.encode() if isinstance(content,str) else content
-    return dict(name=file.name,filename=file.file_name,mime='application/pdf',content=base64.b64encode(content).decode())
+    title=re.sub(r'-[a-f0-9]{12}(?:[a-f0-9]{6})?(?=\.pdf$)','',file.file_name)
+    return dict(name=file.name,filename=title,mime='application/pdf',content=base64.b64encode(content).decode())

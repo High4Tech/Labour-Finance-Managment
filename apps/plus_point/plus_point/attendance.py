@@ -8,6 +8,31 @@ from plus_point.finance import money,day_units
 STATES={'Present':'1','Half day':'0.5','Absent':'0','Not marked':''}
 
 
+@frappe.whitelist()
+def day_register(plan,work_date):
+    """Read the selected day's roster; viewing a calendar never posts work."""
+    require_customer()
+    from plus_point.events import plan_doc
+    doc=plan_doc(plan);day=getdate(work_date)
+    if not getdate(doc.start_date)<=day<=getdate(doc.end_date):
+        frappe.throw('Choose a date within the event period.')
+    site_names=list(dict.fromkeys(r.site for r in doc.staffing if getdate(r.start_date)<=day<=getdate(r.end_date)))
+    result=[]
+    for site in site_names:
+        location,project,_,required=context(site,day)
+        registers=frappe.get_list('PP Daily Register',filters={'site':site,'work_date':day,'docstatus':['<',2]},fields=['name'],order_by='docstatus desc,creation desc',limit_page_length=1)
+        register=detail(registers[0].name) if registers else None
+        rows=register['rows'] if register else []
+        if not register:
+            for assignment in roster(site,day):
+                person=linked('Employee',assignment.employee)
+                rows.append(dict(employee=person.name,title=person.employee_name,designation=person.designation,status='Not marked'))
+        if sum(len(venue['rows']) for venue in result)+len(rows)>1000:
+            frappe.throw('Use the attendance register to review more than 1,000 workers.')
+        result.append(dict(site=site,title=location.site_name,required=required,register=register['name'] if register else None,rows=[dict(employee=r['employee'],title=r['title'],designation=r.get('designation'),status=r['status']) for r in rows]))
+    return dict(date=str(day),venues=result,can_open=day<=getdate(today()) and bool(frappe.has_permission('PP Daily Register','read')))
+
+
 def status_for(units):
     try:return {'1':'Present','0.5':'Half day','0':'Absent'}[str(day_units(units)).rstrip('0').rstrip('.') or '0']
     except ValueError:frappe.throw('Choose Present, Absent or Half day for this worker.')

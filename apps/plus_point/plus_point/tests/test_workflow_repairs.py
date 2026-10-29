@@ -18,6 +18,53 @@ class WorkflowRepairsTests(unittest.TestCase):
     agreement=hierarchy.HierarchyTests.agreement
     event=hierarchy.HierarchyTests.event
 
+    def test_event_budget_projection_does_not_double_count_earned_wages(self):
+        from decimal import Decimal
+        from plus_point.operations import event_budget_summary
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        frappe.db.set_value('Project',doc.project,'estimated_costing',5000)
+        allocations=[frappe._dict(start_date=doc.start_date,end_date=doc.end_date,wage_rate=100)]
+        with patch('plus_point.budget.costs',return_value=dict(wages=Decimal(100),purchases=Decimal(25),claims=Decimal(10),total=Decimal(135))):
+            result=event_budget_summary(doc,allocations)
+        days=frappe.utils.date_diff(doc.end_date,doc.start_date)+1
+        self.assertEqual(result['projected'],Decimal(days*100+35))
+        self.assertEqual(result['recorded'],135)
+        self.assertEqual(result['remaining'],5000-result['projected'])
+
+    def test_calendar_read_creates_no_attendance_or_financial_records(self):
+        from plus_point.attendance import day_register
+        event=self.event();doc=frappe.get_doc('PP Event Plan',event)
+        counts=lambda:tuple(frappe.db.count(dt) for dt in ['PP Daily Register','PP Work Entry','GL Entry'])
+        before=counts();result=day_register(event,str(doc.start_date))
+        self.assertEqual(counts(),before);self.assertEqual(len(result['venues']),1)
+        with self.assertRaises(frappe.ValidationError):day_register(event,add_days(doc.start_date,-1))
+        op.auto_assign(event)
+        from plus_point.attendance import prepare
+        register=prepare(doc.staffing[0].site,str(doc.start_date))
+        saved=frappe.get_doc('PP Daily Register',register['name']);saved.entries[0].attendance_status='Half day';saved.entries[0].units='0.5';saved.save()
+        before=counts();result=day_register(event,str(doc.start_date))
+        self.assertEqual(result['venues'][0]['register'],saved.name)
+        self.assertEqual(result['venues'][0]['rows'][0]['status'],'Half day')
+        self.assertEqual(counts(),before)
+
+    def test_document_titles_include_agreement_reference_name_and_client(self):
+        from plus_point.agreement_documents import document_title,describe_documents,event_documents,pdf_filename
+        agreement=self.agreement();terms=frappe.get_doc('PP Contract Terms',agreement['name'])
+        title=document_title(terms,'Agreement')
+        self.assertIn(terms.agreement_title,title);self.assertIn(terms.pp_reference,title)
+        client=frappe.db.get_value('Project',terms.project,'customer')
+        self.assertIn(frappe.db.get_value('Customer',client,'customer_name'),title)
+        rows=describe_documents([frappe._dict(file_name=terms.pp_reference+' Agreement-abcdef012345.pdf')],terms)
+        self.assertNotIn('abcdef012345',rows[0].display_name)
+        event=self.event(agreement);self.assertIsInstance(event_documents(event),list)
+        self.assertLessEqual(len(pdf_filename('Agreement '+'a'*200+' Pro forma invoice','snapshot'))+6,140)
+
+    def test_custom_phase_requires_description_and_retains_legacy_other(self):
+        from plus_point.phases import normalize
+        self.assertEqual(normalize('Event, Other: Registration'), 'Event, Other: Registration')
+        self.assertEqual(normalize('Other'),'Other')
+        with self.assertRaises(frappe.ValidationError):normalize('Other: ')
+
     def test_auto_daily_worker_overrides_keep_profile_snapshot_and_booking_checks(self):
         event=self.event();doc=frappe.get_doc('PP Event Plan',event);role=doc.staffing[0].name;settings={role:dict(basis='Daily')}
         preview=op.auto_assign_preview(event,[role],settings);worker=preview['assignments'][0]['employee']

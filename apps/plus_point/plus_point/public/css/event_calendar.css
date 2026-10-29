@@ -68,3 +68,29 @@ body.pp-ui .pp-staffing-calendar [data-period][aria-pressed=true]{color:var(--pp
 
 body.pp-ui .pp-staffing-calendar .pp-timeline-grid>.pp-timeline-day{min-height:64px!important;padding:8px!important;display:flex;grid-template-rows:none;align-content:normal;gap:6px 10px;line-height:1.5}
 @media(max-width:600px){body.pp-ui .pp-staffing-calendar .pp-timeline-grid>.pp-timeline-day{min-height:72px!important;padding:7px 5px!important;gap:4px}}
+
+/* Calendar controls center the selected date; filters and coverage stay right. */
+.pp-staffing-calendar .pp-calendar-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px}
+.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{justify-self:center;min-width:0;display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+.pp-staffing-calendar .pp-calendar-navigation>div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pp-staffing-calendar [data-work-date]{width:176px;min-height:40px}
+.pp-staffing-calendar .pp-period-label{font-size:13px;min-width:0;margin:0;text-align:center}
+.pp-staffing-calendar .pp-timeline-tools{justify-content:flex-end;max-width:100%}
+.pp-staffing-calendar .pp-timeline-tools select{width:auto;max-width:220px}
+.pp-staffing-calendar .pp-timeline-legend{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-block:8px 20px;font-size:14px}
+.pp-staffing-calendar .pp-timeline-legend>strong{margin-inline-end:4px}
+.pp-staffing-calendar .pp-timeline-legend>.pp-op-badge{padding:6px 10px;border-radius:999px;line-height:1.4}
+.pp-staffing-calendar .pp-calendar-register{margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color);min-width:0}
+.pp-staffing-calendar .pp-calendar-register>header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.pp-staffing-calendar .pp-calendar-register h4{font-size:16px;line-height:1.6;margin:0}
+.pp-staffing-calendar .pp-calendar-register .pp-actions{margin-top:16px}
+.pp-staffing-calendar .pp-calendar-register .text-muted{margin-top:12px}
+.pp-staffing-calendar button[data-date][aria-pressed=true]{outline:2px solid var(--pp-accent);outline-offset:-3px}
+@media(max-width:1100px){.pp-staffing-calendar .pp-calendar-heading{grid-template-columns:1fr}.pp-staffing-calendar .pp-timeline-tools{justify-content:center}}
+@media(max-width:600px){.pp-staffing-calendar .pp-calendar-periods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}.pp-staffing-calendar .pp-calendar-periods .btn{padding-inline:10px;font-size:13px}.pp-staffing-calendar .pp-timeline-legend{justify-content:flex-start;flex-wrap:wrap}.pp-staffing-calendar .pp-timeline-legend>strong{width:100%}}
+
+.pp-staffing-calendar{container-type:inline-size}
+.pp-staffing-calendar .pp-calendar-heading{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{grid-column:2}
+.pp-staffing-calendar .pp-calendar-heading>.pp-timeline-tools{grid-column:3;justify-self:end}
+@container(max-width:940px){.pp-staffing-calendar .pp-calendar-heading{display:flex;flex-direction:column;align-items:stretch}.pp-staffing-calendar .pp-calendar-heading>.pp-calendar-navigation{align-self:center}.pp-staffing-calendar .pp-calendar-heading>.pp-timeline-tools{align-self:flex-end}}

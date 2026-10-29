@@ -43,7 +43,7 @@ def recent_sites(customer=None, exclude=None, customer_name=None):
     if not customer:return []
     linked('Customer',customer)
     projects=frappe.get_list('Project',filters={'company':business.name,'customer':customer,'pp_archived':0},pluck='name',limit_page_length=0)
-    terms=frappe.get_list('PP Contract Terms',filters={'project':['in',projects or ['']],'name':['!=',exclude or '']},
+    terms=frappe.get_list('PP Contract Terms',filters={'project':['in',projects or ['']],'name':['!=',exclude or ''],'event_basis':0},
         fields=['name','project','agreement_title','modified','pp_agreement_currency','currency','pp_transport_requirements'],order_by='modified desc,name desc',limit_page_length=40)
     result=[]
     for record in terms:
