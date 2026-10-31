@@ -438,3 +438,11 @@ body.pp-customer-app .pp-action-list .pp-list-actions{display:flex;flex-directio
 body.pp-customer-app .pp-table-selection-tools:has(+.pp-op-table-scroll>[data-sticky-actions]) .pp-table-select-compact{display:none!important}
 body.pp-customer-app .pp-table-selection-tools:has(+.pp-op-table-scroll>[data-sticky-actions])[hidden]{display:none!important}
 body.pp-customer-app .pp-register-table[data-sticky-actions] tr>th small{display:block!important;margin:4px 0 0!important}
+
+/* Authoritative status variant used by the Figma overview; default pill is preserved. */
+body.pp-customer-app.pp-ui .pp-ui-badge[data-variant=outline-dot]{display:inline-flex!important;align-items:center;gap:6px;padding:2px 6px;line-height:18px;font-size:12px;font-weight:500;border-radius:6px;background:var(--pp-overview-surface,var(--pp-surface,#fff))!important;color:var(--pp-overview-ink,var(--text-color))!important;border:1px solid #cbd5e1!important;box-shadow:0 1px 2px #0000000d;white-space:nowrap}
+body.pp-customer-app.pp-ui .pp-status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#9ca3af;flex:none}
+body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=success]>.pp-status-dot{background:#16a34a}
+body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=warning]>.pp-status-dot{background:#ff5800}
+body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=error]>.pp-status-dot{background:#dc2626}
+body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=info]>.pp-status-dot{background:#2563eb}

@@ -116,3 +116,12 @@ The venue sits in one reusable world with streets, arrival plaza, landscaping an
 The popup inherits the shared native dialog/button/typography/theme contracts. Its preview controls, accessible counts and Back to event details remain usable when WebGL is unavailable. The scene canvas is an illustration with a text alternative; it cannot record attendance, reserve resources, create invoices or change event data. See [demo acceptance](docs/EVENT_SCENE_DEMO_2026-10-31.md).
 
 Closing the scene may replace the poster with one frozen WebP of the last view before releasing the renderer. This image belongs only to the current page; never persist it in browser storage, upload a File record, or retain a background renderer. Capture failure must not prevent dialog cleanup. The image-button variant shares section-header, action, focus and responsive contracts, with dark-mode image treatment.
+
+
+## Figma Overview and orange branding — November 1
+
+The customer Overview now follows Figma frame `jZ63XyjbXM1v4evqYuzQLD / 23:16714`. Primary orange is `#FF5800`; shared tokens live in `brand.css`. Preserve semantic state colors and native Frappe/ERPNext/HRMS capabilities. Small text on orange uses contrasting navy ink. Do not recolor success states as brand actions.
+
+Use `ui.overview_metric` for the title-band/sparkline financial card, `ui.badge(label,tone,{variant:'outline-dot'})` for the supplied outlined-dot variant, and `render_table(labels,rows,{selection:false})` only for deliberately read-only summaries or tables providing their own selection. All other tables retain the default selection contract. Do not duplicate the layout or add feature-local status styles.
+
+`dashboard_overview.js/.css` owns the composition; `dashboard_view.view` owns the authorized read-only projection. Four ECharts instances are disposed on departure and recreated on return. No polling or new chart dependency is introduced. Native advanced views remain accessible; the optional event world stays unloaded. See [source, data semantics and acceptance](docs/FIGMA_OVERVIEW_2026-11-01.md).

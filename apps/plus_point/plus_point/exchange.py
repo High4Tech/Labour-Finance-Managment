@@ -99,7 +99,7 @@ def present(data, display_currency=None):
             if key in row:
                 row[key] = str(money(Decimal(str(row[key])) * rate))
 
-    convert(result, ('wages_unpaid', 'client_balance', 'earned_revenue', 'contribution', 'wages_earned',
+    convert(result, ('loans_outstanding', 'wages_unpaid', 'client_balance', 'earned_revenue', 'contribution', 'wages_earned',
                      'wages_paid', 'other_costs', 'cash_received', 'invoiced_net', 'invoiced_month', 'receipts_month'))
     for row in result.get('projects', []):
         convert(row, ('earned_revenue', 'wages_unpaid', 'contribution'))
@@ -119,6 +119,13 @@ def present(data, display_currency=None):
         convert(row, ('amount',))
     for row in result.get('finance_series', []):
         convert(row, ('revenue', 'wages'))
+    for row in result.get('metric_series', []):
+        convert(row, ('revenue', 'wages', 'loans'))
+    for row in result.get('workers', []) if isinstance(result.get('workers'), list) else []:
+        convert(row, ('wages_unpaid', 'loan'))
+    for row in result.get('milestones', []):
+        if row.get('amount') is not None:
+            convert(row, ('amount',))
     result['currency'] = target
     result['fx'] = dict(status='converted', requested=target, source=source, target=target, rate=str(rate),
         source_per_target=str(source_rate / target_rate),

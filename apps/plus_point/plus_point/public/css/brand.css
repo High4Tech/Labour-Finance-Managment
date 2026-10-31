@@ -1,0 +1,19 @@
+/* Shared orange identity from Figma 23:16714. Semantic success/error colors stay semantic.
+   Native ERPNext/HRMS modules and authorized advanced views are not replaced. */
+body.pp-customer-app.pp-ui{--pp-brand-solid:#ff5800;--pp-brand-hover:#e84f00;--pp-brand-text:#b83d00;--pp-accent:var(--pp-brand-text);--pp-focus:#c74400;--pp-action-primary:var(--pp-brand-solid);--pp-action-primary-hover:var(--pp-brand-hover);--pp-action-on-primary:#0b2538;--primary:var(--pp-brand-solid);--primary-color:var(--pp-brand-solid);--pp-canvas:#f8fafc;--pp-band:#f8fafc;--pp-support:#e2e8f0}
+html[data-theme=dark] body.pp-customer-app.pp-ui{--pp-brand-solid:#ff5800;--pp-brand-hover:#ff7933;--pp-brand-text:#ffad80;--pp-accent:var(--pp-brand-text);--pp-focus:#ff955c;--pp-action-primary:var(--pp-brand-solid);--pp-action-primary-hover:var(--pp-brand-hover);--pp-action-on-primary:#0b2538;--pp-canvas:#18212c;--pp-band:#222b36;--pp-support:#394351}
+body.pp-customer-app.pp-ui :is(.pp-dashboard,.pp-operations,.pp-worker-profile,.pp-agreement-document,.pp-event-overview){--pp-accent:var(--pp-brand-text);--pp-highlight:var(--pp-brand-solid)}
+body.pp-customer-app.pp-ui .btn-primary{background:var(--pp-brand-solid)!important;border-color:#dc4c00!important;color:var(--pp-action-on-primary)!important;--icon-stroke:var(--pp-action-on-primary)}
+body.pp-customer-app.pp-ui .btn-primary:hover{background:var(--pp-brand-hover)!important}
+body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected){background:var(--pp-brand-solid)!important;color:#0b2538!important}
+body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected) :is(a,span,svg){color:#0b2538!important;--icon-stroke:#0b2538}
+body.pp-customer-app.pp-ui .body-sidebar{background:#f8f8f8;border-right:1px solid #e5e7eb;width:264px;--sidebar-width:264px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-label{font-size:14px!important;font-weight:600}
+html[data-theme=dark] body.pp-customer-app.pp-ui .body-sidebar{background:#1c2530;border-color:#394351}
+body.pp-customer-app.pp-ui .pp-brand-wordmark{display:block;width:85px;height:24px;object-fit:contain;margin-right:auto}
+body.pp-customer-app.pp-ui .pp-orange-brand-header .title-container{display:none}
+body.pp-customer-app.pp-ui .pp-orange-brand-header .header-logo{width:85px;flex:none}
+body.pp-customer-app.pp-ui .pp-orange-brand-header{gap:12px;padding:20px!important;min-height:64px;justify-content:space-between}
+html[data-theme=dark] body.pp-customer-app.pp-ui .pp-brand-wordmark{filter:brightness(0) invert(1)}
+body.pp-customer-app.pp-ui .progress-bar{background:var(--pp-brand-solid)}
+body.pp-customer-app.pp-ui .pp-chart-swatch{--pp-chart-color-0:var(--pp-brand-solid)}

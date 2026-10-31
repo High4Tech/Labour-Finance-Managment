@@ -52,12 +52,21 @@ class FullWorkflowTests(unittest.TestCase):
         totals=project_summary(agreement['project']);self.assertEqual(totals['labour_cost'],'600.00');self.assertEqual(totals['earned_revenue'],'1050.00')
         advance=self.payment(alice.name,500,self.f.company.default_receivable_account)
         loan=benefits.grant_loan(alice.name,500,25,today(),'Audited advance',advance.name)
-        self.assertEqual(benefits.balances(alice.name)['proposed_deduction'],'75.00')
-        recovery=benefits.apply_deduction(loan['name'],agreement['project'],today());self.assertEqual(recovery['amount'],'75.00')
-        wages=self.payment(alice.name,225,self.f.company.default_payable_account,agreement['project'])
+        # Month boundaries must not recover a percentage of last month's earnings.
+        monthly_alice=(Decimal(200) if str(days[0])[:7]==str(today())[:7] else Decimal(0))+Decimal(100)
+        deduction=monthly_alice*Decimal('.25');cash=Decimal(300)-deduction
+        self.assertEqual(Decimal(benefits.balances(alice.name)['proposed_deduction']),deduction)
+        recovery=benefits.apply_deduction(loan['name'],agreement['project'],today());self.assertEqual(Decimal(recovery['amount']),deduction)
+        wages=self.payment(alice.name,cash,self.f.company.default_payable_account,agreement['project'])
         insert('PP Wage Settlement',employee=alice.name,project=agreement['project'],payment_entry=wages.name).submit()
-        self.assertEqual(benefits.balances(alice.name)['loan_outstanding'],'425.00')
+        self.assertEqual(Decimal(benefits.balances(alice.name)['loan_outstanding']),Decimal(500)-deduction)
         self.assertEqual(Decimal(benefits.balances(alice.name)['monthly_after_deduction']),0)
+        from plus_point.dashboard_view import view as dashboard_view
+        dashboard=dashboard_view(self.f.company.name)
+        # A full-day leave is excluded from the eligible roster: 3 units / 5 entries.
+        self.assertEqual(dashboard['attendance_rate'],60)
+        self.assertEqual(Decimal(dashboard['loans_outstanding']),Decimal(500)-deduction)
+        self.assertEqual(Decimal(next(r for r in dashboard['workers'] if r['name']==alice.name)['wages_unpaid']),0)
         invoice=frappe.get_doc('Sales Invoice',billing.create_invoice(agreement['name'])['name']);invoice.submit()
         self.assertEqual(Decimal(str(invoice.grand_total)),1050)
         from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
@@ -67,7 +76,7 @@ class FullWorkflowTests(unittest.TestCase):
         supplier=insert('Supplier',supplier_name='Journey supplier '+uuid.uuid4().hex[:5],supplier_group='All Supplier Groups',supplier_type='Company')
         expense=insert('Purchase Invoice',company=self.f.company.name,supplier=supplier.name,project=agreement['project'],items=[dict(item_code=self.f.item.name,qty=1,rate=100,project=agreement['project'],expense_account=self.f.company.default_expense_account,cost_center=self.f.company.cost_center)]);expense.submit()
         totals=project_summary(agreement['project'])
-        for key,value in dict(earned_revenue='1050.00',labour_cost='600.00',cash_collected_gross='1050.00',client_outstanding_gross='0.00',wages_paid='225.00',loan_recoveries='75.00',wages_outstanding='300.00',other_project_costs='100.00',operational_profit='350.00').items():
+        for key,value in dict(earned_revenue='1050.00',labour_cost='600.00',cash_collected_gross='1050.00',client_outstanding_gross='0.00',wages_paid=f'{cash:.2f}',loan_recoveries=f'{deduction:.2f}',wages_outstanding='300.00',other_project_costs='100.00',operational_profit='350.00').items():
             with self.subTest(total=key):self.assertEqual(totals[key],value)
         from plus_point.reporting import worker_statement_report
         from plus_point.worker_profile import overview

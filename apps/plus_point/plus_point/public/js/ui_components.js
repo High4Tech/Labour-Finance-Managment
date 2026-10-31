@@ -27,6 +27,9 @@
   analytics_card(title,symbol,body,{actions='',className=''}={}){
    return '<section class="pp-analytics-card '+esc(className)+'">'+pp.ui.heading(title,{symbol,actions})+'<div class="pp-analytics-body">'+body+'</div></section>';
   },
+  overview_metric(label,value,{unit='',key='',href='',description=''}={}){
+   return '<section class="pp-analytics-card pp-overview-metric">'+pp.ui.heading(label,{})+'<div class="pp-overview-metric-body"><a class="pp-overview-metric-value" href="'+esc(href)+'" title="'+esc(description)+'"><span>'+esc(unit)+'</span><strong data-fit-number>'+esc(pp.ui.amount(value))+'</strong></a><div class="pp-metric-spark" data-spark="'+esc(key)+'" aria-label="'+esc(description)+'"></div></div></section>';
+  },
   bind_input(input,df){
    if(input.ppField)return input.ppField;
    const wrapper=input.closest('label')||input.parentElement;wrapper.classList.add('frappe-control');input.type='text';input.setAttribute('aria-label',df.label);
@@ -37,7 +40,7 @@
    const section=document.createElement('section');section.className='pp-ui-panel pp-builder-card';
    section.innerHTML=pp.ui.heading(title,{description,symbol,className:'pp-ui-panel-heading'})+'<div class="pp-ui-panel-body pp-builder-card-body"></div>';return section;
   },
-  badge(label,tone='neutral'){return '<span class="pp-ui-badge" data-tone="'+esc(tone)+'">'+esc(__(label))+'</span>';},
+  badge(label,tone='neutral',{variant='pill'}={}){return '<span class="pp-ui-badge" data-tone="'+esc(tone)+'" data-variant="'+esc(variant)+'">'+(variant==='outline-dot'?'<i class="pp-status-dot" aria-hidden="true"></i>':'')+esc(__(label))+'</span>';},
   metric(symbol,value,label,note='',href=''){
    const tag=href?'a':'div';return '<'+tag+(href?' href="'+esc(href)+'"':'')+' class="pp-ui-metric pp-agreement-metric"><span class="pp-agreement-metric-icon" aria-hidden="true">'+(pp.record_profile_ui?.icon(symbol)||icon(symbol))+'</span><div><span>'+esc(__(label))+'</span><strong title="'+esc(value||'—')+'">'+esc(value||'—')+'</strong><small'+(!note?' aria-hidden="true" class="pp-metric-note-empty"':'')+'>'+esc(note||'\u00a0')+'</small></div></'+tag+'>';
   },

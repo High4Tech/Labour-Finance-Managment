@@ -60,3 +60,38 @@ class DashboardAnalyticsTests(unittest.TestCase):
         with patch('frappe.defaults.get_user_default',side_effect=lambda key,*a,**kw:'USD' if key=='pp_display_currency' else native(key,*a,**kw)),patch('plus_point.exchange._snapshot',return_value=dict(updated=1700000000,rates={'USD':'1','PKR':'100'})):
             data=overview(company=self.f.company.name,display_currency='USD')
         self.assertEqual(data['earned_revenue'],'15.00');self.assertEqual(data['dashboard_snapshot']['payments'][0]['amount'],'10.00')
+
+    def test_redesigned_dashboard_real_worker_balances_and_bounded_pages(self):
+        from plus_point.dashboard_view import view
+        self.work();data=view(self.f.company.name)
+        self.assertEqual(data['worker_total'],1)
+        self.assertEqual(data['workers'][0]['wages_unpaid'],'1000.00')
+        self.assertEqual(data['loans_outstanding'],'0.00')
+        self.assertEqual(len(data['metric_series']),30)
+        self.assertEqual(data['metric_series'][-1]['wages'],'1000.00')
+        self.assertIsNone(data['attendance_rate'])
+        self.assertEqual(view(self.f.company.name,search='no such worker')['worker_total'],0)
+        self.assertLessEqual(len(data['feed']),25)
+        self.assertEqual(view(self.f.company.name,page=999)['page'],1)
+
+    def test_redesigned_dashboard_scope_dates_and_conversion(self):
+        from plus_point.dashboard_view import view
+        self.work()
+        with self.assertRaises(frappe.PermissionError):view('different-company')
+        with self.assertRaises(frappe.ValidationError):view(self.f.company.name,start='2026-02-02',end='2026-01-01')
+        with self.assertRaises(frappe.ValidationError):view(self.f.company.name,start='2020-01-01',end=today())
+        with self.assertRaises(frappe.ValidationError):view(self.f.company.name,event_status='Draft')
+        with patch('plus_point.exchange._snapshot',return_value=dict(updated=1700000000,rates={'USD':'1','PKR':'100'})):
+            data=view(self.f.company.name,display_currency='USD')
+        self.assertEqual(data['workers'][0]['wages_unpaid'],'10.00')
+        self.assertEqual(data['metric_series'][-1]['wages'],'10.00')
+        self.assertEqual(data['currency'],'USD')
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):view(self.f.company.name)
+
+    def test_redesigned_dashboard_does_not_write_business_records(self):
+        from plus_point.dashboard_view import view
+        types=['Employee','PP Event Plan','PP Contract Terms','PP Daily Register','PP Work Entry','PP Worker Loan','Sales Invoice','File']
+        before={dt:frappe.db.count(dt) for dt in types}
+        view(self.f.company.name)
+        self.assertEqual(before,{dt:frappe.db.count(dt) for dt in types})

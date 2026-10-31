@@ -16,7 +16,7 @@
   const refresh=()=>{
    if(disposed)return;const dark=document.documentElement.dataset.theme==='dark',reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,key=dark+':'+reduced;if(signature===key)return;signature=key;
    const css=getComputedStyle(host),text=css.getPropertyValue('--text-color').trim()||(dark?'#f1f5f9':'#102a25'),muted=css.getPropertyValue('--text-muted').trim()||(dark?'#c0cbc6':'#52665e'),grid=dark?'#354b43':'#e7eeeb';
-   const fallback=dark?['#53d5b1','#f1bd50','#93b9db','#bcb0ef','#f29da6']:['#087f65','#b67b12','#567f9a','#8062ac','#b65669'],colors=fallback.map((color,i)=>css.getPropertyValue('--pp-chart-color-'+i).trim()||color);
+   const fallback=dark?['#ff955c','#f1bd50','#93b9db','#bcb0ef','#f29da6']:['#ff5800','#b67b12','#567f9a','#8062ac','#b65669'],colors=config.colors||fallback.map((color,i)=>css.getPropertyValue('--pp-chart-color-'+i).trim()||color);
    const description=config.description||config.title+'. '+__('Use Left and Right arrows to explore values, or open View chart data for the complete table.');
    const option={backgroundColor:'transparent',color:colors,textStyle:{fontFamily:css.fontFamily,color:text,fontSize:13},animation:!reduced,animationDuration:360,animationDurationUpdate:180,aria:{enabled:true,label:{enabled:true,description}},tooltip:{trigger:config.type==='donut'?'item':'axis',renderMode:'richText',confine:true,backgroundColor:dark?'#e5f3ed':'#102f28',borderWidth:0,padding:[10,12],textStyle:{color:dark?'#142d24':'#fff',fontSize:14},axisPointer:{type:config.type==='bar'?'shadow':'line',lineStyle:{color:colors[0],type:'dashed'}},formatter:params=>{const rows=Array.isArray(params)?params:[params];return String(rows[0]?.name||'')+'\n'+rows.map(p=>p.seriesName+': '+value(series[p.seriesIndex||0]?.values[p.dataIndex]??p.value)+(p.percent!=null?' · '+p.percent+'%':'')).join('\n');}}};
    if(config.type==='donut'){
@@ -32,6 +32,16 @@
     option.xAxis={type:'category',data:labels,boundaryGap:config.type==='bar',axisLine:{show:false},axisTick:{show:false},axisLabel:{color:muted,fontSize:12,hideOverlap:true,margin:12,formatter:name=>config.type==='line'&&/^\d{4}-\d{2}-\d{2}$/.test(name)?name.slice(5):name}};
     option.yAxis={type:'value',min:config.nonNegative?0:undefined,axisLine:{show:false},axisTick:{show:false},axisLabel:{color:muted,fontSize:12,formatter:compact},splitLine:{lineStyle:{color:grid,type:'dashed'}}};
     option.series=series.map((row,i)=>({name:row.name,type:config.type,data:row.values.map(Number),...(config.type==='line'?{smooth:0.2,smoothMonotone:'x',showSymbol:true,symbol:'circle',symbolSize:labels.length<=12?7:3,itemStyle:{borderWidth:2,borderColor:dark?'#182e25':'#fff'},lineStyle:{width:3,cap:'round',shadowBlur:6,shadowColor:dark?'#53d5b120':'#087f6515'},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:i===0?(dark?'#53d5b16b':'#087f6545'):(dark?'#f1bd5055':'#b67b1238')},{offset:1,color:i===0?'#087f6502':'#b67b1202'}]}}}:{barMaxWidth:28,barGap:'25%',itemStyle:{borderRadius:[4,4,0,0]}}),emphasis:{focus:'series'},color:colors[i%colors.length]}));
+   }
+   if(config.sparkline){
+    option.grid={left:0,right:0,top:6,bottom:3};option.xAxis={type:'category',show:false,data:labels,boundaryGap:false};option.yAxis={type:'value',show:false,min:0,max:series[0].values.some(v=>Number(v)>0)?undefined:1};
+    option.series=[{type:'line',name:series[0].name,data:series[0].values.map(Number),smooth:.35,showSymbol:false,lineStyle:{width:2,color:colors[0]},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:colors[0]+'20'},{offset:1,color:colors[0]+'00'}]}}}];
+   }
+   if(config.type==='attendance'){
+    option.grid={left:0,right:0,top:12,bottom:24,containLabel:false};
+    option.xAxis={type:'category',data:labels,boundaryGap:true,axisTick:{show:false},axisLine:{show:false},axisLabel:{color:muted,fontSize:12,hideOverlap:true,formatter:v=>String(Number(v.slice(-2)))}};
+    option.yAxis={type:'value',min:0,axisLabel:{show:false},axisTick:{show:false},axisLine:{show:false},splitNumber:4,splitLine:{lineStyle:{color:grid}}};
+    option.series=[{name:series[0].name,type:'line',data:series[0].values.map(Number),showSymbol:false,smooth:.16,lineStyle:{width:2,color:colors[0]},z:3},{name:series[1].name,type:'bar',data:series[1].values.map(Number),barMaxWidth:2,itemStyle:{color:dark?'#435269':colors[1]},z:1}];
    }
    chart.setOption(option,{notMerge:true});host.dataset.chartTheme=dark?'dark':'light';plot.setAttribute('role','img');plot.setAttribute('aria-label',description);plot.setAttribute('aria-description',__('Left and Right arrows explore values. Home and End jump to the first and last values. Escape closes the tooltip.'));
   };

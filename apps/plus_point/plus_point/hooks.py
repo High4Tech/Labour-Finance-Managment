@@ -15,7 +15,7 @@ before_install = "plus_point.install.before_install"
 extend_bootinfo = "plus_point.onboarding.boot_context"
 web_include_js = ["/assets/plus_point/js/website.js?v=20261021-complete-forms-4"]
 website_route_rules = [{"from_route":"/signup","to_route":"plans"}]
-app_include_js = ["/assets/plus_point/js/choices.js?v=20261029-event-review-2","/assets/plus_point/js/icons.js?v=20261031-scene-demo-1","/assets/plus_point/js/runtime.js?v=20261029-upload-assets-2",
+app_include_js = ["/assets/plus_point/js/choices.js?v=20261029-event-review-2","/assets/plus_point/js/icons.js?v=20261031-scene-demo-1","/assets/plus_point/js/runtime.js?v=20261101-figma-orange-2",
                   "/assets/plus_point/js/feedback.js?v=20261027-refinement-1","/assets/plus_point/js/appearance.js?v=20261028-echarts-2",
                   "/assets/plus_point/js/selectors.js?v=20261029-upload-assets-2",
                   "/assets/plus_point/js/forms.js?v=20261029-event-review-2",
@@ -93,7 +93,7 @@ add_to_apps_screen = [
 ]
 
 app_include_js += ["/assets/plus_point/js/event_pay.js?v=20261029-event-review-2"]
-app_include_js += ["/assets/plus_point/js/experience.js?v=20261028-booking-controls-2"]
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261101-figma-orange-2"]
 app_include_css += ["/assets/plus_point/css/experience.css?v=20261027-refinement-1"]
 
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261029-commercial-flow-3"]
@@ -120,8 +120,9 @@ app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261029-table-cont
 app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261029-upload-assets-2"]
 
 app_include_js += ["/assets/plus_point/js/design_assets.js?v=20261029-upload-assets-2"]
-app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261029-upload-assets-2"]
-app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261029-upload-assets-2"]
+app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-figma-orange-2"]
+app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261101-figma-orange-2"]
 app_include_css += ["/assets/plus_point/css/upload_assets.css?v=20261029-upload-assets-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261031-scene-poster-1"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261101-figma-orange-2"]
+app_include_css += ["/assets/plus_point/css/brand.css?v=20261101-figma-orange-2"]

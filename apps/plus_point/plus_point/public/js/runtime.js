@@ -12,9 +12,10 @@
   for(const row of table.querySelectorAll('tbody>tr:not(.pp-table-empty)')){const cell=row.children[index];if(!cell)continue;cell.dataset.tableActions='true';if(cell.querySelector(':scope>.pp-table-actions'))continue;const actions=document.createElement('div');actions.className='pp-table-actions';for(const child of [...cell.childNodes]){if(child.nodeType===1&&child.matches('p,small'))child.classList.add('pp-table-action-note');else actions.append(child);}cell.prepend(actions);}
  }
  plus_point.enhance_table_actions=tableActions;
- plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.'}={})=>{
+ plus_point.render_table=(labels,rows,{emptyTitle='No records yet',emptyDescription='Records will appear here when they are added.',selection=true}={})=>{
   const esc=v=>frappe.utils.escape_html(String(v??'')),template=document.createElement('template');
   template.innerHTML=`<div class="pp-op-table-scroll" tabindex="0" role="region" aria-label="${esc(__('Table: {0}',[labels.map(t=>__(t)).join(', ')]))}"><table class="pp-register-table"><thead><tr>${labels.map(t=>`<th scope="col">${esc(__(t))}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr class="pp-table-empty"><td colspan="${Math.max(1,labels.length)}">${plus_point.empty_state(emptyTitle,emptyDescription)}</td></tr>`}</tbody></table></div>`;
+  if(!selection)template.content.querySelector('table').dataset.selection='none';
   template.content.querySelectorAll('thead th').forEach((cell,i)=>{if(/^(amount|rate|daily wage|client rate|balance|revenue|cost|outstanding|paid|estimated total|approved to invoice|wages|fixed contract value)/i.test(labels[i]||''))cell.dataset.numeric='true';});
   const kind=labels.includes('Attendance period')?'payments':labels.includes('Event pay')?'crew':'',weights=kind==='payments'?[16,21,12,14,14,9,30]:kind==='crew'?[24,10,10,14,12,16,10,22]:null;
   if(weights?.length===labels.length){const table=template.content.querySelector('table'),cols=document.createElement('colgroup'),total=weights.reduce((sum,n)=>sum+n,0);table.dataset.tableKind=kind;for(const n of weights){const col=document.createElement('col');col.style.width=(n/total*100)+'%';cols.append(col);}table.prepend(cols);}
@@ -25,7 +26,7 @@
  // Shared selection for owned tables. Feature owners supply permitted mutations;
  // read-only tables still support selection and copying without unlocking history.
  plus_point.table_selection=(root,{actions=[],keys=null,eligible=()=>true}={})=>{
-  const table=root?.matches?.('table.pp-register-table')?root:root?.querySelector('table.pp-register-table');if(!table)return;
+  const table=root?.matches?.('table.pp-register-table')?root:root?.querySelector('table.pp-register-table');if(!table||table.dataset.selection==='none')return;
   tableActions(table);if(table.ppSelection){if(actions.length)table.ppSelection.setActions(actions);return table.ppSelection;}
   const rows=[...table.querySelectorAll('tbody>tr:not(.pp-table-empty)')];
   if(!rows.length||rows.some(row=>row.querySelector('input[type=checkbox]')))return;
