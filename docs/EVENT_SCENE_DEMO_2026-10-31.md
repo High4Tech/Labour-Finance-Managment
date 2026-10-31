@@ -4,20 +4,20 @@ Implemented October 31, 2026, as a supporting preview in the existing company Ev
 
 ## Component and visual contract
 
-- One fixed isometric conference pavilion, teal/white architecture, landscaped edge and vehicle lane. The same component serves every preview.
+- One fixed isometric event world: teal/white pavilion, arrival gate, plaza, banners, benches, surrounding streets/crossings, landscaped public spaces and quiet neighboring buildings. The world extends beyond the camera rather than ending on a display plinth. The same component serves every preview.
 - Existing event name/reference, venue, dated staffing demand, unique available assignments and dated vehicle reservations supply the changing information. Equipment is excluded.
 - Walking figures during Working hours; dimmed lights and still figures After hours. Now checks the current site timezone and event dates against the temporary demo schedule. Overnight shifts belong to their starting work date.
 - Preview hours default to 09:00â€“18:00 and can be adjusted inside the dialog. They are explicitly unsaved demo settings: existing records have no persistent shift-hours fields. The scene is scheduled activity, not live location/attendance tracking.
 - Exact numeric totals accompany representative populations capped at 36 workers and 6 vehicles. No false assignments or bookings are created for presentation.
-- Native accessible dialog, labelled keyboard controls, zoom/rotate/reset, motion pause, light/dark themes and mobile layouts. Unsupported graphics show event counts and retain navigation.
+- Native accessible dialog, labelled keyboard controls, drag and keyboard exploration, zoom/rotate/reset, contextual venue/crew/vehicle markers, motion pause, light/dark themes and mobile layouts. Unsupported graphics show event counts and retain navigation.
 
 ## Loading and lifecycle
 
 The ordinary app includes only a lightweight entry action and feature definitions. The scene component, its CSS and Three.js are downloaded only after the explicit action. Three.js r180 is pinned, bundled locally and MIT-licensed; no CDN or model service is contacted at runtime.
 
-The local engine is 495,266 source bytes / 125,306 gzip bytes. It is cached across openings. No separate venue files, texture downloads or animation packages are requested. Workers use instanced meshes; the measured 15-person preview uses 134 draw calls, 5 geometry buffers and 1 generated sign texture.
+The local engine is 495,283 source bytes / 125,328 gzip bytes. It is cached across openings. No separate venue files, texture downloads or animation packages are requested. Workers use instanced meshes; the measured 15-person preview uses 216 draw calls, 6 geometry buffers, 1 generated sign texture and 1 cached shadow-map texture.
 
-The active scene has one animation loop capped at 30 FPS and a maximum pixel ratio of 1.5. Paused, reduced-motion and off-hours states render only on change. Hidden tabs stop the loop. One boundary timeout updates the Now state at the next start/end/midnight; it is not an API polling loop. One local resize observer is disconnected on close. Replacement, closing and route navigation release all GPU resources, renderer context, canvas, listeners and timer. A partially initialized scene is also cleaned up if graphics fail.
+The active scene has one animation loop capped at 30 FPS and a maximum pixel ratio of 1.5. Paused, reduced-motion and off-hours states render only on change. Hidden tabs stop the loop. One boundary timeout updates the Now state at the next start/end/midnight; it is not an API polling loop. A 1024px static shadow map is refreshed on state changes, not on every animation frame. World markers project only when the camera changes. One local resize observer is disconnected on close. Replacement, closing and route navigation release all GPU resources, renderer context, canvas, listeners and timer. A partially initialized scene is also cleaned up if graphics fail.
 
 ## Supplied library findings
 
@@ -26,7 +26,7 @@ The complete listing of the user's [SimReady asset bucket](https://huggingface.c
 ## Verification
 
 - `node tests/event-scene-state.cjs`: eight checks of site timezone, shift boundaries, overnight work dates, venue/date counts, deduplication, invalid hours, inactive events, demo isolation and bounded graphic populations.
-- `node scripts/browser-event-scene.cjs`: 15 read-only company checks of zero initial scene requests, explicit local loading, animation pause, off-hours, hidden-page pause, reduced motion, desktop/mobile light/dark AA accessibility, cleanup, cached reopening, 50-person/two-vehicle reuse, graphics fallback, navigation cleanup and interrupted-download recovery. Company Event Plan, Contract Terms, Assignment, Daily Register, Sales Invoice and File counts are unchanged before/after.
+- `node scripts/browser-event-scene.cjs`: 18 read-only company checks of zero initial scene requests, explicit local loading, animation pause, off-hours, hidden-page pause, reduced motion, desktop/mobile light/dark AA accessibility, drag/keyboard exploration, marker-to-profile navigation, cleanup, cached reopening, 50-person/two-vehicle reuse, graphics fallback, navigation cleanup and interrupted-download recovery. Company Event Plan, Contract Terms, Assignment, Daily Register, Sales Invoice and File counts are unchanged before/after.
 - QA `audit-workflows.py --crew-regression`: all 118 tests passed, zero errors or skipped cases (211.986 seconds). Includes planning, hierarchy and event/resource workflows, including reservation kind/site identifiers. All fixtures roll back.
 - The initial QA run passed 117 of 118 cases. The remaining leave-allowance test assumed tomorrow stayed in the current month, which is false on October 31. Its date now stays in the same month; no leave business rule was changed.
 
@@ -35,3 +35,7 @@ Browser evidence and private screenshots remain ignored under `.local/qa/`. Loca
 References: official Three.js [rendering on demand](https://threejs.org/manual/pages/rendering-on-demand.html), [resource cleanup](https://threejs.org/manual/pages/cleanup.html), and [WebGL renderer](https://threejs.org/docs/pages/WebGLRenderer.html).
 
 No schema migration, emails, live-company data mutation or accounting/stock posting is needed. Native Frappe permissions and advanced views remain intact.
+
+## World refinement
+
+The user’s follow-up reference called for an explorable world rather than an isolated architectural model. The wider native popup now puts the three exact counters and contextual venue inspector over a viewport-filling world. The canvas supports bounded pointer dragging and arrow-key panning, with reset/zoom/rotation. Venue, crew and transport markers update the inspector; its supporting action returns to the existing relevant event tab. Mobile places the same inspector below the world to keep the scene usable. The neighborhood is illustrative; it does not claim to be a real map or add bookings.
