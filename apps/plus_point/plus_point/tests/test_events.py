@@ -85,6 +85,10 @@ class EventTests(unittest.TestCase):
         event=self.event();plan=frappe.get_doc('PP Event Plan',event['plan']);vehicle=self.vehicle()
         values=self.booking(event,vehicle=vehicle.name,purpose='Crew',crew_count=2)
         result=resources.save_booking(event['project'],'vehicle',values)
+        from plus_point.operations import plan as event_details
+        reservation=next(row for row in event_details(plan.name)['reservations'] if row['name']==result['name'])
+        self.assertEqual(reservation['kind'],'vehicle')
+        self.assertEqual(reservation['site_id'],values['site'])
         data=resources.overview('vehicles',vehicle.name,plan.start_date,plan.end_date)
         self.assertEqual(data['rows'][0].status,'Assigned')
         self.assertEqual(resources.project_resources(event['project'])['rows'][0].name,result['name'])

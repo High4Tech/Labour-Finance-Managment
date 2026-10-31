@@ -33,7 +33,10 @@ class HierarchyTests(unittest.TestCase):
         assignment=frappe.db.get_value('PP Assignment',{'project':frappe.get_doc('PP Event Plan',name).project},'name')
         with self.assertRaises(frappe.ValidationError):insert('PP Work Entry',assignment=assignment,work_date=today(),units=1,status='Draft')
         work=insert('PP Work Entry',assignment=assignment,work_date=today(),units=.5,status='Draft');work.status='Approved';work.save()
-        with self.assertRaises(frappe.ValidationError):b.grant_leave(worker.name,add_days(today(),1),'Full day','Above allowance')
+        # The allowance resets each month; tomorrow may belong to a new month.
+        next_day=add_days(today(),1)
+        same_month_day=next_day if next_day[:7]==today()[:7] else add_days(today(),-1)
+        with self.assertRaises(frappe.ValidationError):b.grant_leave(worker.name,same_month_day,'Full day','Above allowance')
         self.assertEqual(b.balances(worker.name)['leaves'][0].units,.5)
 
     def test_worker_loan_waiting_period_and_unpaid_draft(self):

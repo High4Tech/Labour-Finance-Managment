@@ -95,7 +95,7 @@ The shared builder owns viewport height and footer placement: the footer stays a
 The event calendar owns period/date/venue state and a selected-day link to the native Attendance register, filtered by project, date and venue. It does not duplicate the worker roster. Its date control is centered independently of the left-aligned Timeline/Week/Month/Year controls and right-side venue filter; narrow containers stack these controls. Today is the default, formatted as an abbreviated weekday, ordinal day, month and year. Do not add a second date-range line under the picker. Coverage uses shared filled pills. Selecting a day and opening Attendance do not create registers or work entries; no polling occurs. Event overview places this component first and keeps crew/resource cards expanded; shortages are an inline part of crew coverage. See [verification and constraints](docs/EVENT_CREATION_AND_REVIEW_2026-10-29.md).
 
 
-## Shared upload assets and table actions � October 29
+## Shared upload assets and table actions — October 29
 
 `design_assets.js` owns the supplied file-type and country-flag map. Use `assets.file(filename)` in every document/import row and `enhance_country_picker(control)` for native Country links. Local decorative images preserve the native field name and keyboard behavior; they are requested only when shown. The supplied upload tile is extracted from the reference SVG. The import dropzone, selection row and real progress states are live controls styled by `upload_assets.css`, not a flattened illustration.
 
@@ -104,3 +104,13 @@ The event calendar owns period/date/venue state and a selected-day link to the n
 Owned tables with an Actions header use the shared horizontal action wrapper and a pinned final column. Keep the table horizontally scrollable at narrow widths, including mobile, rather than stacking its action buttons. Selection remains in one visible header checkbox; dynamic crew rows reapply the same shared table-action decorator when updated. Completed event-progress rows show a check; upcoming/unscheduled rows use a muted grey surface.
 
 See [calendar and asset acceptance](docs/CALENDAR_AND_UPLOAD_ASSETS_2026-10-29.md) for the verification scope and asset provenance.
+
+## Optional event scene — October 31
+
+Event Overview exposes one supporting **View event scene** action. `event_scene.js/.css` and the pinned local Three.js bundle are optional features: never add them to Desk includes, preload them, or initialize a canvas on event/dashboard render. The original event profile remains the operational interface.
+
+`plus_point.event_scene` owns one venue template and one active native Dialog. `snapshot(data, options)` projects existing staffing dates, unique assignments and dated vehicle bookings; no equipment, employee positions or tracking are invented. A demo can explicitly preview Working hours / After hours. Now uses the current site timezone, event dates and the temporary preview hours. These hours are labelled as unsaved demo settings until persistent event shifts are defined.
+
+Counts remain exact; representative figures are capped at 36 workers and 6 vehicles. Workers share instanced geometry, materials and one local sign texture. There is one visible-scene animation loop capped at 30 FPS, a pixel-ratio cap of 1.5 and one instance-owned resize observer. Off-hours, paused and reduced-motion states render only on changes; a hidden document stops rendering. A single timeout updates Now at the next shift/date boundary, with no network polling. Close, replacement and route changes dispose graphics, observers, listeners and timers. Cached code is reused on reopening; GPU scenes do not accumulate.
+
+The popup inherits the shared native dialog/button/typography/theme contracts. Its preview controls, accessible counts and Back to event details remain usable when WebGL is unavailable. The scene canvas is an illustration with a text alternative; it cannot record attendance, reserve resources, create invoices or change event data. See [demo acceptance](docs/EVENT_SCENE_DEMO_2026-10-31.md).

@@ -1,0 +1,8 @@
+{
+  "library": "Three.js",
+  "version": "0.180.0",
+  "bytes": 495266,
+  "gzipBytes": 125306,
+  "sha256": "fea75675cf876841103a91dee8e91a0b8225b2f3ceba1619a4abc12612bcbe50",
+  "loading": "Explicit View event scene action only; no CDN or runtime model requests"
+}

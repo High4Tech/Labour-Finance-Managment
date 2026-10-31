@@ -369,7 +369,7 @@ def plan(name):
     result['reservations']=[]
     for kind,label in [('PP Vehicle Booking','vehicle'),('PP Equipment Booking','item')]:
         for row in frappe.get_list(kind,filters={'project':doc.project,'status':'Planned'},fields=['name',label,'site','start_date','end_date'],limit_page_length=0):
-            result['reservations'].append(dict(name=row.name,title=row[label],site=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(row.start_date),end=str(row.end_date)))
+            result['reservations'].append(dict(name=row.name,title=row[label],kind=label,site_id=row.site,site=frappe.db.get_value('PP Site',row.site,'site_name'),start=str(row.start_date),end=str(row.end_date)))
     return result
 
 

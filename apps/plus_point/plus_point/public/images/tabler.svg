@@ -182,4 +182,8 @@
   <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" />
   <path d="M11 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
   <path d="M12 12l0 2.5" />
-</symbol></svg>
+</symbol>
+<symbol viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="minus"><path d="M5 12h14"/></symbol>
+<symbol viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="pause"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></symbol>
+<symbol viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="play"><path d="M7 4v16l13 -8z"/></symbol>
+</svg>

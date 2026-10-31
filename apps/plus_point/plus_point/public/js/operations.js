@@ -134,12 +134,12 @@
   const listTypes={'pp-agreements':'PP Contract Terms','pp-event-plans':'PP Event Plan','pp-client-billing':'Sales Invoice'};
   const page=frappe.ui.make_app_page({parent:wrapper,title:__(titles[mode]),single_column:true});
   const root=document.createElement('div');root.className='pp-operations';page.main.get(0).append(root);
-  let catalogue,sequence=0,record,pendingNotice,resumedDraft,pendingSign;frappe.router.on('change',()=>{if(frappe.get_route()[0]!==mode)sequence++;});
+  let catalogue,sequence=0,record,pendingNotice,resumedDraft,pendingSign;frappe.router.on('change',()=>{plus_point.event_scene?.close();if(frappe.get_route()[0]!==mode)sequence++;});
   async function load(){
    await plus_point.detach_draft?.();await plus_point.close_action_popup?.();
    frappe.route_options=null;
    const query=new URL(location.href).searchParams;if(!['record','project','client','agreement','invoice','draft'].some(key=>query.has(key))){frappe.set_route('List',listTypes[mode]);return;}
-   const key=location.pathname+location.search;if(root.dataset.recordKey!==key){delete root.dataset.activeTab;root.dataset.recordKey=key;}const token=++sequence;content()?.ppFlowCleanup?.();plus_point.dispose_owned_forms(root);delete root.dataset.ready;root.dataset.building='true';root.setAttribute('aria-busy','true');root.innerHTML=plus_point.loading_state();
+   const key=location.pathname+location.search;if(root.dataset.recordKey!==key){delete root.dataset.activeTab;root.dataset.recordKey=key;}const token=++sequence;plus_point.event_scene?.close();content()?.ppFlowCleanup?.();plus_point.dispose_owned_forms(root);delete root.dataset.ready;root.dataset.building='true';root.setAttribute('aria-busy','true');root.innerHTML=plus_point.loading_state();
    try{
     await ensureEditors(mode,(!record||record==='new'||new URL(location.href).searchParams.has('edit')||mode==='pp-event-plans'));
     catalogue=await rpc('catalogue');if(token!==sequence||frappe.get_route()[0]!==mode)return;

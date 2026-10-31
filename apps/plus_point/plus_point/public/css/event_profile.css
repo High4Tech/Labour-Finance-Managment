@@ -1,4 +1,5 @@
 /* Operational event profile: reference hierarchy, existing teal action system. */
+.pp-scene-entry>p{margin:0;padding:16px;color:var(--text-muted);font-size:15px;line-height:22px}.pp-scene-entry>[data-scene-load-error]:not([hidden]){margin:0 16px 16px}
 .pp-op-layout:has(.pp-event-overview){display:block}
 .pp-operations:has(.pp-event-overview){padding:16px 20px 28px;background:var(--bg-color)}
 .pp-event-overview{--event-tint:color-mix(in srgb,var(--pp-accent) 9%,var(--fg-color));--event-ink:var(--pp-action-primary);--agreement-tint:var(--event-tint);min-width:0}

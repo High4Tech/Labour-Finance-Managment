@@ -1,0 +1,9 @@
+{
+  "name": "plus-point-event-scene",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-only dependencies for the optional, locally served event scene",
+  "scripts": {"build": "node build.cjs"},
+  "dependencies": {"three": "0.180.0"},
+  "devDependencies": {"esbuild": "0.28.2"}
+}
