@@ -8,7 +8,7 @@
   imports:{file:'imports',version:'20261029-upload-assets-2',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,version:'20261029-upload-assets-2',ready:()=>pp.render_event_timeline?.ppCalendarVersion===6},
   event_scene_engine:{file:'vendor/three-scene.min',nonblocking:true,version:'0.180.0-2',ready:()=>window.PlusPointScene3D?.PCFSoftShadowMap!==undefined},
-  event_scene:{file:'event_scene',css:true,dependencies:['event_scene_engine'],nonblocking:true,version:'20261031-scene-world-1',ready:()=>pp.event_scene?.version===2},
+  event_scene:{file:'event_scene',css:true,dependencies:['event_scene_engine'],nonblocking:true,version:'20261031-scene-poster-1',ready:()=>pp.event_scene?.version===3},
   flow_builder:{file:'flow_builder',css:true,version:'20261029-upload-assets-2',ready:()=>typeof pp.flow_builder==='function'},
   freddy_runtime:{file:'freddy-runtime',ready:()=>!!pp.freddy_runtime}
  };

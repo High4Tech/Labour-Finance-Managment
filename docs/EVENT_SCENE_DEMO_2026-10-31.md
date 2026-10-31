@@ -26,7 +26,7 @@ The complete listing of the user's [SimReady asset bucket](https://huggingface.c
 ## Verification
 
 - `node tests/event-scene-state.cjs`: eight checks of site timezone, shift boundaries, overnight work dates, venue/date counts, deduplication, invalid hours, inactive events, demo isolation and bounded graphic populations.
-- `node scripts/browser-event-scene.cjs`: 18 read-only company checks of zero initial scene requests, explicit local loading, animation pause, off-hours, hidden-page pause, reduced motion, desktop/mobile light/dark AA accessibility, drag/keyboard exploration, marker-to-profile navigation, cleanup, cached reopening, 50-person/two-vehicle reuse, graphics fallback, navigation cleanup and interrupted-download recovery. Company Event Plan, Contract Terms, Assignment, Daily Register, Sales Invoice and File counts are unchanged before/after.
+- `node scripts/browser-event-scene.cjs`: 19 read-only company checks of the frozen preview, zero initial scene requests, explicit local loading, animation pause, off-hours, hidden-page pause, reduced motion, desktop/mobile light/dark AA accessibility, drag/keyboard exploration, marker-to-profile navigation, cleanup, cached reopening, 50-person/two-vehicle reuse, graphics fallback, navigation cleanup and interrupted-download recovery. Company Event Plan, Contract Terms, Assignment, Daily Register, Sales Invoice and File counts are unchanged before/after.
 - QA `audit-workflows.py --crew-regression`: all 118 tests passed, zero errors or skipped cases (211.986 seconds). Includes planning, hierarchy and event/resource workflows, including reservation kind/site identifiers. All fixtures roll back.
 - The initial QA run passed 117 of 118 cases. The remaining leave-allowance test assumed tomorrow stayed in the current month, which is false on October 31. Its date now stays in the same month; no leave business rule was changed.
 
@@ -38,4 +38,10 @@ No schema migration, emails, live-company data mutation or accounting/stock post
 
 ## World refinement
 
-The user�s follow-up reference called for an explorable world rather than an isolated architectural model. The wider native popup now puts the three exact counters and contextual venue inspector over a viewport-filling world. The canvas supports bounded pointer dragging and arrow-key panning, with reset/zoom/rotation. Venue, crew and transport markers update the inspector; its supporting action returns to the existing relevant event tab. Mobile places the same inspector below the world to keep the scene usable. The neighborhood is illustrative; it does not claim to be a real map or add bookings.
+The user’s follow-up reference called for an explorable world rather than an isolated architectural model. The wider native popup now puts the three exact counters and contextual venue inspector over a viewport-filling world. The canvas supports bounded pointer dragging and arrow-key panning, with reset/zoom/rotation. Venue, crew and transport markers update the inspector; its supporting action returns to the existing relevant event tab. Mobile places the same inspector below the world to keep the scene usable. The neighborhood is illustrative; it does not claim to be a real map or add bookings.
+
+## Frozen preview on Event Overview
+
+The scene entry now shows a static world image rather than a text-only placeholder. Its default 1440×650 WebP is 34,812 bytes, rendered offline from the same scene component with no workers or vehicles. Clicking the image loads the animated scene. Closing captures one last-viewed WebP into the current page before disposing GPU resources. There is no persistent image cache, File upload, hidden renderer or business-record mutation. If capture fails, the default poster remains and cleanup still completes.
+
+The final browser run passed all 19 checks, measured 1,048 ms for cold opening and 280 ms for cached reopening, and confirmed zero scene/engine requests on dashboard or ordinary Event Overview. These measurements describe this local machine only.

@@ -1,0 +1,8 @@
+{
+  "source": "Original shared event_scene.js component, rendered with no workers or vehicle bookings",
+  "width": 1440,
+  "height": 650,
+  "bytes": 34812,
+  "sha256": "4f6721dc9b8ae7f3518895156701ea862812a344ae070115fd40f7962c0a94cf",
+  "runtime": "Static preview only. Does not initialize Three.js."
+}

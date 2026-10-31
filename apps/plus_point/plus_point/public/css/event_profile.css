@@ -1,5 +1,14 @@
 /* Operational event profile: reference hierarchy, existing teal action system. */
 .pp-scene-entry>p{margin:0;padding:16px;color:var(--text-muted);font-size:15px;line-height:22px}.pp-scene-entry>[data-scene-load-error]:not([hidden]){margin:0 16px 16px}
+.pp-scene-entry>.pp-section-heading>[data-scene-preview-state]{margin-inline-start:auto}
+.pp-scene-preview-button{position:relative;display:block;width:100%;padding:0;border:0;background:var(--event-tint);text-align:inherit;overflow:hidden;cursor:pointer}
+.pp-scene-preview-button>img{display:block;width:100%;height:clamp(220px,25vw,340px);object-fit:cover;object-position:50% 53%}
+.pp-scene-preview-action{position:absolute;inset-inline-end:16px;bottom:16px;pointer-events:none;box-shadow:0 3px 12px #163f3526}
+.pp-scene-preview-button:hover .pp-scene-preview-action{border-color:var(--pp-accent)}
+.pp-scene-preview-button:focus-visible{outline:3px solid var(--pp-focus,var(--pp-accent));outline-offset:-3px}
+.pp-scene-preview-button:disabled{cursor:progress}
+html[data-theme=dark] .pp-scene-preview-button>img{filter:brightness(.78)}
+@media(max-width:767px){.pp-scene-preview-button>img{height:230px}.pp-scene-preview-action{inset-inline-end:12px;bottom:12px}}
 .pp-op-layout:has(.pp-event-overview){display:block}
 .pp-operations:has(.pp-event-overview){padding:16px 20px 28px;background:var(--bg-color)}
 .pp-event-overview{--event-tint:color-mix(in srgb,var(--pp-accent) 9%,var(--fg-color));--event-ink:var(--pp-action-primary);--agreement-tint:var(--event-tint);min-width:0}

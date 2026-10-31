@@ -112,8 +112,8 @@ app_include_css += ["/assets/plus_point/css/business_reports.css?v=20261023-repo
 
 app_include_css += ["/assets/plus_point/css/agreement_profile.css?v=20261028-booking-controls-2"]
 
-app_include_js += ["/assets/plus_point/js/event_profile.js?v=20261031-scene-world-1"]
-app_include_css += ["/assets/plus_point/css/event_profile.css?v=20261031-scene-demo-1"]
+app_include_js += ["/assets/plus_point/js/event_profile.js?v=20261031-scene-poster-1"]
+app_include_css += ["/assets/plus_point/css/event_profile.css?v=20261031-scene-poster-1"]
 
 app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261029-table-controls-3"]
 
@@ -124,4 +124,4 @@ app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261029-upload-ass
 app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261029-upload-assets-2"]
 app_include_css += ["/assets/plus_point/css/upload_assets.css?v=20261029-upload-assets-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261031-scene-world-1"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261031-scene-poster-1"]
