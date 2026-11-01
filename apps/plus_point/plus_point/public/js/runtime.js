@@ -4,6 +4,25 @@
  // Native equivalents of the Empty/Skeleton composition reviewed on 21st.dev.
  // Text only: callers retain ownership of their actions and event listeners.
  plus_point.close_dialog=d=>{const native=d.$wrapper.data('bs.modal');if(native?._isTransitioning)d.$wrapper.one('shown.bs.modal',()=>d.hide());else d.hide();};
+ // Only dismiss the top native dialog; never discard a form through raw DOM removal.
+ let outsideStart=null,pendingOutside=null;
+ // Bootstrap creates the backdrop before attaching the dialog during its fade.
+ $(document).on('shown.bs.modal.pp-outside',event=>{const pending=pendingOutside;pendingOutside=null;if(!pending||performance.now()-pending.time>1000||!pending.backdrop.isConnected)return;const modal=event.target,native=$(modal).data('bs.modal'),dialog=frappe.ui.open_dialogs.find(d=>d.$wrapper?.[0]===modal);if(native?._config?.backdrop==='static'||dialog?.static||modal.getAttribute('aria-busy')==='true'||dialog?.get_primary_btn?.().prop('disabled'))return;$(modal).modal('hide');});
+ document.addEventListener('pointerdown',event=>{outsideStart=event.target;pendingOutside=null;if(document.body.classList.contains('pp-customer-app'))for(const menu of document.querySelectorAll('details.pp-event-menu[open],details.pp-native-filter-tools[open]'))if(!menu.contains(event.target))menu.open=false;},true);
+ document.addEventListener('pointerup',event=>{
+  if(!document.body.classList.contains('pp-customer-app')||event.target!==outsideStart)return;
+  if(event.target.matches('.modal-backdrop')&&!document.querySelector('.modal.show')){pendingOutside={backdrop:event.target,time:performance.now()};return;}
+  const d=frappe.ui.open_dialogs.at(-1);if(!d){const modal=[...document.querySelectorAll('.modal.show')].at(-1),native=modal&&$(modal).data('bs.modal');if(!modal||native?._config?.backdrop==='static'||event.target!==modal&&!event.target.matches('.modal-backdrop'))return;if(native?._isTransitioning)$(modal).one('shown.bs.modal.pp-dismiss',()=>$(modal).modal('hide'));else $(modal).modal('hide');return;}if(d.static||d.$wrapper?.attr('aria-busy')==='true'||d.get_primary_btn?.().prop('disabled'))return;
+  const target=event.target,modal=d.$wrapper?.[0];if(!modal||!d.display||target.closest('.modal-content,.popover,.es-menu,.pp-select-menu,.datepicker'))return;
+  if(target===modal||target.matches('.modal-backdrop')||modal.classList.contains('pp-search-popover')&&!target.closest('.navbar-modal-search-mobile'))plus_point.close_dialog(d);
+ },true);
+ // Scoped shortcuts preserve selection inside editable fields and rich-text editors.
+ document.addEventListener('keydown',event=>{
+  if(frappe.boot?.plus_point?.is_platform||event.repeat||event.isComposing||event.shiftKey||event.getModifierState?.('AltGraph')||event.target.closest('input,textarea,select,[contenteditable=true],[role=textbox]'))return;
+  const key=event.key.toLowerCase(),kind=(event.ctrlKey||event.metaKey)&&!event.altKey?({a:'agreements',e:'events'})[key]:event.altKey&&!event.ctrlKey&&!event.metaKey?({l:'workers',i:'inventory',w:'warehouses',v:'vehicles'})[key]:null;
+  if(!kind||frappe.ui.open_dialogs.some(d=>d.display&&!d.$wrapper?.hasClass('pp-scoped-search')))return;
+  event.preventDefault();frappe.ui.open_dialogs.filter(d=>d.$wrapper?.hasClass('pp-scoped-search')).forEach(d=>d.hide());plus_point.load_feature('company_tools').then(()=>plus_point.scoped_search(kind)).catch(()=>frappe.show_alert({message:__('Search could not load. Please try again.'),indicator:'red'}));
+ });
  const escape=v=>frappe.utils.escape_html(String(v??''));
  plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;
  plus_point.loading_state=(label='Loading your records…',{avatar=true}={})=>`<div class="pp-loading-state" role="status"><span class="sr-only">${escape(__(label))}</span><div class="pp-loading-placeholder" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>${avatar?'<img class="pp-loading-logo" src="/assets/plus_point/images/freddy/thinking.svg?v=20261027" width="88" height="88" alt="" aria-hidden="true">':''}</div>`;

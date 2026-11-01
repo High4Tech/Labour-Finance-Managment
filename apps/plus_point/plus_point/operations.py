@@ -441,7 +441,7 @@ def save_project(name,values):
     if 'budget' in data:project.estimated_costing=data.budget
     if 'enforce_budget' in data:project.pp_enforce_spending_budget=frappe.utils.cint(data.enforce_budget)
     project.save()
-    for key in ('event_name','start_date','end_date','notes'):
+    for key in ('event_name','start_date','end_date','notes','wage_payment_cycle'):
         if key in data:doc.set(key,data[key])
     terms=terms_doc(doc.contract_terms,True)
     if terms.get('event_basis'):

@@ -18,7 +18,8 @@
     "selected_crew",
     "crew_allocated",
     "timeline",
-    "notes"
+    "notes",
+    "wage_payment_cycle"
   ],
   "fields": [
     {
@@ -114,6 +115,14 @@
       "fieldtype": "Long Text",
       "hidden": 1,
       "read_only": 1
+    },
+    {
+      "fieldname": "wage_payment_cycle",
+      "label": "Worker payment confirmation",
+      "fieldtype": "Select",
+      "options": "Manual\nDaily\nMonthly",
+      "default": "Manual",
+      "description": "Prepare approved wages for daily or monthly confirmation. Actual payments must still be recorded."
     }
   ],
   "title_field": "event_name",

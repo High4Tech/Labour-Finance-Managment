@@ -71,7 +71,11 @@
         }
     });
     frappe.router.on('change',()=>{
-        const route=frappe.get_route();if(route[0]==='query-report'&&titles[route[1]])return;
+        const route=frappe.get_route();
+        // QueryReport is reused by native Frappe. Cancel the previous report's
+        // request before its response can render against the next report's metadata.
+        if(current&&(route[0]!=='query-report'||route[1]!==reportName))current.last_ajax?.abort();
+        if(route[0]==='query-report'&&titles[route[1]])return;
         observer?.disconnect();observer=null;root?.classList.remove('pp-business-report','pp-worker-statement');root?.style.removeProperty('--pp-report-body-height');
         current=null;reportName=null;root=null;if(frame)cancelAnimationFrame(frame);frame=null;
     });

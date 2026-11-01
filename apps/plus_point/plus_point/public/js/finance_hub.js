@@ -29,6 +29,7 @@
             if(list.doctype==='PP Wage Settlement')list.page.add_inner_button(__('Worker statements'),()=>frappe.set_route('query-report','PLUS POINT Worker Statement'));
             if(list.doctype==='PP Worker Loan')list.page.add_inner_button(__('Recovery history'),()=>frappe.set_route('List','PP Loan Recovery','List'));
         }
+        if(list.doctype==='PP Wage Settlement'&&!list.__pp_wages&&!list.__pp_wages_loading){list.__pp_wages_loading=true;plus_point.load_feature('wage_payments').then(()=>{if(window.cur_list===list)plus_point.wage_payments.mount(list);}).catch(()=>frappe.show_alert({message:__('Payment balances could not load. Refresh to retry.'),indicator:'red'})).finally(()=>{list.__pp_wages_loading=false;});}
         if(list.doctype!=='PP Worker Loan')return;
         if(!list.__pp_loan_create){list.__pp_loan_create=true;list.make_new_doc=()=>plus_point.new_worker_loan(()=>list.refresh());}
         if(list.can_create&&list.page.btn_primary?.text().trim()!==__('Assign loan')){

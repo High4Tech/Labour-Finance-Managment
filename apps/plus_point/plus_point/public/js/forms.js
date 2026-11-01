@@ -36,6 +36,7 @@
  };
  function error(control,required=true){
   if(control.ppValidateOther?.())return control.ppValidateOther();
+  if(control.df.fieldtype==='Check')return required&&control.df.reqd&&!control.get_value()?__('Confirm: {0}.',[control.df.label||control.df.fieldname]):'';
   const {df}=control,raw=String(control.$input.val()??'').trim();
   if(!raw)return required&&df.reqd?__('Enter {0}.',[df.label||df.fieldname]):'';
   if(df.fieldtype==='Date'&&!moment(raw,control.date_format||frappe.defaultDateFormat,true).isValid())return __('Enter a date in {0} format.',[control.date_format||frappe.defaultDateFormat]);
@@ -87,6 +88,9 @@
   if(!contactErrors(layout,true)&&!bad.length)bad.push(layout.fields_dict.email);
   if(bad[0]){plus_point.reveal_control?.(bad[0]);bad[0].set_focus?.();}return !bad.length;
  };
+ // Show field guidance before native required checks can open a second dialog.
+ // Native value parsing and validation still run after the shared checks pass.
+ plus_point.bind_inline_dialog_validation=dialog=>{if(dialog.ppInlineValidation)return dialog;dialog.ppInlineValidation=true;const native=dialog.get_values.bind(dialog);dialog.get_values=(...args)=>plus_point.validate_inputs(dialog)?native(...args):null;return dialog;};
  plus_point.fill_saved_context=async(layout,{project,site,replace=false}={})=>{
   if(frappe.boot.plus_point?.is_platform)return;
   const identity=plus_point.dashboard_company||frappe.boot.plus_point?.company_identity?.name;

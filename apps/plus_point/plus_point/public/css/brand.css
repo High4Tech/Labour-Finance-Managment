@@ -8,7 +8,7 @@ body.pp-customer-app.pp-ui .btn-primary{background:var(--pp-action-primary)!impo
 body.pp-customer-app.pp-ui .btn-primary:hover{background:var(--pp-action-primary-hover)!important}
 body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected){background:var(--pp-action-primary)!important;color:#fff!important}
 body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected) :is(a,span,svg){color:#fff!important;--icon-stroke:#fff}
-body.pp-customer-app.pp-ui .body-sidebar{background:#f8f8f8;border-right:1px solid #e5e7eb;width:264px;--sidebar-width:264px}
+body.pp-customer-app.pp-ui .body-sidebar{background:#f8f8f8;border-right:1px solid #e5e7eb;width:var(--sidebar-width);--sidebar-width:264px}
 body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-label{font-size:14px!important;font-weight:600}
 html[data-theme=dark] body.pp-customer-app.pp-ui .body-sidebar{background:#1c2530;border-color:#394351}
 body.pp-customer-app.pp-ui .pp-brand-wordmark{display:block;width:85px;height:24px;object-fit:contain;margin-right:auto}

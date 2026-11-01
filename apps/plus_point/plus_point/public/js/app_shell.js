@@ -12,13 +12,15 @@
   modal.classList.add('pp-search-popover');modal.setAttribute('aria-label',__('Search'));modal.style.setProperty('--pp-search-left',left+'px');modal.style.setProperty('--pp-search-top',top+'px');modal.style.setProperty('--pp-search-width',width+'px');document.body.classList.add('pp-search-open');
  }
  $(document).on('shown.bs.modal.pp-shell-search',searchPopover).on('hidden.bs.modal.pp-shell-search',()=>document.body.classList.remove('pp-search-open'));
- document.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('pp-search-open')||e.target.closest('.pp-search-popover .modal-content,.navbar-modal-search-mobile'))return;document.querySelector('.pp-search-popover .btn-modal-close')?.click();});
+ document.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('pp-search-open')||e.target.closest('.pp-search-popover .modal-content,.navbar-modal-search-mobile'))return;const modal=document.querySelector('.pp-search-popover');if(modal)$(modal).modal('hide');});
  function notifications(){
   const native=frappe.app?.sidebar?.notifications,bell=header?.querySelector('.pp-shell-notifications');if(!native?.panel?.$panel?.[0]||!bell||notificationPopover)return;
   native.panel.hide();native.as_popover=true;
-  const content=native.panel.$panel[0];content.classList.add('pp-notification-content');
+  const content=native.panel.$panel[0];content.classList.add('pp-notification-content');content.addEventListener('click',e=>{if(e.target.closest('.list-footer,.full-log-btn,.activity-status')){e.preventDefault();e.stopPropagation();native.close_panel();frappe.set_route('pp-notifications');}},true);
   notificationPopover=new frappe.ui.Popover({trigger:$(bell),content:()=>{content.style.display='block';return content;},css_class:'notifications-popover pp-header-notifications',side:'bottom',align:'end',on_open:()=>native.on_open()});native.popover=notificationPopover;
   const close=content.querySelector('.panel-close');close?.addEventListener('click',e=>{e.stopImmediatePropagation();native.close_panel();},true);
+  // Preserve native unread/read and routing handlers; swap only the entity visual.
+  const view=native.tabs?.notifications;if(view&&!view.ppEntityItems){view.ppEntityItems=true;const original=view.get_dropdown_item_html.bind(view);view.get_dropdown_item_html=record=>{const item=original(record),kind=({'PP Contract Terms':'agreements','Contract':'agreements','PP Event Plan':'jobs','Employee':'workers','PP Daily Register':'attendance','PP Wage Settlement':'payments','PP Worker Loan':'loans','Sales Invoice':'billing'})[record.document_type];if(kind)item.find('.user-avatar').first().replaceWith('<span class="pp-notification-entity">'+pp.entity_icon(kind)+'</span>');return item;};if(Array.isArray(view.dropdown_items))view.render_notifications_dropdown();}
  }
  function setAttention(rows){
   const active=rows.filter(r=>['error','warning','empty'].includes(r.level)&&!dismissed.has(r.title+'|'+r.path)).slice(0,3);
@@ -44,7 +46,7 @@
  matchMedia('(max-width:767px)').addEventListener('change',()=>mobileNavigation(false));
  const initials=name=>String(name||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
  function pageTitle(){
-  const r=frappe.get_route()||[],aliases={'pp-agreements':'Agreements','pp-event-plans':'Jobs & Events','pp-client-billing':'Billing and invoices','pp-daily-register':'Attendance','pp-onboarding':'Company setup','pp-section':new URL(location.href).searchParams.get('section')};
+  const r=frappe.get_route()||[],aliases={'pp-agreements':'Agreements','pp-event-plans':'Jobs & Events','pp-client-billing':'Billing and invoices','pp-daily-register':'Attendance','pp-onboarding':'Company setup','pp-notifications':'Notifications & activity','pp-section':new URL(location.href).searchParams.get('section')};
   if(r[0]==='Workspaces')return __('Overview');
   if(r[0]==='pp-inventory')return __(({vehicles:'Vehicles',equipment:'Inventory & equipment',warehouses:'Warehouses'})[new URL(location.href).searchParams.get('view')]||'Warehouses');
   const items=frappe.boot.plus_point.navigation?.items||[],item=items.find(i=>i.link_to===r[1]||i.link_to===r[0]);
@@ -59,7 +61,7 @@
  function mount(body){
   companyMenu?.destroy?.();
   header=document.createElement('header');header.className='pp-global-bar pp-app-header';header.setAttribute('aria-label',__('Company and page controls'));
-  header.innerHTML='<div class="pp-shell-breadcrumb"><button type="button" class="pp-shell-company" aria-label="'+esc(__('Company menu'))+'"><span class="pp-shell-company-avatar" aria-hidden="true"></span><strong></strong>'+icon('chevronselectorvertical')+'</button>'+icon('chevronright')+'<span class="pp-shell-page" aria-current="page"></span></div><div class="pp-shell-controls"><label class="pp-shell-currency"><span class="sr-only">'+esc(__('Display currency'))+'</span><select class="form-control pp-app-currency" aria-label="'+esc(__('Display currency'))+'"></select></label><span class="pp-shell-appearance"></span><button type="button" class="btn btn-default pp-global-help pp-shell-icon-button" aria-label="'+esc(__('Help and support'))+'" title="'+esc(__('Help and support'))+'">'+icon('openfalsesupportingtextfalsetooltiptopnoarrow')+'</button><button type="button" class="btn btn-default pp-shell-notifications pp-shell-icon-button" aria-label="'+esc(__('Notifications'))+'" title="'+esc(__('Notifications'))+'">'+icon('bell01')+'<span class="pp-shell-notification-count" hidden></span></button><a class="btn btn-primary pp-shell-upgrade" aria-label="'+esc(__("Upgrade now"))+'" title="'+esc(__("Upgrade now"))+'" href="/plans" target="_blank" rel="noopener">'+icon('zap')+'<span>'+esc(__('Upgrade now'))+'</span></a></div>';
+  header.innerHTML='<div class="pp-shell-breadcrumb"><button type="button" class="pp-shell-company" aria-label="'+esc(__('Company menu'))+'"><span class="pp-shell-company-avatar" aria-hidden="true"></span><strong></strong>'+icon('chevronselectorvertical')+'</button>'+icon('chevronright')+'<span class="pp-shell-page" aria-current="page"></span></div><div class="pp-shell-controls"><label class="pp-shell-currency"><span class="sr-only">'+esc(__('Display currency'))+'</span><select class="form-control pp-app-currency" data-pp-native-select="true" aria-label="'+esc(__('Display currency'))+'"></select></label><span class="pp-shell-appearance"></span><button type="button" class="btn btn-default pp-global-help pp-shell-icon-button" aria-label="'+esc(__('Help and support'))+'" title="'+esc(__('Help and support'))+'">'+icon('openfalsesupportingtextfalsetooltiptopnoarrow')+'</button><button type="button" class="btn btn-default pp-shell-notifications pp-shell-icon-button" aria-label="'+esc(__('Notifications'))+'" title="'+esc(__('Notifications'))+'">'+icon('bell01')+'<span class="pp-shell-notification-count" hidden></span></button><a class="btn btn-primary pp-shell-upgrade" aria-label="'+esc(__("Upgrade now"))+'" title="'+esc(__("Upgrade now"))+'" href="/plans" target="_blank" rel="noopener">'+icon('zap')+'<span>'+esc(__('Upgrade now'))+'</span></a></div>';
   header.querySelector('.pp-shell-breadcrumb').insertAdjacentHTML('afterbegin','<button type="button" class="btn btn-default pp-shell-mobile-nav" aria-label="'+esc(__('Open navigation'))+'">'+pp.icon('list')+'</button>');
   header.querySelector('.pp-shell-mobile-nav').setAttribute('aria-expanded','false');
   header.querySelector('.pp-shell-mobile-nav').onclick=e=>{e.stopPropagation();mobileNavigation(!mobileOpen);};
@@ -78,6 +80,8 @@
   if(avatar&&avatar.dataset.ppAccount!==key){avatar.dataset.ppAccount=key;avatar.innerHTML='<span class="pp-shell-user-avatar">'+(user.image?'<img alt="" src="'+esc(user.image)+'">':esc(initials(name)))+'<span class="pp-shell-signed-in" aria-hidden="true"></span></span>';}
   if(!account.querySelector('.pp-shell-account-chevron'))account.insertAdjacentHTML('beforeend','<span class="pp-shell-account-chevron">'+icon('chevronselectorvertical')+'</span>');
  }
+ const navIcons={'Agreements':'agreements','Jobs & Events':'jobs','Clients':'clients','Workers':'workers','Attendance':'attendance','Inventory & equipment':'inventory','Warehouses':'warehouses','Vehicles':'vehicles','Billing and invoices':'billing','Worker payments':'payments','Worker loans':'loans','Receipts and payments':'receipts','Expenses':'expenses','Event finances':'event-finances','Worker statement':'worker-statement'};
+ function navigationIcons(){for(const row of document.querySelectorAll('.body-sidebar .standard-sidebar-item')){const label=row.querySelector('.sidebar-item-label')?.textContent.trim(),kind=Object.keys(navIcons).find(k=>label===k||label===__(k)),host=row.querySelector('.sidebar-item-icon');if(host&&kind&&host.dataset.ppEntity!==navIcons[kind]){host.innerHTML=pp.entity_icon(navIcons[kind]);host.dataset.ppEntity=navIcons[kind];}}}
  function update(data){
   if(frappe.boot?.plus_point?.is_platform)return;
   if(data)Object.assign(context,data);
@@ -91,6 +95,7 @@
   const count=Math.max(0,Number(document.querySelector('.sidebar-notification .notification-count')?.textContent)||0),badge=header.querySelector('.pp-shell-notification-count'),bell=header.querySelector('.pp-shell-notifications');text(badge,String(count));if(badge.hidden!==(count===0))badge.hidden=count===0;
   const label=count?__('Notifications: {0} unread',[count]):__('Notifications');if(bell.getAttribute('aria-label')!==label)bell.setAttribute('aria-label',label);
   account();
+  navigationIcons();
   notifications();
  }
  pp.app_shell={update,account,setContext:data=>update(data),setAttention,clearAttention(){attention?.remove();attention=null;}};

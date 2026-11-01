@@ -91,7 +91,7 @@ def product_navigation(platform):
         for item in items:
             if item.get('type')=='Link':item['icon']=icons.get(item.get('link_to'),'home')
     return dict(items=items, doctypes=sorted(doctypes), reports=sorted(reports), workspace=home,
-                pages=['pp-section']+([] if platform else ['pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)
+                pages=['pp-section']+([] if platform else ['pp-notifications','pp-inventory','pp-onboarding','pp-agreements','pp-event-plans','pp-client-billing']),groups=ordered)
 
 
 @frappe.whitelist(methods=['POST'])

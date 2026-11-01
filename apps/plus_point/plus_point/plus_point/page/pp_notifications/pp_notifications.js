@@ -1,0 +1,2 @@
+frappe.pages['pp-notifications'].on_page_load=wrapper=>{frappe.ui.make_app_page({parent:wrapper,title:__('Notifications & activity'),single_column:true});const root=document.createElement('div');root.className='pp-notifications-page';wrapper.page.main.append(root);wrapper.pp_notifications_root=root;};
+frappe.pages['pp-notifications'].on_page_show=async wrapper=>{await plus_point.load_feature('company_tools');plus_point.mount_notifications(wrapper);};

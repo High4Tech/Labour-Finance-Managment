@@ -27,7 +27,7 @@ html[data-theme=dark] .pp-app-header .pp-shell-icon,html[data-theme=dark] .pp-sh
 body.pp-customer-app.pp-ui .page-head{top:var(--pp-shell-height)}
 body.pp-customer-app.pp-ui .pp-op-tabs{top:calc(var(--pp-shell-height) + 56px)}
 /* Native navigation retains its links, permission filtering, collapse and reorder handlers. */
-body.pp-customer-app.pp-ui .body-sidebar{--sidebar-width:264px;width:264px;background:#f8f8f8;border-right:1px solid var(--pp-shell-line)}
+body.pp-customer-app.pp-ui .body-sidebar{--sidebar-width:264px;width:var(--sidebar-width);background:#f8f8f8;border-right:1px solid var(--pp-shell-line)}
 body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-label{font:600 14px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#344454}
 body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item{border-radius:6px}
 body.pp-customer-app.pp-ui .body-sidebar .sidebar-items>.sidebar-item-container:not(.section-item)>.standard-sidebar-item{min-height:36px;padding:6px 10px}
@@ -86,6 +86,7 @@ body.pp-customer-app.pp-overview-route :is(.pp-welcome,.pp-task-home,.layout-mai
 .pp-overview-skeleton-metrics,.pp-overview-skeleton-panels{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px}
 .pp-overview-skeleton-metrics i{height:196px;border-radius:12px}.pp-overview-skeleton-panels{grid-template-columns:repeat(2,minmax(0,1fr))}.pp-overview-skeleton-panels i{height:318px;border-radius:12px}
 .pp-overview-skeleton :is(i,.pp-overview-skeleton-heading){display:block;background:var(--subtle-fg,#f3f5f6);animation:pp-shell-skeleton 1.6s ease-in-out infinite alternate}
+@media(min-width:1600px){.pp-overview-skeleton{width:calc(100% - 352px)}}
 @keyframes pp-shell-skeleton{to{opacity:.45}}
 /* Reposition the native command search; its results, keys and permissions remain native. */
 body.pp-customer-app .modal.pp-search-popover{inset:0;pointer-events:none;background:transparent!important}
@@ -94,6 +95,9 @@ body.pp-customer-app .pp-search-popover .modal-content{max-height:calc(100dvh - 
 body.pp-customer-app.pp-search-open>.modal-backdrop{opacity:0!important;pointer-events:none}
 body.pp-customer-app .pp-search-popover .modal-body{padding:12px!important}
 body.pp-customer-app .pp-search-popover .navbar-modal-wrapper{width:100%;min-width:0}
+body.pp-customer-app .pp-search-popover .modal-divider{display:none!important}
+body.pp-customer-app .modal:has(.pp-scoped-results) .modal-divider{display:none!important}
+body.pp-customer-app.modal-open .pp-attention-stack{visibility:hidden}
 /* Native notifications are hosted at the bell rather than in a second navigation panel. */
 body.pp-customer-app .pp-header-notifications{width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);z-index:1300}
 body.pp-customer-app .pp-header-notifications .pp-notification-content{position:static!important;inset:auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:min(640px,calc(100dvh - 110px));display:block!important;border:0!important;box-shadow:none!important;transform:none!important;padding:0;overflow:auto;visibility:visible!important}
@@ -107,3 +111,16 @@ body.pp-customer-app .pp-header-notifications :is(.notification-list-body,.notif
 @media(prefers-reduced-motion:reduce){.pp-overview-skeleton :is(i,.pp-overview-skeleton-heading){animation:none}}
 
 body.pp-customer-app.pp-overview-route .pp-dashboard:not(.pp-overview){width:100%;max-width:none;padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+
+/* Native rail width drives both navigation and content. Expanded and mobile stay full. */
+body.pp-customer-app.pp-ui{--sidebar-width:264px;--sidebar-collapsed-width:64px}
+@media(min-width:768px){body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .body-sidebar{width:var(--sidebar-collapsed-width)!important}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .standard-sidebar-item{padding-inline:12px!important;justify-content:center}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .navbar-modal-search-mobile .standard-sidebar-item{margin-inline:8px;padding:6px!important}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-user-button{padding:4px!important;min-height:48px!important;justify-content:center}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .pp-shell-account-chevron{display:none}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .pp-brand-wordmark{width:24px;object-fit:cover;object-position:left}}
+.pp-entity-icon{display:inline-block;object-fit:contain;flex:none;vertical-align:middle}
+.body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected) .pp-entity-icon{filter:brightness(0) invert(1)}
+html[data-theme=dark] .body-sidebar .pp-entity-icon{filter:brightness(1.6)}
+body.pp-customer-app .pp-search-popover .search-icon,body.pp-customer-app .pp-search-popover #navbar-search{border-bottom:0!important;box-shadow:none!important}
+body.pp-customer-app .pp-search-popover .search-bar,body.pp-customer-app .pp-search-popover .modal-header,body.pp-customer-app .pp-search-popover .awesomebar-input-row{border-bottom:0!important;background:none!important}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-currency{position:relative;width:76px;max-width:76px;min-width:76px}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-currency select.pp-app-currency{width:76px!important;appearance:none!important;padding:6px 28px 6px 12px!important;background-image:url(/assets/plus_point/images/dashboard/chevrondown.svg)!important;background-position:right 9px center!important;background-size:12px!important;background-repeat:no-repeat!important}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-currency .pp-select-container{display:none!important}
+.pp-notification-entity{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--subtle-fg);flex:none;margin-right:12px}

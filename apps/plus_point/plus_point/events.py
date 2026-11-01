@@ -84,6 +84,8 @@ def context(doc):
 
 
 def validate_plan(doc):
+    if doc.get('wage_payment_cycle') not in (None,'','Manual','Daily','Monthly'):
+        frappe.throw('Choose Manual, Daily or Monthly worker payment confirmation.')
     require_customer();project=linked('Project',doc.project);linked('Company',project.company);doc.company=project.company
     if not doc.is_new():frappe.db.get_value('PP Event Plan',doc.name,'name',for_update=True)
     if not doc.contract_terms:

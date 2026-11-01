@@ -43,8 +43,8 @@ body.pp-customer-app .pp-overview .pp-ui-section-heading .pp-ui-heading-icon{dis
 .pp-overview .pp-metric-spark{height:56px;min-height:56px;flex:1;margin-top:20px;position:relative}
 .pp-overview .pp-metric-spark .pp-chart-plot{height:56px}
 .pp-overview-tables{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.pp-overview-tables>.pp-analytics-card{min-height:318px}
-.pp-overview-tables .pp-analytics-body{min-height:258px}
+.pp-overview-tables>.pp-analytics-card{min-height:0;align-self:start}
+.pp-overview-tables .pp-analytics-body{min-height:0}
 body.pp-customer-app .pp-overview .pp-overview-tables .pp-ui-section-heading{min-height:58px}
 .pp-overview .pp-op-table-scroll{margin:0;border:0;box-shadow:none;border-radius:0;max-width:100%;overflow:auto}
 body.pp-customer-app .pp-overview .pp-register-table{display:table!important;width:100%;min-width:100%;table-layout:auto;border-collapse:collapse;border:0;margin:0;background:var(--pp-overview-surface);font-size:14px;line-height:20px;white-space:normal}
@@ -75,7 +75,7 @@ body.pp-customer-app .pp-overview .pp-register-table tbody tr:last-child>*{borde
 .pp-overview-feed-item>div{min-width:0;flex:1}
 .pp-overview-feed-item strong{font-weight:600;color:var(--pp-overview-ink)}
 .pp-overview-feed-item time{display:block;font-size:10px;line-height:14px;text-align:right;color:var(--pp-overview-muted)}
-.pp-overview-attendance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:36px;align-items:start}
+.pp-overview-attendance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-bottom:36px;align-items:stretch}
 .pp-overview-attendance-chart .pp-analytics-body{padding:20px}
 .pp-overview-attendance-summary{display:flex;justify-content:space-between;gap:16px;margin-bottom:20px}
 .pp-overview-attendance-summary strong{display:block;font-size:30px;line-height:38px;font-weight:700}
@@ -117,7 +117,7 @@ body.pp-customer-app .pp-overview .pp-register-table tbody tr:last-child>*{borde
 .pp-overview-advanced{margin-block:20px;color:var(--pp-overview-muted)}
 .pp-overview-advanced>summary{cursor:pointer;font-size:13px;padding:12px}
 .pp-overview-error{margin-bottom:20px}
-@media(min-width:1700px){.pp-overview-upper{grid-template-columns:minmax(0,1fr) 280px}.pp-overview-activity>header{height:40px}.pp-overview-feed-item{min-height:76px}.pp-overview-tables>.pp-analytics-card{min-height:386px}.pp-overview-tables .pp-register-table tbody tr{height:94px!important}}
+@media(min-width:1700px){.pp-overview-upper{grid-template-columns:minmax(0,1fr) 280px}.pp-overview-activity>header{height:40px}.pp-overview-feed-item{min-height:76px}.pp-overview-tables>.pp-analytics-card{min-height:0}.pp-overview-tables .pp-register-table tbody tr{height:94px!important}}
 @media(max-width:1250px){.pp-overview .pp-overview-header{align-items:start;flex-direction:column}.pp-overview-upper{grid-template-columns:minmax(0,1fr) 220px;gap:16px}.pp-overview-tables{grid-template-columns:1fr}.pp-overview-attendance{grid-template-columns:1fr 1fr;gap:16px}.pp-overview-attendance-summary{flex-direction:column}.pp-overview .pp-overview-registers .pp-register-table{min-width:490px}}
 @media(max-width:1000px){.pp-overview-upper{grid-template-columns:1fr}.pp-overview-tables{grid-template-columns:1fr 1fr}.pp-overview-activity [data-overview-feed]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.pp-overview-attendance{grid-template-columns:1fr}.pp-overview .pp-overview-header{margin-bottom:24px}.pp-overview-activity{margin-top:8px}.pp-overview-attendance-summary{flex-direction:row}}
 @media(max-width:600px){body.pp-customer-app .pp-overview{width:calc(100% - 32px);margin-top:20px}.pp-overview .pp-overview-header,.pp-overview-workers{margin-inline:0}.pp-overview .pp-kpi-grid,.pp-overview-tables{grid-template-columns:1fr}.pp-overview-metric{height:180px}.pp-overview .pp-overview-header h1{font-size:20px;line-height:28px}.pp-overview .pp-overview-header p{font-size:14px;line-height:22px}.pp-overview .pp-overview-controls{flex-wrap:wrap;width:100%;gap:8px}.pp-overview [data-overview-range]{font-size:12px!important;padding-inline:10px}.pp-overview .pp-overview-controls>.pp-overview-filter-wrap{margin-left:auto}.pp-overview .pp-overview .pp-overview-attendance-summary{flex-direction:column}.pp-overview-segments{max-width:100%;width:100%;justify-content:space-between}.pp-overview .pp-overview-segments .btn{padding:6px;font-size:12px!important}.pp-overview-activity [data-overview-feed]{grid-template-columns:1fr}.pp-overview-workers>header{align-items:start;flex-direction:column}.pp-overview-search{width:100%}.pp-overview-pagination{flex-wrap:wrap}.pp-overview-pagination>div{order:3;width:100%;justify-content:center;flex-wrap:wrap}.pp-overview-workflow{margin-inline:-16px;padding:24px 16px}.pp-overview-workflow>img{min-width:500px}.pp-overview-workflow{overflow:auto;justify-content:start}.pp-overview .pp-register-table{min-width:350px!important}.pp-overview .pp-overview-workers .pp-register-table{min-width:760px!important}}
@@ -154,4 +154,7 @@ body.pp-customer-app.pp-ui .pp-overview .pp-overview-icon-action img{width:18px;
 .pp-overview [data-overview-chart-data]{margin:0 16px 16px}
 .pp-chart-tooltip{font-size:14px!important;line-height:22px!important;border-radius:8px!important}
 
-@media(min-width:1600px){body.pp-customer-app .pp-overview{width:calc(100% - 192px)}}
+@media(min-width:1600px){body.pp-customer-app .pp-overview{width:calc(100% - 352px);padding-bottom:140px}}
+
+/* Equal attendance panels; real rows only. No action-column paint behind search. */
+.pp-overview-attendance>.pp-analytics-card{display:flex;flex-direction:column}.pp-overview-attendance>.pp-analytics-card>.pp-analytics-body{flex:1}.pp-overview-workers>header{position:relative;z-index:2;background:var(--pp-overview-surface)}.pp-overview-workers .pp-overview-search{box-shadow:none}.pp-overview-workers [data-table-actions]{box-shadow:none!important}.pp-overview-workers .pp-op-table-scroll{isolation:isolate}.pp-overview-feed-icon>.pp-entity-icon{width:20px;height:20px}.pp-overview-feed-icon[data-tone=brand] img,.pp-overview-feed-icon[data-tone=success] img,.pp-overview-feed-icon[data-tone=error] img{filter:brightness(0) invert(1)}

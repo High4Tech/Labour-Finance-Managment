@@ -81,10 +81,10 @@ def create_event_from_draft(doc,data,terms=None):
         from plus_point.events import positive
         for key in ('budget','fixed_amount'):
             if key in prepared:prepared[key]=float(positive(prepared[key],key.replace('_',' ').title(),allow_zero=True))*float((terms.get('pp_agreement_rate') if terms else 1) or 1)
-        event=create_event(agreement=doc.agreement,**{k:v for k,v in prepared.items() if k in ('event_name','start_date','end_date','customer','billing_model','fixed_amount','commercial_status','commercial_source','notes','budget','enforce_budget')})
+        event=create_event(agreement=doc.agreement,**{k:v for k,v in prepared.items() if k in ('event_name','start_date','end_date','customer','billing_model','fixed_amount','commercial_status','commercial_source','notes','budget','enforce_budget','wage_payment_cycle')})
     else:event=create_plan(doc.agreement,data['event_name'],data.get('notes'),data.get('start_date'),data.get('end_date'))
     if not event['existing'] and not data.get('new_occurrence') and doc.agreement:
-        changes={key:data[key] for key in ('budget','enforce_budget') if key in data}
+        changes={key:data[key] for key in ('budget','enforce_budget','wage_payment_cycle') if key in data}
         if 'budget' in changes:
             try:amount=Decimal(str(changes['budget'] or 0))
             except (InvalidOperation,ValueError,TypeError):frappe.throw('Enter a valid spending budget of zero or more.')
@@ -187,7 +187,7 @@ def configure_event(name,values):
     doc.agreement=agreement;doc.title=str(v.event_name).strip()[:140];doc.scheduled_for=None;doc.last_error=''
     first=getdate(v.get('start_date') or (terms.effective_start if terms else today()));last=getdate(v.get('end_date') or (terms.effective_end if terms else first))
     if first>last or terms and (first<getdate(terms.effective_start) or terms.effective_end and last>getdate(terms.effective_end)):frappe.throw('Choose event dates within the agreement, with end on or after start.')
-    data=dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last));data.update({key:v[key] for key in ('budget','enforce_budget','new_occurrence','customer','billing_model','fixed_amount','commercial_status','commercial_source') if key in v});doc.payload=json.dumps(data)
+    data=dict(contract_terms=agreement,event_name=doc.title,notes=str(v.get('notes') or '')[:5000],start_date=str(first),end_date=str(last));data.update({key:v[key] for key in ('budget','enforce_budget','wage_payment_cycle','new_occurrence','customer','billing_model','fixed_amount','commercial_status','commercial_source') if key in v});doc.payload=json.dumps(data)
     if v.action=='Now':
         create_event_from_draft(doc,data,terms)
     elif v.action=='Schedule':

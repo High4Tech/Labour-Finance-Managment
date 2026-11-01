@@ -71,7 +71,7 @@ def governing(terms):
 
 def create_event(agreement=None,event_name=None,start_date=None,end_date=None,customer=None,
                  billing_model='Daily',fixed_amount=0,commercial_status='Pending',commercial_source='',
-                 notes='',budget=0,enforce_budget=0,**unused):
+                 notes='',budget=0,enforce_budget=0,wage_payment_cycle='Manual',**unused):
     from plus_point.operations import company,terms_doc,service_item
     from plus_point.setup_flow import linked
     from plus_point.events import span
@@ -133,7 +133,7 @@ def create_event(agreement=None,event_name=None,start_date=None,end_date=None,cu
     terms.save()
     plan=frappe.get_doc(dict(doctype='PP Event Plan',project=project.name,company=business.name,event_name=event_name.strip(),
         contract_terms=terms.name,start_date=start_date,end_date=end_date,wage_rate=0,
-        client_rate=rows[0]['client_rate'] if rows else 0,staffing=rows,notes=notes)).insert()
+        client_rate=rows[0]['client_rate'] if rows else 0,staffing=rows,notes=notes,wage_payment_cycle=wage_payment_cycle)).insert()
     return dict(name=plan.name,existing=False,project=project.name,contract_terms=terms.name)
 
 
@@ -141,7 +141,7 @@ def create_event(agreement=None,event_name=None,start_date=None,end_date=None,cu
 def create(values):
     from plus_point.benefits import atomic
     data=frappe.parse_json(values) or {}
-    allowed=('agreement','event_name','start_date','end_date','customer','billing_model','fixed_amount','commercial_status','commercial_source','notes','budget','enforce_budget')
+    allowed=('agreement','event_name','start_date','end_date','customer','billing_model','fixed_amount','commercial_status','commercial_source','notes','budget','enforce_budget','wage_payment_cycle')
     return atomic(lambda:create_event(**{k:data[k] for k in allowed if k in data}))()
 
 
