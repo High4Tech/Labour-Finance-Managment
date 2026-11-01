@@ -1,5 +1,7 @@
 # App appearance and actions
 
+The [shared company shell](docs/SHARED_APP_SHELL_2026-11-01.md) applies the orange Figma header and sidebar across the company app. `app_shell.js` / `app_shell.css` own this documented compact shell variant; feature pages must not recreate its breadcrumb, account controls or navigation. Overview uses the same persistent header as lists, profiles and editors. Native platform administration and authorized advanced capabilities remain available.
+
 Current creation UI: [Context-aware three-stage workflows and shared components](docs/CONTEXT_AWARE_UX_2026-10-27.md). This supersedes earlier five/four-step layout descriptions; the underlying business architecture is retained.
 
 The [community component review](docs/COMMUNITY_COMPONENTS_2026-10-24.md) records the 21st.dev patterns adapted into the native system. Shared `empty_state`, `loading_state` and `render_table` helpers own supporting-table feedback. Empty states provide a clear title and next-step guidance without duplicating surrounding actions. Loading placeholders are static and expose one status message. Agreement/event step navigation shows completed checks and connecting separators while retaining the native validation gates. Table row feedback follows both pointer hover and keyboard focus. These patterns add no external runtime dependencies.

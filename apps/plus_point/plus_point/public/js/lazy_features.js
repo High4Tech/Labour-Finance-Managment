@@ -2,7 +2,7 @@
 (()=>{
  frappe.provide('plus_point');const pp=plus_point,pending=new Map(),attempts=new Map();
  const features={
-  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261101-figma-orange-2',ready:()=>typeof pp.render_customer_dashboard==='function'},
+  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261101-shared-shell-1',ready:()=>typeof pp.render_customer_dashboard==='function'},
   dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261101-figma-orange-2',ready:()=>!!pp.charts},
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',version:'20261029-upload-assets-2',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},

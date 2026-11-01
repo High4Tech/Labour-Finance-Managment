@@ -31,6 +31,22 @@
     }
     function schedule(){if(active()&&!frame)frame=requestAnimationFrame(fit);}
     plus_point.mount_business_report=report=>{
+        // Native refresh throws a string when an initial required filter is empty.
+        // Keep the required filter and server validation; explain the next step
+        // before requesting data, on these two product reports only.
+        if(!report.__ppRequiredFilterGuard){
+            const refresh=report.refresh;
+            report.refresh=function(...args){
+                const missing=titles[this.report_name]&&(this.filters||[]).filter(f=>(f.df.reqd||f.df.mandatory)&&!f.get_value());
+                if(missing?.length&&!this.prepared_report_name){
+                    this.hide_loading_screen();this.toggle_report(false);
+                    this.toggle_message(true,__('Select {0} above to view this report.',[missing.map(f=>__(f.df.label)).join(', ')]));
+                    return Promise.resolve();
+                }
+                return refresh.apply(this,args);
+            };
+            report.__ppRequiredFilterGuard=true;
+        }
         current=report;reportName=report.report_name;
         const next=report.page.wrapper.get(0);
         if(root!==next){observer?.disconnect();root?.classList.remove('pp-business-report','pp-worker-statement');root=next;lastWidth=0;}

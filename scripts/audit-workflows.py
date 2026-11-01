@@ -69,6 +69,7 @@ def main():
     if '--profiles' in sys.argv:names=['test_profiles_billing','test_drafts','test_hierarchy','test_component_validation']
     if '--planning-repairs' in sys.argv:names=['test_setup_imports','test_planning','test_attendance']
     if '--dashboard' in sys.argv:names=['test_dashboard_analytics','test_operations','test_currency_billing','test_full_workflow']
+    if '--app-shell' in sys.argv:names=['test_hierarchy','test_consolidated_architecture','test_planning_list']
     started=time.monotonic()
     try:
         suite=unittest.defaultTestLoader.loadTestsFromNames(['plus_point.tests.'+name for name in names])

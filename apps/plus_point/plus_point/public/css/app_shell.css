@@ -1,0 +1,80 @@
+/* Authoritative company shell: Figma 23:16918 and 23:16717.
+   Scoped to the product shell; native document tools/advanced views stay intact. */
+body.pp-customer-app.pp-ui{--pp-shell-ink:#0b2538;--pp-shell-muted:#4b5563;--pp-shell-line:#e2e8f0;--pp-shell-band:#f8fafc;--pp-shell-surface:#fff;--pp-shell-height:88px}
+html[data-theme=dark] body.pp-customer-app.pp-ui{--pp-shell-ink:#ecf0f5;--pp-shell-muted:#b9c2cc;--pp-shell-line:#394351;--pp-shell-band:#222b36;--pp-shell-surface:#18212c}
+body.pp-customer-app.pp-ui .pp-app-header{position:sticky;top:0;z-index:110;display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:var(--pp-shell-height);height:var(--pp-shell-height);padding:28px 32px 16px;background:var(--pp-shell-surface);border:0;color:var(--pp-shell-ink);font:14px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.pp-app-header *{box-sizing:border-box}
+.pp-app-header .pp-shell-breadcrumb{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.pp-app-header .pp-shell-company{display:flex;align-items:center;gap:8px;max-width:340px;min-width:0;border:0;background:none;color:inherit;padding:0;cursor:pointer;font:inherit;text-align:start}
+.pp-shell-company strong{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:650}
+.pp-shell-company-avatar{width:28px;height:28px;display:grid;place-items:center;flex:none;border:1px solid var(--pp-shell-line);border-radius:8px;background:var(--pp-shell-band);box-shadow:0 1px 3px #0001;font-size:11px;font-weight:600}
+.pp-app-header .pp-shell-icon{display:block;width:20px;height:20px;flex:none;object-fit:contain}
+.pp-shell-breadcrumb>.pp-shell-icon,.pp-shell-company>.pp-shell-icon{width:16px;height:16px}
+.pp-app-header .pp-shell-page{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:650;min-width:0}
+.pp-app-header .pp-shell-controls{display:flex;align-items:center;gap:4px;flex:none}
+.pp-app-header .pp-shell-currency{display:block;margin:0 8px 0 0;min-width:72px;max-width:80px}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-currency :is(select,.pp-select-trigger){min-height:36px!important;height:36px!important;background:var(--pp-shell-surface);color:var(--pp-shell-ink);border:1px solid #cbd5e1;border-radius:8px;padding:6px 10px;font-size:14px;box-shadow:0 1px 2px #0000000d}
+.pp-shell-currency>.pp-select-container{width:80px!important;min-width:0!important}
+body.pp-customer-app.pp-ui .pp-app-header :is(.pp-shell-icon-button,.pp-theme-toggle){min-height:36px!important;height:36px!important;width:36px!important;min-width:36px!important;max-width:36px;padding:8px!important;border:0!important;border-radius:8px;background:var(--pp-shell-band);box-shadow:none;display:inline-flex;align-items:center;justify-content:center;gap:0!important;position:relative;color:var(--pp-shell-ink)}
+.pp-app-header .pp-theme-toggle>:not(.pp-theme-symbol),.pp-app-header .pp-theme-symbol>*{display:none!important}
+.pp-app-header .pp-theme-symbol{display:block!important;width:20px;height:20px;background:url('/assets/plus_point/images/dashboard/moon01.svg') center/20px no-repeat}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-upgrade{min-height:36px!important;height:36px!important;border-radius:8px;margin-left:8px;padding:6px 12px!important;gap:8px;font:600 14px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;text-decoration:none}
+.pp-shell-notification-count{position:absolute;top:-3px;right:-2px;min-width:16px;height:16px;border-radius:999px;background:#dc2626;color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 3px}
+.pp-app-header :is(button,a,select):focus-visible{outline:2px solid var(--pp-focus)!important;outline-offset:3px}
+body.pp-customer-app.pp-ui .pp-app-header :is(.pp-shell-icon-button,.pp-theme-toggle):hover{background:var(--pp-shell-line)}
+html[data-theme=dark] .pp-app-header .pp-shell-icon,html[data-theme=dark] .pp-shell-account-chevron,html[data-theme=dark] .pp-app-header .pp-theme-symbol{filter:brightness(1.7)}
+/* The page toolbar scrolls beneath the same header on every company route. */
+body.pp-customer-app.pp-ui .page-head{top:var(--pp-shell-height)}
+body.pp-customer-app.pp-ui .pp-op-tabs{top:calc(var(--pp-shell-height) + 56px)}
+/* Native navigation retains its links, permission filtering, collapse and reorder handlers. */
+body.pp-customer-app.pp-ui .body-sidebar{--sidebar-width:264px;width:264px;background:#f8f8f8;border-right:1px solid var(--pp-shell-line)}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-label{font:600 14px/20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;color:#344454}
+body.pp-customer-app.pp-ui .body-sidebar .standard-sidebar-item{border-radius:6px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-items>.sidebar-item-container:not(.section-item)>.standard-sidebar-item{min-height:36px;padding:6px 10px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-items .section-item>.sidebar-child-item>.sidebar-item-container>.standard-sidebar-item{min-height:40px;padding:8px 10px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-icon{width:20px;min-width:20px;margin-right:10px;color:#667085;display:inline-flex;align-items:center;justify-content:center}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-icon svg{width:20px;height:20px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-items>.section-item>.standard-sidebar-item{margin-top:20px;min-height:36px;padding:6px 10px}
+body.pp-customer-app.pp-ui .body-sidebar .section-break>.sidebar-item-label{font-size:12px!important;text-transform:uppercase;letter-spacing:0;white-space:nowrap}
+body.pp-customer-app.pp-ui .body-sidebar .section-break{min-width:0;gap:0}
+body.pp-customer-app.pp-ui .body-sidebar .section-break>.sidebar-item-control{margin-left:auto;flex:none}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-notification{display:none}
+body.pp-customer-app.pp-ui .body-sidebar .navbar-modal-search-mobile .standard-sidebar-item{min-height:36px;border:1px solid #cbd5e1;border-radius:8px;background:var(--pp-shell-surface);margin:0 12px 16px;padding:4px 8px;box-shadow:0 1px 2px #0000000d}
+body.pp-customer-app.pp-ui .body-sidebar .navbar-modal-search-mobile .item-anchor{min-height:26px}
+body.pp-customer-app.pp-ui .body-sidebar .navbar-modal-search-mobile .sidebar-item-label{color:#667085;font-weight:400!important}
+body.pp-customer-app.pp-ui .body-sidebar .navbar-modal-search-mobile .sidebar-item-control:after{content:'\2318 K';font-size:12px;color:#667085;border:1px solid var(--pp-shell-line);border-radius:4px;padding:0 4px}
+body.pp-customer-app.pp-ui .body-sidebar .sidebar-user-button{background:var(--pp-shell-surface);border:1px solid var(--pp-shell-line);border-radius:12px;min-height:68px!important;padding:12px!important;gap:10px;text-decoration:none;color:var(--pp-shell-ink)}
+body.pp-customer-app.pp-ui .body-sidebar .avatar-name-email{flex:1;min-width:0;margin-left:0!important;line-height:20px}
+body.pp-customer-app.pp-ui .body-sidebar .avatar-name-email span:first-child{font-size:14px;font-weight:600;color:var(--pp-shell-ink)}
+body.pp-customer-app.pp-ui .body-sidebar .avatar-name-email span:last-child{font-size:13px;color:var(--pp-shell-muted)}
+.pp-shell-user-avatar{display:grid;place-items:center;position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--pp-shell-line);background:var(--pp-shell-band);font-size:13px;font-weight:600;color:var(--pp-shell-ink);flex:none}
+.pp-shell-user-avatar>img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pp-shell-signed-in{position:absolute;right:0;bottom:0;width:10px;height:10px;border-radius:50%;background:#16a34a;border:2px solid var(--pp-shell-surface)}
+.pp-shell-account-chevron{display:flex;align-items:center;flex:none}
+.pp-shell-account-chevron img{width:16px;height:16px}
+body.pp-customer-app.pp-ui .body-sidebar .dropdown-navbar-user{margin:12px 8px 8px!important}
+body.pp-customer-app.pp-ui .body-sidebar :is(.sidebar-user-button,.item-anchor):focus-visible{outline:2px solid var(--pp-focus);outline-offset:2px}
+html[data-theme=dark] body.pp-customer-app.pp-ui .body-sidebar{background:#1c2530}
+html[data-theme=dark] body.pp-customer-app.pp-ui .body-sidebar .sidebar-item-label{color:#d3dbe5}
+html[data-theme=dark] body.pp-customer-app.pp-ui .pp-brand-wordmark{filter:none;background:#f8f8f8;border-radius:4px}
+html[data-theme=dark] body.pp-customer-app.pp-ui .body-sidebar .navbar-modal-search-mobile .sidebar-item-label{color:#b9c2cc}
+@media(max-width:1100px){.pp-app-header .pp-shell-company{max-width:220px}.pp-app-header .pp-shell-breadcrumb{gap:8px}body.pp-customer-app.pp-ui .pp-app-header{padding-inline:24px;gap:12px}}
+@media(max-width:767px){body.pp-customer-app.pp-ui{--pp-shell-height:116px}body.pp-customer-app.pp-ui .pp-app-header{flex-wrap:wrap;align-content:center;gap:12px;padding:12px 16px}.pp-app-header .pp-shell-breadcrumb{flex-basis:100%;flex-grow:1}.pp-app-header .pp-shell-company{max-width:calc(100% - 100px)}.pp-app-header .pp-shell-controls{width:100%;justify-content:flex-end;gap:6px}.pp-app-header .pp-shell-currency{margin-right:auto}body.pp-customer-app.pp-ui .pp-app-header :is(.pp-shell-icon-button,.pp-theme-toggle){width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important}body.pp-customer-app.pp-ui .pp-app-header .pp-shell-upgrade{margin-left:2px;font-size:13px;padding-inline:8px!important}.pp-app-header .pp-shell-page{font-size:13px}.pp-app-header .pp-shell-company strong{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.pp-app-header *{transition:none!important;animation:none!important}}
+
+body.pp-customer-app.pp-ui .body-sidebar .pp-orange-brand-header .header-logo{background:transparent;border-radius:0}
+body.pp-customer-app.pp-ui .pp-app-header .pp-shell-mobile-nav{display:none}
+@media(max-width:767px){body.pp-customer-app.pp-ui .pp-app-header .pp-shell-mobile-nav{display:inline-flex;flex:none;padding:6px;width:32px;min-width:32px;height:32px;min-height:32px;border:0;background:var(--pp-shell-band);color:var(--pp-shell-ink)}}
+
+@media(max-width:374px){body.pp-customer-app.pp-ui .pp-app-header .pp-shell-upgrade span{display:none}body.pp-customer-app.pp-ui .pp-app-header .pp-shell-upgrade{width:40px;min-width:40px;justify-content:center}.pp-app-header .pp-shell-controls{justify-content:space-between;gap:4px}}
+.pp-shell-nav-close,.pp-shell-nav-backdrop{display:none}
+@media(max-width:767px){
+ body.pp-customer-app.pp-mobile-navigation-open .es-menu{z-index:1400!important}
+ body.pp-customer-app.pp-mobile-navigation-open .body-sidebar-container{position:fixed!important;inset:0 auto 0 0!important;width:264px!important;height:100dvh!important;display:flex!important;visibility:visible!important;z-index:1300;pointer-events:auto}
+ body.pp-customer-app.pp-mobile-navigation-open .body-sidebar-container .body-sidebar{display:flex!important;position:relative!important;inset:auto!important;width:264px!important;height:100dvh!important;visibility:visible!important;pointer-events:auto;transform:none!important}
+ body.pp-customer-app.pp-mobile-navigation-open .pp-shell-nav-backdrop{display:block;position:fixed;inset:0;z-index:1290;background:#0b253866;border:0;border-radius:0;padding:0}
+ body.pp-customer-app.pp-mobile-navigation-open .pp-shell-nav-close{display:flex;position:absolute;right:8px;top:8px;z-index:1;width:32px;height:32px;min-height:32px;padding:6px}
+ body.pp-customer-app.pp-mobile-navigation-open .pp-orange-brand-header{padding-top:48px!important}
+}
+
+body.pp-customer-app.pp-ui .pp-app-header select.pp-app-currency{appearance:none;background-image:url("/assets/plus_point/images/dashboard/chevrondown.svg");background-position:right 8px center;background-size:16px;background-repeat:no-repeat;padding-right:28px}

@@ -72,9 +72,9 @@ class HierarchyTests(unittest.TestCase):
         from plus_point.navigation import product_navigation
         nav=product_navigation(False);labels=[r['label'] for r in nav['items']]
         self.assertNotIn('Accounts',labels);self.assertNotIn('Business setup',labels)
-        self.assertIn('Reports and analytics',labels);self.assertIn('Job and event finances',labels);self.assertIn('Worker statement',labels)
+        self.assertIn('Reports and analytics',labels);self.assertIn('Event finances',labels);self.assertIn('Worker statement',labels)
         self.assertNotIn('Expense claims',labels);self.assertNotIn('Wages earned',labels)
-        self.assertIn('Worker loans and advances',labels);self.assertIn('Expenses',labels)
+        self.assertIn('Worker loans',labels);self.assertIn('Expenses',labels)
         self.assertIn('Account',nav['doctypes']);self.assertIn('Expense Claim',nav['doctypes'])
         self.assertIn('PLUS POINT Worker Statement',nav['reports'])
 

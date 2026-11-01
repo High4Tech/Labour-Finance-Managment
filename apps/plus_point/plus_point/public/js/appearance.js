@@ -38,7 +38,7 @@
             const label=document.createElement('span');label.textContent=__('Appearance');
             const value=document.createElement('span');value.className='pp-theme-value';
             button.append(graphic,label,value);footer.prepend(button);
-            new frappe.ui.Dropdown({trigger:$(button),side:'top',align:'start',options:[{group:__('Appearance'),options:
+            new frappe.ui.Dropdown({trigger:$(button),side:frappe.boot.plus_point.is_platform?'top':'bottom',align:'end',options:[{group:__('Appearance'),options:
                 Object.entries(modes).map(([name,label])=>({name:'pp-theme-'+name,label,onclick:()=>plus_point.set_theme(name)}))
             }]});
         }
@@ -48,7 +48,7 @@
         const value=button.querySelector('.pp-theme-value');
         if (value.textContent!==current)value.textContent=current;
         const symbol=button.querySelector('.pp-theme-symbol'),dark=root.getAttribute('data-theme')==='dark';
-        if (symbol.dataset.theme!==String(dark)) { symbol.innerHTML=icon(dark);symbol.dataset.theme=String(dark); }
+        if (symbol.dataset.theme!==String(dark)) { symbol.innerHTML=frappe.boot.plus_point.is_platform?icon(dark):'';symbol.dataset.theme=String(dark); }
         button.disabled=pending;
         if (button.getAttribute('aria-busy')!==String(pending))button.setAttribute('aria-busy',String(pending));
     }

@@ -351,17 +351,13 @@
             if(footer&&footer.dataset.ppCompanyMenu!==setupMenu){
                 const clone=footer.cloneNode(true);clone.dataset.ppCompanyMenu=setupMenu;footer.replaceWith(clone);
                 clone.querySelector('.sidebar-user-button')?.setAttribute('aria-label',__('Company menu'));
-                new frappe.ui.Dropdown({trigger:$(clone),side:'top',align:'start',options:[{group:'',options:[
+                new frappe.ui.Dropdown({trigger:$(clone.querySelector('.sidebar-user-button')),side:'top',align:'start',options:[{group:'',options:[
                     {name:'company',label:__('Your company'),onclick:()=>{const name=plus_point.dashboard_company||identity?.name;if(name)frappe.set_route('Form','Company',name);else plus_point.open_setup();}},
                     ...(!frappe.boot.plus_point.onboarding_complete?[{name:'setup',label:__('Guided company setup'),onclick:()=>plus_point.open_setup()}]:[]),
                     {name:'about',label:__('About PLUS POINT'),onclick:()=>frappe.msgprint({title:__('About PLUS POINT'),message:'<p>PLUS POINT · High4Tech</p><p>Icons by <a href="https://github.com/tabler/tabler-icons" target="_blank" rel="noopener">Tabler</a> · Theme icons by <a href="https://github.com/basmilius/meteocons" target="_blank" rel="noopener">Meteocons</a> · MIT.</p>'})},
                     {name:'logout',label:__('Sign out'),onclick:()=>frappe.app.logout()}]}]});
             }
-            const names=document.querySelectorAll('.sidebar-user-button .avatar-name-email span');
-            if(names[0]&&names[0].textContent!==title)names[0].textContent=title;
-            if(names[1]&&names[1].textContent!==__('Company account'))names[1].textContent=__('Company account');
-            const avatar=document.querySelector('.sidebar-user-button>div:first-child');
-            if(avatar&&!avatar.querySelector('.pp-company-avatar'))avatar.innerHTML=`<span class="pp-company-avatar" aria-hidden="true">${esc(title.split(/\s+/).slice(0,2).map(s=>s[0]).join(''))}</span>`;
+            plus_point.app_shell?.account();
         }
         if (!inProductScope(route)) {
             // Wait for the native departing route to settle before redirecting.

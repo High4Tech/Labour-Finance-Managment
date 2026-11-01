@@ -3,11 +3,11 @@ import frappe
 import json
 
 CUSTOMER_GROUPS = [
-    ('Clients and work', [('Customer', 'Clients'), ('PP Contract Terms', 'Agreements'), ('PP Event Plan','Jobs and events')]),
-    ('Workforce and resources', [('Employee', 'Workers'), ('Item','Inventory and equipment'), ('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
-    ('Finance', [('Sales Invoice', 'Billing and invoices'), ('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans and advances'),
+    ('Clients and work', [('PP Contract Terms', 'Agreements'), ('PP Event Plan','Jobs & Events'), ('Customer', 'Clients')]),
+    ('Workforce and resources', [('Employee', 'Workers'), ('Item','Inventory & equipment'), ('Warehouse','Warehouses'),('Vehicle','Vehicles')]),
+    ('Finance', [('Sales Invoice', 'Billing and invoices'), ('PP Wage Settlement', 'Worker payments'), ('PP Worker Loan', 'Worker loans'),
                            ('Payment Entry', 'Receipts and payments'), ('Purchase Invoice', 'Expenses')]),
-    ('Reports and analytics', [('Report:PLUS POINT Project Finances', 'Job and event finances'),
+    ('Reports and analytics', [('Report:PLUS POINT Project Finances', 'Event finances'),
                           ('Report:PLUS POINT Worker Statement', 'Worker statement')]),
 ]
 SECTION_ALIASES = {'Daily work':'Workforce and resources','Inventory and transport':'Workforce and resources',

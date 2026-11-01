@@ -37,9 +37,9 @@ fs.mkdirSync(out,{recursive:true});
   });
   await check('Real activity expansion and notification count',async()=>{
    await page.locator('[data-overview-all-activity]').click();const dialog=page.locator('.modal:visible').last();await dialog.locator('a').first().waitFor();assert(await dialog.locator('a').count()>=await page.locator('[data-overview-feed] a').count());await dialog.locator('.btn-modal-close').first().click();
-   return {count:await page.locator('.pp-overview-notification-count').textContent().catch(()=> '0')};
+   return {count:await page.locator('.pp-shell-notification-count').textContent().catch(()=> '0')};
   });
-  await check('Theme control has a visible menu',async()=>{await page.locator('[data-overview-theme]').click();assert(await page.getByText('Dark',{exact:true}).filter({visible:true}).count()>0);await page.keyboard.press('Escape');});
+  await check('Theme control has a visible menu',async()=>{await page.locator('.pp-app-header .pp-theme-toggle').click();assert(await page.getByText('Dark',{exact:true}).filter({visible:true}).count()>0);await page.keyboard.press('Escape');});
   await page.addScriptTag({path:'.local/a11y/node_modules/axe-core/axe.min.js'});
   for(const theme of ['light','dark']){
    await page.evaluate(t=>{document.documentElement.dataset.theme=t;document.dispatchEvent(new Event('pp:theme-changed'));},theme);await page.waitForTimeout(450);

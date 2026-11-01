@@ -23,6 +23,11 @@ def boot_context(bootinfo):
     bootinfo.plus_point['company_identity']=dict(name=identity.name,title=identity.company_name) if identity else dict(name=None,title='High4Tech' if platform else frappe.conf.get('pp_signup_company') or 'Your event company')
     bootinfo.plus_point['signup_company_name']=frappe.conf.get('pp_signup_company') or ''
     if identity:bootinfo.plus_point['company_country']=frappe.db.get_value('Company',identity.name,'country')
+    if not platform:
+        from plus_point.exchange import DISPLAY_CURRENCIES
+        currency = frappe.db.get_value('Company', identity.name, 'default_currency') if identity else None
+        bootinfo.plus_point['company_currency'] = currency or 'USD'
+        bootinfo.plus_point['currency_options'] = list(dict.fromkeys([currency or 'USD', *DISPLAY_CURRENCIES]))
     # One product entry per site. Retain every engine's route/dock metadata for
     # native forms and workspaces; only their separate launcher entries change.
     for app in bootinfo.get('app_data', []):

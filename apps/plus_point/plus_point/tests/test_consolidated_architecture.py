@@ -109,7 +109,7 @@ class ConsolidatedTests(unittest.TestCase):
         from plus_point.navigation import product_navigation,SECTION_ALIASES
         from plus_point.sections import overview
         nav=product_navigation(False);items=nav['items'];labels=[i['label'] for i in items]
-        for label in ('Clients','Agreements','Jobs and events','Workers','Inventory and equipment','Billing and invoices','Worker loans and advances','Worker statement'):
+        for label in ('Clients','Agreements','Jobs & Events','Workers','Inventory & equipment','Billing and invoices','Worker loans','Worker statement'):
             self.assertIn(label,labels)
         self.assertEqual(labels.count('Overview'),1);self.assertIn('Attendance',labels)
         self.assertFalse(any(label.endswith(' overview') for label in labels))
