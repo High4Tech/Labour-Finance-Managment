@@ -121,11 +121,11 @@ app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261029-table-cont
 app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261029-upload-assets-2"]
 
 app_include_js += ["/assets/plus_point/js/design_assets.js?v=20261029-upload-assets-2"]
-app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-scenes-4"]
-app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261101-scenes-4"]
+app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-payment-reference-1"]
+app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261101-payment-reference-1"]
 app_include_css += ["/assets/plus_point/css/upload_assets.css?v=20261029-upload-assets-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261101-scenes-4"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261101-payment-reference-1"]
 app_include_css += ["/assets/plus_point/css/brand.css?v=20261101-scenes-4"]
 
 app_include_css += ["/assets/plus_point/css/app_shell.css?v=20261101-scenes-4"]

@@ -94,7 +94,7 @@ class PaymentOverviewTests(unittest.TestCase):
         from plus_point.wage_payments import review_payments,record_payments
         items=self.batch_items();review=review_payments(items,self.f.company.name)
         self.assertEqual(review['currency'],'PKR');self.assertEqual(review['total'],'1250.00');self.assertEqual(len({r['event'] for r in review['rows']}),2)
-        args=dict(items=items,company=self.f.company.name,account=self.f.company.default_cash_account,posting_date=today(),reference='Multi event batch QA')
+        args=dict(items=items,company=self.f.company.name,account=self.f.company.default_cash_account,posting_date=today(),reference='Multi event batch QA',confirmed=True,confirmation_id='11111111111111111111111111111111')
         first=record_payments(**args);self.assertEqual(len(first['payments']),2);self.assertEqual(first,record_payments(**args))
         rows=overview(self.f.company.name)['rows'];self.assertEqual({r['status'] for r in rows},{'Paid'});self.assertEqual({r['outstanding'] for r in rows},{'0'})
 
@@ -102,7 +102,7 @@ class PaymentOverviewTests(unittest.TestCase):
         from plus_point.wage_payments import record_payments
         items=sorted(self.batch_items(),key=lambda r:r['event']);items[-1]['balance']='9999'
         types=['Payment Entry','PP Wage Settlement','GL Entry'];before={dt:frappe.db.count(dt) for dt in types}
-        with self.assertRaises(frappe.ValidationError):record_payments(items,self.f.company.default_cash_account,today(),'Stale batch QA',self.f.company.name)
+        with self.assertRaises(frappe.ValidationError):record_payments(items,self.f.company.default_cash_account,today(),'Stale batch QA',self.f.company.name,confirmed=True,confirmation_id='22222222222222222222222222222222')
         self.assertEqual(before,{dt:frappe.db.count(dt) for dt in types})
 
     def test_batch_rejects_duplicate_or_unreviewed_rows(self):
@@ -111,3 +111,34 @@ class PaymentOverviewTests(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):review_payments([item,item],self.f.company.name)
         with self.assertRaises(frappe.ValidationError):review_payments([dict(event=self.event.name,employee=self.f.employee.name)],self.f.company.name)
         with self.assertRaises(frappe.ValidationError):review_payments([item]*201,self.f.company.name)
+
+    def test_bulk_payment_needs_consent_but_not_an_external_reference(self):
+        from plus_point.wage_payments import record_payments,set_reference
+        items=self.batch_items()
+        args=dict(items=items,company=self.f.company.name,account=self.f.company.default_cash_account,posting_date=today(),confirmation_id='33333333333333333333333333333333')
+        before={dt:frappe.db.count(dt) for dt in ['Payment Entry','PP Wage Settlement','GL Entry']}
+        with self.assertRaisesRegex(frappe.ValidationError,'actually been paid'):record_payments(**args)
+        self.assertEqual(before,{dt:frappe.db.count(dt) for dt in before})
+        first=record_payments(**args,confirmed=True)
+        records=frappe.get_all('PP Wage Settlement',filters={'payment_entry':['in',first['payments']]},pluck='name')
+        self.assertEqual(len(records),2)
+        self.assertTrue(all(not frappe.db.get_value('PP Wage Settlement',n,'payment_reference') for n in records))
+        ledger_before=frappe.db.sql("SELECT name,account,debit,credit FROM `tabGL Entry` WHERE voucher_no in %(payments)s ORDER BY name",{'payments':first['payments']})
+        for i,name in enumerate(records):set_reference([name],f'Bank transfer {i+1}',self.f.company.name)
+        self.assertEqual(record_payments(**args,confirmed=True),first)
+        self.assertEqual(ledger_before,frappe.db.sql("SELECT name,account,debit,credit FROM `tabGL Entry` WHERE voucher_no in %(payments)s ORDER BY name",{'payments':first['payments']}))
+        self.assertEqual({frappe.db.get_value('PP Wage Settlement',n,'payment_reference') for n in records},{'Bank transfer 1','Bank transfer 2'})
+        self.assertTrue(all(frappe.db.get_value('Payment Entry',n,'reference_no').startswith('PP-WAGE-') for n in first['payments']))
+        self.assertEqual({r['status'] for r in overview(self.f.company.name)['rows']},{'Paid'})
+        with self.assertRaises(frappe.PermissionError):set_reference(records,'Wrong company','Unavailable company')
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):set_reference(records,'Unowned',self.f.company.name)
+
+    def test_optional_bulk_reference_is_saved_and_can_be_bulk_updated(self):
+        from plus_point.wage_payments import record_payments,set_reference
+        items=self.batch_items()
+        result=record_payments(items,self.f.company.default_cash_account,today(),'Initial optional reference',self.f.company.name,confirmed=True,confirmation_id='44444444444444444444444444444444')
+        names=frappe.get_all('PP Wage Settlement',filters={'payment_entry':['in',result['payments']]},pluck='name')
+        self.assertEqual({frappe.db.get_value('PP Wage Settlement',n,'payment_reference') for n in names},{'Initial optional reference'})
+        self.assertEqual(set_reference(names,'Statement received later',self.f.company.name)['updated'],2)
+        self.assertEqual({frappe.db.get_value('PP Wage Settlement',n,'payment_reference') for n in names},{'Statement received later'})

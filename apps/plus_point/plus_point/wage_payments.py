@@ -1,6 +1,8 @@
 """Approved wage balances and confirmation cadence. Never auto-disburse money."""
 from collections import defaultdict
 from decimal import Decimal
+from hashlib import sha256
+import re
 import frappe
 from frappe.utils import add_days, getdate, get_first_day, today
 from plus_point.finance import money
@@ -51,11 +53,17 @@ def review_payments(items,company=None):
 
 
 @frappe.whitelist(methods=['POST'])
-def record_payments(items,account,posting_date,reference,company=None):
+def record_payments(items,account,posting_date,reference='',company=None,confirmed=False,confirmation_id=None):
     """All selected events post together, or none do; native retry protection remains."""
     from plus_point.record_actions import settle_event_crew
     from plus_point.budget import lock_project
-    business=company_scope(company);items=payment_items(items);events=payment_events(items,business)
+    business=company_scope(company)
+    if not frappe.utils.cint(confirmed):frappe.throw('Confirm that these wages have actually been paid.')
+    if not re.fullmatch(r'[a-fA-F0-9-]{32,36}',str(confirmation_id or '')):frappe.throw('Reopen the payment confirmation and try again.')
+    reference=str(reference or '').strip()
+    if len(reference)>140:frappe.throw('Use a payment reference of up to 140 characters.')
+    internal_reference='PP-WAGE-'+sha256((business.name+':'+str(confirmation_id)).encode()).hexdigest()[:24]
+    items=payment_items(items);events=payment_events(items,business)
     # Stable lock order across the entire batch prevents cross-event lock inversions.
     for project in sorted({e.project for e in events.values()}):lock_project(project)
     for employee in sorted({r['employee'] for r in items}):frappe.db.get_value('Employee',employee,'name',for_update=True)
@@ -64,11 +72,43 @@ def record_payments(items,account,posting_date,reference,company=None):
         for name in sorted(events):
             selected=[r for r in items if r['event']==name]
             result=settle_event_crew(name=name,employees=[r['employee'] for r in selected],account=account,
-                posting_date=posting_date,reference=reference,balances={r['employee']:r['balance'] for r in selected})
+                posting_date=posting_date,reference=internal_reference,balances={r['employee']:r['balance'] for r in selected})
             payments.extend(result['payments'])
+            if reference:
+                for payment in result['payments']:
+                    settlement=frappe.get_doc('PP Wage Settlement',{'payment_entry':payment,'docstatus':1})
+                    if not settlement.payment_reference:
+                        settlement.payment_reference=reference;settlement.save()
     except Exception:
         frappe.db.rollback(save_point='pp_wage_payment_batch');raise
     return dict(payments=payments)
+
+
+@frappe.whitelist(methods=['POST'])
+def set_reference(names,reference,company=None):
+    """Update audit metadata through native permissions; never repost a payment."""
+    from plus_point.budget import lock_project
+    business=company_scope(company);names=frappe.parse_json(names);reference=str(reference or '').strip()
+    if not isinstance(names,list) or not 1<=len(names)<=200 or any(not isinstance(n,str) or not n for n in names):frappe.throw('Select between 1 and 200 payment records.')
+    if not reference or len(reference)>140:frappe.throw('Enter a payment reference of up to 140 characters.')
+    documents=[]
+    for name in sorted(set(names)):
+        doc=frappe.get_doc('PP Wage Settlement',name);doc.check_permission('write')
+        project=frappe.get_doc('Project',doc.project);project.check_permission('read')
+        if project.company!=business.name or doc.docstatus!=1:frappe.throw('Choose confirmed payments in the selected company.',frappe.PermissionError)
+        documents.append(doc)
+    # Match payment posting's project -> worker -> settlement lock order.
+    for project in sorted({d.project for d in documents}):lock_project(project)
+    for employee in sorted({d.employee for d in documents}):frappe.db.get_value('Employee',employee,'name',for_update=True)
+    frappe.db.savepoint('pp_payment_reference')
+    try:
+        for doc in documents:
+            frappe.db.get_value('PP Wage Settlement',doc.name,'name',for_update=True);doc.reload()
+            if doc.docstatus!=1:frappe.throw('This payment changed. Refresh Payment history and select confirmed payments.')
+            doc.payment_reference=reference;doc.save()
+    except Exception:
+        frappe.db.rollback(save_point='pp_payment_reference');raise
+    return dict(updated=len(set(names)))
 
 
 def due_cutoff(event, day):

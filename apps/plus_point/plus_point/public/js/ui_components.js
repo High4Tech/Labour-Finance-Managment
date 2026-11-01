@@ -6,7 +6,7 @@
  const icon=name=>pp.icon?.(name)||'<svg width=24 height=24 viewBox="0 0 24 24" aria-hidden="true"><use href="/assets/plus_point/images/tabler.svg#'+name+'"></use></svg>';
  const tones={green:'success',red:'error',orange:'warning',yellow:'warning',blue:'info'};
  pp.ui={
-  list_table(labels,rows,options={}){return pp.render_table(labels,rows,options).replace('class="pp-register-table"','class="pp-register-table pp-native-list-table"');},
+  list_table(labels,rows,options={}){return pp.render_table(labels,rows,options).replace('class="pp-register-table"','class="pp-register-table pp-native-list-table" data-density="'+(options.density==='comfortable'?'comfortable':'compact')+'"');},
   workflow(){
    const nodes=[['Agreement',20,72,150],['Events & Jobs',210,72,160],['Attendance',410,72,150],['Approved work',600,72,160],['Worker earnings',840,12,210],['Client billing',840,132,210]],paths=['M170 100H210','M370 100H410','M560 100H600','M760 100C800 100 800 40 840 40','M760 100C800 100 800 160 840 160'];
    return '<footer class="pp-overview-workflow" tabindex="0" aria-label="'+esc(__('Agreement to events, attendance, approved work, worker earnings and client billing'))+'"><svg class="pp-workflow-live" viewBox="0 0 1080 210" role="img" aria-label="'+esc(__('Business workflow'))+'"><g class="pp-workflow-connectors">'+paths.map(d=>'<path d="'+d+'"/>').join('')+'</g><g class="pp-workflow-dots">'+paths.map((d,i)=>'<path pathLength="100" style="--flow-delay:'+i*.45+'s" d="'+d+'"/>').join('')+'</g>'+nodes.map(([title,x,y,w])=>'<g class="pp-workflow-node"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="56" rx="12"/><text x="'+(x+w/2)+'" y="'+(y+33)+'" text-anchor="middle">'+esc(__(title))+'</text></g>').join('')+'</svg></footer>';
