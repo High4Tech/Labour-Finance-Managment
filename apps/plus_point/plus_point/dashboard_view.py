@@ -122,7 +122,7 @@ def view(company, start=None, end=None, search='', page=1, event_status='Active'
         ('Employee', 'employee_name', 'Worker added', 'client', '/desk/employee/', {'company': company}),
         ('PP Event Plan', 'event_name', 'Event added', 'calendar', '/desk/pp-event-plans?record=', {'company': company, 'project': ['in', names]}),
         ('PP Contract Terms', 'name', 'Agreement added', 'document', '/desk/pp-agreements?record=', {'project': ['in', names], 'event_basis': 0}),
-        ('PP Daily Register', 'name', 'Attendance updated', 'check', '/desk/pp-daily-register?record=', {'project': ['in', names]})):
+        ('PP Daily Register', 'name', 'Attendance updated', 'check-square', '/desk/pp-daily-register?record=', {'project': ['in', names]})):
         extra = ['project', 'docstatus'] if dt == 'PP Daily Register' else ['project'] if dt == 'PP Contract Terms' else []
         order = 'modified desc' if dt == 'PP Daily Register' else 'creation desc'
         for r in frappe.get_list(dt, filters=filters, fields=list(dict.fromkeys(['name', title_field, 'modified', 'creation']+extra)), order_by=order, limit_page_length=25):

@@ -78,3 +78,32 @@ body.pp-customer-app.pp-ui .pp-app-header .pp-shell-mobile-nav{display:none}
 }
 
 body.pp-customer-app.pp-ui .pp-app-header select.pp-app-currency{appearance:none;background-image:url("/assets/plus_point/images/dashboard/chevrondown.svg");background-position:right 8px center;background-size:16px;background-repeat:no-repeat;padding-right:28px}
+/* The initial company dashboard and its ready state share the same footprint. */
+body.pp-customer-app.pp-overview-route #page-Workspaces>.page-head{display:none!important}
+body.pp-customer-app.pp-overview-route :is(.pp-welcome,.pp-task-home,.layout-main-section){max-width:none;border:0;box-shadow:none}
+.pp-overview-skeleton{max-width:1800px;width:calc(100% - 48px);margin:24px auto;min-height:750px;padding:0}
+.pp-overview-skeleton-heading{width:min(640px,80%);height:68px;margin-bottom:36px;border-radius:10px}
+.pp-overview-skeleton-metrics,.pp-overview-skeleton-panels{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px}
+.pp-overview-skeleton-metrics i{height:196px;border-radius:12px}.pp-overview-skeleton-panels{grid-template-columns:repeat(2,minmax(0,1fr))}.pp-overview-skeleton-panels i{height:318px;border-radius:12px}
+.pp-overview-skeleton :is(i,.pp-overview-skeleton-heading){display:block;background:var(--subtle-fg,#f3f5f6);animation:pp-shell-skeleton 1.6s ease-in-out infinite alternate}
+@keyframes pp-shell-skeleton{to{opacity:.45}}
+/* Reposition the native command search; its results, keys and permissions remain native. */
+body.pp-customer-app .modal.pp-search-popover{inset:0;pointer-events:none;background:transparent!important}
+body.pp-customer-app .pp-search-popover .modal-dialog{position:fixed!important;left:var(--pp-search-left)!important;top:var(--pp-search-top)!important;margin:0!important;width:var(--pp-search-width)!important;max-width:var(--pp-search-width)!important;transform:none!important;pointer-events:auto}
+body.pp-customer-app .pp-search-popover .modal-content{max-height:calc(100dvh - var(--pp-search-top) - 16px);overflow:auto;box-shadow:0 10px 30px #0b253822}
+body.pp-customer-app.pp-search-open>.modal-backdrop{opacity:0!important;pointer-events:none}
+body.pp-customer-app .pp-search-popover .modal-body{padding:12px!important}
+body.pp-customer-app .pp-search-popover .navbar-modal-wrapper{width:100%;min-width:0}
+/* Native notifications are hosted at the bell rather than in a second navigation panel. */
+body.pp-customer-app .pp-header-notifications{width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);z-index:1300}
+body.pp-customer-app .pp-header-notifications .pp-notification-content{position:static!important;inset:auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:min(640px,calc(100dvh - 110px));display:block!important;border:0!important;box-shadow:none!important;transform:none!important;padding:0;overflow:auto;visibility:visible!important}
+body.pp-customer-app .pp-header-notifications .sidebar-panel-body{position:static;max-height:min(520px,calc(100dvh - 210px));overflow:auto}
+body.pp-customer-app .pp-header-notifications .panel-header{padding:16px;gap:12px}
+body.pp-customer-app .pp-header-notifications :is(.notification-list-body,.notifications-list){width:100%;min-width:0}
+.pp-attention-stack{position:fixed;bottom:20px;right:20px;width:min(390px,calc(100vw - 32px));max-height:calc(100dvh - 130px);overflow:auto;z-index:1085;display:grid;gap:12px;padding:4px;pointer-events:none}.pp-attention-stack[hidden]{display:none}
+.pp-attention-toast{display:grid;grid-template-columns:24px minmax(0,1fr) 32px;gap:12px;padding:16px;background:var(--fg-color,#fff);border:1px solid var(--border-color,#e2e8f0);border-left:3px solid #d18b08;border-radius:0;box-shadow:0 4px 18px #0b25381a;pointer-events:auto;color:var(--text-color)}
+.pp-attention-toast[data-tone=error]{border-left-color:#dc2626}.pp-attention-toast strong{font-size:15px;line-height:22px}.pp-attention-toast p{font-size:14px;line-height:21px;margin:4px 0 12px;color:var(--text-muted)}.pp-attention-icon svg{width:24px;height:24px;color:#b77908}.pp-attention-toast .pp-attention-dismiss{padding:6px!important;width:32px;height:32px;min-height:32px!important;background:transparent!important;border:0!important}.pp-attention-toast .pp-attention-dismiss svg{width:18px;height:18px}.pp-attention-toast .btn{font-size:14px}.pp-attention-toast a{justify-self:start}
+@media(max-width:600px){.pp-overview-skeleton-metrics,.pp-overview-skeleton-panels{grid-template-columns:1fr}.pp-attention-stack{right:12px;bottom:12px;max-height:50dvh}.pp-attention-toast{padding:12px;gap:8px}.pp-overview-skeleton{width:calc(100% - 32px)}}
+@media(prefers-reduced-motion:reduce){.pp-overview-skeleton :is(i,.pp-overview-skeleton-heading){animation:none}}
+
+body.pp-customer-app.pp-overview-route .pp-dashboard:not(.pp-overview){width:100%;max-width:none;padding:0;margin:0;border:0;background:transparent;box-shadow:none}

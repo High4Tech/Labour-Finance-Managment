@@ -137,7 +137,7 @@
                 if (current === request) root.setAttribute('aria-busy','false');
             }
         }
-        root.innerHTML=frappe.boot.plus_point?.is_platform?`<p role="status">${esc(__('Loading your dashboard…'))}</p>`:plus_point.loading_state('Loading your dashboard…');
+        root.innerHTML=frappe.boot.plus_point?.is_platform?`<p role="status">${esc(__('Loading your dashboard…'))}</p>`:'<div class="pp-overview-skeleton" role="status"><span class="sr-only">'+esc(__('Loading your dashboard…'))+'</span><div class="pp-overview-skeleton-heading"></div><div class="pp-overview-skeleton-metrics"><i></i><i></i><i></i></div><div class="pp-overview-skeleton-panels"><i></i><i></i></div></div>';
         if(root.ppCurrencyHandler)document.removeEventListener('pp:display-currency',root.ppCurrencyHandler);root.ppCurrencyHandler=()=>{if(root.isConnected&&$(root).is(':visible'))load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);};document.addEventListener('pp:display-currency',root.ppCurrencyHandler);load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
     };
 })();

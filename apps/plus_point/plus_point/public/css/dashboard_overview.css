@@ -140,3 +140,18 @@ body.pp-customer-app.pp-ui .pp-overview .pp-overview-segments .btn[aria-pressed=
 
 body.pp-customer-app.pp-ui .pp-overview .pp-overview-pagination>div>.btn[aria-current=page]{background:var(--pp-overview-band)!important}
 body.pp-customer-app.pp-ui .pp-overview .pp-overview-activity .btn-link{color:var(--pp-overview-muted)!important}
+/* Shared list sizing is authoritative on the overview too. */
+body.pp-customer-app.pp-ui .pp-overview .pp-native-list-table :is(th,td){font-size:15px;line-height:24px;padding:10px 12px!important;background:var(--pp-overview-surface)}
+body.pp-customer-app.pp-ui .pp-overview .pp-native-list-table thead th{height:36px;font-size:14px;line-height:20px;background:var(--pp-overview-band)}
+body.pp-customer-app.pp-ui .pp-overview .pp-native-list-table tbody tr{height:64px!important}
+body.pp-customer-app.pp-ui .pp-overview .pp-native-list-table small{font-size:13px;line-height:20px}
+body.pp-customer-app.pp-ui .pp-overview .pp-overview-workers .pp-native-list-table :is(th,td):first-child{padding-left:12px!important}
+body.pp-customer-app.pp-ui .pp-overview .pp-overview-workers .pp-native-list-table :is(th,td):last-child{padding-right:12px!important}
+body.pp-customer-app.pp-ui .pp-overview :is(button,a).pp-overview-icon-action{width:36px;height:36px!important;min-height:36px!important;padding:8px;background:var(--pp-overview-surface)!important;border:1px solid var(--pp-overview-line)!important;border-radius:8px}
+body.pp-customer-app.pp-ui .pp-overview .pp-overview-icon-action img{width:18px;height:18px}
+.pp-overview-feed-icon{color:#fff}.pp-overview-feed-icon[data-tone=success]{background:#16a34a;color:#fff}
+.pp-overview-workflow{padding:24px;margin-top:24px;overflow-x:auto}
+.pp-overview [data-overview-chart-data]{margin:0 16px 16px}
+.pp-chart-tooltip{font-size:14px!important;line-height:22px!important;border-radius:8px!important}
+
+@media(min-width:1600px){body.pp-customer-app .pp-overview{width:calc(100% - 192px)}}

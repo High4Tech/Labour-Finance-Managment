@@ -2,13 +2,16 @@
 (()=>{
  frappe.provide('plus_point');const pp=plus_point,pending=new Map(),attempts=new Map();
  const features={
-  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261101-shared-shell-1',ready:()=>typeof pp.render_customer_dashboard==='function'},
-  dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261101-figma-orange-2',ready:()=>!!pp.charts},
+  app_help:{file:'app_help',css:true,nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>!!pp.app_help},
+  dashboard_journey:{file:'dashboard_journey',css:true,nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>!!pp.dashboard_journey},
+  world_assets:{file:'world_assets',nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>!!pp.world_assets},
+  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['dashboard_charts'],nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>typeof pp.render_customer_dashboard==='function'},
+  dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>!!pp.charts},
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',version:'20261029-upload-assets-2',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,version:'20261029-upload-assets-2',ready:()=>pp.render_event_timeline?.ppCalendarVersion===6},
   event_scene_engine:{file:'vendor/three-scene.min',nonblocking:true,version:'0.180.0-2',ready:()=>window.PlusPointScene3D?.PCFSoftShadowMap!==undefined},
-  event_scene:{file:'event_scene',css:true,dependencies:['event_scene_engine'],nonblocking:true,version:'20261031-scene-poster-1',ready:()=>pp.event_scene?.version===3},
+  event_scene:{file:'event_scene',css:true,dependencies:['event_scene_engine','world_assets'],nonblocking:true,version:'20261101-dashboard-polish-2',ready:()=>pp.event_scene?.version===3},
   flow_builder:{file:'flow_builder',css:true,version:'20261029-upload-assets-2',ready:()=>typeof pp.flow_builder==='function'},
   freddy_runtime:{file:'freddy-runtime',ready:()=>!!pp.freddy_runtime}
  };

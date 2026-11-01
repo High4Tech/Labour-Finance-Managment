@@ -1,0 +1,15 @@
+/* Shared low-poly event-world assets. The dashboard uses pre-rendered exports,
+ * so its decorative journey never starts a WebGL renderer. */
+(()=>{frappe.provide('plus_point');
+ const van=(k,parent)=>{const {T,box,mesh,roundGeo,palette:p}=k,g=new T.Group();parent?.add(g);box(p.white,0,1,0,1.35,1.28,3.15,g);box(p.teal,0,.67,0,1.38,.32,3.17,g);box(p.glass,0,1.22,1.59,1.08,.63,.025,g);box(p.deep,0,.38,1.6,1.4,.18,.1,g);for(const x of [-.45,.45])box(p.light,x,.66,1.66,.23,.18,.06,g);for(const x of [-.69,.69])for(const z of [-.9,.95]){const tire=mesh(roundGeo,p.dark,x,.34,z,.32,.13,.32,g);tire.rotation.z=Math.PI/2;for(const pos of [-.8,.1,.95])box(p.window,x,1.28,pos,.025,.45,.55,g);}return g;};
+ function worker(k,{color,skin,hat=true,paper=false,pose=0}={}){const {T,box,mesh,ballGeo,palette:p,material}=k,g=new T.Group(),shirt=material(color||'#f26922'),face=material(skin||'#ad7958');box(shirt,0,.87,0,.33,.43,.22,g);mesh(ballGeo,face,0,1.22,0,.14,.16,.14,g);if(hat)mesh(ballGeo,p.white,0,1.33,0,.18,.085,.18,g);for(const direction of [-1,1]){const arm=box(shirt,direction*.23,.86,pose*direction,.10,.44,.12,g);arm.rotation.x=pose*2*direction;box(p.deep,direction*.09,.45,-pose*direction,.12,.43,.14,g);box(p.dark,direction*.09,.22,.04-pose*direction,.14,.11,.24,g);}if(paper){box(p.white,.38,.91,.2,.32,.40,.025,g);for(let i=0;i<3;i++)box(p.teal,.38,1.02-i*.09,.218,.22,.016,.008,g);}return g;}
+ function checkpoint(k,type){const {T,box,mesh,roundGeo,ballGeo,palette:p,material}=k,g=new T.Group();
+  if(type==='client'){g.add(worker(k,{color:'#354d61',hat:false,paper:true}));const other=worker(k,{color:'#ed7a31',paper:true,skin:'#dab18b'});other.position.x=.7;g.add(other);return g;}
+  if(type==='crew'){for(let i=0;i<3;i++){const w=worker(k,{color:['#f26922','#087f70','#3c7a8b'][i],skin:['#ad7958','#d4a47f','#80533c'][i]});w.position.x=(i-1)*.7;w.position.z=i%2*.5;g.add(w);}return g;}
+  if(type==='van')return van(k);
+  if(type==='crane'){box(p.deep,0,.3,0,1.4,.45,2.7,g);box(p.teal,0,.85,0,1.4,.7,1.6,g);box(p.glass,0,1.2,.9,1,.65,.6,g);box(p.orange,-.35,2.1,-.6,.20,3,.20,g);box(p.orange,-.35,3.6,.2,.20,.2,3.6,g);box(p.deep,-.35,2.9,1.8,.04,1.5,.04,g);for(const x of [-.8,.8])for(const z of [-.9,.9]){const tire=mesh(roundGeo,p.dark,x,.3,z,.3,.16,.3,g);tire.rotation.z=Math.PI/2;}return g;}
+  const warehouse=type==='warehouse';box(p.stone,0,.05,0,5,.10,4,g);box(p.white,0,1,0,4,1.8,2.8,g);box(p.teal,0,1.9,0,4.3,.25,3.1,g);box(warehouse?p.deep:p.glass,0,1.0,1.42,3.3,1.3,.05,g);for(const x of [-1.2,0,1.2])box(p.white,x,1,1.5,.1,1.7,.15,g);box(p.orange,0,1.75,1.55,2.2,.3,.06,g);
+  for(const x of [-2.1,2.1]){mesh(roundGeo,p.wood,x,.5,-1.6,.08,.9,.08,g);mesh(ballGeo,p.leaf,x,1.2,-1.6,.45,.65,.45,g);}
+  if(warehouse){const crate=material('#c49462');for(let i=0;i<4;i++)box(crate,-1.5+i*.7,.3,2,.6,.6,.6,g);}else for(let i=0;i<3;i++){const w=worker(k,{color:i%2?'#087f70':'#f26922',pose:.1});w.scale.setScalar(.65);w.position.set(-1+i,.12,2);g.add(w);}return g;
+ }
+ plus_point.world_assets={van,worker,checkpoint};})();

@@ -3,7 +3,29 @@
  frappe.provide('plus_point');const pp=plus_point,esc=v=>frappe.utils.escape_html(String(v??'')),base='/assets/plus_point/images/dashboard/';
  const icon=n=>'<img class="pp-shell-icon" alt="" aria-hidden="true" src="'+base+n+'.svg">';
  const text=(node,value)=>{if(node&&node.textContent!==value)node.textContent=value;};
- let header,context={},companyMenu,mobileOpen=false,mobilePrevious,backdrop,mainWasInert=false;
+ let header,context={},companyMenu,mobileOpen=false,mobilePrevious,backdrop,mainWasInert=false,notificationPopover,attention;
+ const dismissed=new Set();
+ function searchPopover(){
+  if(frappe.boot?.plus_point?.is_platform)return;
+  const modal=document.querySelector('#navbar-search')?.closest('.modal');if(!modal||getComputedStyle(modal).display==='none')return;
+  const anchor=document.querySelector('.navbar-modal-search-mobile'),r=anchor?.getBoundingClientRect(),width=Math.min(460,innerWidth-24),left=Math.max(12,Math.min(r?.left||12,innerWidth-width-12)),top=Math.min((r?.bottom||60)+8,innerHeight-180);
+  modal.classList.add('pp-search-popover');modal.setAttribute('aria-label',__('Search'));modal.style.setProperty('--pp-search-left',left+'px');modal.style.setProperty('--pp-search-top',top+'px');modal.style.setProperty('--pp-search-width',width+'px');document.body.classList.add('pp-search-open');
+ }
+ $(document).on('shown.bs.modal.pp-shell-search',searchPopover).on('hidden.bs.modal.pp-shell-search',()=>document.body.classList.remove('pp-search-open'));
+ document.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('pp-search-open')||e.target.closest('.pp-search-popover .modal-content,.navbar-modal-search-mobile'))return;document.querySelector('.pp-search-popover .btn-modal-close')?.click();});
+ function notifications(){
+  const native=frappe.app?.sidebar?.notifications,bell=header?.querySelector('.pp-shell-notifications');if(!native?.panel?.$panel?.[0]||!bell||notificationPopover)return;
+  native.panel.hide();native.as_popover=true;
+  const content=native.panel.$panel[0];content.classList.add('pp-notification-content');
+  notificationPopover=new frappe.ui.Popover({trigger:$(bell),content:()=>{content.style.display='block';return content;},css_class:'notifications-popover pp-header-notifications',side:'bottom',align:'end',on_open:()=>native.on_open()});native.popover=notificationPopover;
+  const close=content.querySelector('.panel-close');close?.addEventListener('click',e=>{e.stopImmediatePropagation();native.close_panel();},true);
+ }
+ function setAttention(rows){
+  const active=rows.filter(r=>['error','warning','empty'].includes(r.level)&&!dismissed.has(r.title+'|'+r.path)).slice(0,3);
+  if(!attention){attention=document.createElement('aside');attention.className='pp-attention-stack';attention.setAttribute('aria-label',__('Needs your attention'));document.body.append(attention);}
+  attention.innerHTML=active.map((r,i)=>'<article class="pp-attention-toast" data-tone="'+esc(r.level)+'"><span class="pp-attention-icon" aria-hidden="true">'+pp.icon(r.level==='error'?'warning':r.level==='warning'?'warning':'info')+'</span><div><strong>'+esc(__(r.title))+'</strong><p>'+esc(__(r.message))+'</p><a class="btn btn-default" href="'+esc(r.path)+'">'+esc(__(r.label))+'</a></div><button type="button" class="btn btn-default pp-attention-dismiss" data-dismiss-attention="'+i+'" aria-label="'+esc(__('Dismiss {0}',[r.title]))+'">'+pp.icon('close')+'</button></article>').join('');
+  attention.hidden=!active.length;attention.querySelectorAll('article').forEach((article,i)=>{const row=active[i];if(row.action?.startsWith('new:'))article.querySelector('a').onclick=e=>{e.preventDefault();frappe.new_doc(row.action.slice(4));};});attention.querySelectorAll('[data-dismiss-attention]').forEach(b=>b.onclick=()=>{const row=active[Number(b.dataset.dismissAttention)];dismissed.add(row.title+'|'+row.path);b.closest('article').remove();attention.hidden=!attention.children.length;});
+ }
  function mobileNavigation(open){
   open=!!open&&matchMedia('(max-width:767px)').matches;if(open===mobileOpen)return;
   const sidebar=frappe.app?.sidebar,node=document.querySelector('.body-sidebar'),main=document.querySelector('.main-section');if(!sidebar||!node)return;
@@ -29,6 +51,7 @@
   return __(aliases[r[0]]||item?.label||r[1]||r[0]||'Overview');
  }
  function help(){
+  if(!frappe.boot.plus_point.is_platform){pp.load_feature('app_help').then(()=>pp.app_help.open()).catch(()=>frappe.show_alert({message:__('Help could not load. Please try again.'),indicator:'red'}));return;}
   const local=[...document.querySelectorAll('.pp-top-help')].find(b=>b.closest('.page-container')?.style.display!=='none');
   if(local){local.click();return;}
   frappe.msgprint({title:__('Help and support'),message:'<p>'+__('Use the information icons beside fields for help. Contact your software provider for account or billing support.')+'</p><p class="pp-icon-credit">Icons by <a href="https://github.com/tabler/tabler-icons" target="_blank" rel="noopener">Tabler</a> · Theme icons by <a href="https://github.com/basmilius/meteocons" target="_blank" rel="noopener">Meteocons</a> · MIT.</p>'});
@@ -43,7 +66,6 @@
   body.prepend(header);
   companyMenu=new frappe.ui.Dropdown({trigger:$(header.querySelector('.pp-shell-company')),side:'bottom',align:'start',options:[{group:__('Company'),options:[{name:'shell-company',label:__('Your company'),onclick:()=>{const name=pp.dashboard_company||frappe.boot.plus_point.company_identity?.name;if(name)frappe.set_route('Form','Company',name);else pp.open_setup();}}]}]});
   header.querySelector('.pp-global-help').onclick=help;
-  header.querySelector('.pp-shell-notifications').onclick=()=>{const native=document.querySelector('.sidebar-notification .item-anchor');if(native)native.click();else frappe.set_route('List','Notification Log');};
   header.querySelector('.pp-app-currency').onchange=async e=>{const select=e.target,previous=frappe.boot.plus_point.display_currency||context.currency;select.disabled=true;try{await pp.form_rpc('workflows.display_currency',{currency:select.value});frappe.boot.plus_point.display_currency=select.value;context.currency=select.value;document.dispatchEvent(new Event('pp:display-currency'));}catch(error){select.value=previous;frappe.show_alert({message:__('Could not change currency. Please try again.'),indicator:'red'});}finally{select.disabled=false;}};
  }
  function account(){
@@ -69,6 +91,7 @@
   const count=Math.max(0,Number(document.querySelector('.sidebar-notification .notification-count')?.textContent)||0),badge=header.querySelector('.pp-shell-notification-count'),bell=header.querySelector('.pp-shell-notifications');text(badge,String(count));if(badge.hidden!==(count===0))badge.hidden=count===0;
   const label=count?__('Notifications: {0} unread',[count]):__('Notifications');if(bell.getAttribute('aria-label')!==label)bell.setAttribute('aria-label',label);
   account();
+  notifications();
  }
- pp.app_shell={update,account,setContext:data=>update(data)};
+ pp.app_shell={update,account,setContext:data=>update(data),setAttention,clearAttention(){attention?.remove();attention=null;}};
 })();

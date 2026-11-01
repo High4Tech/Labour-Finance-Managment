@@ -446,3 +446,16 @@ body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=success]>.pp-status-dot{backgr
 body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=warning]>.pp-status-dot{background:#ff5800}
 body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=error]>.pp-status-dot{background:#dc2626}
 body.pp-customer-app.pp-ui .pp-ui-badge[data-tone=info]>.pp-status-dot{background:#2563eb}
+/* Native-list visual contract for embedded tables. It retains render_table selection/actions. */
+body.pp-customer-app.pp-ui .pp-native-list-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;font-size:15px;line-height:24px;background:var(--fg-color)}
+body.pp-customer-app.pp-ui .pp-native-list-table :is(th,td){padding:10px 12px;vertical-align:middle;font-size:15px;line-height:24px;border-bottom:1px solid var(--border-color);background:var(--fg-color)}
+body.pp-customer-app.pp-ui .pp-native-list-table thead th{background:var(--subtle-fg);color:var(--text-muted);font-size:14px;line-height:20px;font-weight:500;height:36px;white-space:nowrap;border-bottom:0}
+body.pp-customer-app.pp-ui .pp-native-list-table thead th:first-child{border-radius:8px 0 0 8px}body.pp-customer-app.pp-ui .pp-native-list-table thead th:last-child{border-radius:0 8px 8px 0}
+body.pp-customer-app.pp-ui .pp-native-list-table tbody tr{height:64px}body.pp-customer-app.pp-ui .pp-native-list-table tbody tr:hover>:is(th,td){background:var(--subtle-fg)}
+body.pp-customer-app.pp-ui .pp-native-list-table small{font-size:13px;line-height:20px;font-weight:400;color:var(--text-muted)}
+body.pp-customer-app.pp-ui .pp-native-list-table .pp-table-actions{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+body.pp-customer-app.pp-ui .pp-native-list-table :is(th,td):has(>.pp-table-actions){position:sticky;right:0;z-index:1;background:var(--fg-color);box-shadow:-1px 0 var(--border-color)}
+
+/* Shared workflow drawing is ready before the optional perimeter artwork. */
+.pp-workflow-live{display:block;width:100%;max-width:1080px;height:auto;min-width:520px}.pp-workflow-connectors path{fill:none;stroke:#a2b2ae;stroke-width:2}.pp-workflow-dots path{fill:none;stroke:var(--pp-brand-solid);stroke-width:5;stroke-linecap:round;stroke-dasharray:1 99;animation:pp-workflow-signal 4s linear infinite;animation-delay:var(--flow-delay);animation-play-state:paused}.pp-workflow-running .pp-workflow-dots path{animation-play-state:running}.pp-workflow-node rect{fill:var(--pp-overview-band);stroke:#a2b2ae;stroke-width:1.5}.pp-workflow-node text{font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:var(--pp-overview-ink)}.pp-workflow-node:nth-child(-n+3) rect{stroke:var(--pp-brand-solid)}@keyframes pp-workflow-signal{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.pp-workflow-dots path{animation:none;stroke-dasharray:1 24}}

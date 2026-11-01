@@ -22,7 +22,7 @@ app_include_js = ["/assets/plus_point/js/choices.js?v=20261029-event-review-2","
                   "/assets/plus_point/js/attendance.js?v=20261023-finance-3",
                   "/assets/plus_point/js/worker_profile.js?v=20261029-upload-assets-2",
                   "/assets/plus_point/js/dashboard_motion.js?v=20261028-dashboard-final-1",
-                  "/assets/plus_point/js/dashboard.js?v=20261028-dashboard-final-1",
+                  "/assets/plus_point/js/dashboard.js?v=20261101-dashboard-polish-2",
                   "/assets/plus_point/js/activity.js?v=20261023-finance-3",
                   "/assets/plus_point/js/crew.js?v=20261027-ui-2",
                   "/assets/plus_point/js/events.js?v=20261027-refinement-1",
@@ -30,7 +30,7 @@ app_include_js = ["/assets/plus_point/js/choices.js?v=20261029-event-review-2","
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/setup_flow.js?v=20261025-freddy-2",
                   "/assets/plus_point/js/event_setup.js?v=20261025-freddy-2",
-                  "/assets/plus_point/js/onboarding.js?v=20261101-shared-shell-1"]
+                  "/assets/plus_point/js/onboarding.js?v=20261101-dashboard-polish-2"]
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-import-2",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
@@ -93,8 +93,8 @@ add_to_apps_screen = [
 ]
 
 app_include_js += ["/assets/plus_point/js/event_pay.js?v=20261029-event-review-2"]
-app_include_js += ["/assets/plus_point/js/app_shell.js?v=20261101-shared-shell-1"]
-app_include_js += ["/assets/plus_point/js/experience.js?v=20261101-shared-shell-1"]
+app_include_js += ["/assets/plus_point/js/app_shell.js?v=20261101-dashboard-polish-2"]
+app_include_js += ["/assets/plus_point/js/experience.js?v=20261101-dashboard-polish-2"]
 app_include_css += ["/assets/plus_point/css/experience.css?v=20261027-refinement-1"]
 
 app_include_js += ["/assets/plus_point/js/record_actions.js?v=20261029-commercial-flow-3"]
@@ -121,11 +121,11 @@ app_include_js += ["/assets/plus_point/js/planning_list.js?v=20261029-table-cont
 app_include_js += ["/assets/plus_point/js/agreement_share.js?v=20261029-upload-assets-2"]
 
 app_include_js += ["/assets/plus_point/js/design_assets.js?v=20261029-upload-assets-2"]
-app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-figma-orange-2"]
-app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261101-figma-orange-2"]
+app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-dashboard-polish-2"]
+app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261101-dashboard-polish-2"]
 app_include_css += ["/assets/plus_point/css/upload_assets.css?v=20261029-upload-assets-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261101-figma-orange-2"]
-app_include_css += ["/assets/plus_point/css/brand.css?v=20261101-figma-orange-2"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261101-dashboard-polish-2"]
+app_include_css += ["/assets/plus_point/css/brand.css?v=20261101-dashboard-polish-2"]
 
-app_include_css += ["/assets/plus_point/css/app_shell.css?v=20261101-shared-shell-1"]
+app_include_css += ["/assets/plus_point/css/app_shell.css?v=20261101-dashboard-polish-2"]
