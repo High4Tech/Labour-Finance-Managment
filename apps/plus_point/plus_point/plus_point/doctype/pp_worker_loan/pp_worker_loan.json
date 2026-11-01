@@ -48,6 +48,7 @@
       "fieldname": "amount",
       "label": "Loan amount",
       "fieldtype": "Currency",
+      "options": "currency",
       "reqd": 1,
       "in_list_view": 1
     },

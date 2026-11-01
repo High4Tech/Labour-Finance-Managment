@@ -154,7 +154,7 @@ body.pp-customer-app.pp-ui .pp-overview .pp-overview-icon-action img{width:18px;
 .pp-overview [data-overview-chart-data]{margin:0 16px 16px}
 .pp-chart-tooltip{font-size:14px!important;line-height:22px!important;border-radius:8px!important}
 
-@media(min-width:1600px){body.pp-customer-app .pp-overview{width:calc(100% - 352px);padding-bottom:140px}}
+
 
 /* Equal attendance panels; real rows only. No action-column paint behind search. */
 .pp-overview-attendance>.pp-analytics-card{display:flex;flex-direction:column}.pp-overview-attendance>.pp-analytics-card>.pp-analytics-body{flex:1}.pp-overview-workers>header{position:relative;z-index:2;background:var(--pp-overview-surface)}.pp-overview-workers .pp-overview-search{box-shadow:none}.pp-overview-workers [data-table-actions]{box-shadow:none!important}.pp-overview-workers .pp-op-table-scroll{isolation:isolate}.pp-overview-feed-icon>.pp-entity-icon{width:20px;height:20px}.pp-overview-feed-icon[data-tone=brand] img,.pp-overview-feed-icon[data-tone=success] img,.pp-overview-feed-icon[data-tone=error] img{filter:brightness(0) invert(1)}

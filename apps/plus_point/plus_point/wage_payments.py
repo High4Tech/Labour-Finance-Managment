@@ -7,6 +7,70 @@ from plus_point.finance import money
 from plus_point.finance_hub import company_scope
 
 
+def payment_items(items):
+    """A bounded list of event/worker snapshots, never an arbitrary payment amount."""
+    items=frappe.parse_json(items)
+    if not isinstance(items,list) or not 1<=len(items)<=200:
+        frappe.throw('Select between 1 and 200 worker balances.')
+    result=[];seen=set()
+    for row in items:
+        if not isinstance(row,dict) or not all(isinstance(row.get(k),str) and row[k] for k in ('event','employee')) or 'balance' not in row:
+            frappe.throw('Review each selected worker and event balance before recording payments.')
+        key=(row['event'],row['employee'])
+        if key in seen:frappe.throw('Select each worker balance once per event.')
+        seen.add(key);amount=money(row['balance'])
+        if amount<=0:frappe.throw('Choose workers with approved outstanding wages.')
+        result.append(dict(event=key[0],employee=key[1],balance=str(amount)))
+    return result
+
+
+def payment_events(items,business):
+    from plus_point.record_actions import document
+    events={}
+    for name in sorted({r['event'] for r in items}):
+        event=document('PP Event Plan',name)
+        if event.company!=business.name:frappe.throw('Choose worker balances from the selected company only.',frappe.PermissionError)
+        events[name]=event
+    return events
+
+
+@frappe.whitelist()
+def review_payments(items,company=None):
+    from plus_point.record_actions import event_review
+    business=company_scope(company);items=payment_items(items);events=payment_events(items,business)
+    reviews={name:event_review(name) for name in events};rows=[]
+    for item in items:
+        review=reviews[item['event']]
+        if not review['can_pay']:frappe.throw('You do not have permission to record worker payments.',frappe.PermissionError)
+        worker=next((r for r in review['workers'] if r['employee']==item['employee']),None)
+        if not worker:frappe.throw('Choose workers assigned to the selected events.',frappe.PermissionError)
+        if money(worker['outstanding'])!=money(item['balance']):frappe.throw('A wage balance changed. Refresh the list and review the selected workers again.')
+        rows.append(dict(item,worker=worker['worker'],event_name=review['title']))
+    return dict(rows=rows,currency=business.default_currency,accounts=next(iter(reviews.values()))['accounts'],
+        total=str(sum((money(r['balance']) for r in rows),Decimal(0))))
+
+
+@frappe.whitelist(methods=['POST'])
+def record_payments(items,account,posting_date,reference,company=None):
+    """All selected events post together, or none do; native retry protection remains."""
+    from plus_point.record_actions import settle_event_crew
+    from plus_point.budget import lock_project
+    business=company_scope(company);items=payment_items(items);events=payment_events(items,business)
+    # Stable lock order across the entire batch prevents cross-event lock inversions.
+    for project in sorted({e.project for e in events.values()}):lock_project(project)
+    for employee in sorted({r['employee'] for r in items}):frappe.db.get_value('Employee',employee,'name',for_update=True)
+    frappe.db.savepoint('pp_wage_payment_batch');payments=[]
+    try:
+        for name in sorted(events):
+            selected=[r for r in items if r['event']==name]
+            result=settle_event_crew(name=name,employees=[r['employee'] for r in selected],account=account,
+                posting_date=posting_date,reference=reference,balances={r['employee']:r['balance'] for r in selected})
+            payments.extend(result['payments'])
+    except Exception:
+        frappe.db.rollback(save_point='pp_wage_payment_batch');raise
+    return dict(payments=payments)
+
+
 def due_cutoff(event, day):
     """Daily closes yesterday; monthly closes the prior month, plus final event pay."""
     day=getdate(day)

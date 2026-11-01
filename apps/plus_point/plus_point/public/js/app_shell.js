@@ -80,10 +80,11 @@
   if(avatar&&avatar.dataset.ppAccount!==key){avatar.dataset.ppAccount=key;avatar.innerHTML='<span class="pp-shell-user-avatar">'+(user.image?'<img alt="" src="'+esc(user.image)+'">':esc(initials(name)))+'<span class="pp-shell-signed-in" aria-hidden="true"></span></span>';}
   if(!account.querySelector('.pp-shell-account-chevron'))account.insertAdjacentHTML('beforeend','<span class="pp-shell-account-chevron">'+icon('chevronselectorvertical')+'</span>');
  }
- const navIcons={'Agreements':'agreements','Jobs & Events':'jobs','Clients':'clients','Workers':'workers','Attendance':'attendance','Inventory & equipment':'inventory','Warehouses':'warehouses','Vehicles':'vehicles','Billing and invoices':'billing','Worker payments':'payments','Worker loans':'loans','Receipts and payments':'receipts','Expenses':'expenses','Event finances':'event-finances','Worker statement':'worker-statement'};
+ const navIcons={'Overview':'overview','Agreements':'agreements','Jobs & Events':'jobs','Clients':'clients','Workers':'workers','Attendance':'attendance','Inventory & equipment':'inventory','Warehouses':'warehouses','Vehicles':'vehicles','Billing and invoices':'billing','Worker payments':'payments','Worker loans':'loans','Receipts and payments':'receipts','Expenses':'expenses','Event finances':'event-finances','Worker statement':'worker-statement'};
  function navigationIcons(){for(const row of document.querySelectorAll('.body-sidebar .standard-sidebar-item')){const label=row.querySelector('.sidebar-item-label')?.textContent.trim(),kind=Object.keys(navIcons).find(k=>label===k||label===__(k)),host=row.querySelector('.sidebar-item-icon');if(host&&kind&&host.dataset.ppEntity!==navIcons[kind]){host.innerHTML=pp.entity_icon(navIcons[kind]);host.dataset.ppEntity=navIcons[kind];}}}
  function update(data){
   if(frappe.boot?.plus_point?.is_platform)return;
+  const brand=document.querySelector('.body-sidebar .sidebar-header');if(brand&&!brand.querySelector('.pp-rail-expand')){const expand=document.createElement('button');expand.className='pp-rail-expand';expand.type='button';expand.setAttribute('aria-label',__('Expand navigation'));expand.title=__('Expand navigation');expand.innerHTML=pp.icon('right');expand.onclick=e=>{e.preventDefault();e.stopPropagation();frappe.app.sidebar.open();};brand.append(expand);}
   if(data)Object.assign(context,data);
   const body=document.getElementById('body');if(!body)return;
   if(!header?.isConnected)mount(body);

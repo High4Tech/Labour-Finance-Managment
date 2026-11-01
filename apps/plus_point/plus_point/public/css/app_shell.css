@@ -86,7 +86,7 @@ body.pp-customer-app.pp-overview-route :is(.pp-welcome,.pp-task-home,.layout-mai
 .pp-overview-skeleton-metrics,.pp-overview-skeleton-panels{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px}
 .pp-overview-skeleton-metrics i{height:196px;border-radius:12px}.pp-overview-skeleton-panels{grid-template-columns:repeat(2,minmax(0,1fr))}.pp-overview-skeleton-panels i{height:318px;border-radius:12px}
 .pp-overview-skeleton :is(i,.pp-overview-skeleton-heading){display:block;background:var(--subtle-fg,#f3f5f6);animation:pp-shell-skeleton 1.6s ease-in-out infinite alternate}
-@media(min-width:1600px){.pp-overview-skeleton{width:calc(100% - 352px)}}
+
 @keyframes pp-shell-skeleton{to{opacity:.45}}
 /* Reposition the native command search; its results, keys and permissions remain native. */
 body.pp-customer-app .modal.pp-search-popover{inset:0;pointer-events:none;background:transparent!important}
@@ -114,7 +114,32 @@ body.pp-customer-app.pp-overview-route .pp-dashboard:not(.pp-overview){width:100
 
 /* Native rail width drives both navigation and content. Expanded and mobile stay full. */
 body.pp-customer-app.pp-ui{--sidebar-width:264px;--sidebar-collapsed-width:64px}
-@media(min-width:768px){body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .body-sidebar{width:var(--sidebar-collapsed-width)!important}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .standard-sidebar-item{padding-inline:12px!important;justify-content:center}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .navbar-modal-search-mobile .standard-sidebar-item{margin-inline:8px;padding:6px!important}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-user-button{padding:4px!important;min-height:48px!important;justify-content:center}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .pp-shell-account-chevron{display:none}body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .pp-brand-wordmark{width:24px;object-fit:cover;object-position:left}}
+/* A collapsed navigation is a real icon rail, not a cropped expanded sidebar. */
+.pp-rail-expand{display:none}
+@media(min-width:768px){
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .body-sidebar{width:64px!important;padding:0!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) :is(.sidebar-item-label,.sidebar-item-control,.sidebar-item-suffix,.pp-section-grip,.title-container,.pp-shell-account-chevron){display:none!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) :is(.body-sidebar-top,.standard-items-band){width:64px!important;padding:0!important;overflow-x:hidden}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-items{padding:0 8px!important;display:block!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .section-item,body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .section-item>.sidebar-child-item{display:contents!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .section-item>.standard-sidebar-item{display:none!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-item-container:not(.section-item){margin:0 0 4px!important;padding:0!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .standard-sidebar-item{width:48px!important;min-width:48px!important;min-height:44px!important;height:44px!important;padding:0!important;margin:0!important;display:flex;justify-content:center}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .item-anchor{width:48px!important;min-width:0!important;height:44px!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;gap:0!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-item-icon{width:22px!important;min-width:22px!important;height:22px!important;margin:0!important;overflow:visible!important;flex:0 0 22px!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-item-icon :is(img,svg){width:22px!important;height:22px!important;max-width:none!important;flex:none}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .navbar-modal-search-mobile{width:48px;margin:0 8px 12px}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .navbar-modal-search-mobile .standard-sidebar-item{border:0;background:transparent;box-shadow:none;border-radius:6px}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-header{height:56px!important;min-height:56px!important;padding:0!important;margin:0 8px 8px!important;width:48px;display:grid;place-items:center}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-header>:not(.pp-rail-expand){display:none!important}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .pp-rail-expand{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:var(--pp-shell-muted);border-radius:6px}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .dropdown-navbar-user{margin:8px!important;width:48px}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .sidebar-user-button{padding:4px!important;min-height:48px!important;width:48px!important;justify-content:center}
+ body.pp-customer-app.pp-ui .body-sidebar-container:not(.expanded) .avatar-name-email{display:none!important}
+}
+/* Hide presentation-only social metadata in company lists; native record activity remains. */
+body.pp-customer-app .list-row-activity,body.pp-customer-app .list-row-head :is(.list-row-like,.list-liked-by-me){display:none!important}
+
 .pp-entity-icon{display:inline-block;object-fit:contain;flex:none;vertical-align:middle}
 .body-sidebar .standard-sidebar-item:is(.active-sidebar,.pp-selected) .pp-entity-icon{filter:brightness(0) invert(1)}
 html[data-theme=dark] .body-sidebar .pp-entity-icon{filter:brightness(1.6)}

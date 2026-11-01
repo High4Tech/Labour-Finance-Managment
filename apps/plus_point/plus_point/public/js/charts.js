@@ -35,13 +35,13 @@
    }
    if(config.sparkline){
     option.grid={left:0,right:0,top:6,bottom:3};option.xAxis={type:'category',show:false,data:labels,boundaryGap:false};option.yAxis={type:'value',show:false,min:0,max:series[0].values.some(v=>Number(v)>0)?undefined:1};
-    option.series=[{type:'line',name:series[0].name,data:series[0].values.map(Number),smooth:.35,showSymbol:false,lineStyle:{width:2,color:colors[0]},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:colors[0]+'20'},{offset:1,color:colors[0]+'00'}]}}}];
+    option.series=[{type:'line',name:series[0].name,data:series[0].values.map(Number),smooth:.35,showSymbol:false,lineStyle:{width:2,color:colors[0]},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:colors[0]+'60'},{offset:1,color:colors[0]+'14'}]}}}];
    }
    if(config.type==='attendance'){
     option.grid={left:0,right:0,top:12,bottom:24,containLabel:false};
     option.xAxis={type:'category',data:labels,boundaryGap:true,axisTick:{show:false},axisLine:{show:false},axisLabel:{color:muted,fontSize:12,hideOverlap:true,formatter:v=>String(Number(v.slice(-2)))}};
     option.yAxis={type:'value',min:0,axisLabel:{show:false},axisTick:{show:false},axisLine:{show:false},splitNumber:4,splitLine:{lineStyle:{color:grid}}};
-    option.series=[{name:series[0].name,type:'line',data:series[0].values.map(Number),showSymbol:false,smooth:.16,lineStyle:{width:2,color:colors[0]},z:3},{name:series[1].name,type:'bar',data:series[1].values.map(Number),barMaxWidth:2,itemStyle:{color:dark?'#435269':colors[1]},z:1}];
+    option.series=[{name:series[0].name,type:'line',data:series[0].values.map(Number),showSymbol:false,smooth:.16,lineStyle:{width:2,color:colors[0]},areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:colors[0]+'66'},{offset:1,color:colors[0]+'16'}]}},z:3},{name:series[1].name,type:'bar',data:series[1].values.map(Number),barMaxWidth:2,itemStyle:{color:dark?'#435269':colors[1]},z:1}];
    }
    chart.setOption(option,{notMerge:true});host.dataset.chartTheme=dark?'dark':'light';plot.setAttribute('role','img');plot.setAttribute('aria-label',description);plot.setAttribute('aria-description',__('Left and Right arrows explore values. Home and End jump to the first and last values. Escape closes the tooltip.'));
   };

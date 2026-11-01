@@ -17,11 +17,13 @@
   if(target===modal||target.matches('.modal-backdrop')||modal.classList.contains('pp-search-popover')&&!target.closest('.navbar-modal-search-mobile'))plus_point.close_dialog(d);
  },true);
  // Scoped shortcuts preserve selection inside editable fields and rich-text editors.
+ let shortcutOpening=false;
  document.addEventListener('keydown',event=>{
-  if(frappe.boot?.plus_point?.is_platform||event.repeat||event.isComposing||event.shiftKey||event.getModifierState?.('AltGraph')||event.target.closest('input,textarea,select,[contenteditable=true],[role=textbox]'))return;
-  const key=event.key.toLowerCase(),kind=(event.ctrlKey||event.metaKey)&&!event.altKey?({a:'agreements',e:'events'})[key]:event.altKey&&!event.ctrlKey&&!event.metaKey?({l:'workers',i:'inventory',w:'warehouses',v:'vehicles'})[key]:null;
+  if(frappe.boot?.plus_point?.is_platform||shortcutOpening||event.repeat||event.isComposing||event.shiftKey||event.getModifierState?.('AltGraph')||event.target.closest('input,textarea,select,[contenteditable=true],[role=textbox]'))return;
+  const key=event.key.toLowerCase(),kind=({a:'agreements',e:'events',l:'workers',i:'inventory',w:'warehouses',v:'vehicles',c:'clients'})[key],create=(event.ctrlKey||event.metaKey)&&!event.altKey,search=event.altKey&&!event.ctrlKey&&!event.metaKey;
+  if(!create&&!search||create&&key==='c'&&window.getSelection()?.toString())return;
   if(!kind||frappe.ui.open_dialogs.some(d=>d.display&&!d.$wrapper?.hasClass('pp-scoped-search')))return;
-  event.preventDefault();frappe.ui.open_dialogs.filter(d=>d.$wrapper?.hasClass('pp-scoped-search')).forEach(d=>d.hide());plus_point.load_feature('company_tools').then(()=>plus_point.scoped_search(kind)).catch(()=>frappe.show_alert({message:__('Search could not load. Please try again.'),indicator:'red'}));
+  event.preventDefault();shortcutOpening=true;frappe.ui.open_dialogs.filter(d=>d.$wrapper?.hasClass('pp-scoped-search')).forEach(d=>d.hide());plus_point.load_feature('company_tools').then(()=>create?plus_point.create_record(kind):plus_point.scoped_search(kind)).catch(()=>frappe.show_alert({message:__('This tool could not load. Please try again.'),indicator:'red'})).finally(()=>shortcutOpening=false);
  });
  const escape=v=>frappe.utils.escape_html(String(v??''));
  plus_point.empty_state=(title,description='')=>`<div class="pp-empty-state"><strong>${escape(__(title))}</strong>${description?`<p>${escape(__(description))}</p>`:''}</div>`;

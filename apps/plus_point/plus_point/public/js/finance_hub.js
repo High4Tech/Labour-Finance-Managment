@@ -46,7 +46,8 @@
             };
             list.meta.title_field='employee';
             for(const df of list.meta.fields)df.in_list_view=Number(['amount','loan_date','deduction_percent'].includes(df.fieldname));
-            list.settings.formatters={...list.settings.formatters,employee:(value,df,doc)=>esc(doc.worker_name||value)};
+            list.settings.add_fields=[...new Set([...(list.settings.add_fields||[]),'currency'])];
+            list.settings.formatters={...list.settings.formatters,employee:(value,df,doc)=>esc(doc.worker_name||value),amount:(value,df,doc)=>money(value,doc.currency||frappe.boot.plus_point?.company_identity?.default_currency||frappe.defaults.get_default('currency'))};
             list.setup_columns().then(()=>{list.render_header(true);list.render_list();});
         }
         const rows=list.data;

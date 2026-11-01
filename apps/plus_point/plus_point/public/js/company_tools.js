@@ -1,7 +1,15 @@
 /* Scoped command search and notifications: native dialogs, shared cards and ownership. */
 (()=>{frappe.provide('plus_point');const pp=plus_point,esc=v=>frappe.utils.escape_html(String(v??'')),rpc=(m,args)=>pp.form_rpc('company_tools.'+m,args);
+ pp.create_record=async kind=>{
+  if(kind==='agreements'||kind==='events'){frappe.set_route(kind==='agreements'?'pp-agreements':'pp-event-plans',{record:'new'});return;}
+  if(kind!=='workers')return pp.open_resource(kind==='inventory'?'inventory_items':kind,()=>document.dispatchEvent(new Event('pp:data-changed')));
+  const company=pp.dashboard_company||frappe.boot.plus_point?.company_identity?.name,options=await pp.form_rpc('people.work_options',{});
+  const d=new frappe.ui.Dialog({title:__('Add worker'),size:'large',fields:[{fieldtype:'HTML',fieldname:'worker'}]});d.show();
+  const host=d.fields_dict.worker.$wrapper[0];host.dataset.ppForm='true';host.pp_form=pp.quick_worker_form(host,{company,categories:options.designations||options.categories||['Event crew'],onSaved:()=>d.hide(),onCancel:()=>d.hide()});
+  d.$wrapper.one('hidden.bs.modal',()=>{pp.dispose_owned_forms(host);d.$wrapper.remove();});
+ };
  pp.scoped_search=kind=>{
-  const titles={agreements:'Agreements',events:'Jobs & Events',workers:'Workers',inventory:'Inventory & equipment',warehouses:'Warehouses',vehicles:'Vehicles'};
+  const titles={agreements:'Agreements',events:'Jobs & Events',workers:'Workers',inventory:'Inventory & equipment',warehouses:'Warehouses',vehicles:'Vehicles',clients:'Clients'};
   let timer,seq=0,dead=false;const d=new frappe.ui.Dialog({title:__('Search {0}',[__(titles[kind])]),fields:[{fieldtype:'Data',fieldname:'query',label:__('Search by name or ID')},{fieldtype:'HTML',fieldname:'results'}]});d.$wrapper.addClass('pp-scoped-search');
   const draw=async()=>{const own=++seq,host=d.fields_dict.results.$wrapper[0];host.setAttribute('aria-busy','true');try{const rows=await rpc('search',{kind,text:d.get_value('query')||''});if(dead||own!==seq)return;host.innerHTML=rows.length?'<div class="pp-scoped-results">'+rows.map(r=>'<a href="'+esc(r.href)+'">'+pp.entity_icon(kind==='events'?'jobs':kind)+'<span><strong>'+esc(r.title)+'</strong><small>'+esc(r.name)+'</small></span></a>').join('')+'</div>':pp.empty_state('No matching records','Try another name or ID.');host.querySelectorAll('a').forEach(a=>a.onclick=e=>{e.preventDefault();d.hide();frappe.set_route(a.getAttribute('href').replace('/desk/',''));});}catch(e){if(!dead&&own===seq)pp.ui.feedback(host,{tone:'error',message:e.message});}finally{if(own===seq)host.removeAttribute('aria-busy');}};
   d.fields_dict.query.$input.on('input',()=>{clearTimeout(timer);timer=setTimeout(draw,200);});d.$wrapper.one('hidden.bs.modal',()=>{dead=true;seq++;clearTimeout(timer);d.$wrapper.remove();});d.show();d.fields_dict.query.set_focus();draw();return d;

@@ -68,6 +68,46 @@ class PaymentOverviewTests(unittest.TestCase):
         self.assertEqual([r['name'] for r in rows],[self.f.employee.name]);self.assertLessEqual(len(rows),20)
         self.assertEqual(search('workers','no matching worker anywhere',self.f.company.name),[])
         with self.assertRaises(frappe.ValidationError):search('User','',self.f.company.name)
+        clients=search('clients',self.f.customer.name,self.f.company.name)
+        self.assertEqual([r['name'] for r in clients],[self.f.customer.name])
+        self.assertTrue(clients[0]['href'].startswith('/desk/customer/'))
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):search('clients','',self.f.company.name)
     def test_mark_read_rejects_unowned_notifications(self):
         from plus_point.company_tools import mark_read
         with self.assertRaises(frappe.PermissionError):mark_read(['unowned-notification'])
+
+    def batch_items(self):
+        self.work(True)
+        project=insert('Project',project_name=self.f.company.name+' second event',company=self.f.company.name,customer=self.f.customer.name)
+        worker=insert('Employee',first_name='Second Batch Worker',gender='Male',date_of_birth='1990-01-01',date_of_joining='2020-01-01',company=self.f.company.name,status='Active')
+        contract=insert('Contract',party_type='Customer',party_name=self.f.customer.name,contract_terms='Second event QA',start_date=today())
+        terms=insert('PP Contract Terms',contract=contract.name,project=project.name,billing_model='Daily',currency='PKR',status='Active',effective_start=today())
+        site=insert('PP Site',site_name='Second batch venue',project=project.name,is_active=1)
+        event=insert('PP Event Plan',event_name='Second batch event',project=project.name,contract_terms=terms.name,start_date=today(),end_date=today(),wage_rate=500,client_rate=1000,
+            staffing=[dict(site=site.name,phase='Event',start_date=today(),end_date=today(),workers_required=1)])
+        assignment=insert('PP Assignment',employee=worker.name,site=site.name,project=project.name,contract_terms=terms.name,start_date=today(),end_date=today(),wage_rate=500,client_rate=1000)
+        work=insert('PP Work Entry',assignment=assignment.name,work_date=today(),units=.5,status='Draft');work.status='Approved';work.save()
+        return [dict(event=self.event.name,employee=self.f.employee.name,balance='1000'),dict(event=event.name,employee=worker.name,balance='250')]
+
+    def test_multi_event_batch_reviews_and_posts_once(self):
+        from plus_point.wage_payments import review_payments,record_payments
+        items=self.batch_items();review=review_payments(items,self.f.company.name)
+        self.assertEqual(review['currency'],'PKR');self.assertEqual(review['total'],'1250.00');self.assertEqual(len({r['event'] for r in review['rows']}),2)
+        args=dict(items=items,company=self.f.company.name,account=self.f.company.default_cash_account,posting_date=today(),reference='Multi event batch QA')
+        first=record_payments(**args);self.assertEqual(len(first['payments']),2);self.assertEqual(first,record_payments(**args))
+        rows=overview(self.f.company.name)['rows'];self.assertEqual({r['status'] for r in rows},{'Paid'});self.assertEqual({r['outstanding'] for r in rows},{'0'})
+
+    def test_multi_event_batch_rolls_back_every_payment_if_one_balance_changed(self):
+        from plus_point.wage_payments import record_payments
+        items=sorted(self.batch_items(),key=lambda r:r['event']);items[-1]['balance']='9999'
+        types=['Payment Entry','PP Wage Settlement','GL Entry'];before={dt:frappe.db.count(dt) for dt in types}
+        with self.assertRaises(frappe.ValidationError):record_payments(items,self.f.company.default_cash_account,today(),'Stale batch QA',self.f.company.name)
+        self.assertEqual(before,{dt:frappe.db.count(dt) for dt in types})
+
+    def test_batch_rejects_duplicate_or_unreviewed_rows(self):
+        from plus_point.wage_payments import review_payments
+        item=dict(event=self.event.name,employee=self.f.employee.name,balance=1000)
+        with self.assertRaises(frappe.ValidationError):review_payments([item,item],self.f.company.name)
+        with self.assertRaises(frappe.ValidationError):review_payments([dict(event=self.event.name,employee=self.f.employee.name)],self.f.company.name)
+        with self.assertRaises(frappe.ValidationError):review_payments([item]*201,self.f.company.name)

@@ -1,10 +1,27 @@
-/* Wide open perimeter, without a footer panel. Main data always has priority. */
-.pp-journey-layer{display:none;pointer-events:none;position:absolute;inset:0 -160px 0;z-index:0;overflow:hidden}.pp-has-journey{position:relative;isolation:isolate}.pp-has-journey>.pp-journey-layer~*{position:relative;z-index:1}.pp-has-journey>.pp-overview-header{z-index:10}
-.pp-journey-road{position:absolute;width:100%;height:100%;overflow:visible}.pp-journey-road path{fill:none;stroke-linecap:round}.pp-journey-road-curb{stroke:#e0e7e5;stroke-width:84}.pp-journey-road-bed{stroke:#626e6b;stroke-width:72}.pp-journey-road-lane{stroke:#f7faf8;stroke-width:2;stroke-dasharray:18 18}
-.pp-journey-checkpoint{position:absolute;left:0;top:0;display:grid;justify-items:center;width:154px}.pp-journey-model{width:154px;height:154px;position:relative;filter:drop-shadow(0 5px 3px #102a3526)}.pp-journey-checkpoint span{font-size:12px;font-weight:600;line-height:18px;text-align:center;max-width:150px;padding:2px 6px;color:#fff;background:#344c46;border-radius:4px}
-.pp-journey-sprite{display:block;width:100%;height:100%;background:url(/assets/plus_point/images/dashboard-journey/event-world-atlas.png?v=20261101-road-1) var(--sprite-x) var(--sprite-y)/400% 300% no-repeat}.pp-journey-pose,.pp-journey-loaded{position:absolute;inset:0;opacity:0}.pp-journey-visible .pp-journey-pose{animation:pp-journey-work 3s steps(1,end) infinite}.pp-journey-paused .pp-journey-pose{animation:none}
-.pp-journey-traveller{position:absolute;left:0;top:0;width:68px;height:68px;filter:drop-shadow(0 4px 2px #102a352a);will-change:transform}.pp-journey-traveller[data-traveller=worker],.pp-journey-traveller[data-traveller=second]{width:36px;height:36px}.pp-journey-layer[data-stage=working] .pp-journey-loaded{opacity:1}
-@keyframes pp-journey-work{0%,100%{opacity:0}50%{opacity:1}}
-@media(min-width:1600px){body.pp-customer-app .pp-overview.pp-has-journey{width:calc(100% - 352px);padding-bottom:140px}.pp-journey-layer{display:block}}
-html[data-theme=dark] .pp-journey-road-curb{stroke:#3f4d4a}html[data-theme=dark] .pp-journey-road-bed{stroke:#293b35}
-@media(prefers-reduced-motion:reduce){.pp-journey-pose{animation:none!important}.pp-journey-traveller{will-change:auto}}
+/* One shared, lazy scene banner. Motion belongs to hover/keyboard focus only. */
+.pp-journey-banners{margin-top:40px;padding-bottom:24px;--pp-journey-atlas:none}
+.pp-journey-banners>header{margin:0 0 20px}.pp-journey-banners>header h2{font-size:20px;line-height:28px;margin:0 0 4px}.pp-journey-banners>header p{margin:0;color:var(--pp-shell-muted)}
+.pp-journey-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.pp-journey-banner{position:relative;min-height:360px;border:1px solid var(--pp-shell-line);border-radius:12px;overflow:hidden;background:var(--pp-shell-surface);isolation:isolate}
+.pp-journey-world{position:absolute;inset:0;overflow:hidden;background:#eef0f1;contain:paint;container-type:inline-size;filter:grayscale(1);transition:filter .25s}
+.pp-journey-banner:is(:hover,:focus-within) .pp-journey-world{filter:grayscale(0)}
+.pp-journey-model{position:absolute;width:370px;height:370px;left:29%;top:43%;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 5px #18232a18)}
+.pp-journey-sprite{display:block;width:100%;height:100%;background:var(--pp-journey-atlas) var(--sprite-x) var(--sprite-y)/400% 300% no-repeat}
+.pp-journey-pose{position:absolute;inset:0;opacity:0;animation:pp-banner-pose 4s steps(1,end) infinite}
+.pp-journey-road{position:absolute;left:0;right:0;bottom:22px;height:48px;background:#666c70;border-block:5px solid #d2d8dc}
+.pp-journey-road:after{content:'';position:absolute;inset:18px 0 auto;height:2px;background:repeating-linear-gradient(90deg,#fff 0 18px,transparent 18px 36px);animation:pp-banner-road 4s linear infinite}
+.pp-journey-vehicle{position:absolute;width:94px;height:94px;bottom:-2px;left:8%;animation:pp-banner-drive 20s linear infinite;filter:drop-shadow(0 4px 2px #1e293b26)}
+.pp-journey-walker{position:absolute;width:48px;height:48px;bottom:70px;left:14%;animation:pp-banner-walk 24s ease-in-out infinite}
+.pp-journey-place{position:absolute;left:16px;top:16px;font-size:12px;line-height:20px;font-weight:600;color:#475467}
+.pp-journey-story{position:relative;margin:32px 24px 100px auto;width:43%;padding:20px;border:1px solid var(--pp-shell-line);border-radius:10px;background:var(--pp-shell-surface);box-shadow:0 4px 12px #1018280a;min-width:0}
+.pp-journey-story:before{content:'';position:absolute;left:-6px;top:38px;width:10px;height:10px;transform:rotate(45deg);background:var(--pp-shell-surface);border-left:1px solid var(--pp-shell-line);border-bottom:1px solid var(--pp-shell-line)}
+.pp-journey-story h3{font-size:17px;line-height:24px;margin:0 0 8px}.pp-journey-story p{font-size:14px;line-height:22px;color:var(--pp-shell-muted);margin:0 0 16px}
+.pp-journey-actions{display:flex;align-items:flex-start;gap:12px;flex-direction:column}.pp-journey-actions .btn{white-space:normal;text-align:left}.pp-journey-secondary{font-size:13px;color:var(--pp-accent);text-decoration:underline}
+.pp-journey-banners :is(.pp-journey-pose,.pp-journey-vehicle,.pp-journey-walker),.pp-journey-road:after{animation-play-state:paused}
+.pp-journey-visible:is(:hover,:focus-within) :is(.pp-journey-pose,.pp-journey-vehicle,.pp-journey-walker),.pp-journey-visible:is(:hover,:focus-within) .pp-journey-road:after{animation-play-state:running}
+.pp-journey-paused :is(.pp-journey-pose,.pp-journey-vehicle,.pp-journey-walker),.pp-journey-paused .pp-journey-road:after{animation-play-state:paused!important}
+@keyframes pp-banner-pose{0%,100%{opacity:0}50%{opacity:1}}@keyframes pp-banner-road{to{background-position:36px 0}}@keyframes pp-banner-drive{from{transform:translateX(0)}to{transform:translateX(calc(100cqw + 100%))}}@keyframes pp-banner-walk{0%,100%{transform:translate(0,0)}50%{transform:translate(25cqw,0)}}
+html[data-theme=dark] .pp-journey-world{background:#273039}html[data-theme=dark] .pp-journey-place{color:#cbd5e1}html[data-theme=dark] .pp-journey-road{background:#39434b;border-color:#4a535c}
+@media(max-width:1199px){.pp-journey-grid{grid-template-columns:1fr}}
+@media(max-width:575px){.pp-journey-banners{margin-top:28px}.pp-journey-banner{min-height:580px}.pp-journey-model{width:330px;height:330px;left:50%;top:160px}.pp-journey-story{margin:330px 16px 90px;width:auto;padding:16px}.pp-journey-story:before{left:32px;top:-6px;transform:rotate(135deg)}.pp-journey-actions{flex-direction:row;align-items:center;flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.pp-journey-banners :is(.pp-journey-pose,.pp-journey-vehicle,.pp-journey-walker),.pp-journey-banners .pp-journey-road:after{animation:none!important}.pp-journey-world{transition:none}}

@@ -12,6 +12,7 @@ SEARCH = {
     'inventory': ('Item', 'item_name', '/desk/pp-inventory?view=equipment&record='),
     'warehouses': ('Warehouse', 'warehouse_name', '/desk/pp-inventory?view=warehouses&record='),
     'vehicles': ('Vehicle', 'license_plate', '/desk/pp-inventory?view=vehicles&record='),
+    'clients': ('Customer', 'customer_name', '/desk/customer/'),
 }
 
 
@@ -26,7 +27,7 @@ def search(kind, text='', company=None):
         filters['company'] = business.name
     elif kind == 'inventory':
         filters['is_stock_item'] = 1
-    else:
+    elif kind == 'agreements':
         projects = frappe.get_list('Project', filters={'company': business.name}, pluck='name', limit_page_length=0)
         filters.update(project=['in', projects or ['']], event_basis=0)
     text = str(text or '').strip()[:100]

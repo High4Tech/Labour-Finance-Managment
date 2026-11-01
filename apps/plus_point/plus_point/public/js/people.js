@@ -5,7 +5,7 @@
  plus_point.resolve_category=async group=>{if(group.fields_dict?.designation?.get_value()!=='__new__')return;const title=String(group.ppNewCategory?.get_value()||'').trim();if(!title){plus_point.field_error(group.ppNewCategory,__('Enter the new category name.'));throw Error(__('Enter the new category name.'));}const saved=await plus_point.form_rpc('operations.create_category',{title});group.ppCreatedCategories=[...new Set([...(group.ppCreatedCategories||[]),saved.name])];const c=group.fields_dict.designation;c.df.options=[...c.df.options.filter(v=>(typeof v==='object'?v.value:v)!=='__new__'),saved.name,{label:__('New category…'),value:'__new__'}];c.refresh();await group.set_value('designation',saved.name);group.ppNewCategory.$wrapper.hide();return saved.name;};
  const esc=v=>frappe.utils.escape_html(String(v??''));
  plus_point.worker_avatar=(name,image)=>{
-  const parts=String(name||'').trim().split(/\s+/),initials=(parts.length>1?parts[0][0]+parts[1][0]:parts[0]?.slice(0,2)||'?').toUpperCase();
+  const parts=String(name||'').trim().split(/\s+/),initials=(parts.length>1?parts[0][0]+parts.at(-1)[0]:parts[0]?.slice(0,2)||'?').toUpperCase();
   return `<span class="pp-person-avatar" aria-hidden="true">${image?`<img src="${esc(image)}" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${esc(initials)}</span>`:esc(initials)}</span>`;
  };
  plus_point.worker_capsule=(name,image)=>`<span class="pp-person-capsule">${plus_point.worker_avatar(name,image)}<span>${esc(name)}</span></span>`;
