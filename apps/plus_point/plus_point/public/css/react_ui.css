@@ -169,3 +169,43 @@ body.pp-customer-app .pp-client-native-hidden>:is(.form-layout,.form-tabs-list,.
 [data-pp-react-root] .pp-ui-section-heading h2{display:flex;align-items:center;gap:12px}
 [data-pp-react-root] .pp-r-panel-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:32px;height:32px;border-radius:8px;color:var(--pp-action-primary);background:var(--pp-action-tint,#fff1e8)}
 [data-pp-react-root] .pp-r-panel-icon .pp-icon{margin:0}
+
+/* Shared creation wizard variant: one owner, stable fields, full-width footer. */
+[data-pp-react-root] .pp-r-builder{display:flex;flex-direction:column;min-height:calc(100dvh - 128px);width:100%;padding:24px;background:var(--pp-canvas,var(--bg-color));gap:24px}
+[data-pp-react-root] .pp-r-builder [hidden]{display:none!important}
+[data-pp-react-root] .pp-r-builder-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+[data-pp-react-root] .pp-r-builder h1{font-size:clamp(24px,2vw,32px);line-height:1.25;margin:16px 0 0}
+[data-pp-react-root] .pp-r-builder-layout{display:grid;grid-template-columns:clamp(220px,18vw,280px) minmax(0,1fr) 280px;gap:20px;align-items:start;flex:1}
+[data-pp-react-root] .pp-r-builder-content{min-width:0}
+[data-pp-react-root] .pp-r-builder-content>.pp-r-form{margin-top:0}
+[data-pp-react-root] .pp-r-builder-steps{display:grid;padding:16px;gap:8px;background:var(--fg-color);border:1px solid var(--border-color);border-radius:10px;box-shadow:0 2px 6px #10182809}
+[data-pp-react-root] .pp-r-builder .pp-r-step{white-space:normal;display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;text-align:left;justify-content:stretch;padding:12px 8px;border:0;box-shadow:none;background:transparent}
+[data-pp-react-root] .pp-r-builder .pp-r-step[aria-current=step]{background:var(--control-bg);color:var(--pp-action-primary)}
+[data-pp-react-root] .pp-r-step-number{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--pp-action-primary);border-radius:100%;font-size:14px;color:var(--pp-action-primary)}
+[data-pp-react-root] .pp-r-step[aria-current=step] .pp-r-step-number{background:var(--pp-action-primary);color:white}
+[data-pp-react-root] .pp-r-step small{display:block;font-size:13px;line-height:20px;font-weight:400;color:var(--text-muted);margin-top:8px}
+[data-pp-react-root] .pp-r-builder-activity{display:grid;gap:20px;min-width:0}
+[data-pp-react-root] .pp-r-builder-footer{position:sticky;bottom:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:20px;background:var(--fg-color);border-top:1px solid var(--border-color);margin:0 -24px -24px;padding:16px 24px;box-shadow:0 -2px 6px #10182808}
+[data-pp-react-root] .pp-r-draft-status{font-size:13px;color:var(--text-muted);background:none;box-shadow:none}
+[data-pp-react-root] .pp-r-builder .pp-r-grid{align-items:start}
+[data-pp-react-root] .pp-r-builder .pp-r-radio-group{margin-bottom:16px}
+[data-pp-react-root] .pp-r-builder .pp-r-condition+.pp-r-condition{margin-top:16px}
+[data-pp-react-root] .pp-r-builder .pp-r-feedback{width:100%}
+[data-pp-react-root] .pp-r-select-menu [role=listbox]{max-height:240px;overflow-y:auto}
+@media(max-width:1399px){[data-pp-react-root] .pp-r-builder-layout{grid-template-columns:220px minmax(0,1fr)}[data-pp-react-root] .pp-r-builder-activity{grid-column:2}}
+@media(max-width:900px){[data-pp-react-root] .pp-r-builder{padding:16px}[data-pp-react-root] .pp-r-builder-layout{grid-template-columns:minmax(0,1fr)}[data-pp-react-root] .pp-r-builder-steps{display:flex;overflow:auto;padding:8px}[data-pp-react-root] .pp-r-builder .pp-r-step{min-width:170px}[data-pp-react-root] .pp-r-step small{display:none}[data-pp-react-root] .pp-r-builder-activity{grid-column:1}[data-pp-react-root] .pp-r-builder-footer{margin:0 -16px -16px;padding:12px 16px;align-items:flex-start}[data-pp-react-root] .pp-r-builder-footer>span{font-size:12px;max-width:30%}[data-pp-react-root] .pp-r-builder-heading>.pp-actions{width:100%;flex-wrap:wrap}}
+
+[data-pp-react-root] .pp-r-builder .pp-r-step>span:last-child{display:block;min-width:0;white-space:normal;overflow-wrap:anywhere}
+[data-pp-react-root] .pp-r-builder .pp-r-step strong{display:block;white-space:normal;line-height:22px}
+[data-pp-react-root] .pp-r-builder .pp-r-step small{white-space:normal}
+
+[data-pp-react-root] .pp-r-builder .pp-r-step{height:auto;min-height:92px;max-height:none;align-self:start}
+[data-pp-react-root] .pp-r-builder{scroll-margin-top:88px}
+@media(max-width:900px){[data-pp-react-root] .pp-r-builder .pp-r-step{min-height:52px}}
+
+/* Button variants must outrank the temporary native host's generic .btn rule. */
+body.pp-ui [data-pp-react-root] .btn[data-pp-button-tone=draft]{background:#fff2b8;color:#714500;border-color:#d9a800}
+body.pp-ui [data-pp-react-root] .btn[data-pp-button-tone=form]{background:#202a30;color:#fff;border-color:#202a30}
+html[data-theme=dark] body.pp-ui [data-pp-react-root] .btn[data-pp-button-tone=draft]{background:#503e16;color:#ffe096;border-color:#ac8e3d}
+
+[data-pp-react-root] .pp-r-builder .pp-r-step[aria-current=step]{color:var(--pp-brand-text,var(--text-color))}

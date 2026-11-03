@@ -9,7 +9,7 @@ declare global {
    load_feature(name:string):Promise<void>;
    app_shell?:{setContext(data:unknown):void;setAttention(rows:unknown[]):void;clearAttention():void};
    delete_records(doctype:string,names:string[],after:()=>void):void;
-   open_import(company?:string,after?:()=>void,kind?:string):Promise<void>;
+   open_import(company?:string,after?:()=>void,kind?:string,label?:string,options?:Record<string,unknown>):Promise<void>;
    charts:{ready():Promise<void>;create(host:HTMLElement,options:Record<string,unknown>):ChartHandle;stats:{active:number;created:number;destroyed:number}};
    ui:{amount(value:unknown):string};
    react_ui?:{mountPayments(host:HTMLElement,list:NativeList):void; unmount(host:HTMLElement):void; stats:{activeRoots:number;mounts:number;unmounts:number}};

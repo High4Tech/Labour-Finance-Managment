@@ -9,6 +9,25 @@ from plus_point.tests import test_hierarchy as hierarchy
 from plus_point.tests.test_operations import insert
 
 class AgreementSharingTests(unittest.TestCase):
+    def test_react_agreement_form_metadata_is_scoped_and_does_not_load_catalogue(self):
+        with patch('plus_point.operations.catalogue',side_effect=AssertionError('Full catalogue must stay deferred')):
+            result=op.agreement_form()
+            self.assertIn(result['currency'],result['currencies'])
+            self.assertIn(result['country'],result['countries'])
+            self.assertNotIn('plans',result)
+            self.assertNotIn('items',result)
+            a=self.agreement()
+            self.assertEqual(op.agreement_form(a['name'])['currency'],result['currency'])
+            self.assertEqual(op.agreement_reference(project=a['project'])['name'],a['name'])
+            customer=op.agreement(a['name'])['customer']
+            self.assertEqual(op.agreement_reference(customer=customer)['name'],a['name'])
+        user=frappe.session.user
+        try:
+            frappe.set_user('Guest')
+            with self.assertRaises((frappe.PermissionError,frappe.ValidationError)):op.agreement_form()
+            with self.assertRaises((frappe.PermissionError,frappe.ValidationError)):op.agreement_reference(project=a['project'])
+        finally:frappe.set_user(user)
+
     def test_react_resource_proposal_resolves_new_sites_only_after_client_acceptance(self):
         from plus_point import agreement_updates as updates
         from urllib.parse import urlparse,parse_qs

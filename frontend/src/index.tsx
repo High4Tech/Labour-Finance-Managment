@@ -12,6 +12,8 @@ export async function preparePayments(){preparedPayments=(await import('./paymen
 const Notifications=lazy(()=>import('./notifications'));
 const Clients=lazy(()=>import('./clients').then(module=>({default:module.Clients})));
 const ClientProfile=lazy(()=>import('./clients').then(module=>({default:module.ClientProfile})));
+const AgreementBuilder=lazy(()=>import('./agreement-builder'));
+export async function prepareAgreementBuilder(){await import('./agreement-builder');}
 const AgreementProfile=lazy(()=>import('./agreement-profile'));
 export async function prepareAgreementProfile(){await import('./agreement-profile');}
 export async function prepareClients(){await import('./clients');}
@@ -38,6 +40,7 @@ export function mountCommand(host:HTMLElement,kind:string,mode:'search'|'create'
 export function mountWorkers(host:HTMLElement){if(roots.has(host))return;host.dataset.ppReactRoot='workers';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading workers…')}</p>}><Workers/></Suspense></Boundary>);}
 export function mountClients(host:HTMLElement){mountOwned(host,'clients',<Clients/>);}
 export function mountClientProfile(host:HTMLElement,customer?:string){mountOwned(host,'client-profile',<ClientProfile customer={customer}/>);}
+export function mountAgreementBuilder(host:HTMLElement,name?:string,draftName?:string){mountOwned(host,'agreement-builder',<AgreementBuilder name={name} draftName={draftName}/>);}
 export function mountAgreementProfile(host:HTMLElement,name:string){mountOwned(host,'agreement-profile',<AgreementProfile name={name}/>);}
 function mountOwned(host:HTMLElement,kind:string,content:ReactNode){if(roots.has(host))return;host.dataset.ppReactRoot=kind;const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading…')}</p>}>{content}</Suspense></Boundary>);}
 export function mountWorkerProfile(host:HTMLElement,employee:string|undefined,onPhoto:()=>void){if(roots.has(host))return;host.dataset.ppReactRoot='worker-profile';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading worker profile…')}</p>}><WorkerProfile employee={employee} onPhoto={onPhoto}/></Suspense></Boundary>);}

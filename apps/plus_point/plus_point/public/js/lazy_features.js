@@ -2,20 +2,20 @@
 (()=>{
  frappe.provide('plus_point');const pp=plus_point,pending=new Map(),attempts=new Map();
  const features={
-  company_tools:{file:'company_tools',css:true,nonblocking:true,version:'20261103-react-7',ready:()=>!!pp.scoped_search},
-  wage_payments:{file:'wage_payments',css:true,nonblocking:true,version:'20261103-react-7',ready:()=>!!pp.wage_payments},
-  react_ui:{file:'react_bridge',css:false,nonblocking:true,version:'20261103-react-7',ready:()=>!!pp.react_payments_mount},
+  company_tools:{file:'company_tools',css:true,nonblocking:true,version:'20261103-react-9',ready:()=>!!pp.scoped_search},
+  wage_payments:{file:'wage_payments',css:true,nonblocking:true,version:'20261103-react-9',ready:()=>!!pp.wage_payments},
+  react_ui:{file:'react_bridge',css:false,nonblocking:true,version:'20261103-react-9',ready:()=>!!pp.react_payments_mount},
   app_help:{file:'app_help',css:true,nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.app_help},
   dashboard_journey:{file:'dashboard_journey',css:true,nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.dashboard_journey},
   world_assets:{file:'world_assets',nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.world_assets},
-  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['react_ui'],nonblocking:true,version:'20261103-react-7',ready:()=>typeof pp.render_customer_dashboard==='function'},
+  dashboard_analytics:{file:'dashboard_overview',css:true,dependencies:['react_ui'],nonblocking:true,version:'20261103-react-9',ready:()=>typeof pp.render_customer_dashboard==='function'},
   dashboard_charts:{file:'charts',css:true,nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.charts},
   echarts:{file:'vendor/echarts-dashboard.min',version:'6.1.0-1',nonblocking:true,ready:()=>!!window.PlusPointECharts},
   imports:{file:'imports',version:'20261029-upload-assets-2',ready:()=>!!pp.open_import&&!pp.open_import.ppLazy},
   event_calendar:{file:'event_calendar',css:true,version:'20261029-upload-assets-2',ready:()=>pp.render_event_timeline?.ppCalendarVersion===6},
   event_scene_engine:{file:'vendor/three-scene.min',nonblocking:true,version:'0.180.0-2',ready:()=>window.PlusPointScene3D?.PCFSoftShadowMap!==undefined},
   event_scene:{file:'event_scene',css:true,dependencies:['event_scene_engine','world_assets'],nonblocking:true,version:'20261101-scenes-4',ready:()=>pp.event_scene?.version===3},
-  flow_builder:{file:'flow_builder',css:true,version:'20261103-react-7',ready:()=>typeof pp.flow_builder==='function'},
+  flow_builder:{file:'flow_builder',css:true,version:'20261103-react-9',ready:()=>typeof pp.flow_builder==='function'},
   freddy_runtime:{file:'freddy-runtime',ready:()=>!!pp.freddy_runtime}
  };
  pp.load_feature=name=>{

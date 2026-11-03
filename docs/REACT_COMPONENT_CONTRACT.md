@@ -41,3 +41,12 @@ The old `worker_profile.js` renderer returned immediately to the React adapter f
 - DocumentPreview fetches private PDF bytes only when opened, creates an object URL for the preview/download and revokes that URL on close or late unmounted completion. The native File uploader remains an explicit adapter until the import/upload owner migrates.
 - Agreement resource edits are staged locally and serialize only existing persisted venue IDs; new sites resolve by name. Price conversion is left to the existing explicit-currency backend boundary. Edits still use the existing immutable proposal/client-signature or company-attestation workflow.
 - A worker created from a missing crew category uses the shared WorkerEditor with an initial category value, not a copied form. The category popup and profile use the same field/button/dialog components.
+
+## Full form variants
+
+- CreationSteps and CreationFooter define the shared three-step form navigation. Desktop steps have room for their full description, mobile steps wrap into a compact row, and the footer spans the main content container. Explicit reset classes keep native fixed-height button rules from clipping the step descriptions. Only the current form stage is displayed; hidden fields retain their React state.
+- Field labels have stable IDs. RichText references the same label and focuses the complete rounded editor/toolbar container. RadioGroup exposes its field error using the same invalid/description association as text inputs.
+- Select supports an optional remote query and scroll-end pagination without changing local-choice behavior. Pending requests and stale results belong to the owner; no top-of-list Load more action is injected.
+- CostConfirmation is the single explicit over-budget confirmation variant. It retains entered data and only sends the original backend override flag after confirmation.
+- A new agreement reuses AgreementResources in inline staging mode and FixedMilestone/BulkMilestones in local staging mode; existing saved editors keep their original authorized mutation/proposal boundaries. Staged bulk milestone edits validate the aggregate contract total before applying.
+- DraftSession and useAgreementDraft own serialized autosave, revision handling, bounded recovery, visibility flush and disposal. Empty defaults are not content. A revision conflict preserves recovery and requires explicit user resolution. Draft status is a plain utility state, never a second animated helper.

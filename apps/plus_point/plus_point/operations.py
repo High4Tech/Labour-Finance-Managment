@@ -96,6 +96,38 @@ def catalogue():
         items=frappe.get_list('Item',filters={'is_stock_item':0,'disabled':0},fields=['name','item_name'],order_by='item_name,name',limit_page_length=0))
 
 
+@frappe.whitelist()
+def agreement_form(name=None):
+    """Small form metadata boundary; do not initialize the entire work catalogue."""
+    business=company()
+    if name:
+        doc=terms_doc(name)
+        doc.check_permission('write')
+    else:
+        frappe.has_permission('PP Contract Terms','create',throw=True)
+    return dict(country=business.country,currency=business.pp_invoice_currency or business.default_currency,
+        can_create_client=bool(frappe.has_permission('Customer','create')),
+        has_clients=bool(frappe.get_list('Customer',filters={'disabled':0},pluck='name',limit_page_length=1)),
+        countries=frappe.get_list('Country',pluck='name',order_by='name',limit_page_length=0),
+        currencies=frappe.get_list('Currency',pluck='name',order_by='name',limit_page_length=0))
+
+
+@frappe.whitelist()
+def agreement_reference(project=None,customer=None):
+    """Resolve older contextual links without fetching every module's catalogue."""
+    business=company()
+    if project:
+        doc=linked('Project',project)
+        if doc.company!=business.name:frappe.throw('This project belongs to another company.',frappe.PermissionError)
+        projects=[doc.name]
+    elif customer:
+        linked('Customer',customer)
+        projects=frappe.get_list('Project',filters={'company':business.name,'customer':customer,'pp_archived':0},pluck='name',limit_page_length=0)
+    else:frappe.throw('Choose the client or project to find its agreement.')
+    rows=frappe.get_list('PP Contract Terms',filters={'project':['in',projects or ['']],'event_basis':0},pluck='name',order_by='modified desc',limit_page_length=1)
+    return dict(name=rows[0] if rows else None)
+
+
 def validate_agreement(doc):
     from plus_point.agreement_lifecycle import apply_status
     from plus_point.agreement_events import validate_terms

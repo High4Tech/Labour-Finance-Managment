@@ -1,12 +1,19 @@
 /* Stage-by-stage React ownership. No new global observer or polling loop. */
 (()=>{
  const pp=window.plus_point;let modulePromise;
- const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261103-react-7').catch(error=>{modulePromise=null;throw error;}));
+ const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261103-react-9').catch(error=>{modulePromise=null;throw error;}));
  pp.react_prepare_payments=()=>load().then(runtime=>runtime.preparePayments());
  pp.react_prepare_dashboard=()=>load().then(runtime=>runtime.prepareDashboard());
  pp.react_prepare_planning=()=>load().then(runtime=>runtime.preparePlanning());
  pp.react_prepare_workers=()=>load().then(runtime=>runtime.prepareWorkers());
  pp.react_prepare_clients=()=>load().then(runtime=>runtime.prepareClients());
+ pp.react_agreement_builder_mount=async(host,name,draftName)=>{
+  let disposed=false,runtime;const key=location.pathname+location.search;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};
+  const leave=()=>{if(location.pathname+location.search!==key)cleanup();};frappe.router.on('change',leave);host.ppReactCleanup=cleanup;
+  host.dataset.ppReactRoot='agreement-builder';host.textContent=__('Loading agreement…');
+  try{runtime=await load();await runtime.prepareAgreementBuilder();if(disposed)return;pp.react_ui=runtime;runtime.mountAgreementBuilder(host,name,draftName);}catch(error){if(!disposed)host.textContent=__('Agreement could not load. Refresh to retry.');console.error(error);}
+ };
  pp.react_agreement_profile_mount=async(host,name)=>{
   let disposed=false,runtime;const key=location.pathname+location.search;
   const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};
