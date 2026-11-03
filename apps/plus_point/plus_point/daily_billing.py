@@ -1,5 +1,6 @@
 """Daily billing checkpoints group approved attendance; they never recognize revenue."""
 import uuid
+import re
 import frappe
 from frappe.utils import getdate,today,add_days,add_months,cint
 from plus_point.finance import money
@@ -8,22 +9,33 @@ FREQUENCIES=('Daily','Weekly','Biweekly','Monthly','Quarterly','Completion')
 
 
 @frappe.whitelist()
-def periods(start,end,frequency='Weekly',payment_days=0,schedule_id=None):
+def periods(start,end,frequency='Weekly',payment_days=0,schedule_id=None,work_start=None,work_end=None):
     """Derive bounded, contiguous billing periods from the agreement, not a second calendar."""
     if frequency not in FREQUENCIES:frappe.throw('Choose daily, weekly, biweekly, monthly, quarterly or completion payments.')
     if not start or not end or getdate(start)>getdate(end):frappe.throw('Choose valid agreement dates before setting payments.')
     if schedule_id is not None and (not isinstance(schedule_id,str) or len(schedule_id)>80):frappe.throw('Choose a valid payment schedule reference.')
     if str(payment_days or 0) != str(cint(payment_days or 0)) or not 0<=cint(payment_days)<=90:frappe.throw('Payment terms must be a whole number from 0 to 90 days.')
+    hours=work_hours(work_start,work_end)
     first=getdate(start);last=getdate(end);cursor=first;result=[];key=schedule_id or str(uuid.uuid4())
     while cursor<=last:
         if len(result)>=400:frappe.throw('Use a longer payment frequency. An agreement supports up to 400 billing periods.')
         index=len(result)+1
         following=getdate(add_days(last,1)) if frequency=='Completion' else getdate(add_months(first,index*(3 if frequency=='Quarterly' else 1))) if frequency in ('Monthly','Quarterly') else getdate(add_days(first,index*({'Daily':1,'Weekly':7,'Biweekly':14}[frequency])))
         through=min(last,getdate(add_days(following,-1)))
-        result.append(dict(id=key+':'+str(cursor),schedule_id=key,title='Pay after completion' if frequency=='Completion' else frequency+' payment '+str(index),frequency=frequency,
+        result.append(dict(id=key+':'+str(cursor),schedule_id=key,title='Pay after completion' if frequency=='Completion' else frequency+' payment '+str(index),frequency=frequency,**hours,
             from_date=str(cursor),to_date=str(through),due_date=str(add_days(through,cint(payment_days))),payment_days=cint(payment_days),automatic=1))
         cursor=following
     return result
+
+
+def work_hours(start=None,end=None):
+    """Agreed display hours, never a substitute for approved attendance or pay."""
+    if not start and not end:return {}
+    pattern=r'(?:[01]\d|2[0-3]):[0-5]\d(?::00)?'
+    if not all(isinstance(value,str) and re.fullmatch(pattern,value) for value in (start,end)):
+        frappe.throw('Enter both working hours as HH:MM, from 00:00 to 23:59.')
+    if start[:5]==end[:5]:frappe.throw('Choose different start and end hours. An earlier end means the next day.')
+    return dict(work_start=start[:5],work_end=end[:5])
 
 
 def validate(terms):
@@ -35,6 +47,7 @@ def validate(terms):
     for row in rows:
         if not isinstance(row,dict):frappe.throw('Choose valid daily billing checkpoints.')
         row['id']=row.get('id') or str(uuid.uuid4())
+        row.update(work_hours(row.get('work_start'),row.get('work_end')))
         if row['id'] in seen:frappe.throw('Each billing checkpoint must be unique.')
         seen.add(row['id']);before=previous.get(row['id'],{})
         if row.get('invoice')!=before.get('invoice'):frappe.throw('Invoice references are managed by billing.')
@@ -64,7 +77,7 @@ def rebase(terms):
         return
     recurring=next((r for r in rows if r.get('schedule_id')),None)
     if not recurring:return
-    generated=periods(terms.effective_start,terms.effective_end,recurring['frequency'],recurring.get('payment_days',0),recurring['schedule_id'])
+    generated=periods(terms.effective_start,terms.effective_end,recurring['frequency'],recurring.get('payment_days',0),recurring['schedule_id'],recurring.get('work_start'),recurring.get('work_end'))
     old={r['id']:r for r in rows}
     if any((r.get('invoice') or r.get('supplemental_invoices')) and r['id'] not in {p['id'] for p in generated} for r in rows):frappe.throw('Keep invoiced payment periods within the agreement dates.')
     terms.pp_daily_checkpoints=frappe.as_json([old[r['id']] if old.get(r['id'],{}).get('invoice') or old.get(r['id'],{}).get('supplemental_invoices') else dict(r,title=old.get(r['id'],{}).get('title') or r['title']) for r in generated])

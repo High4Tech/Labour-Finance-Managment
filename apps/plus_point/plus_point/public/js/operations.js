@@ -147,7 +147,7 @@
      const resolved=direct.get('record')||((direct.has('project')||direct.has('client'))?(await rpc('agreement_reference',{project:direct.get('project'),customer:direct.get('client')})).name:null);if(!resolved&&!direct.has('draft')){frappe.set_route('List','PP Contract Terms');return;}
      await plus_point.load_feature('react_ui');await frappe.require('/assets/plus_point/css/agreement_profile.css');
      if(token!==sequence||frappe.get_route()[0]!==mode)return;
-     root.classList.remove('pp-flow-builder');root.classList.add('pp-focused-editor');root.replaceChildren();const host=document.createElement('div');root.append(host);
+     root.classList.remove('pp-flow-builder');root.classList.add('pp-focused-editor','pp-react-form-host');root.replaceChildren();const host=document.createElement('div');root.append(host);
      page.clear_primary_action();page.clear_secondary_action();await plus_point.detach_draft?.();if(direct.has('draft')||direct.has('edit')||resolved==='new')await plus_point.react_agreement_builder_mount(host,resolved==='new'?undefined:resolved,direct.get('draft'));else await plus_point.react_agreement_profile_mount(host,resolved);
      if(token!==sequence)return;delete root.dataset.building;root.removeAttribute('aria-busy');root.dataset.ready='true';return;
     }

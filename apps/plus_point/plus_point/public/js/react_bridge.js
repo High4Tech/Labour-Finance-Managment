@@ -1,7 +1,15 @@
 /* Stage-by-stage React ownership. No new global observer or polling loop. */
 (()=>{
  const pp=window.plus_point;let modulePromise;
- const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261103-react-9').catch(error=>{modulePromise=null;throw error;}));
+ const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261103-react-12').catch(error=>{modulePromise=null;throw error;}));
+ let importDialog;
+ pp.react_import_open=async options=>{
+  if(importDialog)return;
+  const host=document.createElement('div');document.body.append(host);let runtime,disposed=false;
+  const close=(notify=true)=>{if(disposed)return;disposed=true;runtime?.unmount(host);host.remove();frappe.router.off('change',leave);importDialog=null;if(notify)options.onClose?.();};
+  const leave=()=>close(false);importDialog=close;frappe.router.on('change',leave);
+  try{runtime=await load();if(disposed)return;pp.react_ui=runtime;runtime.mountImport(host,{...options,onSaved:()=>pp.refresh_setup_banner?.()},()=>close(true));}catch(error){close(false);frappe.msgprint({title:__('Import could not load'),message:__('Reopen the import to try again.'),indicator:'red'});console.error(error);}
+ };
  pp.react_prepare_payments=()=>load().then(runtime=>runtime.preparePayments());
  pp.react_prepare_dashboard=()=>load().then(runtime=>runtime.prepareDashboard());
  pp.react_prepare_planning=()=>load().then(runtime=>runtime.preparePlanning());

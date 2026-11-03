@@ -3,77 +3,17 @@
   "version": "19.3.1",
   "outputs": [
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-6ZLIXQGZ.js",
-      "bytes": 204,
-      "gzipBytes": 147,
-      "sha256": "2fe59bf6c211903f8b025bcdfd49bbe48658a262c070501ffe709f4d24a1c8fb",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-PJV5AEWS.js",
+      "bytes": 2472,
+      "gzipBytes": 1157,
+      "sha256": "87250740559d27610e514bd97e992777135f1197ec965c788639dc9b8ba54f97",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-ODXVLQCY.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
-    {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-Y2VZENFS.js",
-      "bytes": 31224,
-      "gzipBytes": 10172,
-      "sha256": "58240478973bb702ce226988f3d8c58092b6128117560088336dba29855ce01e",
-      "imports": [
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-ODXVLQCY.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
-    {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-ODXVLQCY.js",
-      "bytes": 74578,
-      "gzipBytes": 21220,
-      "sha256": "142e3c08fc4f2f364a746476d26ac6f9d7b1bb31821d72abaa9e5f7f30fcf48d",
-      "imports": [
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -81,23 +21,123 @@
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-46ZR53BX.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-XAP63KQV.js",
+          "kind": "dynamic-import"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-DHOR3LWD.js",
           "kind": "dynamic-import"
         }
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/planning-OBGMOGXA.js",
-      "bytes": 7189,
-      "gzipBytes": 2683,
-      "sha256": "cb1519039ae8f6c038921a85df817800e5dd74e9496b754ace7612c70ad923ac",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-7FRFBYVZ.js",
+      "bytes": 232,
+      "gzipBytes": 158,
+      "sha256": "68383693220438a582ac9929dc4d3a26c88be0ea3e74d88a0b914b5a07b26f9b",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-AZY4XXCT.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-6I4QVZFH.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
+          "kind": "import-statement"
+        }
+      ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-JRK7MLBO.js",
+      "bytes": 31430,
+      "gzipBytes": 10237,
+      "sha256": "703a32fb5f620b37829934b2b1588a84f5d2ea192504e3b5f0cf7bb51ba74872",
+      "imports": [
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-AZY4XXCT.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-6I4QVZFH.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
+          "kind": "import-statement"
+        }
+      ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-AZY4XXCT.js",
+      "bytes": 75226,
+      "gzipBytes": 21380,
+      "sha256": "052e90472ccc0e842d52017060336abe8def8e1050111a4241cc7769cfb3c1bd",
+      "imports": [
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-6I4QVZFH.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-PJV5AEWS.js",
+          "kind": "dynamic-import"
+        }
+      ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/planning-ZNHKN7U4.js",
+      "bytes": 7189,
+      "gzipBytes": 2685,
+      "sha256": "bacf5dfa16bbf5c5d6c6dfd61211f06eb0750a1ecc96ba483153cc19b1e32a96",
+      "imports": [
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -108,12 +148,16 @@
     },
     {
       "file": "../apps/plus_point/plus_point/public/react/index.js",
-      "bytes": 215358,
-      "gzipBytes": 66819,
-      "sha256": "2498e9ba6eb24784470c90d86b12b645b6b577f9fa897f7272543de197e3b89b",
+      "bytes": 213631,
+      "gzipBytes": 66708,
+      "sha256": "3bcd8e4067b4b815d3b594081539a68029874b2871d87fe80dfb133468e9ac9c",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-IYJPKHXO.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -121,86 +165,121 @@
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/dashboard-CTTD4KNL.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/imports-WXUFTHKB.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/dashboard-CTTD4KNL.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/dashboard-PF6RA7ED.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/payments-ASFQDEMG.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/dashboard-PF6RA7ED.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/payments-ASFQDEMG.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/payments-FU2JTXZX.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/notifications-4VHNBAOX.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/payments-FU2JTXZX.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-6YKIVNWL.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/notifications-F7PMQUU4.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-6YKIVNWL.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-DHOR3LWD.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-Y2VZENFS.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-DHOR3LWD.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-Y2VZENFS.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-JRK7MLBO.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-6ZLIXQGZ.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-builder-JRK7MLBO.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-6ZLIXQGZ.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-7FRFBYVZ.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-6YKIVNWL.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/agreement-profile-7FRFBYVZ.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-DD23ANYA.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-DHOR3LWD.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-DD23ANYA.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-XAP63KQV.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-46ZR53BX.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-XAP63KQV.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-46ZR53BX.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-PJV5AEWS.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-46ZR53BX.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-PJV5AEWS.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-DD23ANYA.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-PJV5AEWS.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/planning-OBGMOGXA.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-XAP63KQV.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/planning-OBGMOGXA.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/planning-ZNHKN7U4.js",
+          "kind": "dynamic-import"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/planning-ZNHKN7U4.js",
           "kind": "dynamic-import"
         }
       ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/imports-WXUFTHKB.js",
+      "bytes": 17177,
+      "gzipBytes": 6663,
+      "sha256": "e8afe653a8d49e9c42f05b447630b7feeb6a01bbcc99ff7a6afe83dd8502a3ce",
+      "imports": [
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-6I4QVZFH.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
+          "kind": "import-statement"
+        }
+      ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-6I4QVZFH.js",
+      "bytes": 733,
+      "gzipBytes": 445,
+      "sha256": "76285c3d9ee91511591473088fee381055bb9a7de20bb01b9ecb95cc659645eb",
+      "imports": []
     },
     {
       "file": "../apps/plus_point/plus_point/public/react/chunks/journey-I43OVQNA.js",
@@ -215,17 +294,21 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/dashboard-CTTD4KNL.js",
-      "bytes": 19139,
-      "gzipBytes": 6501,
-      "sha256": "aeaa048e920eb03505a88e27cb132a193526f1718c6a738fcd4116f8007a73db",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/dashboard-PF6RA7ED.js",
+      "bytes": 19459,
+      "gzipBytes": 6573,
+      "sha256": "82b590b20a7f3cf0f3c50928be9889c5b8427299851b1f7915501db533aa85b2",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-IYJPKHXO.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -239,17 +322,29 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/payments-ASFQDEMG.js",
-      "bytes": 13961,
-      "gzipBytes": 4518,
-      "sha256": "68095dc8d7b1f974873a074ab0d9151896d948950398c80da9f65fd5d396c7f6",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-IYJPKHXO.js",
+      "bytes": 911,
+      "gzipBytes": 338,
+      "sha256": "34be584ab8c4475390961df595a2adcc03d5f907a7f3f92a409735518904d150",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
+          "kind": "import-statement"
+        }
+      ]
+    },
+    {
+      "file": "../apps/plus_point/plus_point/public/react/chunks/payments-FU2JTXZX.js",
+      "bytes": 14275,
+      "gzipBytes": 4605,
+      "sha256": "92b24d2702d3f0d0bf256bc957cca329f149b342bb8f4268cc5472fea75883b6",
+      "imports": [
+        {
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -259,17 +354,17 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/notifications-4VHNBAOX.js",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/notifications-F7PMQUU4.js",
       "bytes": 2890,
-      "gzipBytes": 1301,
-      "sha256": "cc8ab1cd1fe4b19a93a05b541b70af02b4ec3baa5761a702b463655b22ec9083",
+      "gzipBytes": 1304,
+      "sha256": "9d1bce8255a7246b7ed04ae94cd6430e0c3b8cb3815a394fcbd23f2f4c096646",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -279,21 +374,21 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/clients-6YKIVNWL.js",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/clients-DHOR3LWD.js",
       "bytes": 9930,
-      "gzipBytes": 3434,
-      "sha256": "7ba8c3ed85100d658cfa6756fb0e56e354da3c77422901ea1910a2bfcfb2890e",
+      "gzipBytes": 3435,
+      "sha256": "72212c68a542d67f43e99ec12b0683b56edea675f6e8a994e80565796ce275dc",
       "imports": [
         {
           "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-PIQ4TCV5.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -310,17 +405,17 @@
       "imports": []
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/workers-DD23ANYA.js",
-      "bytes": 28854,
+      "file": "../apps/plus_point/plus_point/public/react/chunks/workers-XAP63KQV.js",
+      "bytes": 28825,
       "gzipBytes": 9478,
-      "sha256": "2672f115baa0b5ddff65e8032cce0470e539f9dc913db4375be82a8f664fd0b5",
+      "sha256": "a2b4f899e7eeda385ebc078c1de0f8c01dbd5ab98d5b2d373c03a13153a83537",
       "imports": [
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
           "kind": "import-statement"
         },
         {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
+          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
           "kind": "import-statement"
         },
         {
@@ -330,38 +425,10 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/command-dialogs-46ZR53BX.js",
-      "bytes": 2472,
-      "gzipBytes": 1152,
-      "sha256": "31849e6300bb96be5a5849fd16801ef784ea602b2fd7822a1939f694bad00184",
-      "imports": [
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/workers-DD23ANYA.js",
-          "kind": "dynamic-import"
-        },
-        {
-          "path": "../apps/plus_point/plus_point/public/react/chunks/clients-6YKIVNWL.js",
-          "kind": "dynamic-import"
-        }
-      ]
-    },
-    {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-YB22PEM3.js",
-      "bytes": 2088,
-      "gzipBytes": 1081,
-      "sha256": "bc53706ec57de139b9428e2c035907ac5535b8032bdec691649f51e386e67085",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-MYFSUEZM.js",
+      "bytes": 2330,
+      "gzipBytes": 1153,
+      "sha256": "b3ab29344da2833d2af24db5ec730aade80f7dfe44a4113a0a1be5b779795dd3",
       "imports": [
         {
           "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",
@@ -370,10 +437,10 @@
       ]
     },
     {
-      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-DPCBSNDC.js",
-      "bytes": 15457,
-      "gzipBytes": 5645,
-      "sha256": "b5994ccc573274cd593684dca7577447c779afc3658bd3a0c493d8d8d8c68427",
+      "file": "../apps/plus_point/plus_point/public/react/chunks/chunk-BAHDVG4Z.js",
+      "bytes": 16101,
+      "gzipBytes": 5913,
+      "sha256": "02ca52b2c3f557ef6fcb96ab5a6a86871b4393849601b8351b5dfb0b65050492",
       "imports": [
         {
           "path": "../apps/plus_point/plus_point/public/react/chunks/chunk-YVLPVBXE.js",

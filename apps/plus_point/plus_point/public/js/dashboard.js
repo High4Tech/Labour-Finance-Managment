@@ -41,16 +41,6 @@
         return rows.length ? `<section class="pp-conditions pp-action-inbox" aria-label="${esc(__(title))}" tabindex="-1"><header class="pp-panel-heading"><div><h3>${esc(__(title))} <span class="pp-count">${rows.length}</span></h3><p>${unread?esc(__('{0} unread updates',[unread])):esc(__('You have reviewed the latest updates. Actions remain until the underlying record is resolved.'))}</p></div>${unread?`<button type="button" class="btn btn-default btn-sm pp-mark-updates">${esc(__('Mark updates read'))}</button>`:''}</header>${rows.slice(0,2).map(row).join('')}
             ${rows.length>2?`<details><summary>${esc(__('More next actions'))} (${rows.length-2})</summary>${rows.slice(2).map(row).join('')}</details>`:''}</section>`:'';
     }
-    function budgets(data) {
-        if (!data.budgets?.length) return '';
-        return `<section class="pp-dashboard-panel pp-budget-panel"><h3>${esc(__('Spending budgets'))}</h3>
-            <p>${esc(__('Approved wages + posted net purchases + sanctioned expense lines. Separate from the client price; excludes taxes, overhead and unallocated costs.'))}</p>
-            ${data.budgets.map(row=>`<div class="pp-budget-row pp-value-${esc(row.level)}"><div><strong>${esc(row.title)}</strong>
-                <p>${esc(__(!row.enabled?'Spending stop not enabled':row.level==='error'?'Over budget':Number(row.remaining)===0?'Budget fully used':row.level==='warning'?'Approaching budget':'Within budget'))}</p></div>
-                <div class="pp-budget-figures"><strong>${esc(number(row.used))}${row.enabled?` / ${esc(number(row.limit))}`:''} ${esc(row.currency)}</strong>
-                <p>${row.enabled?`${esc(number(row.remaining))} ${esc(__('remaining'))}`:esc(__('Set a limit before enforcing it'))}</p></div>
-                <a class="btn btn-default btn-sm" href="/desk/project/${encodeURIComponent(row.project)}">${esc(__(row.enabled?'Review budget':'Set spending budget'))}</a></div>`).join('')}</section>`;
-    }
     function platform(data) {
         const allZero = data.sales.every(row => !Number(row.invoiced) && !Number(row.receipts));
         return `<dl class="pp-dashboard-metrics">
@@ -78,7 +68,12 @@
     }
     plus_point.mount_dashboard = function (root) {
         if (!root) return;
-        if(!frappe.boot.plus_point?.is_platform)root.classList.add('pp-customer-overview-host');
+        if(!frappe.boot.plus_point?.is_platform){
+            root.classList.add('pp-customer-overview-host');
+            root.textContent=__('Loading your dashboard...');
+            plus_point.load_feature('dashboard_analytics').then(()=>{if(root.isConnected)return plus_point.render_customer_dashboard(root);}).catch(error=>{if(root.isConnected)root.textContent=__('Dashboard could not load. Reopen it to retry.');console.error(error);});
+            return;
+        }
         if (!frappe.boot.plus_point?.is_platform && !frappe.user.has_role('System Manager')) {
             root.remove(); return;
         }
@@ -93,13 +88,8 @@
                 const response = await frappe.call({method:'plus_point.dashboard.overview',args:{company:company || undefined,display_currency:displayCurrency || undefined},silent:true});
                 if (!root.isConnected || current !== request) return;
                 const data=response.message;plus_point.dashboard_company=data.company;
-                if(!data.is_platform)plus_point.ensure_attendance_today?.(data.company).catch(()=>{});
                 plus_point.dashboard_currency=data.currency;
                 root.classList.toggle('pp-motion-dashboard',!data.is_platform);
-                if(!data.is_platform&&data.company){
-                    await plus_point.load_feature('dashboard_analytics');if(!root.isConnected||current!==request)return;
-                    root.ppDashboardCleanup?.();plus_point.render_customer_dashboard(root,data,{reload:load,exchangeNote,conditions,budgets});root.dataset.ready='true';return;
-                }
                 const draw=()=>{
                 root.innerHTML=`<div class="pp-dashboard-toolbar"><div><h3>${esc(__('At a glance'))}</h3>
                     <p>${esc(frappe.datetime.str_to_user(data.date))}${data.currency ? ` · ${esc(__('Amounts in'))} ${esc(data.currency)}` : ''}</p></div>
@@ -138,7 +128,7 @@
                 if (current === request) root.setAttribute('aria-busy','false');
             }
         }
-        root.innerHTML=frappe.boot.plus_point?.is_platform?`<p role="status">${esc(__('Loading your dashboard…'))}</p>`:'<div class="pp-overview-skeleton" role="status"><span class="sr-only">'+esc(__('Loading your dashboard…'))+'</span><div class="pp-overview-skeleton-heading"></div><div class="pp-overview-skeleton-metrics"><i></i><i></i><i></i></div><div class="pp-overview-skeleton-panels"><i></i><i></i></div></div>';
+        root.innerHTML=`<p role="status">${esc(__('Loading your dashboard...'))}</p>`;
         if(root.ppCurrencyHandler)document.removeEventListener('pp:display-currency',root.ppCurrencyHandler);root.ppCurrencyHandler=()=>{if(root.isConnected&&$(root).is(':visible'))load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);};document.addEventListener('pp:display-currency',root.ppCurrencyHandler);load(plus_point.dashboard_company,frappe.boot.plus_point.display_currency);
     };
 })();

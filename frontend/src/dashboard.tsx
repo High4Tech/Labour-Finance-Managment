@@ -2,6 +2,7 @@ import {lazy,Suspense,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'r
 import {amount,relativeDate,t} from './bridge';
 import {Badge,Button,DataTable,Dialog,Feedback,Field,Icon,Input,Panel,Worker} from './components';
 import {Chart} from './charts';
+import {DashboardSkeleton} from './loading';
 import {useDebounced,useLiveUpdates,useResource} from './hooks';
 const Journey=lazy(()=>import('./journey'));
 type Person={name:string;title:string;image?:string;reference:string;designation:string;status:string;wages_unpaid:string;loan:string};
@@ -37,7 +38,12 @@ function ExchangeNote({fx,currency,onRetry}:{fx:Overview['fx'];currency:string;o
  const quote=new Intl.NumberFormat(undefined,{maximumFractionDigits:6}).format(Number(fx.source_per_target)),instant=new Date(fx.as_of),updated=Number.isNaN(instant.valueOf())?fx.as_of:new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:'UTC'}).format(instant);
  return <div className="pp-fx-note" role="status"><p><strong>1 {fx.target} = {quote} {fx.source}</strong> · {t('Rate updated')} {updated} UTC<br/>{t('Latest daily rate. Books remain in')} {fx.source}. <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">{t('Rates by ExchangeRate-API')}</a></p></div>;
 }
-export default function Dashboard({initial}:{initial:Overview}){
+export default function DashboardEntry({initial}:{initial?:Overview}){
+ const boot=useResource(signal=>initial?Promise.resolve(initial):call<Overview>('dashboard.overview',{company:window.plus_point.dashboard_company,display_currency:(window.frappe.boot.plus_point as any).display_currency},signal),[]);
+ if(!boot.data)return boot.error?<div className="pp-overview"><Feedback message={boot.error}/><Button onClick={boot.refresh}>{t('Try again')}</Button></div>:<DashboardSkeleton/>;
+ return <Dashboard initial={boot.data}/>;
+}
+function Dashboard({initial}:{initial:Overview}){
  const [base,setBase]=useState(initial),[baseError,setBaseError]=useState(''),[baseBusy,setBaseBusy]=useState(false),[revision,setRevision]=useState(0);
  const [range,setRange]=useState({start:offset(initial.date,-29),end:initial.date}),[period,setPeriod]=useState('30'),[search,setSearch]=useState(''),[workerStatus,setWorkerStatus]=useState('All'),[eventStatus,setEventStatus]=useState('Active'),[page,setPage]=useState(1),[selected,setSelected]=useState(new Set<string>()),[filters,setFilters]=useState(false),[modal,setModal]=useState<'range'|'chart'|null>(null);
  const debounced=useDebounced(search,350),filterRef=useRef<HTMLDivElement>(null),baseSequence=useRef(0),root=useRef<HTMLDivElement>(null),alive=useRef(true);
@@ -46,10 +52,10 @@ export default function Dashboard({initial}:{initial:Overview}){
  const resource=useResource(signal=>call<View>('dashboard_view.view',{company:base.company,display_currency:base.currency,...range,search:debounced,page:effectivePage,event_status:eventStatus,worker_status:workerStatus},signal),[base.company,base.currency,range.start,range.end,debounced,effectivePage,workerStatus,eventStatus,revision]);
  const view=resource.data,loading=resource.loading||baseBusy;
  useEffect(()=>{previousScope.current=scope;setPage(effectivePage);setSelected(new Set());},[scope,effectivePage]);
- const refreshBase=async()=>{const own=++baseSequence.current;setBaseBusy(true);setBaseError('');try{const next=await call<Overview>('dashboard.overview',{company:base.company,display_currency:base.currency});if(!alive.current||own!==baseSequence.current)return;setBase(next);setRevision(n=>n+1);}catch(e){if(alive.current&&own===baseSequence.current)setBaseError((e as Error).message);}finally{if(alive.current&&own===baseSequence.current)setBaseBusy(false);}};
+ const refreshBase=async()=>{const own=++baseSequence.current;setBaseBusy(true);setBaseError('');try{const next=await call<Overview>('dashboard.overview',{company:base.company,display_currency:(window.frappe.boot.plus_point as any).display_currency||base.currency});if(!alive.current||own!==baseSequence.current)return;setBase(next);setRevision(n=>n+1);}catch(e){if(alive.current&&own===baseSequence.current)setBaseError((e as Error).message);}finally{if(alive.current&&own===baseSequence.current)setBaseBusy(false);}};
  const latestRefresh=useRef(refreshBase);latestRefresh.current=refreshBase;
- useLiveUpdates(['Employee','PP Event Plan','PP Contract Terms','Project','PP Milestone','PP Daily Register','PP Wage Settlement','PP Worker Loan','PP Loan Recovery'],()=>void latestRefresh.current());
- useEffect(()=>{alive.current=true;let timer:ReturnType<typeof setTimeout>|undefined;const changed=()=>{clearTimeout(timer);timer=setTimeout(()=>{if(document.visibilityState==='visible')void latestRefresh.current();},400);};document.addEventListener('pp:data-changed',changed);return()=>{alive.current=false;baseSequence.current++;clearTimeout(timer);document.removeEventListener('pp:data-changed',changed);};},[]);
+ useLiveUpdates(['Employee','PP Event Plan','PP Contract Terms','Project','PP Milestone','PP Daily Register','PP Wage Settlement','PP Worker Loan','PP Loan Recovery'],()=>void latestRefresh.current(),['pp:data-changed','pp:display-currency']);
+ useEffect(()=>{alive.current=true;return()=>{alive.current=false;baseSequence.current++;};},[]);
  useEffect(()=>{window.plus_point.app_shell?.setContext(base);window.plus_point.app_shell?.setAttention(base.conditions||[]);return()=>window.plus_point.app_shell?.clearAttention();},[base]);
  useEffect(()=>{if(!filters)return;const close=(e:PointerEvent)=>{if(!filterRef.current?.contains(e.target as Node))setFilters(false);};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close);},[filters]);
  useEffect(()=>{if(!view)return;setSelected(current=>new Set([...current].filter(id=>view.workers.some(w=>w.name===id))));},[view?.workers]);

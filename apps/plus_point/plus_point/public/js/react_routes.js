@@ -17,7 +17,8 @@
   const proto=frappe.views?.ListView?.prototype;if(!proto||proto.__pp_react_route_adapter)return;
   const nativeShow=proto.show;
   proto.show=function(...args){
-   const config=owner(this);if(!config)return nativeShow.apply(this,args);
+   const config=owner(this);if(!config){(this.parent?.get?.(0)||this.parent)?.classList?.remove('pp-react-list-page');return nativeShow.apply(this,args);}
+   (this.parent?.get?.(0)||this.parent).classList.add('pp-react-list-page');
    if(this.__pp_react_show_pending)return this.__pp_react_show_pending;
    this.__pp_react_show_pending=(async()=>{
     // Metadata and native permission checks stay authoritative. List settings,

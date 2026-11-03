@@ -32,6 +32,19 @@ class ProfileBillingTests(unittest.TestCase):
         for args in [('2026-01-01','2026-01-02','Weekly',-1),('2026-01-01','2026-01-02','Weekly',1.5),('2026-01-01','2026-01-02','Yearly',0),('2026-01-02','2026-01-01','Weekly',0),('2026-01-01','2028-01-01','Daily',0)]:
             with self.assertRaises(frappe.ValidationError):billing.periods(*args)
 
+    def test_daily_hours_are_validated_and_survive_date_rebase(self):
+        rows=billing.periods(today(),add_days(today(),4),'Daily',0,'hours','08:30','17:30')
+        self.assertTrue(all((r['work_start'],r['work_end'])==('08:30','17:30') for r in rows))
+        for start,end in [('25:00','17:00'),('08:00',None),('08:00','08:00'),('text','17:00')]:
+            with self.assertRaises(frappe.ValidationError):billing.periods(today(),today(),'Daily',work_start=start,work_end=end)
+        a=self.agreement();terms=frappe.get_doc('PP Contract Terms',a['name'])
+        terms.pp_daily_checkpoints=frappe.as_json(rows);terms.save()
+        terms.effective_end=add_days(today(),5);billing.rebase(terms);terms.save()
+        changed=frappe.parse_json(terms.pp_daily_checkpoints)
+        self.assertEqual(changed[-1]['work_end'],'17:30')
+        self.assertEqual(changed[-1]['to_date'],add_days(today(),5))
+        self.assertEqual(billing.periods(today(),today(),'Daily',work_start='22:00',work_end='06:00')[0]['work_start'],'22:00')
+
     def test_status_is_derived_from_end_date_and_preserves_drafts(self):
         doc=frappe._dict(status='Active',effective_end=today());apply_status(doc);self.assertEqual(doc.status,'Active')
         doc.effective_end=add_days(today(),-1);apply_status(doc);self.assertEqual(doc.status,'Closed')

@@ -34,7 +34,7 @@ This is an ongoing migration, not a completed rewrite. Frappe, ERPNext and HRMS 
 | Attendance lists/registers, date selection, marks/approval/correction | Legacy shared owners | React ownership; retain approved-work and correction transaction rules |
 | Billing/invoices, loans/recoveries, receipts/payments, expenses/reimbursements | Legacy finance/native owners | React owners using the existing posting APIs |
 | Event finances and worker statements | Native reports with shared presentation | React product report views; retain native exports/report infrastructure |
-| Imports: template/download/upload/preview/approval/result | Legacy shared dialog | React dialog; all existing template validations and idempotent import APIs |
+| Imports: template/download/upload/preview/approval/result | React shared dialog, original transactional APIs | Native advanced Data Import stays available |
 | Client online agreement/progress/signing/update approval portal | Legacy public portal | React public entry with existing private-token/CSRF/version safeguards |
 | Onboarding and account/preferences | Legacy/native owners | Port customer controls; platform admin stays native |
 
@@ -93,3 +93,17 @@ The broad backend suite passed 320 tests, followed by 14 focused permission/shar
 This checkpoint does not complete the event, resource, attendance, remaining finance/report/import, company-shell or public-portal migration. The earlier isolated cold/warm measurements above remain the performance evidence; this checkpoint does not claim a new cold-start improvement. Remaining native infrastructure and advanced views are preserved.
 
 Across the eight current browser suites, 133 checks passed with zero failed checks or unhandled browser errors. This is scoped coverage of the migrated owners, not an acceptance claim for the still-native modules.
+
+## 2026-11-03 shared loading, geometry, payments and import checkpoint
+
+The five migrated list routes now mark their owned native host before asynchronous preparation. Their unused native sidebar no longer reserves a left column, including the first ready frame. Agreement create/edit uses the full main container and the same full-width footer. All React roots share one mount/dispose implementation instead of separate equivalent implementations per screen.
+
+React owns company dashboard loading directly. The superseded company skeleton/data loader is bypassed, and a shared skeleton uses the final dashboard grid. The platform renderer remains separate and intact. Relevant local-save, currency and realtime notices now enter one visibility-aware, throttled update queue; there is no interval refresh. Resource loading reports a changed request scope as busy immediately rather than briefly advertising an idle state before its effect starts.
+
+Worker payment rows remain selectable for review even when the balance is already paid or there is no approved work. Posting still requires permission, positive approved outstanding and explicit actual-payment consent. Selected zero/unapproved balances are excluded with an explanation. References remain optional and can be entered later. Shared Checkbox uses the existing Figma styling and square 20px dimensions across tables and forms; closed selects no longer swallow a dialog's Escape key.
+
+Tables inside React forms/dialogs contain more than six rows within a measured six-row viewport (maximum 500px), with sticky headings and retained horizontal scrolling/sticky actions. A local ResizeObserver tracks only that active table and is disconnected on cleanup. Payment names retain a readable minimum width and show agreement name/reference. Daily periods show their date once and the optional agreed working hours; unset historical hours are explicitly labelled. Hours live in the existing schedule JSON, validate complete/different HH:MM values, support overnight shifts and survive schedule rebasing. No schema migration is needed.
+
+All 15 product imports now share the React dialog, upload, select, feedback, preview table, consent and result components. Original template/help content, external-ID idempotency, final permission/linked-record/budget checks, transactional rollback, reference downloads, error CSV formula protection, onboarding refresh and contextual agreement editing are retained. Preview approval is invalidated on file/type/company changes or a failed apply; posting is never retried automatically. Files are session-local, reads are bounded and disposed, and the engine's short-lived user-bound approval token remains server controlled. Native Data Import remains available in authorized advanced views.
+
+This extends the migration; it does not complete the remaining event, resource, attendance, finance/report, company-shell or public-portal owners. See REACT_INTERFACE_AUDIT_2026-11-03.md for current acceptance evidence and the explicit remaining scope.

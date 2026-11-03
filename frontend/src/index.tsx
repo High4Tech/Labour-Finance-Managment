@@ -3,6 +3,9 @@ import {createRoot,type Root} from 'react-dom/client';
 import {Button,Feedback} from './components';
 import {t,type NativeList} from './bridge';
 import type {Overview} from './dashboard';
+import {DashboardSkeleton} from './loading';
+const Imports=lazy(()=>import('./imports'));
+import type {ImportOptions} from './imports';
 const Dashboard=lazy(()=>import('./dashboard'));
 let preparedDashboard:typeof import('./dashboard').default|undefined;
 export async function prepareDashboard(){preparedDashboard=(await import('./dashboard')).default;}
@@ -33,16 +36,18 @@ class Boundary extends Component<{children:ReactNode},{failed:boolean}>{
  componentDidCatch(error:Error){console.error('PLUS POINT React screen',error);}
  render(){return this.state.failed?<div><Feedback message="This screen could not finish loading. Refresh to try again."/><Button onClick={()=>location.reload()}>{t('Try again')}</Button></div>:this.props.children;}
 }
-export function mountPayments(host:HTMLElement,list:NativeList){if(roots.has(host))return;host.dataset.ppReactRoot='payments';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;const Screen=preparedPayments||Payments;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading worker payments…')}</p>}><Screen list={list}/></Suspense></Boundary>);}
-export function mountNotifications(host:HTMLElement,onRead:(unread:number)=>void){if(roots.has(host))return;host.dataset.ppReactRoot='notifications';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading notifications…')}</p>}><Notifications onRead={onRead}/></Suspense></Boundary>);}
+export function mountPayments(host:HTMLElement,list:NativeList){const Screen=preparedPayments||Payments;mountOwned(host,'payments',<Screen list={list}/>); }
+export function mountNotifications(host:HTMLElement,onRead:(unread:number)=>void){mountOwned(host,'notifications',<Notifications onRead={onRead}/>); }
 export function unmount(host:HTMLElement){const root=roots.get(host);if(!root)return;root.unmount();roots.delete(host);stats.unmounts++;stats.activeRoots=roots.size;}
 export function mountCommand(host:HTMLElement,kind:string,mode:'search'|'create',onClose:()=>void,onSaved?:(name:string)=>void){mountOwned(host,'command',mode==='search'?<ScopedSearch kind={kind} onClose={onClose}/>:kind==='clients'?<CreateClient onClose={onClose} onSaved={onSaved}/>:<CreateWorker onClose={onClose}/>);}
-export function mountWorkers(host:HTMLElement){if(roots.has(host))return;host.dataset.ppReactRoot='workers';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading workers…')}</p>}><Workers/></Suspense></Boundary>);}
+export function mountWorkers(host:HTMLElement){mountOwned(host,'workers',<Workers/>); }
 export function mountClients(host:HTMLElement){mountOwned(host,'clients',<Clients/>);}
 export function mountClientProfile(host:HTMLElement,customer?:string){mountOwned(host,'client-profile',<ClientProfile customer={customer}/>);}
 export function mountAgreementBuilder(host:HTMLElement,name?:string,draftName?:string){mountOwned(host,'agreement-builder',<AgreementBuilder name={name} draftName={draftName}/>);}
 export function mountAgreementProfile(host:HTMLElement,name:string){mountOwned(host,'agreement-profile',<AgreementProfile name={name}/>);}
-function mountOwned(host:HTMLElement,kind:string,content:ReactNode){if(roots.has(host))return;host.dataset.ppReactRoot=kind;const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading…')}</p>}>{content}</Suspense></Boundary>);}
-export function mountWorkerProfile(host:HTMLElement,employee:string|undefined,onPhoto:()=>void){if(roots.has(host))return;host.dataset.ppReactRoot='worker-profile';const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading worker profile…')}</p>}><WorkerProfile employee={employee} onPhoto={onPhoto}/></Suspense></Boundary>);}
-export function mountPlanning(host:HTMLElement,list:{doctype:'PP Contract Terms'|'PP Event Plan';can_delete:boolean;can_create:boolean}){if(roots.has(host))return;host.dataset.ppReactRoot='planning';const Screen=preparedPlanning||Planning;const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<p role="status">{t('Loading records…')}</p>}><Screen list={list}/></Suspense></Boundary>);}
-export function mountDashboard(host:HTMLElement,initial:Overview){if(roots.has(host))return;host.dataset.ppReactRoot='dashboard';const Screen=preparedDashboard||Dashboard;const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={<div className="pp-overview-skeleton" role="status"><span className="sr-only">{t('Loading your dashboard…')}</span><div className="pp-overview-skeleton-heading"/><div className="pp-overview-skeleton-metrics"><i/><i/><i/></div><div className="pp-overview-skeleton-panels"><i/><i/></div></div>}><Screen initial={initial}/></Suspense></Boundary>);}
+function mountOwned(host:HTMLElement,kind:string,content:ReactNode,fallback:ReactNode=<p role="status">{t('Loading…')}</p>){if(roots.has(host))return;host.dataset.ppReactRoot=kind;const root=createRoot(host);roots.set(host,root);stats.mounts++;stats.activeRoots=roots.size;root.render(<Boundary><Suspense fallback={fallback}>{content}</Suspense></Boundary>);}
+export function mountWorkerProfile(host:HTMLElement,employee:string|undefined,onPhoto:()=>void){mountOwned(host,'worker-profile',<WorkerProfile employee={employee} onPhoto={onPhoto}/>); }
+export function mountPlanning(host:HTMLElement,list:{doctype:'PP Contract Terms'|'PP Event Plan';can_delete:boolean;can_create:boolean}){const Screen=preparedPlanning||Planning;mountOwned(host,'planning',<Screen list={list}/>); }
+export function mountDashboard(host:HTMLElement,initial?:Overview){const Screen=preparedDashboard||Dashboard;mountOwned(host,'dashboard',<Screen initial={initial}/>,<DashboardSkeleton/>); }
+
+export function mountImport(host:HTMLElement,options:ImportOptions,onClose:()=>void){mountOwned(host,'import',<Imports {...options} onClose={onClose}/>);}
