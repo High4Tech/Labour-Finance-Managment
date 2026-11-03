@@ -1,0 +1,15 @@
+# Previous development chunks remain available locally for open tabs.
+chunks/*
+!chunks/agreement-profile-HRGEJH4B.js
+!chunks/chunk-GLND6U6P.js
+!chunks/chunk-GYSXJSZ2.js
+!chunks/chunk-PIQ4TCV5.js
+!chunks/chunk-WAPEWQ3P.js
+!chunks/clients-ADC2FVP4.js
+!chunks/command-dialogs-OCQQDPJ6.js
+!chunks/dashboard-IKMXDXH4.js
+!chunks/journey-H2SIBCYH.js
+!chunks/notifications-5OXHRIGX.js
+!chunks/payments-L6QM6SZZ.js
+!chunks/planning-X36MTZV7.js
+!chunks/workers-AENJNIVM.js

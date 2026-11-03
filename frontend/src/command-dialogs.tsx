@@ -1,0 +1,14 @@
+import {Button,Dialog,Feedback,Field,Input} from './components';
+import {useDebounced,useResource} from './hooks';
+import {t} from './bridge';
+import {lazy,Suspense,useState} from 'react';
+const WorkerEditor=lazy(()=>import('./workers').then(module=>({default:module.WorkerEditor})));
+const ClientEditor=lazy(()=>import('./clients').then(module=>({default:module.ClientEditor})));
+const titles:Record<string,string>={agreements:'Agreements',events:'Jobs & Events',workers:'Workers',inventory:'Inventory & equipment',warehouses:'Warehouses',vehicles:'Vehicles',clients:'Clients'};
+type Result={name:string;title:string;href:string};
+export function ScopedSearch({kind,onClose}:{kind:string;onClose:()=>void}){
+ const [query,setQuery]=useState(''),search=useDebounced(query,200),resource=useResource(signal=>window.plus_point.form_rpc<Result[]>('company_tools.search',{kind,text:search},{signal}),[kind,search]);
+ return <Dialog title={'Search '+titles[kind]} onClose={onClose} footer={<Button onClick={onClose}>{t('Close')}</Button>}><Field label="Search by name or ID">{id=><Input id={id} type="search" autoFocus value={query} onChange={e=>setQuery(e.target.value)}/>}</Field><Feedback message={resource.error}/>{resource.error&&<Button onClick={resource.refresh}>{t('Try again')}</Button>}<div className="pp-scoped-results" aria-busy={resource.loading}>{resource.data?.map(row=><a href={row.href} key={row.name} onClick={e=>{e.preventDefault();onClose();window.frappe.set_route(row.href.replace('/desk/',''));}}><img className="pp-entity-icon" width="20" height="20" alt="" src={'/assets/plus_point/images/navigation/'+(kind==='events'?'jobs':kind)+'.svg'}/><span><strong>{row.title}</strong><small>{row.name}</small></span></a>)}{!resource.loading&&!resource.data?.length&&!resource.error&&<p>{t('No matching records. Try another name or ID.')}</p>}</div></Dialog>;
+}
+export function CreateWorker({onClose,onSaved,category}:{onClose:()=>void;onSaved?:(name:string)=>void;category?:string}){const [busy,setBusy]=useState(false);return <Dialog title="Add worker" busy={busy} onClose={onClose} footer={null}><Suspense fallback={<p role="status">{t('Loading worker fields…')}</p>}><WorkerEditor defaults={category?{designation:category}:undefined} onBusy={setBusy} onBack={onClose} onSaved={name=>{onClose();if(onSaved)onSaved(name);else window.frappe.set_route('Form','Employee',name);}}/></Suspense></Dialog>;}
+export function CreateClient({onClose,onSaved}:{onClose:()=>void;onSaved?:(name:string)=>void}){const [busy,setBusy]=useState(false);return <Dialog title="Add client" busy={busy} onClose={onClose} footer={null}><Suspense fallback={<p role="status">{t('Loading client fields…')}</p>}><ClientEditor onBusy={setBusy} onBack={onClose} onSaved={name=>{onClose();if(onSaved)onSaved(name);else window.frappe.set_route('Form','Customer',name);}}/></Suspense></Dialog>;}

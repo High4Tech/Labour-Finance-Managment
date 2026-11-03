@@ -3,10 +3,14 @@
  frappe.provide('plus_point');
  const types={'PP Contract Terms':'Agreement','PP Event Plan':'Event'},route=doctype=>doctype==='PP Contract Terms'?'pp-agreements':'pp-event-plans';
  const link=(doctype,doc)=>'/desk/'+route(doctype)+(doc.pp_draft_name?'?draft='+encodeURIComponent(doc.pp_draft_name):'?record='+encodeURIComponent(doc.name)+(doc.planning_state==='Draft'?'&edit=1':''));
+ const useNative=doctype=>sessionStorage.getItem('pp:planning:advanced')===doctype;
+ function reactAttach(list){if(frappe.boot.plus_point?.is_platform||useNative(list.doctype)||list.__pp_react_planning||list.__pp_react_pending)return;list.__pp_react_pending=true;plus_point.load_feature('react_ui').then(()=>{const r=frappe.get_route();if(r[0]==='List'&&r[1]===list.doctype&&window.cur_list===list)return plus_point.react_planning_mount(list);}).catch(error=>console.warn('PLUS POINT list could not load',error)).finally(()=>list.__pp_react_pending=false);}
  function attach(list){
+  if(!frappe.boot.plus_point?.is_platform&&!useNative(list.doctype)){reactAttach(list);return;}
   if(list.__pp_combined||frappe.boot.plus_point?.is_platform)return;
   list.page.wrapper[0].ppNativeList=list;list.__pp_combined=true;list.method='plus_point.planning_list.rows';
   list.page.wrapper.addClass('pp-planning-list');
+  if(useNative(list.doctype))list.page.add_inner_button(__('Back to simplified list'),()=>{sessionStorage.removeItem('pp:planning:advanced');location.assign(location.pathname);});
   const prepare=list.prepare_data.bind(list),args=list.get_args.bind(list);
   list.prepare_data=response=>{const data=response.message||{};list.ppPlanningTotal=data.total||0;return prepare({...response,message:data.rows||[]});};
   list.get_args=()=>{const value=args(),status=value.filters.find(row=>row[1]==='pp_planning_status')?.[3];return {...value,filters:value.filters.filter(row=>row[1]!=='pp_planning_status'),planning_status:list.ppPlanningStatus||status||''};};
@@ -38,6 +42,7 @@
   }};
  }
  plus_point.planning_list={attach,link};
+ plus_point.watch_ui('react-planning-route',()=>{const r=frappe.get_route(),list=window.cur_list;if(r[0]==='List'&&types[r[1]]&&list?.doctype===r[1]&&list.page?.main)reactAttach(list);});
  // Old bookmarked Drafts routes remain useful, but no longer form a separate screen.
  frappe.router.on('change',()=>{const current=frappe.get_route();if(current[0]==='List'&&current[1]==='PP Planning Draft'&&!frappe.boot.plus_point?.is_platform){const kind=frappe.route_options?.kind;frappe.set_route('List',kind==='Event'?'PP Event Plan':'PP Contract Terms','List');}});
 })();

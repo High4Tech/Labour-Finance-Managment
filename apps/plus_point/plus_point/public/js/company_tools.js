@@ -1,26 +1,10 @@
-/* Scoped command search and notifications: native dialogs, shared cards and ownership. */
-(()=>{frappe.provide('plus_point');const pp=plus_point,esc=v=>frappe.utils.escape_html(String(v??'')),rpc=(m,args)=>pp.form_rpc('company_tools.'+m,args);
+/* React command dialogs; native resource actions remain explicit migration adapters. */
+(()=>{frappe.provide('plus_point');const pp=plus_point;
  pp.create_record=async kind=>{
   if(kind==='agreements'||kind==='events'){frappe.set_route(kind==='agreements'?'pp-agreements':'pp-event-plans',{record:'new'});return;}
-  if(kind!=='workers')return pp.open_resource(kind==='inventory'?'inventory_items':kind,()=>document.dispatchEvent(new Event('pp:data-changed')));
-  const company=pp.dashboard_company||frappe.boot.plus_point?.company_identity?.name,options=await pp.form_rpc('people.work_options',{});
-  const d=new frappe.ui.Dialog({title:__('Add worker'),size:'large',fields:[{fieldtype:'HTML',fieldname:'worker'}]});d.show();
-  const host=d.fields_dict.worker.$wrapper[0];host.dataset.ppForm='true';host.pp_form=pp.quick_worker_form(host,{company,categories:options.designations||options.categories||['Event crew'],onSaved:()=>d.hide(),onCancel:()=>d.hide()});
-  d.$wrapper.one('hidden.bs.modal',()=>{pp.dispose_owned_forms(host);d.$wrapper.remove();});
+  if(['workers','clients'].includes(kind)){await pp.load_feature('react_ui');return pp.react_command(kind,'create');}
+  return pp.open_resource(kind==='inventory'?'inventory_items':kind,()=>document.dispatchEvent(new Event('pp:data-changed')));
  };
- pp.scoped_search=kind=>{
-  const titles={agreements:'Agreements',events:'Jobs & Events',workers:'Workers',inventory:'Inventory & equipment',warehouses:'Warehouses',vehicles:'Vehicles',clients:'Clients'};
-  let timer,seq=0,dead=false;const d=new frappe.ui.Dialog({title:__('Search {0}',[__(titles[kind])]),fields:[{fieldtype:'Data',fieldname:'query',label:__('Search by name or ID')},{fieldtype:'HTML',fieldname:'results'}]});d.$wrapper.addClass('pp-scoped-search');
-  const draw=async()=>{const own=++seq,host=d.fields_dict.results.$wrapper[0];host.setAttribute('aria-busy','true');try{const rows=await rpc('search',{kind,text:d.get_value('query')||''});if(dead||own!==seq)return;host.innerHTML=rows.length?'<div class="pp-scoped-results">'+rows.map(r=>'<a href="'+esc(r.href)+'">'+pp.entity_icon(kind==='events'?'jobs':kind)+'<span><strong>'+esc(r.title)+'</strong><small>'+esc(r.name)+'</small></span></a>').join('')+'</div>':pp.empty_state('No matching records','Try another name or ID.');host.querySelectorAll('a').forEach(a=>a.onclick=e=>{e.preventDefault();d.hide();frappe.set_route(a.getAttribute('href').replace('/desk/',''));});}catch(e){if(!dead&&own===seq)pp.ui.feedback(host,{tone:'error',message:e.message});}finally{if(own===seq)host.removeAttribute('aria-busy');}};
-  d.fields_dict.query.$input.on('input',()=>{clearTimeout(timer);timer=setTimeout(draw,200);});d.$wrapper.one('hidden.bs.modal',()=>{dead=true;seq++;clearTimeout(timer);d.$wrapper.remove();});d.show();d.fields_dict.query.set_focus();draw();return d;
- };
- pp.mount_notifications=wrapper=>{
-  const root=wrapper.pp_notifications_root,generation=(root.ppGeneration||0)+1;root.ppGeneration=generation;let seq=0;const state={mode:'All',page:1};
-  root.innerHTML='<header class="pp-resource-heading"><div><h1>'+esc(__('Notifications & activity'))+'</h1><p>'+esc(__('Your alerts and recent company updates.'))+'</p></div><div class="pp-actions"><button class="btn btn-default" data-read>'+esc(__('Mark visible alerts read'))+'</button><button class="btn btn-default" data-refresh>'+pp.icon('refresh')+esc(__('Refresh'))+'</button></div></header><div class="pp-notification-tabs" role="group" aria-label="'+esc(__('Notification filter'))+'">'+['All','Unread'].map(v=>'<button class="btn btn-default" data-mode="'+v+'" aria-pressed="'+(v==='All')+'">'+esc(__(v))+'</button>').join('')+'</div><div data-personal></div><div data-company></div><div class="pp-actions" data-pages></div>';
-  const load=async()=>{const own=++seq;root.setAttribute('aria-busy','true');try{const data=await rpc('activity',state);if(own!==seq||!root.isConnected||root.ppGeneration!==generation)return;root.querySelector('[data-read]').disabled=!data.notifications.some(r=>!r.read);root.querySelector('[data-read]').onclick=async()=>{const result=await rpc('mark_read',{names:data.notifications.filter(r=>!r.read).map(r=>r.name)});frappe.app.sidebar.notifications?.tabs?.notifications?.update_count_badge(result.unread);load();};
-   const list=rows=>rows.length?'<div class="pp-notification-cards">'+rows.map(r=>'<article class="pp-notification-card" data-unread="'+(!r.read&&!!r.name)+'">'+pp.entity_icon(r.entity)+'<div><strong>'+(r.href?'<a href="'+esc(r.href)+'">'+esc(r.title)+'</a>':esc(r.title))+'</strong>'+(r.label?'<p>'+esc(__(r.label))+'</p>':'')+'<time datetime="'+esc(r.date)+'">'+esc(frappe.datetime.prettyDate(r.date))+'</time></div></article>').join('')+'</div>':pp.empty_state('No notifications','You’re up to date.');
-   root.querySelector('[data-personal]').innerHTML=pp.ui.analytics_card('Notifications','bell',list(data.notifications));root.querySelector('[data-company]').innerHTML=data.feed.length?pp.ui.analytics_card('Company activity','clock',list(data.feed)):'';root.querySelector('[data-pages]').innerHTML='<button class="btn btn-default" data-prev '+(state.page===1?'disabled':'')+'>'+esc(__('Previous'))+'</button><span>'+state.page+'</span><button class="btn btn-default" data-next '+(!data.more?'disabled':'')+'>'+esc(__('Next'))+'</button>';root.querySelector('[data-prev]').onclick=()=>{state.page--;load();};root.querySelector('[data-next]').onclick=()=>{state.page++;load();};
-  }catch(e){if(own===seq&&root.ppGeneration===generation)pp.ui.feedback(root.querySelector('[data-personal]'),{tone:'error',message:e.message});}finally{if(own===seq&&root.ppGeneration===generation)root.removeAttribute('aria-busy');}};
-  root.querySelector('[data-refresh]').onclick=load;root.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;state.page=1;root.querySelectorAll('[data-mode]').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));load();});load();
- };
+ pp.scoped_search=kind=>pp.load_feature('react_ui').then(()=>pp.react_command(kind,'search'));
+ pp.mount_notifications=wrapper=>pp.load_feature('react_ui').then(()=>pp.react_notifications_mount(wrapper));
 })();

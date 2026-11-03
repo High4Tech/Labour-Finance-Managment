@@ -20,3 +20,9 @@ body.pp-customer-app.pp-ui .progress-bar{background:var(--pp-brand-solid)}
 body.pp-customer-app.pp-ui .pp-chart-swatch{--pp-chart-color-0:var(--pp-brand-solid)}
 
 body.pp-customer-app.pp-ui .btn-primary .pp-shell-icon{filter:brightness(0) invert(1)}
+/* Brand surfaces use one palette. Semantic success colors remain semantic. */
+body.pp-customer-app.pp-ui{--pp-hero:#342014;--pp-hero-ring:rgb(255 88 0 / 12%);--pp-input-border:#b8c2cf;--pp-elevation:0 2px 8px #10203010}
+body.pp-customer-app.pp-ui :is(.pp-record-hero,.pp-agreement-hero){background:var(--pp-hero)}
+body.pp-customer-app.pp-ui .pp-record-hero-art:before{background:linear-gradient(100deg,transparent,rgb(255 88 0 / 26%))}
+body.pp-customer-app.pp-ui .pp-record-hero-art:after{border-color:var(--pp-hero-ring)}
+body.pp-customer-app.pp-ui :is(.pp-record-hero,.pp-agreement-hero) :is(.pp-reference,small){color:#f6e8df}

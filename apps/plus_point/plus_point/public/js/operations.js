@@ -136,11 +136,20 @@
   const root=document.createElement('div');root.className='pp-operations';page.main.get(0).append(root);
   let catalogue,sequence=0,record,pendingNotice,resumedDraft,pendingSign;frappe.router.on('change',()=>{plus_point.event_scene?.close();if(frappe.get_route()[0]!==mode)sequence++;});
   async function load(){
+   root.querySelector('[data-pp-react-root]')?.ppReactCleanup?.();
    await plus_point.detach_draft?.();await plus_point.close_action_popup?.();
    frappe.route_options=null;
    const query=new URL(location.href).searchParams;if(!['record','project','client','agreement','invoice','draft'].some(key=>query.has(key))){frappe.set_route('List',listTypes[mode]);return;}
    const key=location.pathname+location.search;if(root.dataset.recordKey!==key){delete root.dataset.activeTab;root.dataset.recordKey=key;}const token=++sequence;plus_point.event_scene?.close();content()?.ppFlowCleanup?.();plus_point.dispose_owned_forms(root);delete root.dataset.ready;root.dataset.building='true';root.setAttribute('aria-busy','true');root.innerHTML=plus_point.loading_state();
    try{
+    const direct=new URL(location.href).searchParams;
+    if(mode==='pp-agreements'&&direct.get('record')&&direct.get('record')!=='new'&&!direct.has('edit')&&!direct.has('draft')){
+     await plus_point.load_feature('react_ui');await frappe.require('/assets/plus_point/css/agreement_profile.css');
+     if(token!==sequence||frappe.get_route()[0]!==mode)return;
+     root.classList.remove('pp-flow-builder');root.classList.add('pp-focused-editor');root.replaceChildren();const host=document.createElement('div');root.append(host);
+     page.clear_primary_action();page.clear_secondary_action();await plus_point.react_agreement_profile_mount(host,direct.get('record'));
+     if(token!==sequence)return;delete root.dataset.building;root.removeAttribute('aria-busy');root.dataset.ready='true';return;
+    }
     await ensureEditors(mode,(!record||record==='new'||new URL(location.href).searchParams.has('edit')||mode==='pp-event-plans'));
     catalogue=await rpc('catalogue');if(token!==sequence||frappe.get_route()[0]!==mode)return;
     root.dataset.currency=catalogue.currency;

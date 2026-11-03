@@ -1,0 +1,6 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createReadCache} from '../src/read-cache.mjs';
+test('list snapshots expire and mutations invalidate only their scope',()=>{let at=0;const cache=createReadCache({now:()=>at,ttl:100});cache.set('worker-a|page1',{name:'A'});cache.set('worker-b|page1',{name:'B'});cache.invalidate('worker-a');assert.equal(cache.get('worker-a|page1'),undefined);assert.equal(cache.get('worker-b|page1').name,'B');at=100;assert.equal(cache.get('worker-b|page1'),undefined);});
+test('least-recent snapshots are bounded by count and bytes',()=>{const cache=createReadCache({limit:2,byteLimit:1000});cache.set('a|1',{name:'A'});cache.set('a|2',{name:'B'});cache.get('a|1');cache.set('a|3',{name:'C'});assert.equal(cache.get('a|2'),undefined);cache.set('a|huge',{text:'a'.repeat(1000)});assert.equal(cache.get('a|huge'),undefined);assert(cache.stats().entries<=2&&cache.stats().bytes<=1000);});
+test('user/company namespaces cannot return another user snapshot',()=>{const cache=createReadCache();cache.set('alice/company-one/events|1',{name:'Private event'});assert.equal(cache.get('bob/company-one/events|1'),undefined);assert.equal(cache.get('alice/company-two/events|1'),undefined);});

@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {agreementErrors,emailErrors,nextPayment,periodEstimate,resourceChanges} from '../src/agreement-model.mjs';
+test('agreement dates and fixed prices fail at the relevant input',()=>{assert.equal(agreementErrors('details',{agreement_title:'Forum',effective_start:'2026-11-10',effective_end:'2026-11-09'}).effective_end,'Choose an end date on or after the start date.');assert.deepEqual(agreementErrors('details',{agreement_title:'Framework',effective_start:'2026-11-01',validity_mode:'Ongoing'}),{});assert.ok(agreementErrors('pricing',{agreement_currency:'SAR',billing_model:'Fixed',fixed_amount:-1}).fixed_amount);});
+test('next payment excludes invoiced rows and period estimates intersect requirement dates',()=>{const data={billing_model:'Daily',agreement_rate:2,staffing:[{start_date:'2026-11-02',end_date:'2026-11-05',workers_required:3,client_rate:100}],pp_daily_checkpoints:JSON.stringify([{id:'later',due_date:'2026-11-20'},{id:'paid',due_date:'2026-11-01',invoice:'INV'},{id:'first',due_date:'2026-11-10'}])};assert.equal(nextPayment(data).id,'first');assert.equal(periodEstimate(data,{from_date:'2026-11-01',to_date:'2026-11-03'}),300);assert.equal(periodEstimate(data,{from_date:'2026-11-10',to_date:'2026-11-11'}),0);});
+test('CC rows validate separate addresses and reject header/list injection',()=>{assert.deepEqual(emailErrors('client@example.com',['a@example.com','','b@example.com']),{});assert.ok(emailErrors('a@example.com,b@example.com').recipient);assert.ok(emailErrors('client@example.com',['a@example.com\nBcc:other@example.com']).cc0);});
+test('New sites resolve by name while saved sites retain their authorized record ID',()=>{
+ const saved={name:'SITE-1',site_name:'Forum',city:'Riyadh',address_line1:'Venue road'},fresh={name:'ui-only-uuid',site_name:'New hall'};
+ const data={venues:[saved],billing_model:'Daily',agreement_currency:'SAR',effective_start:'2026-11-10',effective_end:'2026-11-12'};
+ const crew=[{site:saved.name,site_name:saved.site_name,designation:'Driver',phase:'Event',workers_required:1,client_rate:300},{site:fresh.name,site_name:fresh.site_name,designation:'Event crew',phase:'Event',workers_required:4,client_rate:200}];
+ const payload=resourceChanges(data,[saved,fresh],crew,[{key:'ui-vehicle',vehicle_type:'Van',quantity:1}]);
+ assert.equal(payload.staffing[0].site,'SITE-1');assert.equal(payload.staffing[1].site,undefined);assert.equal(payload.staffing[1].site_name,'New hall');assert.equal(payload.staffing[1].end_date,data.effective_end);assert(!('key' in payload.transport_requirements[0]));assert.equal(payload.transport_requirements[0].start_date,data.effective_start);
+ assert.equal(resourceChanges({...data,effective_end:null},[saved],crew,[]).staffing[0].end_date,data.effective_start);
+});

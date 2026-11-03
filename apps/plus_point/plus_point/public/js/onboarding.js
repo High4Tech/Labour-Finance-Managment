@@ -318,7 +318,7 @@
         }
         if (!screens[frm.doctype]) return;
         if (!platform() && !frm.is_new() && frappe.user.has_role('System Manager')) {
-            if (frm.doctype === 'Employee') frm.add_custom_button(__('Worker statement'), () =>
+            if (frm.doctype === 'Employee'&&!frm.__pp_react_worker) frm.add_custom_button(__('Worker statement'), () =>
                 frappe.set_route('query-report', 'PLUS POINT Worker Statement', {employee: frm.doc.name, company: frm.doc.company}));
             if (frm.doctype === 'Project') frm.add_custom_button(__('Project finances'), () =>
                 frappe.set_route('query-report', 'PLUS POINT Project Finances', {project: frm.doc.name, company: frm.doc.company}));
@@ -386,7 +386,8 @@
             const page = active.page;
             if (page?.title !== __(title)) page?.set_title(__(title));
             const listview = frappe.get_list_view(route[1]);
-            if (listview?.can_create && page?.btn_primary?.is(':visible') && page.btn_primary.attr('data-label') !== __(action)) {
+            if(listview?.__pp_react_planning||listview?.__pp_react_workers||listview?.__pp_react_clients)return;
+            if (!listview?.__pp_wages && listview?.can_create && page?.btn_primary?.is(':visible') && page.btn_primary.attr('data-label') !== __(action)) {
                 page.set_primary_action({label: __(action), short_label: __('Add')}, () => listview.make_new_doc(), 'plus');
                 // Native list refresh can replace the handler on the same button.
                 page.btn_primary.removeAttr('data-pp-event-action');

@@ -70,8 +70,8 @@
 
 
 /* Commercial steps use the product green, independent of black form actions. */
-.pp-flow-builder .pp-flow-number{border-color:#116f65!important;color:#116f65!important;background:var(--fg-color)!important}
-.pp-flow-builder .pp-op-tab-item:is(.is-complete,.is-current) .pp-flow-number,.pp-flow-builder .pp-op-tab-item:has([aria-selected=true]) .pp-flow-number{background:#116f65!important;color:#fff!important}
+.pp-flow-builder .pp-flow-number{border-color:var(--pp-action-primary)!important;color:var(--pp-action-primary)!important;background:var(--fg-color)!important}
+.pp-flow-builder .pp-op-tab-item:is(.is-complete,.is-current) .pp-flow-number,.pp-flow-builder .pp-op-tab-item:has([aria-selected=true]) .pp-flow-number{background:var(--pp-action-primary)!important;color:#fff!important}
 .pp-flow-builder .pp-flow-steps [role=tab][aria-selected=true]{background:rgba(17,111,101,.1)!important;color:#0d655b!important}
 .pp-flow-builder .pp-builder-card:has(.pp-delivery-checklist){padding-bottom:12px}
 

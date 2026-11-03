@@ -174,3 +174,44 @@ def set_cycle(event,cycle):
     if cycle not in ('Manual','Daily','Monthly'):frappe.throw('Choose Manual, Daily or Monthly payment confirmation.')
     doc.wage_payment_cycle=cycle;doc.save()
     return dict(cycle=cycle)
+
+
+@frappe.whitelist()
+def history(company=None,event=None,search='',page=1):
+    """Bounded React history adapter; all native row permissions still apply."""
+    business=company_scope(company)
+    for dt in ('PP Wage Settlement','Employee','Project','PP Event Plan'):
+        frappe.has_permission(dt,'read',throw=True)
+    events=frappe.get_list('PP Event Plan',filters={'company':business.name},
+        fields=['name','event_name','project'],limit_page_length=0)
+    if event and event not in {e.name for e in events}:
+        frappe.throw('Choose an event you can access.',frappe.PermissionError)
+    event_map={e.project:e for e in events if not event or e.name==event}
+    project_filters={'company':business.name}
+    if event:project_filters['name']=['in',list(event_map) or ['']]
+    project_rows=frappe.get_list('Project',filters=project_filters,fields=['name','project_name'],limit_page_length=0)
+    project_names={p.name:p.project_name for p in project_rows}
+    projects=list(project_names)
+    filters={'project':['in',projects or ['']]}
+    query=str(search or '').strip()[:100]
+    worker_filters={'company':business.name}
+    if query:worker_filters['employee_name']=['like','%'+query+'%']
+    workers={w.name:w for w in frappe.get_list('Employee',filters=worker_filters,
+        fields=['name','employee_name','image'],limit_page_length=0)}
+    filters['employee']=['in',list(workers) or ['']]
+    page=max(1,frappe.utils.cint(page));size=25
+    rows=frappe.get_list('PP Wage Settlement',filters=filters,
+        fields=['name','employee','project','amount','payment_reference','payment_entry','creation','docstatus'],
+        order_by='creation desc, name desc',limit_start=(page-1)*size,limit_page_length=size+1)
+    # Permission-aware count: never use db.count which bypasses user filters.
+    count=frappe.get_list('PP Wage Settlement',filters=filters,fields=[{'COUNT':'name','as':'total'}],order_by=None,limit_page_length=1)
+    payments={p.name:p.posting_date for p in frappe.get_list('Payment Entry',filters={'company':business.name,'name':['in',[r.payment_entry for r in rows[:size]] or ['']]},fields=['name','posting_date'],limit_page_length=size)} if frappe.has_permission('Payment Entry','read') else {}
+    result=[]
+    for row in rows[:size]:
+        worker=workers[row.employee];item=event_map.get(row.project)
+        result.append(dict(name=row.name,employee=row.employee,worker=worker.employee_name,image=worker.image,
+            event=item.name if item else '',event_name=item.event_name if item else project_names[row.project],amount=str(money(row.amount)),payment_reference=row.payment_reference or '',
+            payment_entry=row.payment_entry,posting_date=str(payments.get(row.payment_entry) or '')[:10],docstatus=row.docstatus))
+    total=count[0].total if count else 0
+    return dict(rows=result,currency=business.default_currency,page=page,pages=max(1,(total+size-1)//size),
+        can_reference=frappe.has_permission('PP Wage Settlement','write'))

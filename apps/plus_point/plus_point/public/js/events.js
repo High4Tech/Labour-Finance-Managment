@@ -11,6 +11,7 @@
   warehouses:[input('warehouse_name','Warehouse name'),field('Select','warehouse_type','Ownership',{options:'Owned\nRented',default:'Owned',reqd:1})],
  })[kind]||[];
  plus_point.open_resource=async(kind,after)=>{
+  if(kind==='clients'&&!frappe.boot.plus_point?.is_platform){await plus_point.load_feature('react_ui');return plus_point.react_command('clients','create',after?name=>after({doctype:'Customer',name}):undefined);}
   const companies=(await frappe.db.get_list('Company',{fields:['name'],limit:100}));
   if(!companies.length){plus_point.open_setup();return;}
   const dialog=new frappe.ui.Dialog({title:__({clients:'Add client',vehicles:'Add event vehicle',inventory_items:'Add inventory item',warehouses:'Add warehouse'}[kind]),fields:[field('Link','company','Your company',{options:'Company',default:plus_point.dashboard_company||frappe.boot.plus_point?.company_identity?.name||companies[0]?.name,reqd:1,hidden:!frappe.boot.plus_point?.is_platform}),...plus_point.resource_fields(kind)],primary_action_label:__('Save'),async primary_action(values){if(!plus_point.validate_inputs(dialog))return;dialog.disable_primary_action();try{const result=await call('save_resource',{kind,company:values.company,values:JSON.stringify(values)});dialog.hide();frappe.show_alert({message:__('Saved. No attendance, invoice or payment was created.'),indicator:'green'});await after?.(result);}finally{dialog.enable_primary_action();}}});dialog.show();plus_point.enhance_selectors?.(dialog);plus_point.bind_saved_context?.(dialog);if(kind==='clients')plus_point.bind_country_currency?.(dialog);dialog.body.dataset.ppForm='true';dialog.body.pp_form=dialog;dialog.$wrapper.one('hidden.bs.modal',()=>{plus_point.dispose_owned_forms(dialog.body);dialog.$wrapper.remove();});
@@ -50,6 +51,7 @@
  plus_point.event_summary_markup=plans=>`<section class="pp-event-plan-panel"><header class="pp-panel-heading"><h3>${esc(__('Upcoming events'))}</h3><button type="button" class="btn btn-default btn-sm pp-new-event">${esc(__('Create event'))}</button></header>${plans?.length?`<div class="pp-event-summary">${plans.map(p=>`<a href="/desk/pp-event-plans?record=${encodeURIComponent(p.name)}"><strong>${esc(p.event_name)}</strong><span>${esc(p.start_date)} – ${esc(p.end_date)} · ${p.duration} ${esc(__('days'))}</span><span>${esc(__(p.crew_allocated?'Crew allocated':'Crew plan needs review'))}</span></a>`).join('')}</div>`:`<p>${esc(__('No upcoming events. Start with the client, event dates and workers needed per venue.'))}</p>`}</section>`;
  $(document).on('form-refresh.pp-event-timeline',async(_event,frm)=>{
   if(!['Project','Customer','Company'].includes(frm.doctype)||frm.is_new()||frappe.boot.plus_point?.is_platform)return;
+  if(frm.doctype==='Customer'&&sessionStorage.getItem('pp:clients:advanced')!=='1')return;
   const name=frm.doc.name,seq=frm.__pp_event_seq=(frm.__pp_event_seq||0)+1;
   let plans;try{plans=await call('plans_for',frm.doctype==='Project'?{project:name}:frm.doctype==='Customer'?{customer:name}:{company:name});}catch{frm.__pp_event_panel?.remove();return;}
   if(seq!==frm.__pp_event_seq||frm.doc.name!==name)return;
@@ -62,7 +64,7 @@
  $(document).on('form-refresh.pp-event-resource',(_event,frm)=>{
   if(frappe.boot.plus_point?.is_platform)return;
   if(frm.doctype==='Employee')frm.set_df_property('user_id','hidden',1);
-  if(frm.doctype==='Employee'&&!frm.is_new())frm.add_custom_button(__('Assign to an event'),()=>plus_point.worker_assign?plus_point.worker_assign(frm,()=>frm.reload_doc()):frappe.msgprint(__('The worker assignment update is awaiting installation. Refresh after the update is installed.')));
+  if(frm.doctype==='Employee'&&!frm.is_new()&&!frm.__pp_react_worker)frm.add_custom_button(__('Assign to an event'),()=>plus_point.worker_assign?plus_point.worker_assign(frm,()=>frm.reload_doc()):frappe.msgprint(__('The worker assignment update is awaiting installation. Refresh after the update is installed.')));
   if(frm.doctype==='PP Assignment'&&frm.is_new())frm.add_custom_button(__('Assign multiple workers'),()=>plus_point.assign_workers({project:frm.doc.project,site:frm.doc.site,start:frm.doc.start_date,end:frm.doc.end_date}));
   if(frm.doctype==='PP Site'&&!frm.is_new())frm.add_custom_button(__('Assign workers'),()=>plus_point.assign_workers({project:frm.doc.project,site:frm.doc.name}));
   if(frm.doctype==='Vehicle')for(const name of ['employee','insurance_details','additional_details','vehicle_value','acquisition_date','location','last_odometer','chassis_no'])frm.set_df_property(name,'hidden',1);

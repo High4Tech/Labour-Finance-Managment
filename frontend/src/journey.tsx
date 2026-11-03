@@ -1,0 +1,18 @@
+import {memo,useEffect,useRef,type CSSProperties} from 'react';
+import {t} from './bridge';
+const types=['client','crew','van','crane','warehouse','venue','worker-orange','worker-teal','client-active','warehouse-active','venue-active','loader'];
+const scenes=[
+ {type:'client',pose:'client-active',place:'Client office',title:'Start with an agreement',description:'Agree the scope, client rates and payment milestones before the work begins.',cta:'Create agreement',href:'/desk/pp-agreements?record=new',vehicle:'van'},
+ {type:'crew',place:'Worker house',title:'Get your team ready',description:'Keep worker profiles, pay and availability together. Plan the vehicles that take your crew to site.',cta:'Manage workers',href:'/desk/employee',secondary:'Manage vehicles',secondaryHref:'/desk/pp-inventory?view=vehicles',vehicle:'van'},
+ {type:'warehouse',pose:'warehouse-active',place:'Warehouse',title:'Prepare the equipment',description:'See what is available, where it is stored and what is reserved. Send the right inventory to each event.',cta:'Manage inventory',href:'/desk/pp-inventory?view=equipment',vehicle:'loader'},
+ {type:'venue',pose:'venue-active',place:'Event site',title:'Bring the plan to life',description:'Assign crew and vehicles, track attendance and follow the work through to payment.',cta:'Create event',href:'/desk/pp-event-plans?record=new',vehicle:'loader'}
+];
+function Sprite({type,extra=''}:{type:string;extra?:string}){const i=types.indexOf(type);return <i className={'pp-journey-sprite '+extra} style={{'--sprite-x':(i%4)*100/3+'%','--sprite-y':Math.floor(i/4)*50+'%'} as CSSProperties}/>;}
+export default memo(function Journey(){
+ const ref=useRef<HTMLElement>(null);
+ useEffect(()=>{const section=ref.current!,motion=matchMedia('(prefers-reduced-motion: reduce)');let loaded=false;const wake=()=>section.classList.toggle('pp-journey-paused',document.hidden||motion.matches);
+  const observer=new IntersectionObserver(entries=>{for(const entry of entries){entry.target.classList.toggle('pp-journey-visible',entry.isIntersecting);if(entry.isIntersecting&&!loaded){loaded=true;section.style.setProperty('--pp-journey-atlas','url(/assets/plus_point/images/dashboard-journey/event-world-atlas.png?v=20261101-scenes-4)');}}},{root:section.closest('.main-section'),rootMargin:'160px',threshold:.01});
+  section.querySelectorAll('.pp-journey-banner').forEach(n=>observer.observe(n));document.addEventListener('visibilitychange',wake);motion.addEventListener('change',wake);wake();return()=>{observer.disconnect();document.removeEventListener('visibilitychange',wake);motion.removeEventListener('change',wake);};
+ },[]);
+ return <section ref={ref} className="pp-journey-banners" aria-label={t('From agreement to delivery')}><header><h2>{t('From agreement to delivery')}</h2><p>{t('Everything you need to move the work forward.')}</p></header><div className="pp-journey-grid">{scenes.map(s=><article className="pp-journey-banner" data-scene={s.type} key={s.type}><div className="pp-journey-world" aria-hidden="true"><div className="pp-journey-road"/><div className="pp-journey-model"><Sprite type={s.type}/>{s.pose&&<Sprite type={s.pose} extra="pp-journey-pose"/>}</div><div className="pp-journey-vehicle"><Sprite type={s.vehicle}/></div><div className="pp-journey-walker"><Sprite type="worker-orange"/></div><span className="pp-journey-place">{t(s.place)}</span></div><div className="pp-journey-story"><h3>{t(s.title)}</h3><p>{t(s.description)}</p><div className="pp-journey-actions"><a className="btn btn-primary" href={s.href}>{t(s.cta)}</a>{s.secondary&&<a className="pp-journey-secondary" href={s.secondaryHref}>{t(s.secondary)}</a>}</div></div></article>)}</div></section>;
+});

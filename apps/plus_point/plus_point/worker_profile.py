@@ -7,6 +7,110 @@ from plus_point.setup_flow import require_customer,linked
 from plus_point.finance import money
 
 
+# Product form boundary. Native Employee hooks, permissions and payroll remain
+# authoritative; only these presentation fields can be changed by this form.
+WORKER_FIELDS = ('first_name', 'last_name', 'gender', 'date_of_birth', 'date_of_joining',
+    'status', 'employee_number', 'department', 'designation', 'reports_to', 'employment_type',
+    'pp_salary_basis', 'pp_daily_rate', 'pp_monthly_rate', 'pp_leaves_per_month',
+    'pp_loan_allowed', 'pp_loan_wait_months', 'pp_loan_deduction_percent', 'cell_number',
+    'personal_email', 'current_address', 'person_to_be_contacted', 'emergency_phone_number', 'relation')
+
+
+@frappe.whitelist()
+def form(employee=None):
+    from plus_point.operations import company, event_roles
+    from plus_point.people import DEPARTMENTS, senior
+    business = company()
+    worker = linked('Employee', employee, business.name) if employee else None
+    frappe.has_permission('Employee', 'write' if worker else 'create', doc=worker, throw=True)
+    departments = frappe.get_list('Department', filters={'company': business.name},
+        fields=['name', 'department_name'], order_by='department_name', limit_page_length=0)
+    managers = frappe.get_list('Employee', filters={'company': business.name, 'status': 'Active'},
+        fields=['name', 'employee_name', 'designation'], order_by='employee_name', limit_page_length=0)
+    meta = frappe.get_meta('Employee')
+    fields = [key for key in WORKER_FIELDS if meta.has_field(key)]
+    values = {key: worker.get(key) for key in fields} if worker else dict(status='Active',
+        date_of_joining=today(), pp_salary_basis='Daily', pp_daily_rate=0, pp_monthly_rate=0,
+        pp_leaves_per_month=0, pp_loan_allowed=0, pp_loan_wait_months=0, pp_loan_deduction_percent=10)
+    return dict(values=values, modified=str(worker.modified) if worker else None,
+        title=worker.employee_name if worker else '', reference=worker.get('pp_reference') if worker else '',
+        company=business.name, currency=business.default_currency, fields=fields,
+        departments=[dict(value=r.name,label=r.department_name) for r in departments],
+        roles={r.name:list(dict.fromkeys(DEPARTMENTS.get(r.department_name,event_roles())+
+            [role for role in event_roles() if role not in {x for group in DEPARTMENTS.values() for x in group}])) for r in departments},
+        designations=event_roles(), managers=[dict(value=r.name,label=r.employee_name) for r in managers
+            if r.name!=employee and senior(r.designation)],
+        genders=frappe.get_list('Gender',pluck='name',order_by='name',limit_page_length=0),
+        employment_types=frappe.get_list('Employment Type',pluck='name',order_by='name',limit_page_length=0))
+
+
+@frappe.whitelist(methods=['POST'])
+def save(values, employee=None, modified=None):
+    from plus_point.operations import company
+    from plus_point.benefits import atomic
+
+    @atomic
+    def persist():
+        business=company()
+        values_dict=frappe.parse_json(values)
+        if not isinstance(values_dict,dict) or set(values_dict)-(set(WORKER_FIELDS)|{'new_category'}):
+            frappe.throw('Use the worker profile fields to update this record.')
+        if employee:
+            # Lock before comparing the browser version, so simultaneous edits
+            # cannot overwrite each other after passing the version check.
+            current=frappe.db.get_value('Employee',employee,'modified',for_update=True)
+            doc=linked('Employee',employee,business.name)
+            doc.check_permission('write')
+            if not modified or frappe.utils.get_datetime(current)!=frappe.utils.get_datetime(modified):
+                frappe.throw('This worker was updated elsewhere. Reload the profile before saving.',frappe.TimestampMismatchError)
+        else:
+            frappe.has_permission('Employee','create',throw=True)
+            doc=frappe.new_doc('Employee')
+            doc.update(company=business.name,status='Active',create_user_automatically=0)
+        if values_dict.get('designation')=='__new__':
+            from plus_point.operations import create_category
+            values_dict['designation']=create_category(values_dict.get('new_category'))['name']
+        doc.update({key:value for key,value in values_dict.items() if key in WORKER_FIELDS and doc.meta.has_field(key)})
+        doc.save()
+        return dict(name=doc.name,modified=str(doc.modified))
+    return persist()
+
+
+@frappe.whitelist()
+def workers(search='',status='',page=1):
+    from plus_point.operations import company
+    business=company();frappe.has_permission('Employee','read',throw=True)
+    status=str(status or '')
+    if status not in ('','Available','Assigned','Scheduled','Inactive'):
+        frappe.throw('Choose All, Available, Assigned, Scheduled or Inactive workers.')
+    page=max(1,frappe.utils.cint(page));size=20
+    if page>501:frappe.throw('Narrow the worker search before loading more records.')
+    filters={'company':business.name};search=str(search or '').strip()[:140]
+    if search:filters['employee_name']=['like','%'+search+'%']
+    names=frappe.get_list('Employee',filters={'company':business.name},pluck='name',limit_page_length=0)
+    can_read_assignments=frappe.has_permission('PP Assignment','read')
+    if status in ('Assigned','Available','Scheduled') and not can_read_assignments:
+        frappe.throw('You need worker-assignment access to filter booking availability.',frappe.PermissionError)
+    assignments=frappe.get_list('PP Assignment',filters={'employee':['in',names or ['']]},
+        fields=['employee','start_date','end_date'],limit_page_length=0) if can_read_assignments else []
+    active=[r for r in assignments if not r.end_date or getdate(r.end_date)>=getdate(today())]
+    booked={r.employee for r in active if getdate(r.start_date)<=getdate(today())}
+    scheduled={r.employee for r in active}-booked
+    if status=='Assigned':filters.update(status='Active',name=['in',list(booked) or ['']])
+    if status=='Available':filters.update(status='Active',name=['not in',list(booked|scheduled) or ['']])
+    if status=='Scheduled':filters.update(status='Active',name=['in',list(scheduled) or ['']])
+    if status=='Inactive':filters['status']=['!=','Active']
+    total=frappe.get_list('Employee',filters=filters,fields=[{'COUNT':'name','as':'total'}])[0].total
+    pages=max(1,(total+size-1)//size);page=min(page,pages)
+    rows=frappe.get_list('Employee',filters=filters,fields=['name','employee_name','image','pp_reference',
+        'status','department','designation','employment_type','branch'],order_by='employee_name,name',
+        limit_start=(page-1)*size,limit_page_length=size)
+    for row in rows:row['availability']='Inactive' if row.status!='Active' else 'Not available to view' if not can_read_assignments else 'Assigned' if row.name in booked else 'Scheduled' if row.name in scheduled else 'Available'
+    return dict(rows=rows,page=page,pages=pages,total=total,
+        can_create=bool(frappe.has_permission('Employee','create')),
+        can_delete=bool(frappe.has_permission('Employee','delete')))
+
+
 @frappe.whitelist()
 def overview(employee,days=91):
     require_customer();worker=linked('Employee',employee);company=linked('Company',worker.company)

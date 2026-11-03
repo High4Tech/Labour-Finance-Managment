@@ -133,7 +133,7 @@ body.pp-customer-app.pp-ui .pp-figma-field .pp-choice-field>label{display:flex;a
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]){appearance:none;position:relative;display:inline-grid;place-items:center;width:20px!important;height:20px;min-width:20px;min-height:20px;padding:0;margin:0!important;flex:none;border:1px solid var(--pp-field-border);border-radius:6px;background:var(--pp-field-bg);box-shadow:none;vertical-align:middle;cursor:pointer}
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):before{content:none;position:static;inset:auto;border:0;margin:0;transform:none;box-shadow:none}
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=radio]{border-radius:9999px}
-body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):checked{background:#116f65;border-color:#116f65}
+body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):checked{background:var(--pp-action-primary);border-color:var(--pp-action-primary)}
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=radio]:checked:before{content:'';display:block;width:8px;height:8px;border-radius:50%;background:#fff}
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check)[type=checkbox]:checked:before{content:'';display:block;width:14px;height:14px;background:url('/assets/plus_point/images/figma/check-checkbox.svg') center no-repeat}
 body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):focus-visible{outline:2px solid var(--pp-focus);outline-offset:3px}
@@ -148,7 +148,7 @@ body.pp-customer-app.pp-ui .pp-figma-field.has-error .control-label.reqd:after{c
 @media(prefers-reduced-motion:reduce){body.pp-customer-app.pp-ui :is(input.form-control,select.form-control,textarea.form-control,.pp-select-trigger){transition:none}}
 @media(forced-colors:active){body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]){appearance:auto}body.pp-customer-app.pp-ui :is(.pp-figma-field input,input.pp-figma-check):is([type=checkbox],[type=radio]):before{display:none}}
 body.pp-ui .pp-input-hint{color:var(--pp-danger);font-size:14px;line-height:1.5;margin-top:6px}
-body.pp-ui :is(input[type=checkbox],input[type=radio]){accent-color:#116f65;flex:none}
+body.pp-ui :is(input[type=checkbox],input[type=radio]){accent-color:var(--pp-action-primary);flex:none}
 body.pp-ui :is(.standard-filter-section,.filter-section,.page-form,.list-filters) :is(.btn,.form-control,.sort-selector-button,.filter-button){height:var(--pp-control-height);min-height:var(--pp-control-height);line-height:20px;font-size:14px;box-sizing:border-box}
 body.pp-ui .filter-section{align-items:center;gap:8px}
 body.pp-ui .filter-section :is(.filter-selector,.sort-selector,.filter-button-group,.frappe-control){margin-block:0;align-self:center}
@@ -193,7 +193,7 @@ body.pp-ui .pp-worker-edit-body>[role=tabpanel]::before{content:attr(data-worker
 body.pp-ui .page-container:has(.pp-worker-edit-body) .pp-worker-profile{background:var(--pp-canvas);padding:20px}
 body.pp-ui .pp-flow-builder .pp-op-client-fields[hidden]{display:none!important}
 
-body.pp-ui .pp-flow-builder[data-final-step=false] [data-save-event-edit-draft]{background:#116f65!important;border-color:#116f65!important;color:#fff!important;--icon-stroke:#fff}body.pp-ui .pp-flow-builder[data-final-step=true] [data-save-event-edit-draft]{background:#fff2bd!important;border-color:#c89313!important;color:#584000!important;--icon-stroke:#584000}
+body.pp-ui .pp-flow-builder[data-final-step=false] [data-save-event-edit-draft]{background:var(--pp-action-primary)!important;border-color:var(--pp-action-primary)!important;color:#fff!important;--icon-stroke:#fff}body.pp-ui .pp-flow-builder[data-final-step=true] [data-save-event-edit-draft]{background:#fff2bd!important;border-color:#c89313!important;color:#584000!important;--icon-stroke:#584000}
 
 body.pp-ui .pp-ui-badge[data-tone=info]{background:color-mix(in srgb,var(--pp-info) 9%,var(--pp-surface));color:var(--pp-info)}
 body.pp-ui .pp-client-load-state{margin-block:12px;line-height:1.5}
@@ -208,7 +208,7 @@ body.pp-ui .page-form .filter-section :is(.btn,.btn-sm,.sort-selector-button){--
 body.pp-ui .frappe-control.has-success .form-control{border-color:var(--pp-positive);background:color-mix(in srgb,var(--pp-positive) 3%,var(--pp-surface))}
 body.pp-ui .frappe-control[aria-busy=true] .form-control{cursor:progress;background:var(--control-bg)}
 body.pp-ui .progress{height:8px;background:var(--control-bg);border-radius:5px;overflow:hidden}
-body.pp-ui .progress-bar{background:#116f65}
+body.pp-ui .progress-bar{background:var(--pp-action-primary)}
 body.pp-ui .pp-ui-disclosure .pp-event-card{box-shadow:none;margin:0;border:0}
 
 /* Frappe's native shown-dialog translate(-15%) must not offset the centered shell. */

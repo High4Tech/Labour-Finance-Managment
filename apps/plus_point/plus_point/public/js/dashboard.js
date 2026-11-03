@@ -78,6 +78,7 @@
     }
     plus_point.mount_dashboard = function (root) {
         if (!root) return;
+        if(!frappe.boot.plus_point?.is_platform)root.classList.add('pp-customer-overview-host');
         if (!frappe.boot.plus_point?.is_platform && !frappe.user.has_role('System Manager')) {
             root.remove(); return;
         }

@@ -4,6 +4,8 @@ import frappe
 
 def boot_context(bootinfo):
     platform = bool(frappe.conf.get('pp_control_plane'))
+    if not platform:
+        bootinfo.setdefault('sysdefaults', {})['app_name'] = 'PLUS POINT'
     from plus_point.navigation import product_navigation
     navigation = product_navigation(platform)
     bootinfo.plus_point = {

@@ -9,6 +9,43 @@ from plus_point.tests import test_hierarchy as hierarchy
 from plus_point.tests.test_operations import insert
 
 class AgreementSharingTests(unittest.TestCase):
+    def test_react_resource_proposal_resolves_new_sites_only_after_client_acceptance(self):
+        from plus_point import agreement_updates as updates
+        from urllib.parse import urlparse,parse_qs
+        a=self.agreement()
+        op.save_agreement(dict(resource_mode='Estimated quantities'),a['name'])
+        original=op.agreement(a['name'])
+        rows=[dict(site=r.site,site_name='Main venue',designation=r.designation,phase=r.phase,
+            start_date=str(r.start_date),end_date=str(r.end_date),workers_required=r.workers_required,
+            wage_rate=0,client_rate=float(r.client_rate)) for r in original['staffing']]
+        rows.append(dict(site_name='New client hall',designation=self.role,phase='Event',
+            start_date=today(),end_date=add_days(today(),4),workers_required=1,wage_rate=0,client_rate=1700))
+        values=dict(agreement_currency=original['agreement_currency'],staffing=rows,
+            sites=['Main venue','New client hall'],site_details={'New client hall':dict(city='Dubai',address_line1='21 Venue Road')},
+            transport_requirements=[dict(vehicle_type='Crew van',quantity=1,site_name='New client hall',start_date=today(),end_date=add_days(today(),4))])
+        financial=lambda:tuple(frappe.db.count(dt) for dt in ('PP Assignment','PP Work Entry','Sales Invoice','GL Entry'))
+        before=financial();exists=frappe.db.exists
+        with patch.object(frappe.db,'exists',side_effect=lambda dt,*args,**kw:True if dt=='Email Account' else exists(dt,*args,**kw)),patch('plus_point.signing.send_link'):
+            proposed=updates.propose(a['name'],values,'Add second delivery hall',recipient='client@example.invalid',cc='manager@example.invalid')
+        self.assertEqual(proposed['status'],'Pending')
+        self.assertFalse(frappe.db.exists('PP Site',dict(project=a['project'],site_name='New client hall')))
+        self.assertEqual(len(op.agreement(a['name'])['staffing']),1)
+        self.assertEqual(financial(),before)
+        token=parse_qs(urlparse(proposed['url']).query)['token'][0]
+        signing.accept(token,'Client Manager','client@example.invalid',1)
+        saved=op.agreement(a['name']);self.assertEqual(len(saved['staffing']),2)
+        hall=next(r for r in saved['venues'] if r.site_name=='New client hall')
+        self.assertEqual(hall.city,'Dubai');self.assertEqual(saved['staffing'][1].site,hall.name)
+        self.assertEqual(financial(),before)
+
+    def test_crew_choices_do_not_load_unrelated_business_lists(self):
+        with patch('plus_point.operations.catalogue',side_effect=AssertionError('Unrelated catalogue')):
+            choices=op.crew_options()
+        self.assertIn('Event crew',choices['designations'])
+        self.assertEqual(set(choices),{'designations'})
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):op.crew_options()
+
     @classmethod
     def setUpClass(cls):hierarchy.HierarchyTests.setUpClass.__func__(cls)
     @classmethod

@@ -76,6 +76,13 @@ def terms_doc(name,write=False):
 
 
 @frappe.whitelist()
+def crew_options():
+    """Category choices without loading every agreement, event and client."""
+    company()
+    return dict(designations=event_roles())
+
+
+@frappe.whitelist()
 def catalogue():
     business=company()
     projects={r.name:r for r in frappe.get_list('Project',filters={'company':business.name,'pp_archived':0},fields=['name','project_name','customer','status'],limit_page_length=0)}

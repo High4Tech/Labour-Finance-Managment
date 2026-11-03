@@ -18,6 +18,71 @@ class WorkflowRepairsTests(unittest.TestCase):
     agreement=hierarchy.HierarchyTests.agreement
     event=hierarchy.HierarchyTests.event
 
+    def test_react_client_boundary_preserves_native_profiles_and_checks_revision(self):
+        from plus_point import clients
+        data=clients.form(self.f.customer.name)
+        values={key:data['values'].get(key) or '' for key in clients.PROFILE_FIELDS}
+        values.update(customer_type='Company',contact_name='Client Manager',email='client@example.invalid',
+            country='United Arab Emirates',city='Dubai',address_line1='12 Festival Avenue',default_currency='AED')
+        counts=lambda:tuple(frappe.db.count(dt) for dt in ('PP Event Plan','PP Work Entry','GL Entry','Sales Invoice'))
+        before=counts()
+        saved=clients.save_profile(values,self.f.customer.name,data['revision'])
+        self.assertEqual(saved['name'],self.f.customer.name)
+        self.assertEqual(clients.details(saved['name'])['email'],'client@example.invalid')
+        self.assertEqual(before,counts())
+        with self.assertRaises(frappe.TimestampMismatchError):clients.save_profile(values,saved['name'],data['revision'])
+        fresh=clients.form(saved['name'])
+        contact=frappe.db.get_value('Customer',saved['name'],'customer_primary_contact')
+        frappe.db.set_value('Contact',contact,'first_name','Changed in native view')
+        with self.assertRaises(frappe.TimestampMismatchError):clients.save_profile(values,saved['name'],fresh['revision'])
+        with self.assertRaises(frappe.ValidationError):clients.save_profile(dict(values,disabled=1),saved['name'],fresh['revision'])
+
+    def test_react_client_read_is_permission_scoped_and_creates_nothing(self):
+        from plus_point import clients
+        before=frappe.db.count('Customer')
+        self.assertIn(self.f.customer.name,[r.name for r in clients.rows(search=self.f.customer.customer_name)['rows']])
+        self.assertEqual(clients.profile(self.f.customer.name)['name'],self.f.customer.name)
+        self.assertEqual(frappe.db.count('Customer'),before)
+        previous=frappe.session.user
+        try:
+            frappe.set_user('Guest')
+            with self.assertRaises(frappe.PermissionError):clients.rows()
+            with self.assertRaises(frappe.PermissionError):clients.form()
+        finally:frappe.set_user(previous)
+
+    def test_react_worker_form_read_does_not_create_departments_or_financial_records(self):
+        from plus_point import worker_profile as ui
+        counts=lambda:tuple(frappe.db.count(dt) for dt in ('Department','Employee','PP Work Entry','GL Entry'))
+        before=counts();data=ui.form(self.worker.name)
+        self.assertEqual(counts(),before)
+        self.assertIn('pp_daily_rate',data['fields']);self.assertIn('pp_monthly_rate',data['fields'])
+        self.assertNotIn('company',data['fields'])
+        self.assertEqual(data['values']['first_name'],frappe.db.get_value('Employee',self.worker.name,'first_name'))
+
+    def test_react_worker_save_checks_version_and_protects_non_form_fields(self):
+        from plus_point import worker_profile as ui
+        before=ui.form(self.worker.name)
+        saved=ui.save(dict(pp_daily_rate=175,pp_monthly_rate=4200,pp_leaves_per_month=2),self.worker.name,before['modified'])
+        doc=frappe.get_doc('Employee',self.worker.name)
+        self.assertEqual(doc.pp_daily_rate,175);self.assertEqual(doc.pp_monthly_rate,4200)
+        with self.assertRaises(frappe.TimestampMismatchError):ui.save(dict(pp_daily_rate=500),self.worker.name,before['modified'])
+        with self.assertRaises(frappe.ValidationError):ui.save(dict(company='Another company'),self.worker.name,saved['modified'])
+        self.assertEqual(frappe.db.get_value('Employee',self.worker.name,'pp_daily_rate'),175)
+
+    def test_react_worker_list_includes_assigned_and_available_and_scopes_guest(self):
+        from plus_point import worker_profile as ui
+        event=self.event();op.auto_assign(event)
+        data=ui.workers();self.assertTrue(data['rows'])
+        assigned=ui.workers(status='Assigned');self.assertTrue(assigned['rows'])
+        self.assertTrue(all(r.availability=='Assigned' for r in assigned['rows']))
+        self.assertFalse(set(r.name for r in assigned['rows'])&set(r.name for r in ui.workers(status='Available')['rows']))
+        self.assertTrue(all(frappe.db.get_value('Employee',r.name,'company')==self.f.company.name for r in data['rows']))
+        previous=frappe.session.user
+        try:
+            frappe.set_user('Guest')
+            with self.assertRaises(frappe.PermissionError):ui.workers()
+        finally:frappe.set_user(previous)
+
     def test_event_budget_projection_does_not_double_count_earned_wages(self):
         from decimal import Decimal
         from plus_point.operations import event_budget_summary
@@ -332,3 +397,21 @@ class WorkflowRepairsTests(unittest.TestCase):
             review=actions.review('PP Contract Terms',master['name'])
         self.assertEqual(review['dependency']['doctype'],'PP Event Plan')
         self.assertEqual(review['dependency']['name'],event['name'])
+
+    def test_company_product_metadata_does_not_change_platform_metadata(self):
+        from plus_point.product_ui import website_context
+        with patch.dict(frappe.conf, {'pp_control_plane': False}):
+            context = {}; website_context(context)
+            self.assertEqual(context['app_name'], 'PLUS POINT')
+            self.assertTrue(context['favicon'].endswith('product-favicon.svg'))
+        with patch.dict(frappe.conf, {'pp_control_plane': True}):
+            context = {'app_name': 'Operator console'}; website_context(context)
+            self.assertEqual(context, {'app_name': 'Operator console'})
+
+    def test_framework_release_notices_are_operator_only(self):
+        from plus_point.product_ui import show_update_popup
+        with patch('frappe.utils.change_log.show_update_popup') as native:
+            with patch.dict(frappe.conf, {'pp_control_plane': False}):
+                self.assertIsNone(show_update_popup()); native.assert_not_called()
+            with patch.dict(frappe.conf, {'pp_control_plane': True}):
+                show_update_popup(); native.assert_called_once()

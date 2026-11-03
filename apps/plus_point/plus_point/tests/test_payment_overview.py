@@ -4,7 +4,7 @@ from unittest.mock import patch
 import frappe
 from frappe.utils import today, getdate
 from plus_point.tests.test_operations import fixture, insert
-from plus_point.wage_payments import overview, due_cutoff, set_cycle
+from plus_point.wage_payments import overview, due_cutoff, set_cycle, history
 
 
 class PaymentOverviewTests(unittest.TestCase):
@@ -76,6 +76,29 @@ class PaymentOverviewTests(unittest.TestCase):
     def test_mark_read_rejects_unowned_notifications(self):
         from plus_point.company_tools import mark_read
         with self.assertRaises(frappe.PermissionError):mark_read(['unowned-notification'])
+
+    def test_react_history_is_permission_scoped_and_read_only(self):
+        self.work(True)
+        from plus_point.wage_payments import record_payments
+        result=record_payments(items=[dict(event=self.event.name,employee=self.f.employee.name,balance='1000')],
+            account=self.f.company.default_cash_account,posting_date=today(),company=self.f.company.name,
+            confirmed=True,confirmation_id='f'*32)
+        types=['Payment Entry','PP Wage Settlement','PP Work Entry','GL Entry']
+        before={dt:frappe.db.count(dt) for dt in types}
+        data=history(self.f.company.name,event=self.event.name)
+        self.assertEqual(len(data['rows']),1)
+        row=data['rows'][0]
+        self.assertEqual(row['payment_entry'],result['payments'][0])
+        self.assertEqual(row['amount'],'1000.00')
+        self.assertEqual(row['payment_reference'],'')
+        self.assertEqual(row['posting_date'],today())
+        self.assertEqual(data['currency'],self.f.company.default_currency)
+        self.assertEqual(history(self.f.company.name,search='no worker matches')['rows'],[])
+        self.assertEqual(before,{dt:frappe.db.count(dt) for dt in types})
+        with self.assertRaises(frappe.PermissionError):history('other-company')
+        with self.assertRaises(frappe.PermissionError):history(self.f.company.name,event='other-event')
+        frappe.set_user('Guest')
+        with self.assertRaises(frappe.PermissionError):history(self.f.company.name)
 
     def batch_items(self):
         self.work(True)

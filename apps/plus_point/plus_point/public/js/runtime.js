@@ -22,7 +22,7 @@
   if(frappe.boot?.plus_point?.is_platform||shortcutOpening||event.repeat||event.isComposing||event.shiftKey||event.getModifierState?.('AltGraph')||event.target.closest('input,textarea,select,[contenteditable=true],[role=textbox]'))return;
   const key=event.key.toLowerCase(),kind=({a:'agreements',e:'events',l:'workers',i:'inventory',w:'warehouses',v:'vehicles',c:'clients'})[key],create=(event.ctrlKey||event.metaKey)&&!event.altKey,search=event.altKey&&!event.ctrlKey&&!event.metaKey;
   if(!create&&!search||create&&key==='c'&&window.getSelection()?.toString())return;
-  if(!kind||frappe.ui.open_dialogs.some(d=>d.display&&!d.$wrapper?.hasClass('pp-scoped-search')))return;
+  if(!kind||document.querySelector('dialog[data-pp-react-root][open]')||frappe.ui.open_dialogs.some(d=>d.display&&!d.$wrapper?.hasClass('pp-scoped-search')))return;
   event.preventDefault();shortcutOpening=true;frappe.ui.open_dialogs.filter(d=>d.$wrapper?.hasClass('pp-scoped-search')).forEach(d=>d.hide());plus_point.load_feature('company_tools').then(()=>create?plus_point.create_record(kind):plus_point.scoped_search(kind)).catch(()=>frappe.show_alert({message:__('This tool could not load. Please try again.'),indicator:'red'})).finally(()=>shortcutOpening=false);
  });
  const escape=v=>frappe.utils.escape_html(String(v??''));
@@ -85,7 +85,7 @@
   try{for(const callback of watchers.values())try{callback();}catch(error){console.warn('PLUS POINT enhancement',error);}stats.passes++;}
   finally{running=false;observer.observe(document.body,{childList:true,subtree:true});}
  }
- plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(records=>{if(records.some(record=>!(record.target.nodeType===1?record.target:record.target.parentElement)?.closest('[contenteditable=true],.pp-freddy__motion,.pp-chart-plot')))schedule();});observer.observe(document.body,{childList:true,subtree:true});}schedule();};
+ plus_point.watch_ui=(name,callback)=>{watchers.set(name,callback);stats.watchers=watchers.size;if(!observer){observer=new MutationObserver(records=>{if(records.some(record=>!(record.target.nodeType===1?record.target:record.target.parentElement)?.closest('[data-pp-react-root],[contenteditable=true],.pp-freddy__motion,.pp-chart-plot')))schedule();});observer.observe(document.body,{childList:true,subtree:true});}schedule();};
  const wake=()=>{bursts=0;schedule();};
  document.addEventListener('visibilitychange',wake);document.addEventListener('pp:data-changed',wake);
  // Typing and pointer movement do not require rescanning every screen. DOM changes and routes wake the enhancements.
