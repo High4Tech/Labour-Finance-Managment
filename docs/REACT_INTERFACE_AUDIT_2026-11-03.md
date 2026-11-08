@@ -1,5 +1,7 @@
 # React interface checkpoint — November 3, 2026
 
+For the later resource, attendance, accounting and D: storage checkpoint, see the [November 9 migration ledger](REACT_MIGRATION_2026-11-09.md). The remaining-scope paragraph below describes this older checkpoint.
+
 The company dashboard uses one React loading layout. Local saves, currency changes and realtime notifications share one refresh queue, and dashboard updates preserve the mounted controls and charts. Agreements, Jobs & Events, Clients, Workers and Worker Payments take their full main width on the first ready frame. The agreement editor and its footer span the main area.
 
 Worker Payments allows selection for review even when no balance is payable. Recording still requires permission, an approved outstanding balance and explicit confirmation; payment references can be supplied later. React tables share a square checkbox. In forms and dialogs, long tables scroll within their section, with sticky headings and horizontally scrollable data. Schedule rows include agreement context and show a single date plus configured hours for daily work. Historical schedules without hours are labelled accordingly.

@@ -4,7 +4,7 @@
  const features={
   company_tools:{file:'company_tools',css:true,nonblocking:true,version:'20261103-react-12',ready:()=>!!pp.scoped_search},
   wage_payments:{file:'wage_payments',css:true,nonblocking:true,version:'20261103-react-12',ready:()=>!!pp.wage_payments},
-  react_ui:{file:'react_bridge',css:false,nonblocking:true,version:'20261103-react-12',ready:()=>!!pp.react_payments_mount},
+  react_ui:{file:'react_bridge',css:false,nonblocking:true,version:'20261109-react-finance-4',ready:()=>!!pp.react_payments_mount},
   app_help:{file:'app_help',css:true,nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.app_help},
   dashboard_journey:{file:'dashboard_journey',css:true,nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.dashboard_journey},
   world_assets:{file:'world_assets',nonblocking:true,version:'20261101-scenes-4',ready:()=>!!pp.world_assets},

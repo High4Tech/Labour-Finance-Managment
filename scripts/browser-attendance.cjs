@@ -13,9 +13,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  try{
   await page.goto('http://qa.localhost:8000/login',{waitUntil:'domcontentloaded'});
   assert.equal(await page.evaluate(async pwd=>(await(await fetch('/api/method/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usr:'Administrator',pwd})})).json()).message,settings.PP_ADMIN_PASSWORD),'Logged In');
-  await page.goto('http://qa.localhost:8000/desk/plus-point',{waitUntil:'domcontentloaded'});await page.locator('.pp-onboarding-shell[data-ready=true]').waitFor({timeout:60000});
+  await page.goto('http://qa.localhost:8000/desk/plus-point',{waitUntil:'commit'});await page.locator('.pp-onboarding-shell[data-ready=true]').waitFor({timeout:60000});
   originalTheme=await page.evaluate(()=>document.documentElement.dataset.themeMode);
-  await page.getByRole('button',{name:'Skip onboarding',exact:true}).click();await page.locator('.pp-dashboard[data-ready=true]').waitFor();
+  await page.getByRole('button',{name:'Skip onboarding',exact:true}).click();await page.locator('[data-pp-react-root=dashboard] .pp-overview-header').waitFor();
   const client=await rpc('events.save_resource',{company:data.company,kind:'clients',values:{customer_name:data.prefix+' Client',customer_type:'Company',contact_name:'Ayesha Malik',email:'crew@example.invalid',country:'Pakistan',city:'Karachi',address_line1:'12 Venue Road'}});
   const day=await page.evaluate(()=>frappe.datetime.get_today()),end=await page.evaluate(()=>frappe.datetime.add_days(frappe.datetime.get_today(),1));
   const event=await rpc('events.create_event',{company:data.company,customer:client.name,event_name:data.prefix+' Festival',start_date:day,end_date:end,agreement:'Disposable browser staffing agreement',billing_model:'Daily',wage_rate:1000,client_rate:1500,sites:[{site_name:'Main stage',phase:'Event',start_date:day,end_date:end,workers_required:3},{site_name:'Backstage',phase:'Event',start_date:day,end_date:end,workers_required:1}]});
@@ -27,45 +27,51 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await rpc('crew.assign',{project:event.project,site,contract_terms:event.contract_terms,start_date:day,end_date:end,wage_rate:1000,client_rate:1500,employees:people});
   const initial=await native('frappe.client.get_list',{doctype:'PP Daily Register',filters:{project:event.project,site,work_date:day},fields:['name']});assert.equal(initial.length,1,'Allocations should generate today’s roster automatically');
   assert.equal((await summary(event.project)).labour_cost,'0.00');
+  await page.evaluate(project=>frappe.set_route('List','PP Daily Register',{project}),event.project);
+  const list=page.locator('[data-pp-react-root=attendance-list]');
+  const record=list.getByRole('link',{name:initial[0].name,exact:true});
+  await record.waitFor();
+  const row=record.locator('xpath=ancestor::tr');
+  assert.match(await row.innerText(),/Main stage/);
+  assert.match(await row.innerText(),/Draft/);
+  assert.equal(await row.locator('input[type=checkbox]').count(),1);
+  await list.getByRole('searchbox',{name:'Register or tracking ID'}).fill(initial[0].name);
+  await page.waitForFunction(()=>document.querySelectorAll('[data-pp-react-root=attendance-list] tbody tr').length===1);
+  await record.click();
+  await page.locator('[data-pp-react-root=attendance-register] .pp-r-list').waitFor();
   await page.evaluate(()=>plus_point.open_attendance_picker());const picker=page.locator('.modal:visible');await picker.getByRole('button',{name:'Open register',exact:true}).waitFor();
   await page.waitForFunction(()=>window.cur_dialog?.display);await page.evaluate(async values=>{await cur_dialog.set_value('project',values.project);await cur_dialog.set_value('site',values.site);}, {project:event.project,site});
-  await picker.getByRole('button',{name:'Open register',exact:true}).click();const register=page.locator('.pp-register[data-ready=true]');await register.waitFor();
+  await picker.getByRole('button',{name:'Open register',exact:true}).click();const register=page.locator('[data-pp-react-root="attendance-register"] .pp-r-list');await register.waitFor();
   assert.equal(await register.locator('tbody tr').count(),3);assert.equal(await page.evaluate(()=>cur_frm.doc.name),initial[0].name);
   assert(await register.getByRole('button',{name:'Approve attendance',exact:true}).isDisabled());
-  assert.equal(await register.getByText('Not marked',{exact:true}).count(),4);
+  assert.match(await register.innerText(), /Not marked: 3/);
   for(const [index,state] of ['Present','Half day','Absent'].entries())await register.locator(`tr:has(a[href$="/${people[index]}"])`).getByRole('button',{name:state,exact:true}).click();
   assert(await register.getByRole('button',{name:'Approve attendance',exact:true}).isEnabled());
   await waitSave(register.getByRole('button',{name:'Save draft',exact:true}),false);assert.equal((await summary(event.project)).labour_cost,'0.00');
-  await page.waitForFunction(()=>cur_frm.doc.entries.every(r=>r.attendance_status!=='Not marked'));
+  await register.getByRole('status').filter({hasText:'Attendance saved.'}).waitFor();
   await native('frappe.client.set_value',{doctype:'Project',name:event.project,fieldname:{estimated_costing:500,pp_enforce_spending_budget:1}});
-  await register.getByRole('button',{name:'Approve attendance',exact:true}).click();await register.locator('.pp-register-error').filter({hasText:'Spending budget exceeded'}).waitFor();
+  await register.getByRole('button',{name:'Approve attendance',exact:true}).click();await register.getByRole('alert').filter({hasText:'Spending budget exceeded'}).waitFor();
   assert.equal((await summary(event.project)).labour_cost,'0.00');
   await page.screenshot({path:path.join(out,'attendance-budget-stop.png'),fullPage:true});
   await native('frappe.client.set_value',{doctype:'Project',name:event.project,fieldname:{estimated_costing:5000,pp_enforce_spending_budget:1}});
   await waitSave(register.getByRole('button',{name:'Approve attendance',exact:true}),true);
-  await page.waitForFunction(()=>cur_frm.doc.docstatus===1);await register.getByText('Approved attendance',{exact:false}).waitFor();
+  await register.getByText('Approved attendance',{exact:false}).waitFor();
   const totals=await summary(event.project);assert.equal(totals.labour_cost,'1500.00');assert.equal(totals.earned_revenue,'2250.00');
   assert.equal((await rpc('attendance.prepare',{site,project:event.project,work_date:day})).name,initial[0].name);
   const work=await native('frappe.client.get_list',{doctype:'PP Work Entry',filters:{project:event.project},fields:['name','units']});assert.equal(work.length,3);assert.deepEqual(work.map(r=>Number(r.units)).sort(),[0,.5,1]);
   await page.screenshot({path:path.join(out,'attendance-approved-desktop.png'),fullPage:true});
-  await page.evaluate(name=>frappe.set_route('Form','Employee',name),people[0]);const profile=page.locator('.pp-worker-profile[data-ready=true]');await profile.waitFor();
-  assert.equal(await profile.locator('.pp-worker-metrics article').first().locator('strong').innerText(),'1');
-  assert.match(await profile.locator('.pp-worker-finances').first().innerText(),/1,000 PKR/);
-  assert.equal(await profile.locator('.pp-worker-day').count(),91);assert.equal(await profile.locator('.pp-day-present[data-date]').count(),1);
-  assert.equal(await page.locator('.form-layout:visible').count(),0,'Worker should open on overview, not the long HR form');
-  await profile.getByRole('button',{name:'Edit profile',exact:true}).click();await page.locator('.pp-worker-edit-tabs:visible').waitFor();
-  await profile.getByRole('button',{name:'Back to overview',exact:true}).click();await profile.getByRole('button',{name:'Edit profile',exact:true}).waitFor();assert.equal(await page.locator('.form-layout:visible').count(),0);
-  await profile.locator('.pp-worker-period').selectOption('366');await page.waitForFunction(()=>document.querySelectorAll('.pp-worker-day').length===366);
-  const focus=profile.locator('.pp-worker-day').last();await focus.focus();await focus.press('ArrowLeft');assert.equal(await page.locator('.pp-worker-day[tabindex="0"]').count(),1);
-  await page.screenshot({path:path.join(out,'worker-overview-desktop.png'),fullPage:true});
+  await page.evaluate(name=>frappe.set_route('Form','Employee',name),people[0]);
+  const profile=page.locator('[data-worker-react]');
+  await profile.getByRole('heading',{name:'Wages at a glance',exact:true}).waitFor();
+  assert.match(await profile.innerText(),/1,000 PKR/);
+  await page.waitForFunction(()=>plus_point.react_ui.stats.activeRoots===1);
   await page.evaluate(()=>plus_point.set_theme('dark'));await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
   await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  await page.waitForTimeout(350);assert.equal(await page.locator('.page-container:visible .layout-side-section:visible').count(),0,'Native form sidebar should not overlay worker overview');await page.screenshot({path:path.join(out,'worker-overview-mobile-dark.png'),fullPage:true});
   await page.evaluate(name=>frappe.set_route('Form','PP Daily Register',name),initial[0].name);await register.waitFor();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   await page.screenshot({path:path.join(out,'attendance-approved-mobile-dark.png'),fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('PASS event/site picker, automatic saved roster, unmarked defaults, three attendance states, draft/approval separation, budget stop, exact wages/revenue, duplicate protection, worker overview/edit/history/year calendar, keyboard navigation and mobile dark-mode fit');
- }catch(error){await page.screenshot({path:path.join(out,'attendance-failure.png'),fullPage:true});console.error('PAGE ERRORS',errors);throw error;}
+  console.log('PASS event/site picker, automatic saved roster, unmarked defaults, three attendance states, draft/approval separation, budget stop, exact wages/revenue, duplicate protection, worker wages, root cleanup and mobile dark-mode fit');
+ }catch(error){await page.screenshot({path:path.join(out,'attendance-failure.png'),fullPage:true});console.error('PAGE ERRORS',errors);console.error('ROUTE STATE',await page.evaluate(()=>({route:frappe.get_route(),active:frappe.container?.page?.id,visible:$(frappe.container?.page).is(':visible'),main:!!frappe.container?.page?.querySelector('.layout-main-section'),welcome:document.querySelectorAll('.pp-welcome').length,react:plus_point.react_ui?.stats})));throw error;}
  finally{
   try{if(originalTheme)await page.evaluate(async value=>{await frappe.xcall('frappe.core.doctype.user.user.switch_theme',{theme:{light:'Light',dark:'Dark',automatic:'Automatic'}[value]});},originalTheme);}
   finally{await browser.close();assert(fixture('end').restored);console.log('PASS exact unbilled QA work/registers, crew, event/client and original workspace/appearance restored');}

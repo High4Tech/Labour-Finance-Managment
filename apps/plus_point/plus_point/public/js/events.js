@@ -11,6 +11,7 @@
   warehouses:[input('warehouse_name','Warehouse name'),field('Select','warehouse_type','Ownership',{options:'Owned\nRented',default:'Owned',reqd:1})],
  })[kind]||[];
  plus_point.open_resource=async(kind,after)=>{
+  if(!frappe.boot.plus_point?.is_platform&&['vehicles','inventory_items','warehouses'].includes(kind)){await plus_point.load_feature('react_ui');return plus_point.react_resource_open(kind,after);}
   if(kind==='clients'&&!frappe.boot.plus_point?.is_platform){await plus_point.load_feature('react_ui');return plus_point.react_command('clients','create',after?name=>after({doctype:'Customer',name}):undefined);}
   const companies=(await frappe.db.get_list('Company',{fields:['name'],limit:100}));
   if(!companies.length){plus_point.open_setup();return;}

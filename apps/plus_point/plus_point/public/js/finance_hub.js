@@ -1,6 +1,11 @@
 /* Native finance lists, shared worker dialogs and one on-demand loan summary. */
 (() => {
     frappe.provide('plus_point');
+    $(document).on('form-refresh.pp-react-finance',(_event,frm)=>{
+        if(frappe.boot.plus_point?.is_platform||!['Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'].includes(frm.doctype))return;
+        if(sessionStorage.getItem('pp:finance:advanced-form')===frm.doctype){frm.add_custom_button(__('Back to company form'),()=>{sessionStorage.removeItem('pp:finance:advanced-form');plus_point.load_feature('react_ui').then(()=>plus_point.react_finance_record_mount(frm));});return;}
+        plus_point.load_feature('react_ui').then(()=>plus_point.react_finance_record_mount(frm)).catch(console.error);
+    });
     const esc=value=>frappe.utils.escape_html(String(value??''));
     const rpc=(method,args={})=>plus_point.form_rpc('finance_hub.'+method,args);
     const number=value=>new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(Number(value)||0);
@@ -14,11 +19,13 @@
         return plus_point.worker_loan(null,after||refreshList);
     };
 
-    const nativeTypes=['PP Wage Settlement','PP Worker Loan','Payment Entry','Purchase Invoice','Expense Claim','PP Loan Recovery'];
+    const nativeTypes=['PP Wage Settlement','PP Worker Loan','Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim','PP Loan Recovery'];
     function enhanceLists(){
         const route=frappe.get_route(),list=window.cur_list;
         if(frappe.boot.plus_point?.is_platform||route?.[0]!=='List'||!nativeTypes.includes(route[1])||
-            list?.doctype!==route[1]||!list.page?.main||!list.list_view_settings||!Array.isArray(list.data))return;
+            list?.doctype!==route[1]||list.__pp_react_shared_list||!list.page?.main||!list.list_view_settings||!Array.isArray(list.data))return;
+        if(['Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'].includes(list.doctype)&&sessionStorage.getItem('pp:finance:advanced')!==list.doctype)return;
+        if(sessionStorage.getItem('pp:finance:advanced')===list.doctype&&!list.__pp_react_return){list.__pp_react_return=true;list.page.add_inner_button(__('Back to company list'),()=>{sessionStorage.removeItem('pp:finance:advanced');location.reload();});}
         if(!list.__pp_finance_links){
             list.__pp_finance_links=true;
             list.page.add_inner_button(__('Payments overview'),hub);

@@ -14,7 +14,7 @@ declare global {
    ui:{amount(value:unknown):string};
    react_ui?:{mountPayments(host:HTMLElement,list:NativeList):void; unmount(host:HTMLElement):void; stats:{activeRoots:number;mounts:number;unmounts:number}};
   };
-  frappe:{new_doc(doctype:string):void; set_route(...route:unknown[]):void; datetime:{get_today():string;prettyDate(value:string):string};model:{can_delete(doctype:string):boolean};session:{user:string};boot:{plus_point:{company_identity?:{name:string}}};realtime?:{on(name:string,fn:(data?:{doctype?:string})=>void):void;off(name:string,fn:(data?:{doctype?:string})=>void):void;doctype_subscribe(name:string):void;doctype_unsubscribe(name:string):void}};
+  frappe:{new_doc(doctype:string,route_options?:Record<string,unknown>):void; set_route(...route:unknown[]):void; datetime:{get_today():string;prettyDate(value:string):string};model:{can_delete(doctype:string):boolean;can_write(doctype:string):boolean};session:{user:string};boot:{plus_point:{company_identity?:{name:string}}};realtime?:{on(name:string,fn:(data?:{doctype?:string})=>void):void;off(name:string,fn:(data?:{doctype?:string})=>void):void;doctype_subscribe(name:string):void;doctype_unsubscribe(name:string):void}};
   __(text:string):string;
  }
 }

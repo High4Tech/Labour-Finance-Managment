@@ -252,3 +252,23 @@ dialog.pp-r-dialog:has(.pp-r-import-content){width:min(1120px,calc(100vw - 32px)
 dialog.pp-r-dialog .pp-r-upload-zone{display:grid;place-content:center;justify-items:center;gap:12px;text-align:center}
 dialog.pp-r-dialog .pp-r-upload-zone>.pp-icon{width:32px;height:32px}
 dialog.pp-r-dialog .pp-r-upload-zone>div{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
+
+/* New resource/accounting owners use the same page gutter and heading scale. */
+[data-pp-react-root]:is([data-pp-react-root=resource-profile],[data-pp-react-root=finance-record],[data-pp-react-root=billing])>.pp-r-screen{padding:20px 24px;display:grid;gap:20px;align-content:start;min-width:0}
+[data-pp-react-root]:is([data-pp-react-root=resource-profile],[data-pp-react-root=finance-record],[data-pp-react-root=billing]) h1{font-size:28px;line-height:36px;margin:8px 0;overflow-wrap:anywhere}
+@media(max-width:767px){[data-pp-react-root]:is([data-pp-react-root=resource-profile],[data-pp-react-root=finance-record],[data-pp-react-root=billing])>.pp-r-screen{padding:16px}}
+
+[data-pp-react-root] .pp-r-stock-quantity{max-width:160px;margin-left:auto;min-width:100px}
+[data-pp-react-root] .pp-r-stock-quantity .pp-r-field>label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+[data-pp-react-root] .pp-r-finance-record .pp-op-table-scroll[data-overflow-rows=true]{max-height:500px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+
+body.pp-ui .pp-react-accounting-page>.page-head,body.pp-ui .pp-react-accounting-page .layout-main>.layout-side-section{display:none!important}
+body.pp-ui .pp-react-accounting-page .layout-main-section-wrapper{flex:1 1 100%;width:100%;max-width:100%;min-width:0}
+[data-pp-react-root] :is(.pp-r-resource-profile,.pp-r-billing) .pp-op-table-scroll[data-overflow-rows=true]{max-height:500px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+[data-pp-react-root] :is(.pp-r-resource-profile,.pp-r-billing)>.btn{justify-self:start}
+[data-pp-react-root] .pp-r-list-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+[data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex:0 1 300px;min-width:0}
+body.pp-ui [data-pp-react-root] .pp-agreement-tabs [role=tab][aria-selected=true]{color:var(--pp-action-primary);border-bottom-color:var(--pp-action-primary)}
+body.pp-ui [data-pp-react-root=resource-profile],body.pp-ui [data-pp-react-root=billing],body.pp-ui .pp-react-accounting-page .layout-main-section{background:var(--pp-canvas,var(--subtle-fg,#f7f9fa))}
+@media(max-width:767px){[data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex-basis:100%}}

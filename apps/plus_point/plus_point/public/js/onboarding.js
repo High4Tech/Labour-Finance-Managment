@@ -386,7 +386,7 @@
             const page = active.page;
             if (page?.title !== __(title)) page?.set_title(__(title));
             const listview = frappe.get_list_view(route[1]);
-            if(listview?.__pp_react_planning||listview?.__pp_react_workers||listview?.__pp_react_clients)return;
+            if(listview?.__pp_react_shared_list||listview?.__pp_react_planning||listview?.__pp_react_workers||listview?.__pp_react_clients)return;
             if (!listview?.__pp_wages && listview?.can_create && page?.btn_primary?.is(':visible') && page.btn_primary.attr('data-label') !== __(action)) {
                 page.set_primary_action({label: __(action), short_label: __('Add')}, () => listview.make_new_doc(), 'plus');
                 // Native list refresh can replace the handler on the same button.

@@ -1,5 +1,7 @@
 # React migration — company application
 
+Latest checkpoint: [November 9 resource, attendance, accounting and D: storage ledger](REACT_MIGRATION_2026-11-09.md). Its completed owners supersede the historical classifications below; the whole migration is still incomplete.
+
 This is an ongoing migration, not a completed rewrite. Frappe, ERPNext and HRMS remain the Python backend, authentication, permission, document, accounting and stock engines. The platform operator console and authorized advanced native views remain available. No database records are migrated into browser state.
 
 ## Ownership contract

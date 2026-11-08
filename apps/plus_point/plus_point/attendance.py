@@ -268,3 +268,25 @@ def save_marks(name,marks,approve=False):
     except Exception:
         frappe.db.rollback(save_point='pp_attendance_save');raise
     return dict(name=doc.name,approved=doc.docstatus==1)
+
+@frappe.whitelist(methods=['POST'])
+def list_registers(search=None, project=None, start=0):
+    """Page through registers using the same record permissions as Desk."""
+    from frappe.utils import cint
+
+    if frappe.conf.get('pp_control_plane'):
+        frappe.throw('Attendance belongs on the customer site.', frappe.PermissionError)
+
+    filters = {'project': project} if project else {}
+    search = str(search or '').strip()[:140]
+    rows = frappe.get_list(
+        'PP Daily Register',
+        fields=['name', 'pp_reference', 'docstatus', 'work_date', 'site', 'project',
+                'site.site_name as site_title', 'project.project_name as event_title'],
+        filters=filters,
+        or_filters={'name': ['like', f'%{search}%'], 'pp_reference': ['like', f'%{search}%']} if search else None,
+        order_by='work_date desc, name desc',
+        limit_start=max(0, cint(start)),
+        limit_page_length=21,
+    )
+    return {'rows': rows[:20], 'has_more': len(rows) > 20}

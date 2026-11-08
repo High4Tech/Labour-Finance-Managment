@@ -51,3 +51,53 @@ export function mountPlanning(host:HTMLElement,list:{doctype:'PP Contract Terms'
 export function mountDashboard(host:HTMLElement,initial?:Overview){const Screen=preparedDashboard||Dashboard;mountOwned(host,'dashboard',<Screen initial={initial}/>,<DashboardSkeleton/>); }
 
 export function mountImport(host:HTMLElement,options:ImportOptions,onClose:()=>void){mountOwned(host,'import',<Imports {...options} onClose={onClose}/>);}
+
+const AttendanceRegister = lazy(() => import('./attendance-register'));
+export function mountAttendanceRegister(host: HTMLElement, name: string, preview: React.ComponentProps<typeof AttendanceRegister>['preview']) {
+ mountOwned(host, 'attendance-register', <AttendanceRegister name={name} preview={preview}/>);
+}
+
+const AttendanceList = lazy(() => import('./attendance-list'));
+export async function prepareAttendanceList(){await import('./attendance-list');}
+export function mountAttendanceList(host: HTMLElement, options: React.ComponentProps<typeof AttendanceList>){
+ mountOwned(host,'attendance-list',<AttendanceList {...options}/>);
+}
+
+const FinanceList = lazy(() => import('./finance-list'));
+export async function prepareFinanceList(){await import('./finance-list');}
+export function mountFinanceList(host: HTMLElement, options: React.ComponentProps<typeof FinanceList>){
+ mountOwned(host,'finance-list',<FinanceList {...options}/>);
+}
+
+const ResourceList = lazy(() => import('./resource-list'));
+const ResourceProfile = lazy(() => import('./resource-profile'));
+const ResourceEditor = lazy(() => import('./resource-editor').then(module=>({default:module.ResourceEditor})));
+const BookingDialog = lazy(() => import('./resource-bookings').then(module=>({default:module.BookingDialog})));
+export async function prepareResources(){await import('./resource-list');}
+export function mountResourceList(host:HTMLElement,kind:import('./resource-types').ResourceKind){
+ mountOwned(host,'resource-list',<ResourceList kind={kind}/>);
+}
+export function mountResourceProfile(host:HTMLElement,kind:import('./resource-types').ResourceKind,name:string){
+ mountOwned(host,'resource-profile',<ResourceProfile kind={kind} name={name}/>);
+}
+export function mountResourceEditor(host:HTMLElement,props:React.ComponentProps<typeof ResourceEditor>){
+ mountOwned(host,'resource-editor',<ResourceEditor {...props}/>);
+}
+export function mountBooking(host:HTMLElement,props:React.ComponentProps<typeof BookingDialog>){
+ mountOwned(host,'resource-booking',<BookingDialog {...props}/>);
+}
+
+const BillingPage=lazy(()=>import('./billing'));
+export function mountBillingPage(host:HTMLElement,options:React.ComponentProps<typeof BillingPage>){
+ mountOwned(host,'billing',<BillingPage {...options}/>);
+}
+
+const FinanceRecord=lazy(()=>import('./finance-record'));
+export function mountFinanceRecord(host:HTMLElement,options:React.ComponentProps<typeof FinanceRecord>){
+ mountOwned(host,'finance-record',<FinanceRecord {...options}/>);
+}
+
+const ResourceEditDialog=lazy(()=>import('./resource-editor').then(module=>({default:module.ResourceEditDialog})));
+export function mountResourceEdit(host:HTMLElement,props:React.ComponentProps<typeof ResourceEditDialog>){
+ mountOwned(host,'resource-edit',<ResourceEditDialog {...props}/>);
+}

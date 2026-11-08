@@ -60,3 +60,15 @@ The old `worker_profile.js` renderer returned immediately to the React adapter f
 - ImportUpload and ImportDialog replace the old product import FieldGroup/string-table renderer. They use the original local SVG file types, original server templates/preview/approval APIs, native permissions and transactional posting. The old native product import renderer has no remaining caller after open_import delegates to the React owner. Frappe's advanced Data Import is untouched.
 - The company branch in the native dashboard loader returns to React before running its platform flow. Its private company-only budget presentation helper had no remaining call and was removed; budget APIs, event controls and the platform renderer remain available.
 - Native file upload/photo widgets remain documented integration boundaries until their consuming owners migrate; no second equivalent React photo widget is introduced.
+
+## Resource, attendance and accounting ownership — November 9
+
+- ResourceEditor and ResourceEditDialog share one equipment/warehouse/vehicle field definition and the existing fields/selectors/dialog. ResourceLookup is the lazy scoped selector and does not load unrelated form catalogues.
+- WarehouseStock owns staged quantity changes, selection/bulk edits and unsaved-change protection. Reservations stay read-only. Native posting, expected quantities and reserved-capacity checks are server-owned.
+- BookingDialog and ResourceBookings own vehicle/equipment event reservations. Capacity/conflicts belong to their fields; errors retain the dialog and entered values. Only relevant realtime notices request a refresh.
+- AttendanceList/AttendanceRegister own the roster and marks. The opening picker remains a native boundary. Approval/correction/payroll semantics stay in existing controllers and APIs.
+- FinanceList keeps shared table geometry and project/company scope. FinanceRecord uses permitted native field metadata and explicitly hands advanced accounting to the native form. Account currencies, revisions, validation and ledger posting remain authoritative.
+- BillingPage reuses SharedAgreementPayments and DocumentPreview. DocumentPreview's native-print loader is a source variant, not a second PDF dialog; preview alone creates no attachment.
+- Native decorators must not run during React route preparation. They run only in an explicitly selected advanced view. Mount/dispose includes query scope so changing the contextual event cannot reuse stale list state.
+
+The current ledger is [REACT_MIGRATION_2026-11-09.md](REACT_MIGRATION_2026-11-09.md). Its resource, attendance and accounting rows supersede earlier legacy classifications. Events, loans/reports, shell and public portal remain incomplete.

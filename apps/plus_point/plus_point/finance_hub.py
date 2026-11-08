@@ -75,3 +75,38 @@ def loan_detail(name, month=None):
         currency=business.default_currency, benefits=state, loan=row,
         recoveries=frappe.get_list('PP Loan Recovery', filters={'loan': name, 'company': business.name},
             fields=['name','month','amount','docstatus','journal_entry'], order_by='month desc, creation desc', limit_page_length=100))
+
+@frappe.whitelist(methods=['POST'])
+def list_records(doctype, search=None, start=0, project=None):
+    """Read accounting records using native list and company permissions."""
+    from frappe.utils import cint
+
+    fields = {
+        'Payment Entry': ['payment_type', 'party_name', 'party', 'paid_amount', 'paid_from_account_currency'],
+        'Sales Invoice': ['customer_name', 'grand_total', 'currency'],
+        'Purchase Invoice': ['supplier_name', 'grand_total', 'currency'],
+        'Expense Claim': ['employee_name', 'total_claimed_amount', 'company.default_currency as currency'],
+    }
+    if frappe.conf.get('pp_control_plane') or doctype not in fields:
+        frappe.throw('This finance list is unavailable.', frappe.PermissionError)
+    business = company_scope()
+    search = str(search or '').strip()[:140]
+    filters = {'company': business.name}
+    scope = None
+    if project:
+        work = linked('Project', project, business.name)
+        # Reimbursements carry their project on the expense lines. Native list
+        # permissions still apply to the parent document and joined child rows.
+        filters['expenses.project' if doctype == 'Expense Claim' else 'project'] = work.name
+        scope = dict(name=work.name, title=work.project_name)
+    if search:
+        filters['name'] = ['like', f'%{search}%']
+    rows = frappe.get_list(
+        doctype,
+        fields=['name', 'docstatus', 'posting_date', *fields[doctype]],
+        filters=filters,
+        order_by='posting_date desc, name desc',
+        limit_start=max(0, cint(start)),
+        limit_page_length=21,
+    )
+    return {'rows': rows[:20], 'has_more': len(rows) > 20, 'project': scope}

@@ -11,6 +11,43 @@ from plus_point.benefits import atomic
 KINDS={'vehicle':'PP Vehicle Booking','equipment':'PP Equipment Booking'}
 
 
+@frappe.whitelist(methods=['POST'])
+def list_records(view, search=None, offset=0):
+    """Bounded resource lists with the native record permissions."""
+    business = company()
+    config = {
+        'equipment': ('Item', 'item_name', ['stock_uom', 'disabled', 'pp_reference'], {'is_stock_item': 1}),
+        'warehouses': ('Warehouse', 'warehouse_name', ['warehouse_type', 'disabled', 'pp_reference'], {'company': business.name, 'is_group': 0}),
+        'vehicles': ('Vehicle', 'license_plate', ['make', 'model', 'pp_event_enabled', 'pp_crew_seats', 'pp_cargo_capacity', 'pp_cargo_uom'], {'company': business.name}),
+    }
+    if view not in config:
+        frappe.throw('Choose equipment, warehouses or vehicles.')
+    doctype, title, fields, filters = config[view]
+    search = str(search or '').strip()[:140]
+    rows = frappe.get_list(doctype, fields=['name', title, *fields], filters=filters,
+        or_filters={title: ['like', f'%{search}%'], 'name': ['like', f'%{search}%']} if search else None,
+        order_by=f'{title}, name', limit_start=max(0, cint(offset)), limit_page_length=21)
+    more = len(rows) > 20
+    rows = rows[:20]
+    if view == 'vehicles':
+        states = {row.name: row.availability for row in list_states('vehicles', [row.name for row in rows])}
+        for row in rows:
+            row['status'] = states.get(row.name, 'Inactive')
+    for row in rows:
+        row['title'] = row[title]
+    return dict(rows=rows, more=more, currency=business.default_currency)
+
+
+@frappe.whitelist()
+def form_options():
+    business = company()
+    return dict(company=business.name,
+        units=frappe.get_list('UOM', pluck='name', order_by='name', limit_page_length=1000),
+        permissions={kind: {action: bool(frappe.has_permission(doctype, action))
+            for action in ('read', 'create', 'write', 'delete')}
+            for kind, doctype in [('equipment', 'Item'), ('warehouses', 'Warehouse'), ('vehicles', 'Vehicle')]})
+
+
 @frappe.whitelist()
 def equipment_profile(name):
     business=company();item=linked('Item',name)
@@ -213,14 +250,18 @@ def bulk_bookings(rows,values):
 @frappe.whitelist(methods=['POST'])
 def update_profile(view,name,values):
     v=frappe._dict(frappe.parse_json(values) or {});business=company()
-    doctype='Vehicle' if view=='vehicles' else 'Warehouse' if view=='warehouses' else None
-    if not doctype:frappe.throw('Choose a warehouse or vehicle.')
-    doc=linked(doctype,name,business.name);doc.check_permission('write')
+    doctype='Vehicle' if view=='vehicles' else 'Warehouse' if view=='warehouses' else 'Item' if view=='equipment' else None
+    if not doctype:frappe.throw('Choose equipment, a warehouse or a vehicle.')
+    doc=linked(doctype,name,None if doctype=='Item' else business.name);doc.check_permission('write')
+    if doctype=='Item':
+        if not doc.is_stock_item:frappe.throw('Choose reusable event equipment.')
+        if cint(v.get('disabled')) and frappe.db.exists('PP Equipment Booking',{'item':name,'status':'Planned','end_date':['>=',today()]}):
+            frappe.throw('Cancel or move upcoming reservations before deactivating this equipment.')
     if doctype=='Warehouse' and cint(v.get('disabled')) and frappe.db.exists('PP Equipment Booking',{'warehouse':name,'status':'Planned','end_date':['>=',today()]}):
         frappe.throw('Cancel or move upcoming equipment reservations before deactivating this warehouse.')
     if doctype=='Warehouse' and v.get('warehouse_type'):
         ensure_ownership(v.warehouse_type)
-    fields=['make','model','pp_event_enabled','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom'] if doctype=='Vehicle' else ['disabled','warehouse_type']
+    fields=['make','model','pp_event_enabled','pp_crew_seats','pp_cargo_capacity','pp_cargo_uom'] if doctype=='Vehicle' else ['item_name','stock_uom','disabled'] if doctype=='Item' else ['disabled','warehouse_type']
     doc.update({k:v[k] for k in fields if k in v});doc.save();return dict(name=doc.name)
 
 @frappe.whitelist(methods=['POST'])

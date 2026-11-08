@@ -1,7 +1,113 @@
 /* Stage-by-stage React ownership. No new global observer or polling loop. */
 (()=>{
  const pp=window.plus_point;let modulePromise;
- const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261103-react-12').catch(error=>{modulePromise=null;throw error;}));
+ const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261109-react-finance-4').catch(error=>{modulePromise=null;throw error;}));
+ pp.react_prepare_attendance_list=()=>load().then(runtime=>runtime.prepareAttendanceList());
+ pp.react_prepare_finance_list=()=>load().then(runtime=>runtime.prepareFinanceList());
+ async function mountSharedList(list, render){
+  if(list.__pp_react_shared_list)return;
+  const main=list.page.main.get(0),host=document.createElement('div'),query=location.search;
+  const runtime=await load();
+  const active=()=>{const [kind,doctype,view]=frappe.get_route()||[];return kind==='List'&&doctype===list.doctype&&(!view||view==='List')&&location.search===query;};
+  if(!active()||list.__pp_react_shared_list)return;
+  const oldRefresh=list.refresh,oldDebounced=list.debounced_refresh;
+  list.__pp_react_shared_list=true;
+  main.prepend(host);
+  main.classList.add('pp-react-list-host');
+  list.refresh=()=>{document.dispatchEvent(new Event('pp:data-changed'));return Promise.resolve();};
+  list.debounced_refresh=()=>{};
+  const leave=()=>{
+   if(active())return;
+   runtime.unmount(host);host.remove();main.classList.remove('pp-react-list-host');
+   list.refresh=oldRefresh;list.debounced_refresh=oldDebounced;list.__pp_react_shared_list=false;
+   frappe.router.off('change',leave);
+  };
+  frappe.router.on('change',leave);
+  pp.react_ui=runtime;
+  render(runtime,host,{canCreate:list.can_create,canDelete:frappe.model.can_delete(list.doctype)},active);
+ }
+ pp.react_attendance_list_mount=list=>mountSharedList(list,(runtime,host,permissions,active)=>{
+  const project=new URLSearchParams(location.search).get('project')||frappe.route_options?.project;
+  frappe.route_options=null;
+  runtime.mountAttendanceList(host,{...permissions,project});
+  pp.ensure_attendance_today?.(pp.dashboard_company||frappe.boot.plus_point?.company_identity?.name)
+   ?.then(result=>{if(result?.created&&active())list.refresh();}).catch(console.error);
+ });
+ pp.react_finance_list_mount=list=>mountSharedList(list,(runtime,host,permissions)=>{
+  const project=new URLSearchParams(location.search).get('project')||frappe.route_options?.project;
+  frappe.route_options=null;
+  runtime.mountFinanceList(host,{...permissions,doctype:list.doctype,project});
+ });
+ pp.react_prepare_resources=()=>load().then(runtime=>runtime.prepareResources());
+ pp.react_resource_list_mount=list=>mountSharedList(list,(runtime,host)=>{
+  runtime.mountResourceList(host,{Item:'equipment',Warehouse:'warehouses',Vehicle:'vehicles'}[list.doctype]);
+ });
+ pp.react_resource_profile_mount=async(host,kind,name)=>{
+  const key=location.pathname+location.search;
+  let runtime,disposed=false;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};
+  const leave=()=>{if(location.pathname+location.search!==key)cleanup();};
+  host.ppReactCleanup=cleanup;frappe.router.on('change',leave);
+  host.textContent=__('Loading resource…');
+  try{runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountResourceProfile(host,kind,name);}}
+  catch(error){if(!disposed)host.textContent=__('Resource could not load. Reopen to try again.');console.error(error);}
+ };
+ pp.react_finance_record_mount=async frm=>{
+  if(frm.__pp_react_finance_record)return;
+  frm.__pp_react_finance_record=true;
+  const host=document.createElement('div'),key=location.pathname+location.search;
+  frm.form_wrapper.prepend(host);frm.form_wrapper.addClass('pp-client-native-hidden');frm.page.wrapper.addClass('pp-react-accounting-page');frm.disable_save();frm.page.clear_primary_action();frm.page.clear_secondary_action();
+  let runtime,disposed=false;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);host.remove();frm.__pp_react_finance_record=false;frm.form_wrapper.removeClass('pp-client-native-hidden');frm.page.wrapper.removeClass('pp-react-accounting-page');frm.enable_save();frappe.router.off('change',leave);};
+  const leave=()=>{if(key!==location.pathname+location.search)cleanup();};
+  frappe.router.on('change',leave);
+  const advanced=async values=>{if(!frm.is_new())await frm.reload_doc();await frm.set_value(values);sessionStorage.setItem('pp:finance:advanced-form',frm.doctype);cleanup();frm.refresh();};
+  try{runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountFinanceRecord(host,{doctype:frm.doctype,name:frm.is_new()?undefined:frm.doc.name,defaults:frm.is_new()||frm.is_dirty()?JSON.parse(JSON.stringify(frm.doc)):undefined,onAdvanced:advanced});}}
+  catch(error){if(!disposed)host.textContent=__('Accounting record could not load. Reopen to try again.');console.error(error);}
+ };
+ pp.react_billing_mount=async(host,agreement,invoice)=>{
+  const key=location.pathname+location.search;
+  let runtime,disposed=false;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};
+  const leave=()=>{if(location.pathname+location.search!==key)cleanup();};
+  host.ppReactCleanup=cleanup;frappe.router.on('change',leave);
+  try{runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountBillingPage(host,{agreement,invoice});}}
+  catch(error){if(!disposed)host.textContent=__('Billing could not load. Reopen to try again.');console.error(error);}
+ };
+ let resourceDialog;
+ async function openResourceDialog(mount){
+  resourceDialog?.();
+  const host=document.createElement('div');document.body.append(host);
+  let runtime,disposed=false;
+  const close=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);host.remove();frappe.router.off('change',close);if(resourceDialog===close)resourceDialog=null;};
+  resourceDialog=close;frappe.router.on('change',close);
+  try{runtime=await load();if(!disposed){pp.react_ui=runtime;await mount(runtime,host,close,()=>disposed);}}
+  catch(error){close();frappe.msgprint({title:__('Resource could not load'),message:__('Reopen the action to try again.'),indicator:'red'});console.error(error);}
+ }
+ pp.react_resource_open=(kind,after)=>openResourceDialog(async(runtime,host,close,disposed)=>{
+  const options=await pp.form_rpc('resources.form_options');
+  if(disposed())return;
+  runtime.mountResourceEditor(host,{kind:{inventory_items:'equipment',vehicles:'vehicles',warehouses:'warehouses'}[kind],options,onClose:close,onSaved:name=>{close();after?.({name,doctype:{inventory_items:'Item',vehicles:'Vehicle',warehouses:'Warehouse'}[kind]});}});
+ });
+ pp.react_resource_edit=(kind,name,after)=>openResourceDialog((runtime,host,close)=>{
+  runtime.mountResourceEdit(host,{kind,name,onClose:close,onSaved:()=>{close();after?.();}});
+ });
+ pp.react_booking_open=(kind,options)=>openResourceDialog((runtime,host,close)=>{
+  runtime.mountBooking(host,{kind,project:options.project,site:options.site,start:options.start,end:options.end,row:options.row,vehicle:options.vehicle,onClose:close,onSaved:()=>{close();options.after?.();}});
+ });
+ pp.react_attendance_mount=async(host,name,preview)=>{
+  let runtime,disposed=false;
+  const leave=()=>{
+   const [kind,doctype,record]=frappe.get_route()||[];
+   if(kind==='Form'&&doctype==='PP Daily Register'&&record===name)return;
+   disposed=true;runtime?.unmount(host);host.remove();frappe.router.off('change',leave);
+  };
+  frappe.router.on('change',leave);leave();
+  if(disposed)return;
+  host.textContent=__('Loading attendance…');
+  try{runtime=await load();if(!disposed)runtime.mountAttendanceRegister(host,name,preview);}
+  catch(error){if(!disposed)host.textContent=__('Attendance could not load. Refresh to retry.');console.error(error);}
+ };
  let importDialog;
  pp.react_import_open=async options=>{
   if(importDialog)return;
