@@ -28,12 +28,12 @@ app_include_js = ["/assets/plus_point/js/choices.js?v=20261029-event-review-2","
                   "/assets/plus_point/js/dashboard.js?v=20261103-react-12",
                   "/assets/plus_point/js/activity.js?v=20261023-finance-3",
                   "/assets/plus_point/js/crew.js?v=20261027-ui-2",
-                  "/assets/plus_point/js/events.js?v=20261109-react-finance-4",
+                  "/assets/plus_point/js/events.js?v=20261109-event-detail-5",
                   "/assets/plus_point/js/sections.js?v=20261027-consolidated-3",
                   "/assets/plus_point/js/conditions.js?v=20261021-complete-forms-4",
                   "/assets/plus_point/js/setup_flow.js?v=20261025-freddy-2",
                   "/assets/plus_point/js/event_setup.js?v=20261025-freddy-2",
-                  "/assets/plus_point/js/onboarding.js?v=20261109-react-finance-4"]
+                  "/assets/plus_point/js/onboarding.js?v=20261109-event-detail-5"]
 app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-import-2",
                    "/assets/plus_point/css/events.css?v=20261021-complete-forms-4",
                    "/assets/plus_point/css/dashboard_motion.css?v=20261021-complete-forms-4",
@@ -41,7 +41,7 @@ app_include_css = ["/assets/plus_point/css/onboarding.css?v=20261025-agreement-i
 app_include_css += ["/assets/plus_point/css/attendance.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/drafts.js?v=20261028-booking-controls-2",
                    "/assets/plus_point/js/daily_billing.js?v=20261029-table-controls-3"]
-app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261029-upload-assets-2", "/assets/plus_point/js/profiles.js?v=20261029-upload-assets-2", "/assets/plus_point/js/operations.js?v=20261109-react-finance-4"]
+app_include_js += ["/assets/plus_point/js/agreement_profile.js?v=20261029-upload-assets-2", "/assets/plus_point/js/profiles.js?v=20261029-upload-assets-2", "/assets/plus_point/js/operations.js?v=20261109-event-detail-5"]
 app_include_css += ["/assets/plus_point/css/operations.css?v=20261029-upload-assets-2", "/assets/plus_point/css/feedback.css?v=20261027-ui-2"]
 scheduler_events = {"cron":{"* * * * *":["plus_point.drafts.run_scheduled"],"*/15 * * * *":["plus_point.daily_billing.run_recurring"]},"hourly": ["plus_point.agreement_lifecycle.close_expired", "plus_point.support.purge_results", "plus_point.activation.purge_results", "plus_point.attendance.generate_today"]}
 extend_doctype_class = {"Subscription": ["plus_point.subscription.DemoWorkspaceSubscription"]}
@@ -108,8 +108,8 @@ app_include_css += ["/assets/plus_point/css/people.css?v=20261101-scenes-4"]
 
 app_include_js += ["/assets/plus_point/js/worker_actions.js?v=20261028-booking-controls-2"]
 
-app_include_js += ["/assets/plus_point/js/resources.js?v=20261109-react-finance-4"]
-app_include_js += ["/assets/plus_point/js/finance_hub.js?v=20261109-react-finance-4"]
+app_include_js += ["/assets/plus_point/js/resources.js?v=20261109-event-detail-5"]
+app_include_js += ["/assets/plus_point/js/finance_hub.js?v=20261109-event-detail-5"]
 app_include_css += ["/assets/plus_point/css/finance_hub.css?v=20261023-finance-3"]
 app_include_js += ["/assets/plus_point/js/business_reports.js?v=20261101-scenes-4"]
 app_include_css += ["/assets/plus_point/css/business_reports.css?v=20261023-report-layout-2"]
@@ -128,10 +128,10 @@ app_include_js += ["/assets/plus_point/js/ui_components.js?v=20261101-payment-re
 app_include_css += ["/assets/plus_point/css/ui_components.css?v=20261103-react-12"]
 app_include_css += ["/assets/plus_point/css/upload_assets.css?v=20261029-upload-assets-2"]
 
-app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261109-react-finance-4", "/assets/plus_point/js/react_routes.js?v=20261109-react-finance-4"]
+app_include_js += ["/assets/plus_point/js/lazy_features.js?v=20261109-event-detail-5", "/assets/plus_point/js/react_routes.js?v=20261109-event-detail-5"]
 app_include_css += ["/assets/plus_point/css/brand.css?v=20261103-react-12"]
 
 app_include_css += ["/assets/plus_point/css/app_shell.css?v=20261101-scenes-4"]
 
 # Scoped React component styles; runtime and screens remain route-lazy.
-app_include_css += ["/assets/plus_point/css/react_ui.css?v=20261109-react-finance-4"]
+app_include_css += ["/assets/plus_point/css/react_ui.css?v=20261109-event-detail-5"]

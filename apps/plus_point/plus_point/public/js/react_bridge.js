@@ -1,7 +1,7 @@
 /* Stage-by-stage React ownership. No new global observer or polling loop. */
 (()=>{
  const pp=window.plus_point;let modulePromise;
- const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261109-react-finance-4').catch(error=>{modulePromise=null;throw error;}));
+ const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261109-event-detail-5').catch(error=>{modulePromise=null;throw error;}));
  pp.react_prepare_attendance_list=()=>load().then(runtime=>runtime.prepareAttendanceList());
  pp.react_prepare_finance_list=()=>load().then(runtime=>runtime.prepareFinanceList());
  async function mountSharedList(list, render){

@@ -3,6 +3,7 @@ import {Badge,Button,DataTable,Feedback,Field,Icon,Input,Pagination} from './com
 import {t,today} from './bridge';
 import {useDebounced,useLiveUpdates,useResource} from './hooks';
 import {readCache} from './read-cache.mjs';
+import {planningRecordHref} from './planning-links.mjs';
 type Kind='PP Contract Terms'|'PP Event Plan';
 type RecordRow={name:string;agreement_title?:string;event_name?:string;pp_reference:string;pp_draft_name?:string;pp_draft_status?:string;status?:string;planning_state?:string;pp_record_archived?:number;pp_project_status?:string;start_date?:string;end_date?:string;effective_end?:string;contract?:string;project?:string;project_title?:string;billing_model?:string};
 type Response={rows:RecordRow[];total:number};
@@ -21,7 +22,7 @@ export default function Planning({list}:{list:NativePlanning}){
  useEffect(()=>{setSelected(new Set());},[data]);
  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;const changed=()=>{clearTimeout(timer);timer=setTimeout(()=>{readCache.invalidate(cacheScope);setRevision(n=>n+1);},350);};document.addEventListener('pp:data-changed',changed);document.addEventListener('pp:planning-draft-saved',changed);return()=>{clearTimeout(timer);document.removeEventListener('pp:data-changed',changed);document.removeEventListener('pp:planning-draft-saved',changed);};},[]);
  useEffect(()=>{if(!filters)return;const close=(e:PointerEvent)=>{if(!filterRoot.current?.contains(e.target as Node))setFilters(false);};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close);},[filters]);
- const link=(r:RecordRow)=>'/desk/'+path+(r.pp_draft_name?'?draft='+encodeURIComponent(r.pp_draft_name):'?record='+encodeURIComponent(r.name)+(r.planning_state==='Draft'?'&edit=1':''));
+ const link=(r:RecordRow)=>planningRecordHref(path,r);
  const remove=(ids:string[])=>window.plus_point.delete_records(list.doctype,ids,()=>{setSelected(new Set());refresh();});
  const advanced=()=>{sessionStorage.setItem('pp:planning:advanced',list.doctype);location.assign('/desk/'+(agreement?'pp-contract-terms':'pp-event-plan'));};
  return <section className="pp-r-screen pp-r-planning" aria-label={t(title)} aria-busy={loading}><header className="pp-resource-heading"><h1>{t(title)}</h1><div className="pp-actions"><Button icon="refresh" aria-label={t('Refresh records')} disabled={loading} onClick={refresh}/><Button icon="upload" onClick={()=>void window.plus_point.open_import(window.plus_point.dashboard_company,refresh,agreement?'agreements':'events')}>{t(agreement?'Import agreements':'Import events')}</Button>{list.can_create&&<Button icon="plus" tone="primary" onClick={()=>window.frappe.set_route(path,{record:'new'})}>{t(agreement?'New agreement':'Create event')}</Button>}</div></header>

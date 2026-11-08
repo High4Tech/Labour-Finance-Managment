@@ -269,6 +269,6 @@ body.pp-ui .pp-react-accounting-page .layout-main-section-wrapper{flex:1 1 100%;
 [data-pp-react-root] :is(.pp-r-resource-profile,.pp-r-billing)>.btn{justify-self:start}
 [data-pp-react-root] .pp-r-list-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 [data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex:0 1 300px;min-width:0}
-body.pp-ui [data-pp-react-root] .pp-agreement-tabs [role=tab][aria-selected=true]{color:var(--pp-action-primary);border-bottom-color:var(--pp-action-primary)}
+body.pp-ui [data-pp-react-root] .pp-agreement-tabs [role=tab][aria-selected=true]{color:var(--pp-brand-text,var(--pp-accent));border-bottom-color:var(--pp-action-primary)}
 body.pp-ui [data-pp-react-root=resource-profile],body.pp-ui [data-pp-react-root=billing],body.pp-ui .pp-react-accounting-page .layout-main-section{background:var(--pp-canvas,var(--subtle-fg,#f7f9fa))}
 @media(max-width:767px){[data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex-basis:100%}}
