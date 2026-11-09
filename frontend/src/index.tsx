@@ -30,7 +30,7 @@ const Planning=lazy(()=>import('./planning'));
 let preparedPlanning:typeof import('./planning').default|undefined;
 export async function preparePlanning(){preparedPlanning=(await import('./planning')).default;}
 const roots=new Map<HTMLElement,Root>();
-export const stats={activeRoots:0,mounts:0,unmounts:0};
+export const stats={activeRoots:0,persistentRoots:0,mounts:0,unmounts:0};
 class Boundary extends Component<{children:ReactNode},{failed:boolean}>{
  state={failed:false};static getDerivedStateFromError(){return {failed:true};}
  componentDidCatch(error:Error){console.error('PLUS POINT React screen',error);}
@@ -101,3 +101,49 @@ const ResourceEditDialog=lazy(()=>import('./resource-editor').then(module=>({def
 export function mountResourceEdit(host:HTMLElement,props:React.ComponentProps<typeof ResourceEditDialog>){
  mountOwned(host,'resource-edit',<ResourceEditDialog {...props}/>);
 }
+
+const EventScreen=lazy(()=>import('./event-screen'));
+export function mountEvent(host:HTMLElement,props:React.ComponentProps<typeof EventScreen>){mountOwned(host,'event',<EventScreen {...props}/>);}
+const LoanList=lazy(()=>import('./loans').then(m=>({default:m.LoanList})));
+const LoanProfile=lazy(()=>import('./loans').then(m=>({default:m.LoanProfile})));
+const NewLoan=lazy(()=>import('./loans').then(m=>({default:m.NewLoan})));
+const RecoveryProfile=lazy(()=>import('./loans').then(m=>({default:m.RecoveryProfile})));
+const Reports=lazy(()=>import('./reports'));
+export function mountLoans(host:HTMLElement,props:React.ComponentProps<typeof LoanList>){mountOwned(host,'loans',<LoanList {...props}/>);}
+export function mountLoanProfile(host:HTMLElement,name:string){mountOwned(host,'loan-profile',<LoanProfile name={name}/>);}
+export function mountRecoveryProfile(host:HTMLElement,name:string){mountOwned(host,'recovery-profile',<RecoveryProfile name={name}/>);}
+export function mountNewLoan(host:HTMLElement,onClose:()=>void,onSaved:()=>void){mountOwned(host,'new-loan',<NewLoan onClose={onClose} onSaved={onSaved}/>);}
+export function mountReport(host:HTMLElement,name:string){mountOwned(host,'report',<Reports name={name}/>);}
+const ClientPortal=lazy(()=>import('./client-portal'));
+export function mountClientPortal(host:HTMLElement){mountOwned(host,'client-portal',<ClientPortal/>);}
+const AttendancePicker=lazy(()=>import('./utility-dialogs').then(m=>({default:m.AttendancePicker})));
+const HelpDialog=lazy(()=>import('./utility-dialogs').then(m=>({default:m.HelpDialog})));
+const SetupWizard=lazy(()=>import('./utility-dialogs').then(m=>({default:m.SetupWizard})));
+const FileUpload=lazy(()=>import('./uploads').then(m=>({default:m.FileUpload})));
+export function mountAttendancePicker(host:HTMLElement,onClose:()=>void){mountOwned(host,'attendance-picker',<AttendancePicker onClose={onClose}/>);}
+export function mountHelp(host:HTMLElement,onClose:()=>void){mountOwned(host,'help',<HelpDialog onClose={onClose}/>);}
+export function mountSetup(host:HTMLElement,props:React.ComponentProps<typeof SetupWizard>){mountOwned(host,'setup',<SetupWizard {...props}/>);}
+export function mountUpload(host:HTMLElement,props:React.ComponentProps<typeof FileUpload>){mountOwned(host,'upload',<FileUpload {...props}/>);}
+const CompanyShell=lazy(()=>import('./shell'));
+const shellRoots=new Map<HTMLElement,Root>();
+export function renderShell(host:HTMLElement,state:import('./shell').ShellState){let root=shellRoots.get(host);if(!root){host.dataset.ppReactRoot='shell';root=createRoot(host);shellRoots.set(host,root);stats.persistentRoots=shellRoots.size;}root.render(<Boundary><Suspense fallback={null}><CompanyShell state={state}/></Suspense></Boundary>);}
+const RecordRemoval=lazy(()=>import('./record-removal'));
+const EventRemoval=lazy(()=>import('./record-removal').then(m=>({default:m.EventRemoval})));
+const SectionHub=lazy(()=>import('./section-hub'));
+const SectionOrder=lazy(()=>import('./section-hub').then(m=>({default:m.SectionOrder})));
+export function mountRemoval(host:HTMLElement,props:React.ComponentProps<typeof RecordRemoval>){mountOwned(host,'removal',<RecordRemoval {...props}/>);}
+export function mountEventRemoval(host:HTMLElement,props:React.ComponentProps<typeof EventRemoval>){mountOwned(host,'event-removal',<EventRemoval {...props}/>);}
+export function mountSection(host:HTMLElement,section:string){mountOwned(host,'section',<SectionHub section={section}/>);}
+export function mountSectionOrder(host:HTMLElement,onClose:()=>void){mountOwned(host,'section-order',<SectionOrder onClose={onClose}/>);}
+const AssignmentDialog=lazy(()=>import('./assignment-dialog'));
+export function mountAssignment(host:HTMLElement,props:React.ComponentProps<typeof AssignmentDialog>){mountOwned(host,'assignment',<AssignmentDialog {...props}/>);}
+
+const EventSetup=lazy(()=>import('./event-setup'));
+export function mountEventSetup(host:HTMLElement,props:React.ComponentProps<typeof EventSetup>){mountOwned(host,'event-setup',<EventSetup {...props}/>);}
+
+const PaymentConfirmation=lazy(()=>import('./payments').then(m=>({default:m.ConfirmPayment})));
+const PaymentReference=lazy(()=>import('./payments').then(m=>({default:m.ReferenceDialog})));
+const PaymentTiming=lazy(()=>import('./payments').then(m=>({default:m.TimingDialog})));
+export function mountPaymentConfirmation(host:HTMLElement,props:React.ComponentProps<typeof PaymentConfirmation>){mountOwned(host,'payment-confirmation',<PaymentConfirmation {...props}/>);}
+export function mountPaymentReference(host:HTMLElement,props:React.ComponentProps<typeof PaymentReference>){mountOwned(host,'payment-reference',<PaymentReference {...props}/>);}
+export function mountPaymentTiming(host:HTMLElement,props:React.ComponentProps<typeof PaymentTiming>){mountOwned(host,'payment-timing',<PaymentTiming {...props}/>);}

@@ -10,6 +10,7 @@ from plus_point.finance_hub import company_scope
 
 
 FIELDS = {
+    'PP Wage Settlement': ['employee', 'project', 'payment_entry', 'amount', 'payment_reference', 'remarks'],
     'Payment Entry': ['payment_type', 'posting_date', 'party_type', 'party', 'mode_of_payment',
         'paid_from', 'paid_to', 'paid_amount', 'received_amount', 'source_exchange_rate',
         'target_exchange_rate', 'reference_no', 'reference_date', 'cost_center', 'project', 'remarks'],
@@ -34,12 +35,13 @@ def context(doctype, name=None):
     if name:
         doc = frappe.get_doc(doctype, name)
         doc.check_permission('read')
-        if doc.company != business.name:
+        record_company = frappe.db.get_value('Project', doc.project, 'company') if doctype == 'PP Wage Settlement' else doc.company
+        if record_company != business.name:
             frappe.throw('This record belongs to another company.', frappe.PermissionError)
     else:
         frappe.has_permission(doctype, 'create', throw=True)
         doc = frappe.new_doc(doctype)
-        doc.company = business.name
+        if doc.meta.has_field('company'):doc.company = business.name
         doc.posting_date = nowdate()
         if doctype in ('Sales Invoice', 'Purchase Invoice'):
             doc.currency = business.default_currency
@@ -65,6 +67,8 @@ def schema(doctype, names, parent=None):
             continue
         row = dict(key=name, label=field.label, type=field.fieldtype, required=bool(field.reqd),
             options=field.options, readonly=bool(field.read_only or name not in writable))
+        if doctype == 'PP Wage Settlement' and name == 'payment_entry':
+            row['label']='Submitted employee payment'
         if doctype == 'Payment Entry' and name == 'party_type':
             row.update(type='Select', options='\nCustomer\nSupplier\nEmployee')
         if field.fieldtype == 'Table':
@@ -111,7 +115,7 @@ def detail(doctype, name=None, defaults=None):
             value = [dict(name=row.name, **{f['key']: row.get(f['key']) for f in field['fields']})
                 for row in value or []]
         values[field['key']] = value
-    totals = {key: doc.get(key) for key in ['grand_total', 'outstanding_amount', 'paid_amount',
+    totals = {key: doc.get(key) for key in ['amount', 'grand_total', 'outstanding_amount', 'paid_amount',
         'received_amount', 'total_claimed_amount', 'total_sanctioned_amount',
         'paid_from_account_currency', 'paid_to_account_currency'] if doc.meta.has_field(key)}
     return dict(name=doc.name if name else None, doctype=doctype, company=business.name,
@@ -161,6 +165,12 @@ def save(doctype, values, name=None, modified=None):
     if name and str(doc.modified) != str(modified or ''):
         frappe.throw('Someone changed this record. Reload it before saving your changes.')
     apply_values(doc, frappe.parse_json(values))
+    if doctype == 'PP Wage Settlement':
+        from plus_point.setup_flow import linked
+        business = company_scope()
+        linked('Project', doc.project, business.name)
+        linked('Employee', doc.employee, business.name)
+        linked('Payment Entry', doc.payment_entry, business.name)
     if doctype in ('Sales Invoice', 'Purchase Invoice'):
         doc.run_method('set_missing_values')
         doc.run_method('set_missing_item_details')
@@ -202,6 +212,8 @@ def choices(doctype, field, text=None, parentfield=None, party_type=None):
     meta = frappe.get_meta(target)
     if meta.has_field('company'):
         filters['company'] = business.name
+    if target == 'Payment Entry' and doctype == 'PP Wage Settlement':
+        filters.update(docstatus=1, payment_type='Pay', party_type='Employee')
     if target == 'Account':
         filters.update(is_group=0, disabled=0)
     text = str(text or '').strip()[:140]

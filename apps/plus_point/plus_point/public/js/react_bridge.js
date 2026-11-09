@@ -1,9 +1,48 @@
 /* Stage-by-stage React ownership. No new global observer or polling loop. */
 (()=>{
  const pp=window.plus_point;let modulePromise;
- const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261109-event-detail-5').catch(error=>{modulePromise=null;throw error;}));
+ const load=()=>modulePromise||=(import('/assets/plus_point/react/index.js?v=20261109-complete-migration-2').catch(error=>{modulePromise=null;throw error;}));
+ pp.react_event_mount=async(host,props)=>{
+  const key=location.pathname+location.search;let runtime,disposed=false;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};
+  const leave=()=>{if(location.pathname+location.search!==key)cleanup();};
+  host.ppReactCleanup=cleanup;frappe.router.on('change',leave);
+  try{runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountEvent(host,props);}}
+  catch(error){if(!disposed)host.textContent=__('Event could not load. Reopen to try again.');console.error(error);}
+ };
+ pp.react_event_setup=async(wrapper,props)=>{
+  const host=wrapper.pp_onboarding_root;host.ppReactCleanup?.();host.replaceChildren();let runtime,disposed=false;
+  const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);host.replaceChildren();frappe.router.off('change',leave);};
+  const leave=()=>{if(frappe.get_route()[0]!=='pp-onboarding')cleanup();};host.ppReactCleanup=cleanup;frappe.router.on('change',leave);
+  runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountEventSetup(host,props);host.dataset.ready='true';}
+ };
  pp.react_prepare_attendance_list=()=>load().then(runtime=>runtime.prepareAttendanceList());
  pp.react_prepare_finance_list=()=>load().then(runtime=>runtime.prepareFinanceList());
+ pp.react_prepare_loans=()=>load();
+ pp.react_assignment=(defaults,after)=>openResourceDialog((runtime,host,close)=>runtime.mountAssignment(host,{project:defaults?.project,onClose:close,onSaved:()=>after?.()}));
+ pp.react_removal=(doctype,names,after)=>openResourceDialog((runtime,host,close)=>runtime.mountRemoval(host,{doctype,names,onClose:close,onSaved:()=>after?.()}));
+ pp.react_event_removal=(name,resume,after)=>openResourceDialog((runtime,host,close)=>runtime.mountEventRemoval(host,{name,onClose:close,onSaved:()=>after?.(),onRecheck:()=>{close();resume?.();}}));
+ pp.react_section_order=()=>openResourceDialog((runtime,host,close)=>runtime.mountSectionOrder(host,close));
+ pp.react_section_mount=async(wrapper,section)=>{const host=wrapper.pp_section_root,key=location.pathname+location.search;host.ppReactCleanup?.();host.replaceChildren();let runtime,disposed=false;const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);frappe.router.off('change',leave);host.replaceChildren();};const leave=()=>{if(location.pathname+location.search!==key)cleanup();};host.ppReactCleanup=cleanup;frappe.router.on('change',leave);runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountSection(host,section);}};
+ pp.react_shell=async(host,state)=>{const runtime=await load();pp.react_ui=runtime;runtime.renderShell(host,state);};
+ pp.react_attendance_picker=()=>openResourceDialog((runtime,host,close)=>runtime.mountAttendancePicker(host,close));
+ pp.react_help=()=>openResourceDialog((runtime,host,close)=>runtime.mountHelp(host,close));
+ pp.react_setup=props=>openResourceDialog((runtime,host,close)=>runtime.mountSetup(host,{...props,onClose:close}));
+ pp.react_upload=options=>openResourceDialog((runtime,host,close)=>runtime.mountUpload(host,{doctype:options.doctype,name:options.docname,images:!!options.restrictions?.allowed_file_types,onClose:close,onSaved:async file=>{await options.on_success?.(file);close();}}));
+ pp.react_loans_mount=list=>mountSharedList(list,(runtime,host,permissions)=>runtime.mountLoans(host,{doctype:list.doctype,...permissions}));
+ pp.react_new_loan=after=>openResourceDialog((runtime,host,close)=>runtime.mountNewLoan(host,close,()=>{close();after?.();}));
+ pp.react_loan_profile=async frm=>{
+  if(frm.__pp_react_loan)return;frm.__pp_react_loan=true;const host=document.createElement('div'),key=location.pathname+location.search;
+  frm.form_wrapper.prepend(host);frm.form_wrapper.addClass('pp-client-native-hidden');frm.disable_save();frm.page.clear_primary_action();
+  let runtime,disposed=false;const leave=()=>{if(key===location.pathname+location.search)return;disposed=true;runtime?.unmount(host);host.remove();frm.__pp_react_loan=false;frm.form_wrapper.removeClass('pp-client-native-hidden');frm.enable_save();frappe.router.off('change',leave);};frappe.router.on('change',leave);
+  runtime=await load();if(!disposed){pp.react_ui=runtime;frm.doctype==='PP Loan Recovery'?runtime.mountRecoveryProfile(host,frm.doc.name):runtime.mountLoanProfile(host,frm.doc.name);}
+ };
+ pp.react_report_mount=async(report,name)=>{
+  const page=report.parent.page,main=page.main.get(0),key=location.pathname+location.search;
+  main.querySelector('[data-pp-report-host]')?.ppReactCleanup?.();const host=document.createElement('div');host.dataset.ppReportHost='true';main.prepend(host);main.classList.add('pp-react-list-host');page.set_title(__(name));page.clear_primary_action();page.clear_secondary_action();
+  let runtime,disposed=false;const leave=()=>{if(key===location.pathname+location.search)return;cleanup();};const cleanup=()=>{if(disposed)return;disposed=true;runtime?.unmount(host);host.remove();main.classList.remove('pp-react-list-host');frappe.router.off('change',leave);};host.ppReactCleanup=cleanup;frappe.router.on('change',leave);
+  runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountReport(host,name);}
+ };
  async function mountSharedList(list, render){
   if(list.__pp_react_shared_list)return;
   const main=list.page.main.get(0),host=document.createElement('div'),query=location.search;
@@ -74,6 +113,7 @@
   try{runtime=await load();if(!disposed){pp.react_ui=runtime;runtime.mountBillingPage(host,{agreement,invoice});}}
   catch(error){if(!disposed)host.textContent=__('Billing could not load. Reopen to try again.');console.error(error);}
  };
+ pp.react_payment_dialog=(kind,props)=>openResourceDialog((runtime,host,close)=>runtime[{confirmation:'mountPaymentConfirmation',reference:'mountPaymentReference',timing:'mountPaymentTiming'}[kind]](host,{...props,onClose:close,onSaved:()=>{close();props.onSaved?.();}}));
  let resourceDialog;
  async function openResourceDialog(mount){
   resourceDialog?.();

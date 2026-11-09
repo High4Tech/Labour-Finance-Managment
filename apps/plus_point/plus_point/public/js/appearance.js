@@ -28,6 +28,7 @@
         if (!frappe.boot?.plus_point) return;
         const theme=root.getAttribute('data-theme');if(theme!==lastTheme){lastTheme=theme;document.dispatchEvent(new Event('pp:theme-changed'));}
         document.body.classList.add('pp-ui');
+        if(!frappe.boot.plus_point.is_platform)return;
         const footer = document.querySelector('.body-sidebar-bottom');
         if (!footer) return;
         let button = document.querySelector('.pp-theme-toggle');

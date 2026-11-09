@@ -4,6 +4,7 @@ declare global {
   plus_point: {
    form_rpc<T=unknown>(method:string,args?:Args,options?:{signal?:AbortSignal}):Promise<T>;
    open_attendance_picker():void;
+   open_setup():void;
    open_file_upload(options:Record<string,unknown>):void;
    dashboard_company?:string;
    load_feature(name:string):Promise<void>;

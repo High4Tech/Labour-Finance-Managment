@@ -120,7 +120,7 @@
     }
 
     function taskHome() {
-        if(frappe.user.has_role('System Manager'))return '<div class="pp-task-home pp-overview-home"><section class="pp-dashboard" aria-label="'+esc(__('Business dashboard'))+'"></section></div>';
+        if(!platform())return '<div class="pp-task-home pp-overview-home"><section class="pp-dashboard" aria-label="'+esc(__('Business dashboard'))+'"></section></div>';
         return `<div class="pp-task-home">
             <div class="pp-task-heading"><div><h2>${esc(__('Event operations'))}</h2><p>${esc(__('Event timelines, crew, equipment, transport and finances in one view.'))}</p></div></div>
             <section class="pp-setup-banner" aria-label="${esc(__('Business setup and imports'))}"></section>

@@ -39,7 +39,7 @@ The old `worker_profile.js` renderer returned immediately to the React adapter f
 - Facts spans genuinely long location/reference values across its available content width. Document names use left-aligned file-type SVG, text and end action geometry.
 - RichText owns an isolated installed Quill control. It initializes the saved HTML explicitly and synchronizes text-change immediately so rapid review/save cannot lose the last keystroke. It releases its handlers on departure. RichContent is the read-only variant: preserve supported document formatting; exclude active tags, event attributes and unsafe URLs.
 - EmailFields uses one input per address, wrapping CC rows horizontally when space permits. Removal controls align with the input, with shared 12px gaps. Each row has its own label and error association.
-- DocumentPreview fetches private PDF bytes only when opened, creates an object URL for the preview/download and revokes that URL on close or late unmounted completion. The native File uploader remains an explicit adapter until the import/upload owner migrates.
+- DocumentPreview fetches private PDF bytes only when opened, creates an object URL for the preview/download and revokes that URL on close or late unmounted completion. FileUpload is the shared React private-upload owner; the native authenticated upload endpoint remains authoritative.
 - Agreement resource edits are staged locally and serialize only existing persisted venue IDs; new sites resolve by name. Price conversion is left to the existing explicit-currency backend boundary. Edits still use the existing immutable proposal/client-signature or company-attestation workflow.
 - A worker created from a missing crew category uses the shared WorkerEditor with an initial category value, not a copied form. The category popup and profile use the same field/button/dialog components.
 
@@ -59,16 +59,27 @@ The old `worker_profile.js` renderer returned immediately to the React adapter f
 - PaymentName and AttendancePeriod are the shared schedule cells in creation and saved-agreement views. Context is readable, a one-day date is not duplicated, and optional working hours distinguish overnight shifts without changing wage/attendance accounting.
 - ImportUpload and ImportDialog replace the old product import FieldGroup/string-table renderer. They use the original local SVG file types, original server templates/preview/approval APIs, native permissions and transactional posting. The old native product import renderer has no remaining caller after open_import delegates to the React owner. Frappe's advanced Data Import is untouched.
 - The company branch in the native dashboard loader returns to React before running its platform flow. Its private company-only budget presentation helper had no remaining call and was removed; budget APIs, event controls and the platform renderer remain available.
-- Native file upload/photo widgets remain documented integration boundaries until their consuming owners migrate; no second equivalent React photo widget is introduced.
+- FileUpload owns company file/photo selection, progress, validation and abort/revoke cleanup. It calls the native authenticated upload endpoint; framework advanced upload controls remain available in native advanced views.
 
 ## Resource, attendance and accounting ownership — November 9
 
 - ResourceEditor and ResourceEditDialog share one equipment/warehouse/vehicle field definition and the existing fields/selectors/dialog. ResourceLookup is the lazy scoped selector and does not load unrelated form catalogues.
 - WarehouseStock owns staged quantity changes, selection/bulk edits and unsaved-change protection. Reservations stay read-only. Native posting, expected quantities and reserved-capacity checks are server-owned.
 - BookingDialog and ResourceBookings own vehicle/equipment event reservations. Capacity/conflicts belong to their fields; errors retain the dialog and entered values. Only relevant realtime notices request a refresh.
-- AttendanceList/AttendanceRegister own the roster and marks. The opening picker remains a native boundary. Approval/correction/payroll semantics stay in existing controllers and APIs.
+- AttendanceList/AttendanceRegister own the roster and marks. AttendancePicker uses the same React Dialog and Select primitives. Approval/correction/payroll semantics stay in existing controllers and APIs.
 - FinanceList keeps shared table geometry and project/company scope. FinanceRecord uses permitted native field metadata and explicitly hands advanced accounting to the native form. Account currencies, revisions, validation and ledger posting remain authoritative.
 - BillingPage reuses SharedAgreementPayments and DocumentPreview. DocumentPreview's native-print loader is a source variant, not a second PDF dialog; preview alone creates no attachment.
 - Native decorators must not run during React route preparation. They run only in an explicitly selected advanced view. Mount/dispose includes query scope so changing the contextual event cannot reuse stale list state.
 
-The current ledger is [REACT_MIGRATION_2026-11-09.md](REACT_MIGRATION_2026-11-09.md). Its resource, attendance and accounting rows supersede earlier legacy classifications. Events, loans/reports, shell and public portal remain incomplete.
+The current ledger is [REACT_MIGRATION_2026-11-09.md](REACT_MIGRATION_2026-11-09.md). Its resource, attendance and accounting rows supersede earlier legacy classifications. The remaining event, loans/reports, shell, utilities and public portal owners are now migrated; authorized native advanced views remain intentionally available.
+
+## Completed company owners and engine adapters
+
+- EventScreen owns saved profile and new/edit state. EventStaffing, worker/pay dialogs and EventCalendar are shared between creation/review and profile consumers. New requirements serialize only whitelisted values; native assignment and budget checks stay authoritative. A saved record opens its profile regardless of planning state.
+- LoanList/LoanProfile/RecoveryProfile use company-scoped native loan APIs. Reports calls only the two authorized native product reports; exports reuse their returned data with spreadsheet-formula guards.
+- CompanyShell uses React portals into the existing shell slots; one persistent root owns header/navigation and anchored menus. It does not recreate the underlying framework permissions. Shared header geometry keeps company, separator and page title together. Outside/Escape dismissal cleans listeners.
+- RecordRemoval and EventRemoval keep blocker resolutions within the focused dialog and use native deletion protections. Posted financial history is never bypassed by a frontend control.
+- EventSetup and SetupWizard preserve resumable native setup state. A small parsed condition grammar replaces dynamic evaluation. Setup's Leaflet map is an isolated engine with effect cleanup.
+- ClientPortal reuses the same components and their owned-root base styles without requiring the Desk CSS bundle. Token review is uncached; signing still uses native guest security. RichContent sanitizes supported document markup.
+- EventScene initializes the existing canvas engine only when requested. Its owner disposes the engine and context-loss listener, cancels in-flight work and clears the one-shot work-hours lighting timer on close. Chart/Quill/canvas engines are adapters, not duplicate screen renderers.
+- FinanceRecord also owns manual PP Wage Settlement linking. The server derives company from the scoped Project, validates the submitted employee payment and computes the amount using native settlement validation. Existing posted records use the shared reference editor.

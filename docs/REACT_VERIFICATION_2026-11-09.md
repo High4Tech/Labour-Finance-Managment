@@ -1,64 +1,61 @@
 # Frontend/backend verification — 9 November 2026
 
-## Result
+## Result and scope
 
-The company app has a working React/TSX component layer connected to the existing Python/Frappe APIs, but the whole frontend is **not yet React**. The remaining interfaces below must be migrated before making that claim. This audit verifies the current supported paths; it does not certify every possible record, permission combination or external email/payment integration.
+Default company screens and the client signing/progress portal now use React/TSX owners connected to the existing Python/Frappe APIs. The remaining event, loans, reports, shell, utilities and portal interfaces from the previous checkpoint have been migrated. This does not mean every installed ERPNext/HRMS or platform-administration screen has been rewritten: explicitly authorized advanced views remain native by design.
 
-Installed runtime: Frappe 16.51.1, ERPNext 16.51.1, HRMS 16.51.0 and PLUS POINT 0.4.0. React 19.3.1 and TypeScript 7.0.2 are declared in `frontend/package.json`. No backend framework, DocType, permission check, ledger or integration was removed.
+Installed runtime at this checkpoint: Frappe 16.51.1, ERPNext 16.51.1, HRMS 16.51.0 and PLUS POINT 0.4.0; frontend dependencies pin React 19.3.1 and TypeScript 7.0.2. Authentication, permissions, DocTypes, native controllers, accounting/stock ledgers and integrations remain intact. See the [ownership ledger](REACT_MIGRATION_2026-11-09.md) and [component contract](REACT_COMPONENT_CONTRACT.md).
 
-## Ownership
+CSS still styles React components; JavaScript route adapters still connect Desk routes. Neither implies that the default screen renders a second legacy interface. Runtime ownership and actual consumers were audited, rather than judging migration from filename extensions or visual differences alone.
 
-| Interface | Current owner |
-| --- | --- |
-| Dashboard, agreement form/profile, workers, clients | React/TSX with shared components |
-| Agreement/event lists, worker payments, notifications, imports | React/TSX with existing scoped APIs |
-| Attendance register list and marking/approval | React/TSX; native attendance-opening picker remains an adapter |
-| Equipment, warehouse and vehicle lists/profiles/editors/reservations | React/TSX; native stock controllers remain authoritative |
-| Billing workspace, Payment Entry, Sales/Purchase Invoice, Expense Claim | React/TSX; native accounting save/submit/posting APIs |
-| Event form/profile, staffing/pay pickers and calendar | Legacy PLUS POINT JavaScript/native form ownership; event list is React |
-| Worker loans/recoveries, product reports | Legacy ownership remains |
-| Parts of shell/search/help/onboarding/preferences, public client signing/progress portal | Legacy ownership remains |
-| File/photo upload/pickers and authorized advanced framework views | Documented native adapters/views remain available |
+## Fixes and completed paths
 
-CSS is still used to style React components. Its presence is not evidence that a screen is unmigrated; runtime ownership and source consumers are the checks used here.
+- Saved Jobs & Events links, including saved Draft records and native blocker-record URLs, open the React detail profile. Explicit Edit opens the React editor; projected unsaved drafts resume creation. An unfinished edit draft cannot silently replace the saved profile route.
+- Events now share React creation, venue/staff/pay controls, auto-selection review, monthly-profile pay, assignment moves/releases, reservations, calendar, documents and profile sections. Existing backend allocation, budget and commercial-confirmation guards remain enforced.
+- Loans/recoveries and both product reports have React owners with company-scoped native read/posting boundaries.
+- The shell, search/notification overlays, help, attendance opener, deletion blockers, private uploads, preferences and resumable onboarding use shared React components. A legacy breadcrumb spacing rule was corrected in the shared header and has a regression check.
+- Manual wage-payment linking now uses the same metadata-backed FinanceRecord form. Submitted employee-payment checks and amount calculation remain native; posted references use the shared reference dialog.
+- Client review/signing/progress uses the same React tabs, fields, feedback and status primitives. Shared owned-root styles prevent public pages from falling back to browser-default controls.
+- The event-world canvas remains on demand, pauses correctly, and releases its canvas/listeners/timer when closed. No world assets initialize on ordinary dashboard/app startup.
+- Native advanced forms have an explicit return to the company interface. No backend capability was removed to improve presentation.
 
-## Fixes from this audit
+## Checks performed
 
-- Saved event names and Open actions now open the event detail profile, including records whose planning state is Draft. A saved record's unfinished edit draft no longer takes over its list link. Projected unsaved drafts still resume their form. Edit event explicitly opens the editor; opening a detail profile does not finalize the event.
-- Removed the second event-renderer override that forced saved Draft events into editing, even when the route requested the profile.
-- Selected agreement tabs now use the shared accessible brand-text token. The browser audit caught insufficient contrast in both light and dark modes; both pass after the change.
-- Corrected obsolete browser assertions that expected no React owner on inventory or agreement creation. The assertions still verify one active owner and cleanup instead of permitting duplicate roots.
-- Bumped asset versions and cleared the server asset cache to serve the current route and style code.
-
-## Tests actually run
-
-| Check | Result |
+| Check | Final result |
 | --- | --- |
 | Strict TypeScript and production build | Passed |
-| Frontend state/navigation unit tests | 24 passed |
-| Architecture/backend workflow suite on QA | 321 passed, 0 failures/errors, 615.48 seconds |
-| Accounting/resource backend tests on QA | 19 passed, 0 failures/errors |
-| Browser suites | All 12 passed: foundation, dashboard, layout, planning, workers, clients, agreements, agreement builder, worker payments, imports, resources and finance |
-| Event navigation regression | Saved Active and saved Draft records open profiles; explicit Edit opens the form; no unhandled JavaScript errors |
-| Actual QA attendance lifecycle | Passed roster generation, three attendance states, draft/approval separation, budget stop, exact wages/revenue, duplicate protection, worker summary and mobile/dark fit |
-| QA cleanup | Test records removed and original workspace/appearance restored |
+| Frontend state/validation unit tests | 29 passed |
+| Current backend regression run | 187 passed, 0 failures/errors; 418.532 seconds |
+| Existing browser suites | Foundation, dashboard, layout, planning, workers, clients, agreements, agreement builder, worker payments, imports, resources and finance passed |
+| Event browser suite | 7 passed: saved profile/tabs, worker/pay controls, menus, real lazy scene lifecycle, editor, empty-new-draft behavior and mobile cleanup |
+| Migration browser suite | 6 passed: loans, real balance/profile, both reports, navigation snapshot and invalid public token |
+| Utility browser suite | 22 passed: shared shell/search, collapse, notification/help dismissal, attendance validation, deletion, native event URL, upload, payment form/reference, all ten onboarding stages and mobile bounds passed |
+| Client portal browser suite | 4 passed: review/consent, one acceptance POST, signed state/progress, mobile viewport |
 
-The architecture suite covers agreement/event creation, sharing, drafts, planning, crew allocation, attendance, finance, currency rules, deletion and component validation. Browser suites include shared table selection, field validation, error retention, responsive/dark dialogs and screen disposal. Company-site browser financial writes are intercepted; real posting/attendance tests run on the disposable QA site. Email was not sent and no live payment was executed.
+The 187-test backend run covers hierarchy, agreement architecture, consolidated workflows, event controls/start, component validation, full workflow, drafts, planning, payments, dashboard analytics, finance records and new React transport adapters. It includes real QA accounting/ledger posting and permission/cross-company checks. A test harness fix restores the test flag correctly so scheduler work cannot invalidate rollback savepoints; fixture agreement names are unique.
 
-The initial browser pass had two failures: an obsolete foundation ownership assertion and the real agreement-tab contrast failure. Focused reruns after correction pass, and the aggregate report records all 12 final results. Detailed ignored artifacts are in `.local/qa/react-audit/`, `.local/qa/event-detail-navigation/` and the associated `.local/react-audit-*.log` files.
+Browser financial mutations, uploads, setup writes and client acceptance were intercepted where needed to protect the main account. The valid-signing browser test verifies the frontend request/state transition, not an actual client signature. Native signature/token expiry/revocation/security and financial posting were exercised separately on QA. Email delivery and external bank/payment-provider integration were not tested by sending a real message/payment.
 
-## Performance limits
+Detailed ignored artifacts live under `.local/qa/react-*`. Final focused logs include `react-migration-regressions.log`, `react-final-unit.log`, `react-scene-final.log`, `react-migration-browser.log`, `react-utilities-final.log`, `react-portal-browser.log`, `react-payments-final.log`, `react-finance-final.log` and `react-layout-final.log`.
 
-The final read-only lifecycle measurement visited 13 migrated list types, then repeated 26 visits:
+## Performance evidence
 
-- Warm list readiness: **132–239 ms**, median **181 ms**.
-- One active React root and one list-update listener before and after.
-- DOM count stayed at **13,070**. Duplicate native list queries and unhandled browser errors: **zero**.
-- Collected heap increased from **22,687,089** to **24,069,722 bytes**. This bounded run does not prove absence of a memory leak.
-- Cold worker-payment readiness: **3,196 ms**, with **9,426,264 decoded JS/CSS bytes** across the measured page/session. This still needs improvement; it is not a claim that the performance objective is complete.
+Read-only lifecycle measurement across 13 list types and 26 repeat visits:
 
-React alone does not prevent stale selection, polling or retained screens. These are lifecycle/cache ownership problems and need direct measurements. Remaining legacy screen migration and a lighter company entry remain necessary.
+| Measurement | Result |
+| --- | --- |
+| Warm list readiness | 125–279 ms; median 184 ms |
+| DOM nodes before/after | 13,178 / 13,178 |
+| Active screen roots before/after | 1 / 1, plus the persistent shell owner |
+| List-update listeners before/after | 1 / 1 |
+| Duplicate native list queries | 0 |
+| Unhandled browser errors | 0 |
+| Collected heap before/after | 22,828,647 / 24,395,053 bytes |
+| Initial payment-screen readiness | 3,762 ms |
+| Decoded JS/CSS observed in that page/session | 9,438,059 bytes |
 
-## Storage
+These samples show stable measured screen/list ownership and fast warm navigation. The modest heap increase is not proof of no leak. Earlier initial-load samples ranged from about 3.2 to 3.85 seconds, so there is no demonstrated cold-start improvement. The preserved Desk framework still contributes significant initial assets; a lighter isolated company entry remains a separate optimization opportunity. Do not describe all performance work as finished or attribute the original slowdown simply to HTML/CSS.
 
-Source is on `D:\Labour-Managment-Software\Labour-Finance-Managment`. Docker's data disk exists at `D:\DockerDesktop\DockerDesktopWSL\disk\docker_data.vhdx`; the prior C: Docker data disk is absent. The database and uploaded files remain in Docker volumes. Backups are private, ignored by Git, and retained under `.local/backups/`.
+## Storage and release safety
+
+Source is on `D:\Labour-Managment-Software\Labour-Finance-Managment`. Docker storage is on `D:\DockerDesktop\DockerDesktopWSL\disk\docker_data.vhdx`; the previous C: Docker data disk was verified absent in the storage checkpoint. Database/uploads stay in Docker volumes. Private backups and credentials are ignored by Git. No blanket deletion of native features or tenant financial history was performed.

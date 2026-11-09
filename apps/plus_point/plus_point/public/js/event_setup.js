@@ -84,6 +84,11 @@
   return error?.message||__('Could not save this step. Check the highlighted fields and try again.');
  }
  async function show(wrapper,info){
+  if(!frappe.boot.plus_point?.is_platform){
+   frappe.boot.plus_point.onboarding_required=!!info.required;frappe.boot.plus_point.onboarding_complete=!info.required;lock(info.required);
+   await plus_point.load_feature('react_ui');return plus_point.react_event_setup(wrapper,{initial:info,schema:fields,copy,onFinish:()=>{frappe.boot.plus_point.onboarding_required=false;frappe.boot.plus_point.onboarding_complete=true;lock(false);document.dispatchEvent(new Event('pp:onboarding'));frappe.set_route('/desk/plus-point');}});
+  }
+
   const s=info.state,index=steps.indexOf(s.step),[title,description]=copy[s.step],root=wrapper.pp_onboarding_root;
   root.dataset.ready='false';
   wrapper.pp_setup_info=info;wrapper.pp_maps?.forEach(m=>m.remove());wrapper.pp_maps=[];

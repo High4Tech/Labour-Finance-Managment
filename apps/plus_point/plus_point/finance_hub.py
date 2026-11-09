@@ -15,6 +15,23 @@ def company_scope(company=None):
     return linked('Company', company)
 
 
+@frappe.whitelist(methods=['POST'])
+def edit_draft_loan(name,values):
+    business=company_scope();doc=linked('PP Worker Loan',name,business.name)
+    doc.check_permission('write')
+    if doc.docstatus!=0:frappe.throw('Only unpaid draft loans can be edited.')
+    values=frappe.parse_json(values)
+    if not isinstance(values,dict) or set(values)-{'amount','deduction_percent','reason','loan_date'}:frappe.throw('Edit the loan amount, recovery percentage, date or reason.')
+    doc.update(values);doc.save()
+    return dict(name=doc.name)
+
+
+@frappe.whitelist()
+def recovery_detail(name):
+    business=company_scope();doc=linked('PP Loan Recovery',name,business.name)
+    return dict(document=doc.as_dict(),currency=business.default_currency,worker=linked('Employee',doc.employee,business.name).employee_name)
+
+
 @frappe.whitelist()
 def summary(company=None):
     business = company_scope(company)
@@ -70,11 +87,38 @@ def loan_detail(name, month=None):
     from plus_point.benefits import balances
     state = balances(worker.name, month)
     row = next((r for r in state['loans'] if r.name == name), None)
-    return dict(worker=dict(name=worker.name, company=worker.company, employee_name=worker.employee_name,
+    return dict(document=loan.as_dict(),worker=dict(name=worker.name, company=worker.company, employee_name=worker.employee_name,
             image=worker.image, pp_loan_deduction_percent=worker.get('pp_loan_deduction_percent')),
         currency=business.default_currency, benefits=state, loan=row,
         recoveries=frappe.get_list('PP Loan Recovery', filters={'loan': name, 'company': business.name},
             fields=['name','month','amount','docstatus','journal_entry'], order_by='month desc, creation desc', limit_page_length=100))
+
+
+@frappe.whitelist()
+def loan_records(doctype='PP Worker Loan',search='',start=0):
+    business=company_scope()
+    if doctype not in ('PP Worker Loan','PP Loan Recovery'):
+        frappe.throw('Choose loans or recovery history.')
+    start=max(0,frappe.utils.cint(start))
+    filters={'company':business.name}
+    if search:
+        people=frappe.get_list('Employee',filters={'company':business.name,'employee_name':['like','%'+str(search)[:140]+'%']},pluck='name',limit_page_length=200)
+        filters['employee']=['in',people or ['']]
+    fields=['name','employee','amount','docstatus','currency','loan_date','deduction_percent'] if doctype=='PP Worker Loan' else ['name','employee','loan','amount','month','docstatus','journal_entry']
+    rows=frappe.get_list(doctype,filters=filters,fields=fields,order_by='modified desc',limit_start=start,limit_page_length=21)
+    more=len(rows)>20;rows=rows[:20]
+    if doctype=='PP Worker Loan':rows=loan_states([r.name for r in rows])
+    else:
+        for row in rows:
+            row.worker_name=frappe.db.get_value('Employee',row.employee,'employee_name') or row.employee
+            row.currency=business.default_currency
+    return dict(rows=rows,has_more=more,currency=business.default_currency)
+
+
+@frappe.whitelist()
+def loan_workers(search=''):
+    business=company_scope()
+    return frappe.get_list('Employee',filters={'company':business.name,'status':'Active','employee_name':['like','%'+str(search)[:140]+'%']},fields=['name','employee_name'],order_by='employee_name',limit_page_length=40)
 
 @frappe.whitelist(methods=['POST'])
 def list_records(doctype, search=None, start=0, project=None):

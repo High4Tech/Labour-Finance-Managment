@@ -1,3 +1,4 @@
+import {ReferenceDialog} from './payments';
 import {useEffect,useRef,useState} from 'react';
 import {Badge,Button,Checkbox,DataTable,Dialog,Feedback,Field,Input,Panel,Select,SummaryCards,Textarea} from './components';
 import {changed,t} from './bridge';
@@ -10,8 +11,8 @@ type Values=Record<string,Value|Line[]>;
 type Line=Record<string,Value>;
 type Definition={key:string;label:string;type:string;required:boolean;options:string;readonly:boolean;fields?:Definition[]};
 type RecordData={name?:string;doctype:string;company:string;currency:string;modified:string;docstatus:number;fields:Definition[];values:Values;totals:Record<string,Value>;can_write:boolean;can_submit:boolean;advanced:string[]};
-const paths:Record<string,string>={'Payment Entry':'payment-entry','Purchase Invoice':'purchase-invoice','Sales Invoice':'sales-invoice','Expense Claim':'expense-claim'};
-const titles:Record<string,string>={'Payment Entry':'Receipt / payment','Purchase Invoice':'Supplier expense','Sales Invoice':'Client invoice','Expense Claim':'Worker reimbursement'};
+const paths:Record<string,string>={'PP Wage Settlement':'pp-wage-settlement','Payment Entry':'payment-entry','Purchase Invoice':'purchase-invoice','Sales Invoice':'sales-invoice','Expense Claim':'expense-claim'};
+const titles:Record<string,string>={'PP Wage Settlement':'Worker wage payment','Payment Entry':'Receipt / payment','Purchase Invoice':'Supplier expense','Sales Invoice':'Client invoice','Expense Claim':'Worker reimbursement'};
 
 export default function FinanceRecord({doctype,name,defaults,onAdvanced}:{doctype:string;name?:string;defaults?:Record<string,unknown>;onAdvanced:(values:Record<string,unknown>)=>Promise<void>}){
  const dirty=useRef(false);
@@ -28,7 +29,7 @@ export default function FinanceRecord({doctype,name,defaults,onAdvanced}:{doctyp
 
 function RecordForm({data,onSaved,onDirty,onAdvanced}:{data:RecordData;onAdvanced:(values:Record<string,unknown>)=>Promise<void>;onDirty:(dirty:boolean)=>void;onSaved:(name:string)=>void}){
  const [values,setValues]=useState<Values>(data.values),[error,setError]=useState(''),[errors,setErrors]=useState<Record<string,string>>({});
- const [busy,setBusy]=useState(false),[posting,setPosting]=useState(false),lock=useRef(false),[confirm,setConfirm]=useState(false);
+ const [busy,setBusy]=useState(false),[posting,setPosting]=useState(false),lock=useRef(false),[confirm,setConfirm]=useState(false),[reference,setReference]=useState(false);
  const [preview,setPreview]=useState<(()=>Promise<PreviewData>)>();
  const disabled=!!data.docstatus||!data.can_write;
  const dirty=JSON.stringify(values)!==JSON.stringify(data.values);
@@ -66,6 +67,7 @@ function RecordForm({data,onSaved,onDirty,onAdvanced}:{data:RecordData;onAdvance
  const amounts=Object.entries(data.totals).filter(([key])=>!key.endsWith('_currency')).map(([key,value])=>({label:key.replaceAll('_',' '),value:money(Number(value||0),key==='paid_amount'?String(data.totals.paid_from_account_currency||data.currency):key==='received_amount'?String(data.totals.paid_to_account_currency||data.currency):data.currency)}));
  return <>
   <header className="pp-resource-heading"><div><a href={'/desk/'+paths[data.doctype]}>{t('Back to records')}</a><h1>{data.name||t('New '+titles[data.doctype].toLocaleLowerCase())}</h1><Badge tone={data.docstatus===1?'success':data.docstatus===2?'error':'neutral'}>{t(data.docstatus===1?'Submitted':data.docstatus===2?'Cancelled':'Draft')}</Badge></div><div className="pp-actions">
+   {data.doctype==='PP Wage Settlement'&&data.docstatus===1&&data.can_write&&<Button icon="edit" onClick={()=>setReference(true)}>{t('Add / change reference')}</Button>}
    <Button disabled={busy||posting} onClick={()=>void advanced()}>{t('Advanced accounting controls')}</Button>
    {data.name&&<Button icon="document" disabled={busy||posting} onClick={()=>setPreview(()=>()=>call<PreviewData>('finance_records.print_data',{doctype:data.doctype,name:data.name}))}>{t('PDF preview')}</Button>}
    {data.name&&data.doctype==='Sales Invoice'&&values.project&&<a className="btn btn-default" href={'/desk/pp-client-billing?invoice='+encodeURIComponent(data.name)}>{t('Invoice workspace')}</a>}
@@ -75,6 +77,7 @@ function RecordForm({data,onSaved,onDirty,onAdvanced}:{data:RecordData;onAdvance
   <Feedback message={error||currencies.error||''}/>
   {!!data.advanced.length&&<Feedback tone="info" message={t('This draft includes advanced accounting details. Open Advanced accounting controls to keep its allocations and taxes.')}/>}
   {disabled&&<Feedback tone="info" message="This record is read-only. Posted financial history is protected."/>}
+  {data.doctype==='PP Wage Settlement'&&<Feedback tone="info" message="Link an already submitted employee payment for this worker and job. Submitting allocates that payment against approved wages; it does not send money."/>}
   <Panel title="Accounting details" icon="document"><p>{data.company} · {data.currency}</p><div className="pp-r-grid">
    {visibleFields.filter(field=>field.type!=='Table').map(field=><AccountField key={field.key} field={{...field,label:field.label+(['paid_amount','received_amount'].includes(field.key)?' ('+(field.key==='paid_amount'?currencies.data?.source||data.currency:currencies.data?.target||data.currency)+')':'')}} doctype={data.doctype} values={values} update={update} disabled={disabled||busy||posting} error={errors[field.key]}/>)}
   </div>{data.doctype==='Payment Entry'&&<PaymentAccounts values={values} update={update} disabled={disabled||busy}/>}</Panel>
@@ -82,6 +85,7 @@ function RecordForm({data,onSaved,onDirty,onAdvanced}:{data:RecordData;onAdvance
   <SummaryCards items={amounts}/>
   {dirty&&data.name&&<p>{t('Save your changes before submitting this record.')}</p>}
   {confirm&&<Dialog title="Submit accounting record?" busy={posting} onClose={()=>setConfirm(false)} footer={<><Button disabled={posting} onClick={()=>setConfirm(false)}>{t('Cancel')}</Button><Button tone="primary" loading={posting} onClick={()=>void submit()}>{t('Confirm and submit')}</Button></>}><p>{t('This posts the saved document using the existing accounting rules. Review its amounts and accounts first.')}</p><Feedback message={error||''}/></Dialog>}
+  {reference&&<ReferenceDialog names={[data.name!]} onClose={()=>setReference(false)} onSaved={()=>{setReference(false);onSaved(data.name!);}}/>}
   {preview&&<DocumentPreview load={preview} onClose={()=>setPreview(undefined)}/>}
  </>;
 }

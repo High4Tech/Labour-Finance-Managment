@@ -2,6 +2,11 @@
 (() => {
     frappe.provide('plus_point');
     const titles={'PLUS POINT Project Finances':'Project finances','PLUS POINT Worker Statement':'Worker statement'};
+    // QueryReport is route-lazy. Intercept its public show lifecycle once when
+    // the installed framework class appears, without polling or a DOM observer.
+    const install=Class=>{if(!Class||Class.prototype.__ppReactReport)return;const native=Class.prototype.show;Class.prototype.show=function(...args){const name=frappe.get_route()?.[1];if(!frappe.boot.plus_point?.is_platform&&titles[name]&&sessionStorage.getItem('pp:reports:advanced')!==name){return plus_point.load_feature('react_ui').then(()=>plus_point.react_report_mount(this,name));}return native.apply(this,args);};Class.prototype.__ppReactReport=true;};
+    if(frappe.views.QueryReport)install(frappe.views.QueryReport);
+    else{let reportClass;Object.defineProperty(frappe.views,'QueryReport',{configurable:true,get:()=>reportClass,set:value=>{reportClass=value;install(value);}});}
     let current,reportName,root,observer,frame,lastWidth;
     const active=()=>current&&frappe.get_route()[0]==='query-report'&&frappe.get_route()[1]===reportName&&current.report_name===reportName;
     plus_point.business_report_options=options=>({

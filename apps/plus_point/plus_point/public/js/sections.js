@@ -16,6 +16,7 @@
         frappe.show_alert({message:__('Section order saved for your login.'),indicator:'green'});
     };
     plus_point.arrange_sections=()=>{
+        if(!frappe.boot.plus_point?.is_platform)return plus_point.load_feature('react_ui').then(()=>plus_point.react_section_order());
         let order=[...frappe.boot.plus_point.navigation.groups];
         const dialog=new frappe.ui.Dialog({title:__('Arrange sections'),fields:[{fieldtype:'HTML',fieldname:'order'}],
             primary_action_label:__('Save my order'),async primary_action(){
@@ -66,6 +67,7 @@
     plus_point.mount_section=async wrapper=>{
         sectionWrapper=wrapper;
         const root=wrapper.pp_section_root;if(!root)return;
+        if(!frappe.boot.plus_point?.is_platform){const selected=new URL(location.href).searchParams.get('section')||frappe.route_options?.section||frappe.boot.plus_point.navigation.groups[0];return plus_point.load_feature('react_ui').then(()=>plus_point.react_section_mount(wrapper,selected));}
         let section=new URL(location.href).searchParams.get('section')||frappe.route_options?.section||frappe.boot.plus_point.navigation.groups[0];
         if(wrapper.__pp_section_loading===section)return;
         wrapper.__pp_section_loading=section;

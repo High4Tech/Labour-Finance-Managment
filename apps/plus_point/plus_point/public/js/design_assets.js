@@ -19,6 +19,7 @@
  // Presentation-only adapter around the original uploader. Frappe owns validation,
  // private files, permissions, crop tools, library and configured integrations.
  pp.open_file_upload=async options=>{
+  if(!frappe.boot?.plus_point?.is_platform){await pp.load_feature('react_ui');return pp.react_upload(options);}
   const instance=await new frappe.ui.FileUploader(options),dialog=instance?.dialog;
   if(!dialog)return instance;dialog.$wrapper.addClass('pp-upload-dialog');const vm=instance.uploader;
   const paint=()=>{if(!dialog.$wrapper[0].isConnected)return;const root=dialog.$wrapper[0];

@@ -143,6 +143,13 @@
    const key=location.pathname+location.search;if(root.dataset.recordKey!==key){delete root.dataset.activeTab;root.dataset.recordKey=key;}const token=++sequence;plus_point.event_scene?.close();content()?.ppFlowCleanup?.();plus_point.dispose_owned_forms(root);delete root.dataset.ready;root.dataset.building='true';root.setAttribute('aria-busy','true');root.innerHTML=plus_point.loading_state();
    try{
     const direct=new URL(location.href).searchParams;
+    if(mode==='pp-event-plans'){
+     await plus_point.load_feature('react_ui');if(token!==sequence||frappe.get_route()[0]!==mode)return;
+     root.classList.remove('pp-flow-builder');root.classList.add('pp-focused-editor','pp-react-form-host');root.replaceChildren();
+     const host=document.createElement('div');root.append(host);page.clear_primary_action();page.clear_secondary_action();
+     await plus_point.react_event_mount(host,{name:direct.get('record'),draftName:direct.get('draft'),agreement:direct.get('agreement'),project:direct.get('project'),edit:direct.has('edit')});
+     if(token!==sequence)return;delete root.dataset.building;root.removeAttribute('aria-busy');root.dataset.ready='true';return;
+    }
     if(mode==='pp-client-billing'){
      let agreement=direct.get('record');
      if(direct.has('project'))agreement=(await rpc('agreement_reference',{project:direct.get('project')})).name;

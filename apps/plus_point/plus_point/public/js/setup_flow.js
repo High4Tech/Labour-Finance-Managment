@@ -52,6 +52,7 @@
         });
     }
     function show(saved,companies) {
+        if(!frappe.boot.plus_point?.is_platform)return plus_point.load_feature('react_ui').then(()=>plus_point.react_setup({initial:saved,companies,schema:fields,onFinish:()=>plus_point.refresh_setup_banner?.()}));
         const [title,description]=copy[saved.step];
         const index=['company','worker','site','terms','assignment','import','done'].indexOf(saved.step);
         const progress=`<div class="pp-setup-progress" aria-label="${esc(__('Setup progress'))}"><span>${esc(saved.step==='done'?__('Setup complete'):__('Step {0} of 6',[index+1]))}</span><progress max="6" value="${Math.min(index,6)}"></progress></div><p class="pp-freddy-guidance">${esc(__(description))}</p>`;

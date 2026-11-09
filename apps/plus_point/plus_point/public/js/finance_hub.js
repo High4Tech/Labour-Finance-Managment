@@ -1,8 +1,8 @@
-/* Native finance lists, shared worker dialogs and one on-demand loan summary. */
+/* React company finance owners with authorized native list adapters. */
 (() => {
     frappe.provide('plus_point');
     $(document).on('form-refresh.pp-react-finance',(_event,frm)=>{
-        if(frappe.boot.plus_point?.is_platform||!['Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'].includes(frm.doctype))return;
+        if(frappe.boot.plus_point?.is_platform||!['Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim','PP Wage Settlement'].includes(frm.doctype))return;
         if(sessionStorage.getItem('pp:finance:advanced-form')===frm.doctype){frm.add_custom_button(__('Back to company form'),()=>{sessionStorage.removeItem('pp:finance:advanced-form');plus_point.load_feature('react_ui').then(()=>plus_point.react_finance_record_mount(frm));});return;}
         plus_point.load_feature('react_ui').then(()=>plus_point.react_finance_record_mount(frm)).catch(console.error);
     });
@@ -12,18 +12,17 @@
     const money=(value,currency)=>esc(number(value)+' '+currency);
     const refreshList=()=>window.cur_list?.refresh();
     const hub=()=>frappe.set_route('pp-section',{section:'Finance'});
-    let activeLoanForm;
 
     plus_point.new_worker_loan=async after=>{
         await plus_point.close_action_popup?.();
-        return plus_point.worker_loan(null,after||refreshList);
+        await plus_point.load_feature('react_ui');return plus_point.react_new_loan(after||refreshList);
     };
 
     const nativeTypes=['PP Wage Settlement','PP Worker Loan','Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim','PP Loan Recovery'];
     function enhanceLists(){
         const route=frappe.get_route(),list=window.cur_list;
         if(frappe.boot.plus_point?.is_platform||route?.[0]!=='List'||!nativeTypes.includes(route[1])||
-            list?.doctype!==route[1]||list.__pp_react_shared_list||!list.page?.main||!list.list_view_settings||!Array.isArray(list.data))return;
+            list?.doctype!==route[1]||['PP Worker Loan','PP Loan Recovery'].includes(list?.doctype)&&!sessionStorage.getItem('pp:loans:advanced')||list.__pp_react_shared_list||!list.page?.main||!list.list_view_settings||!Array.isArray(list.data))return;
         if(['Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'].includes(list.doctype)&&sessionStorage.getItem('pp:finance:advanced')!==list.doctype)return;
         if(sessionStorage.getItem('pp:finance:advanced')===list.doctype&&!list.__pp_react_return){list.__pp_react_return=true;list.page.add_inner_button(__('Back to company list'),()=>{sessionStorage.removeItem('pp:finance:advanced');location.reload();});}
         if(!list.__pp_finance_links){
@@ -85,43 +84,10 @@
         });
     }
 
-    async function loanSummary(frm,month){
-        activeLoanForm=frm;
-        const name=frm.doc.name,token=frm.__pp_loan_seq=(frm.__pp_loan_seq||0)+1;
-        if(!frm.__pp_loan_root?.isConnected){frm.__pp_loan_root=document.createElement('section');frm.__pp_loan_root.className='pp-loan-summary';frm.form_wrapper.prepend(frm.__pp_loan_root);}
-        const root=frm.__pp_loan_root;delete root.dataset.ready;root.innerHTML=`<p role="status">${esc(__('Loading loan balance…'))}</p>`;
-        try{
-            const data=await rpc('loan_detail',{name,month});
-            if(token!==frm.__pp_loan_seq||!root.isConnected||frm.doc.name!==name||frappe.get_route()[0]!=='Form'||frappe.get_route()[2]!==name)return;
-            const state=data.benefits,loan=data.loan,currency=data.currency,worker={doc:data.worker};
-            const reload=async()=>{await frm.reload_doc();};
-            const status=frm.doc.docstatus===2?'Cancelled':frm.doc.docstatus===0?'Draft · unpaid':Number(loan?.outstanding)>0?'Active':'Repaid';
-            root.innerHTML=`<div class="pp-resource-heading"><div><p class="text-muted">${esc(__('Worker loan'))} · ${esc(__(status))}</p><h2>${esc(data.worker.employee_name)}</h2></div><div class="pp-actions"><button type="button" class="btn btn-default" data-worker>${esc(__('Worker profile'))}</button><button type="button" class="btn btn-default" data-loans>${esc(__('All loans'))}</button></div></div>
-                <dl class="pp-dashboard-metrics">${[['Loan amount',frm.doc.amount],['Recovered',loan?.recovered||0],['Loan balance',loan?.outstanding||0]].map(([title,value])=>`<div class="pp-dashboard-metric"><dt>${esc(__(title))}</dt><dd>${money(value,currency)}</dd></div>`).join('')}</dl>
-                <div class="pp-actions">${frm.doc.docstatus===0?`<button class="btn btn-primary" type="button" data-disburse>${esc(__('Record disbursement'))}</button>`:''}${Number(loan?.proposed_deduction)>0?`<button class="btn btn-primary" type="button" data-recover>${esc(__('Post monthly deduction'))}</button>`:''}</div>
-                <p class="text-muted">${esc(__(frm.doc.docstatus===0?'This loan is unpaid. Record the matching employee advance payment before disbursing it. Wages are unchanged.':'Loan recoveries reduce outstanding wages only when the deduction is posted.'))}</p>
-                <div class="pp-finance-month"><h3>${esc(__('Monthly wage deduction'))}</h3><label>${esc(__('Month'))}<input type="month" class="form-control" value="${esc(state.month.slice(0,7))}" aria-label="${esc(__('Deduction month'))}"></label></div>
-                <dl class="pp-dashboard-metrics">${[['Wages outstanding',state.monthly_outstanding],['Proposed deductions · all loans',state.proposed_deduction],['Wages after proposed deductions',state.monthly_after_deduction]].map(([title,value])=>`<div class="pp-dashboard-metric"><dt>${esc(__(title))}</dt><dd>${money(value,currency)}</dd></div>`).join('')}</dl>
-                <p class="text-muted">${esc(__('Outstanding wages already include posted recoveries. Proposed deductions are limited by approved earnings, unpaid wages and each loan’s balance.'))}</p>
-                <h3>${esc(__('Recovery history'))}</h3>${data.recoveries.length?`<div class="pp-section-worklists">${data.recoveries.map(r=>`<a class="pp-section-list" href="/desk/pp-loan-recovery/${encodeURIComponent(r.name)}"><span>${esc(String(r.month).slice(0,7))} · ${esc(__(r.docstatus===1?'Posted':r.docstatus===2?'Cancelled':'Draft'))}</span><strong>${money(r.amount,currency)}</strong></a>`).join('')}</div>`:`<p class="text-muted">${esc(__('No deductions recorded for this loan.'))}</p>`}`;
-            root.querySelector('[data-worker]').onclick=()=>frappe.set_route('Form','Employee',data.worker.name);
-            root.querySelector('[data-loans]').onclick=()=>frappe.set_route('List','PP Worker Loan','List');
-            root.querySelector('input[type=month]').onchange=event=>{if(/^\d{4}-\d{2}$/.test(event.target.value))loanSummary(frm,event.target.value+'-01');};
-            root.querySelector('[data-disburse]')?.addEventListener('click',()=>plus_point.worker_disburse(worker,{...frm.doc},reload));
-            root.querySelector('[data-recover]')?.addEventListener('click',()=>plus_point.worker_recovery(worker,loan,state.month,reload));
-            root.dataset.ready='true';
-        }catch(error){if(token===frm.__pp_loan_seq){root.innerHTML=`<p role="alert">${esc(error.message)}</p><button class="btn btn-default" type="button">${esc(__('Try again'))}</button>`;root.querySelector('button').onclick=()=>loanSummary(frm,month);}}
-    }
     $(document).on('form-refresh.pp-finance',(_event,frm)=>{
-        if(frappe.boot.plus_point?.is_platform||frm.doctype!=='PP Worker Loan'||frm.is_new())return;
-        frm.set_df_property('company','hidden',1);
-        loanSummary(frm);
-    });
-    frappe.router.on('change',()=>{
-        const frm=activeLoanForm;
-        if(frm?.__pp_loan_root&&(frappe.get_route()[0]!=='Form'||frappe.get_route()[1]!=='PP Worker Loan'||frappe.get_route()[2]!==frm.doc.name)){
-            frm.__pp_loan_seq=(frm.__pp_loan_seq||0)+1;frm.__pp_loan_root.remove();frm.__pp_loan_root=null;activeLoanForm=null;
-        }
+        if(frappe.boot.plus_point?.is_platform||!['PP Worker Loan','PP Loan Recovery'].includes(frm.doctype))return;
+        if(frm.is_new()){frappe.set_route('List','PP Worker Loan');plus_point.new_worker_loan();return;}
+        plus_point.load_feature('react_ui').then(()=>plus_point.react_loan_profile(frm)).catch(console.error);
     });
     plus_point.watch_ui('finance-native-lists',enhanceLists);
 })();

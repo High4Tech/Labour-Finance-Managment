@@ -1,0 +1,18 @@
+/* Standalone public entry: shared React components without loading Desk. */
+body.pp-ui{margin:0;background:#f6f8fa;color:#102a3a;font:16px/1.5 system-ui,sans-serif;--primary:#cc4400;--primary-color:#cc4400;--text-color:#102a3a;--text-muted:#526474;--fg-color:#fff;--control-bg:#fff;--border-color:#d0d5dd;--pp-brand:#cc4400;--pp-brand-text:#b83d00;--pp-brand-soft:#fff3eb;--pp-canvas:#f6f8fa;--pp-surface:#fff}
+body.pp-ui [data-pp-react-root="client-portal"]{max-width:1080px;margin:auto;padding:32px 20px}
+body.pp-ui [data-pp-react-root] *{box-sizing:border-box}
+body.pp-ui .pp-analytics-card{background:#fff;border:1px solid #e4e7ec;border-radius:12px;overflow:hidden;margin:20px 0;box-shadow:0 2px 4px #102a3a08}
+body.pp-ui .pp-ui-section-heading{padding:16px 24px;background:#f9fafb;display:flex;align-items:center;justify-content:space-between;gap:16px}
+body.pp-ui h1{font-size:28px}body.pp-ui h2{font-size:20px;margin:0}body.pp-ui .pp-analytics-body{padding:24px}
+body.pp-ui .btn{font:inherit;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border:1px solid #d0d5dd;border-radius:8px;background:#f9fafb;color:#102a3a;cursor:pointer;min-height:44px}
+body.pp-ui .btn-primary{background:#cc4400;border-color:#cc4400;color:#fff}body.pp-ui .btn:disabled{opacity:.55;cursor:default}
+body.pp-ui .form-control{font:inherit;border:1px solid #d0d5dd;border-radius:8px;width:100%;padding:10px 12px;min-height:44px;background:#fff;color:inherit}
+body.pp-ui .form-control:focus{outline:2px solid #cc4400;outline-offset:2px}body.pp-ui .form-control[aria-invalid=true]{border-color:#d92d20}
+body.pp-ui .pp-r-field{margin-bottom:20px}body.pp-ui .pp-r-field>label{display:block;margin-bottom:6px}body.pp-ui .pp-r-field-error{color:#b42318;display:block}
+body.pp-ui canvas{border:1px solid #d0d5dd;border-radius:8px;width:100%;max-width:600px;height:160px;touch-action:none}
+body.pp-ui .pp-r-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}body.pp-ui .pp-actions{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+body.pp-ui .pp-profile-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}body.pp-ui .pp-profile-facts dt{color:#526474}body.pp-ui .pp-profile-facts dd{margin:4px 0}
+body.pp-ui .pp-client-phases{display:grid;gap:16px;padding-left:24px}body.pp-ui .pp-client-phases li span{display:block}
+body.pp-ui .pp-document-prose{overflow:auto}body.pp-ui .pp-document-prose table{border-collapse:collapse;width:100%}body.pp-ui .pp-document-prose th,body.pp-ui .pp-document-prose td{border:1px solid #d0d5dd;padding:8px}
+@media(max-width:600px){body.pp-ui [data-pp-react-root="client-portal"]{padding:16px 12px}body.pp-ui .pp-r-grid,body.pp-ui .pp-profile-facts{grid-template-columns:1fr}body.pp-ui .pp-analytics-body,body.pp-ui .pp-ui-section-heading{padding:16px}}

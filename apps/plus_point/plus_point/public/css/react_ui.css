@@ -1,9 +1,23 @@
 /* React components share existing PLUS POINT tokens and table contracts.
    Scope all additions to owned roots; never restyle native framework controls. */
+[data-pp-react-root] .pp-agreement-tabs{display:flex;align-items:center;gap:22px;overflow:auto;border-bottom:1px solid var(--border-color);margin-bottom:14px;scrollbar-width:thin;width:100%}
+[data-pp-react-root] .pp-agreement-tabs>[role=tab]{font:inherit;min-height:44px;flex:none;padding:12px 0;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-muted);cursor:pointer}
+[data-pp-react-root] .pp-agreement-tabs>[role=tab][aria-selected=true]{color:var(--pp-brand-text,#b83d00);border-bottom-color:var(--pp-action-primary,#cc4400);font-weight:600}
+[data-pp-react-root] .pp-ui-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;line-height:20px;font-size:14px;font-weight:500;border-radius:9999px;white-space:nowrap;background:var(--control-bg,#f2f4f7);color:var(--text-color)}
+[data-pp-react-root] .pp-ui-badge[data-tone=success]{background:color-mix(in srgb,var(--pp-status-success,#08634c) 12%,var(--fg-color));color:var(--pp-status-success,#08634c)}
+[data-pp-react-root] .pp-ui-badge[data-tone=warning]{background:color-mix(in srgb,var(--pp-status-warning,#8a5000) 12%,var(--fg-color));color:var(--pp-status-warning,#8a5000)}
+[data-pp-react-root] .pp-ui-badge[data-tone=info]{background:color-mix(in srgb,var(--pp-status-info,#175cd3) 10%,var(--fg-color));color:var(--pp-status-info,#175cd3)}
+[data-pp-react-root] .pp-ui-badge[data-tone=error]{background:color-mix(in srgb,var(--pp-danger,#b42335) 10%,var(--fg-color));color:var(--pp-danger,#b42335)}
+[data-pp-react-root] .pp-ui-badge[data-variant=outline-dot]{border:1px solid var(--border-color);border-radius:6px;background:var(--fg-color);color:var(--text-color)}
+[data-pp-react-root] input.pp-figma-check{position:relative;display:inline-grid;place-items:center;border:1px solid var(--border-color);background:var(--fg-color);cursor:pointer;vertical-align:middle}
+[data-pp-react-root] input.pp-figma-check:checked{border-color:var(--pp-action-primary,#cc4400);background:var(--pp-action-primary,#cc4400)}
+[data-pp-react-root] input.pp-figma-check:checked:before{content:'';display:block;width:14px;height:14px;background:url('/assets/plus_point/images/figma/check-checkbox.svg') center no-repeat}
+[data-pp-react-root] input.pp-figma-check:disabled{opacity:.5;cursor:default}
+@media(forced-colors:active){[data-pp-react-root] input.pp-figma-check{appearance:auto}[data-pp-react-root] input.pp-figma-check:before{display:none}}
 [data-pp-react-root]{color:var(--text-color);font-size:15px;line-height:1.5}
 [data-pp-react-root] .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;white-space:nowrap}
 [data-pp-react-root] .btn .pp-icon{flex:none;margin:0;width:20px;height:20px}
-[data-pp-react-root] .pp-r-field{display:grid;gap:6px;min-width:0;margin:0}
+[data-pp-react-root] .pp-r-field{display:grid;align-content:start;gap:6px;min-width:0;margin:0}
 [data-pp-react-root] .pp-r-field>label{margin:0;font-size:14px;font-weight:500;line-height:20px}
 [data-pp-react-root] .pp-ui-section-heading h2{font-size:20px;line-height:28px;font-weight:600;margin:0}
 .pp-r-notifications .pp-analytics-card{margin-top:20px}
@@ -17,7 +31,7 @@
 body.pp-ui [data-pp-react-root] input[type=checkbox]{box-sizing:border-box;appearance:none;width:20px!important;height:20px!important;min-width:20px;max-width:20px;min-height:20px;max-height:20px;aspect-ratio:1;flex:0 0 20px;margin:0;padding:0;border-radius:4px;accent-color:var(--pp-action-primary,#c74600)}
 [data-pp-react-root] input[aria-invalid=true]{outline:2px solid var(--pp-danger,#b42335);outline-offset:2px}
 [data-pp-react-root] .pp-r-feedback{display:flex;align-items:flex-start;gap:12px;border-left:3px solid var(--pp-danger,#b42335);background:var(--fg-color);padding:12px 16px;margin:0 0 16px;border-radius:0}
-[data-pp-react-root] .pp-r-feedback .pp-icon{flex:none;color:var(--pp-danger,#b42335)}
+[data-pp-react-root] .pp-r-feedback .pp-icon{width:20px;height:20px;flex:0 0 20px;color:var(--pp-danger,#b42335)}
 [data-pp-react-root] .pp-r-feedback[data-tone=info]{border-color:var(--pp-info)}
 [data-pp-react-root] .pp-r-feedback[data-tone=info] .pp-icon{color:var(--pp-info)}
 [data-pp-react-root] .pp-r-feedback[data-tone=success]{border-color:var(--pp-positive)}
@@ -118,7 +132,7 @@ html[data-theme=dark] [data-pp-react-root] .btn[data-pp-button-tone=draft]{backg
 body.pp-customer-app .page-container:has(.pp-customer-overview-host) :is(.pp-task-heading,.pp-tools-heading,.pp-daily-focus,.pp-task-rows){display:none}
 body.pp-customer-app .page-container:has(.pp-customer-overview-host) :is(.layout-main-section,.layout-main,.pp-welcome,.pp-task-home){max-width:none;padding:0;border:0;box-shadow:none}
 body.pp-customer-app .page-container:has(.pp-customer-overview-host)>.page-head{display:none!important}
-body.pp-customer-app .pp-client-native-hidden>:is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
+body.pp-customer-app .pp-client-native-hidden :is(.form-layout,.form-tabs-list,.form-dashboard){display:none!important}
 [data-pp-react-root=client-profile]{display:block;padding:20px;background:var(--pp-canvas,var(--bg-color))}
 [data-pp-react-root] .pp-r-client-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:0}
 [data-pp-react-root] .pp-r-client-facts div{min-width:0}
@@ -270,5 +284,71 @@ body.pp-ui .pp-react-accounting-page .layout-main-section-wrapper{flex:1 1 100%;
 [data-pp-react-root] .pp-r-list-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 [data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex:0 1 300px;min-width:0}
 body.pp-ui [data-pp-react-root] .pp-agreement-tabs [role=tab][aria-selected=true]{color:var(--pp-brand-text,var(--pp-accent));border-bottom-color:var(--pp-action-primary)}
+
+/* Event owners share the agreement shell, table, dialog and creation contracts. */
+[data-pp-react-root] .pp-r-event-summary{grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch}
+[data-pp-react-root] .pp-r-event-summary .pp-agreement-metric{min-width:0}
+[data-pp-react-root] .pp-r-event-summary strong{overflow-wrap:anywhere}
+[data-pp-react-root] .pp-r-calendar-toolbar{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-bottom:20px}
+[data-pp-react-root] .pp-r-calendar-toolbar>div:last-child{justify-self:end}
+[data-pp-react-root] .pp-r-calendar-toolbar .pp-r-field{margin:0;min-width:180px}
+[data-pp-react-root] .pp-r-calendar-toolbar label{font-size:13px}
+[data-pp-react-root] .pp-r-calendar-days{display:grid;grid-template-columns:repeat(7,minmax(125px,1fr));gap:8px;overflow:auto;max-height:540px;padding:4px}
+[data-pp-react-root] .pp-r-calendar-day{display:flex;flex-direction:column;gap:8px;align-items:start;padding:12px;border:1px solid var(--pp-border);border-radius:8px;background:var(--fg-color);color:var(--text-color);text-align:left;min-height:112px}
+[data-pp-react-root] .pp-r-calendar-day[data-tone=success]{border-color:var(--green-500,#16834b)}
+[data-pp-react-root] .pp-r-calendar-day[data-tone=warning]{border-color:var(--yellow-600,#9b6500)}
+[data-pp-react-root] .pp-r-calendar-site{margin:20px 0}
+[data-pp-react-root] .pp-r-event-progress{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+[data-pp-react-root] .pp-r-event-progress li{display:flex;gap:12px;padding:12px;border-radius:8px}
+[data-pp-react-root] .pp-r-event-progress li[data-upcoming=true]{background:var(--subtle-fg);color:var(--text-muted)}
+[data-pp-react-root] .pp-r-event-progress li>div{display:grid;justify-items:start;gap:8px}
+[data-pp-react-root] .pp-r-progress-dot{flex:0 0 24px;display:grid;place-items:center}
+[data-pp-react-root] .pp-r-event-poster{width:100%;max-height:330px;object-fit:cover;border-radius:8px;margin-bottom:12px}
+[data-pp-react-root] .pp-r-event-more{position:relative}
+[data-pp-react-root] .pp-r-event-scene{height:440px;min-width:0;position:relative}
+[data-pp-react-root] .pp-r-event-scene canvas{max-width:100%;touch-action:none}
+@media(max-width:1100px){[data-pp-react-root] .pp-r-event-summary{grid-template-columns:repeat(2,minmax(0,1fr))}[data-pp-react-root] .pp-r-calendar-toolbar{grid-template-columns:1fr}[data-pp-react-root] .pp-r-calendar-toolbar>div:last-child{justify-self:start}}
+@media(max-width:600px){[data-pp-react-root] .pp-r-event-summary{grid-template-columns:1fr}[data-pp-react-root] .pp-r-calendar-days{grid-template-columns:repeat(7,150px)}}
 body.pp-ui [data-pp-react-root=resource-profile],body.pp-ui [data-pp-react-root=billing],body.pp-ui .pp-react-accounting-page .layout-main-section{background:var(--pp-canvas,var(--subtle-fg,#f7f9fa))}
 @media(max-width:767px){[data-pp-react-root] .pp-r-list-filters>.pp-r-field{flex-basis:100%}}
+/* Persistent React shell variant. Native layout and permission registries remain intact. */
+body.pp-customer-app .body-sidebar.pp-react-navigation-owner>:not(.pp-react-sidebar){display:none!important}
+body.pp-customer-app .pp-react-sidebar{height:100%;width:100%;min-height:0;overflow:hidden}
+body.pp-ui [data-pp-react-root] .pp-r-navigation{display:flex;flex-direction:column;height:100%;padding:12px 8px;gap:16px;color:var(--pp-shell-ink);background:var(--pp-shell-band)}
+body.pp-ui [data-pp-react-root] .pp-r-navigation>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px}
+body.pp-ui [data-pp-react-root] .pp-r-navigation>header .pp-brand-wordmark{width:116px;height:32px;object-fit:contain}
+body.pp-ui [data-pp-react-root] .pp-r-navigation>header .btn{padding:4px;min-width:28px;width:28px;min-height:32px}
+body.pp-ui [data-pp-react-root] .pp-r-navigation>nav{flex:1;overflow:auto;min-height:0;scrollbar-width:thin}
+body.pp-ui [data-pp-react-root] .pp-r-navigation>nav>section{margin:0 0 16px}
+body.pp-ui [data-pp-react-root] .pp-r-nav-section{display:flex;align-items:center;gap:4px;min-height:40px;margin-top:12px}
+body.pp-ui [data-pp-react-root] .pp-r-nav-section>a{text-transform:uppercase;font-size:12px;font-weight:600;flex:1;color:var(--pp-shell-muted);padding-left:4px}
+body.pp-ui [data-pp-react-root] .pp-r-nav-section>.btn{width:28px;min-width:28px;padding:0;min-height:32px;background:transparent;border:0}
+body.pp-ui [data-pp-react-root] .pp-r-nav-link{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;margin:2px 0;border-radius:6px;color:var(--pp-shell-ink);font-size:14px;text-decoration:none;font-weight:500}
+body.pp-ui [data-pp-react-root] .pp-r-nav-link .pp-entity-icon{width:20px;height:20px;object-fit:contain;flex:none}
+body.pp-ui [data-pp-react-root] .pp-r-nav-link.selected{background:var(--primary);color:white;font-weight:650}
+body.pp-ui [data-pp-react-root] .pp-r-nav-link.selected .pp-entity-icon{filter:brightness(0) invert(1)}
+body.pp-ui [data-pp-react-root] .pp-r-nav-search{width:100%;justify-content:flex-start;background:var(--pp-shell-surface);border:1px solid var(--pp-shell-line)}
+body.pp-ui [data-pp-react-root] .pp-r-nav-search kbd{margin-left:auto;font-size:11px}
+body.pp-ui [data-pp-react-root] .pp-r-nav-account{display:flex;flex-direction:column;align-items:start;gap:4px;overflow:hidden;white-space:nowrap;width:100%;padding:8px;background:var(--pp-shell-surface);border:1px solid var(--pp-shell-line)}
+body.pp-ui [data-pp-react-root] .pp-r-nav-account>span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true]{padding:8px;gap:12px}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true] :is(.pp-r-nav-section,.pp-r-nav-link>span,.pp-r-nav-search>span:not(:first-child),.pp-r-nav-search>kbd,.pp-r-nav-account>span:last-child,.pp-r-nav-account .pp-person-capsule>span:last-child,.pp-r-navigation>header>a){display:none}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true]>header{padding:0;justify-content:center}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true] :is(.pp-r-nav-link,.pp-r-nav-search,.pp-r-nav-account){width:48px;min-width:48px;justify-content:center;padding:10px;gap:0}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true]>nav>section{margin:0}
+body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true] .pp-r-nav-account .pp-person-capsule>.pp-person-avatar{display:grid}
+.pp-r-shell-popover{z-index:1100;padding:16px;border:1px solid var(--pp-shell-line);border-radius:12px;box-shadow:0 10px 32px #0002;background:var(--pp-shell-surface);color:var(--pp-shell-ink);max-height:min(70vh,600px);overflow:auto}
+.pp-r-shell-menu{display:flex;flex-direction:column;gap:8px}
+body.pp-ui [data-pp-react-root=shell-header] .pp-shell-company.btn{border:0!important;background:transparent!important;box-shadow:none!important}
+body.pp-ui [data-pp-react-root=shell-header] .pp-shell-breadcrumb{justify-content:flex-start;gap:12px}
+body.pp-ui [data-pp-react-root=shell-header] .pp-shell-breadcrumb>.pp-icon{width:16px;height:16px;flex:0 0 16px;margin:0}
+@media(max-width:767px){body.pp-customer-app .pp-react-sidebar{min-width:264px}body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true]{min-width:264px}body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true] .pp-r-nav-link{width:100%;justify-content:flex-start}body.pp-ui [data-pp-react-root] .pp-r-navigation[data-collapsed=true] .pp-r-nav-link>span{display:block}}
+
+/* Optional map widget is isolated to its React setup component. */
+[data-pp-react-root] .pp-r-setup-map{height:320px;width:100%;margin-top:16px;border-radius:8px;overflow:hidden}
+[data-pp-react-root] .pp-r-full{grid-column:1/-1;min-width:0}
+
+[data-pp-react-root] .pp-r-feedback[data-tone=warning]{border-color:var(--pp-warning,#9c6100)}
+[data-pp-react-root] .pp-r-feedback[data-tone=warning] .pp-icon{color:var(--pp-warning,#9c6100)}
+
+[data-pp-react-root] .pp-r-feedback>span{flex:1 1 auto;min-width:0;width:auto;text-align:start}

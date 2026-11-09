@@ -12,6 +12,8 @@
   'Payment Entry':{prepare:'react_prepare_finance_list',mount:'react_finance_list_mount',advanced:'pp:finance:advanced',title:'Receipts and payments'},
   'Purchase Invoice':{prepare:'react_prepare_finance_list',mount:'react_finance_list_mount',advanced:'pp:finance:advanced',title:'Expenses'},
   'Expense Claim':{prepare:'react_prepare_finance_list',mount:'react_finance_list_mount',advanced:'pp:finance:advanced',title:'Worker reimbursements'},
+  'PP Worker Loan':{prepare:'react_prepare_loans',mount:'react_loans_mount',advanced:'pp:loans:advanced',title:'Worker loans and advances'},
+  'PP Loan Recovery':{prepare:'react_prepare_loans',mount:'react_loans_mount',advanced:'pp:loans:advanced',title:'Loan recovery history'},
   'Sales Invoice':{prepare:'react_prepare_finance_list',mount:'react_finance_list_mount',advanced:'pp:finance:advanced',title:'Client invoices'},
   'PP Daily Register':{prepare:'react_prepare_attendance_list',mount:'react_attendance_list_mount',advanced:'pp:attendance:advanced',title:'Attendance registers'},
   'PP Contract Terms':{prepare:'react_prepare_planning',mount:'react_planning_mount',advanced:'pp:planning:advanced',title:'Agreements'},

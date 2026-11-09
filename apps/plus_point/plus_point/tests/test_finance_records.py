@@ -105,6 +105,27 @@ class FinanceRecordTests(unittest.TestCase):
         with self.assertRaises(frappe.ValidationError):
             records.save('Sales Invoice', {'remarks': 'change posted'}, invoice.name, str(invoice.modified))
 
+    def test_worker_payment_link_uses_native_paid_amount_and_outstanding_guard(self):
+        work=insert('PP Work Entry',assignment=self.f.assignment.name,work_date=today(),units=1,status='Draft')
+        work.status='Approved';work.save()
+        company=frappe.get_doc('Company',self.f.company.name)
+        payment=insert('Payment Entry',payment_type='Pay',company=company.name,party_type='Employee',
+            party=self.f.employee.name,project=self.f.project.name,paid_from=company.default_cash_account,
+            paid_to=company.default_payable_account,paid_amount=1000,received_amount=1000,
+            source_exchange_rate=1,target_exchange_rate=1,reference_no='QA React settlement',reference_date=today())
+        payment.submit()
+        values=dict(employee=self.f.employee.name,project=self.f.project.name,payment_entry=payment.name)
+        name=records.save('PP Wage Settlement',values)['name']
+        data=records.detail('PP Wage Settlement',name)
+        self.assertEqual(data['totals']['amount'],1000)
+        records.submit('PP Wage Settlement',name,data['modified'])
+        self.assertEqual(frappe.db.get_value('PP Wage Settlement',name,'docstatus'),1)
+        with self.assertRaises(frappe.PermissionError):
+            records.save('PP Wage Settlement',dict(values,amount=1))
+        with self.assertRaises(frappe.PermissionError):
+            with patch('plus_point.finance_records.company_scope',return_value=frappe._dict(name='Other business')):
+                records.detail('PP Wage Settlement',name)
+
     def test_cash_receipt_posts_using_native_accounts(self):
         account = records.payment_accounts('Customer', self.f.customer.name, 'Receive', today())['account']
         cash = frappe.get_list('Account', filters={'company': self.f.company.name,
@@ -137,7 +158,7 @@ class FinanceRecordTests(unittest.TestCase):
     def test_finance_lists_always_include_the_selected_company(self):
         from plus_point.finance_hub import list_records
         with patch('frappe.get_list', return_value=[]) as native:
-            for doctype in records.FIELDS:
+            for doctype in ('Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'):
                 list_records(doctype, search='QA')
                 self.assertEqual(native.call_args.kwargs['filters']['company'], self.f.company.name)
                 self.assertEqual(native.call_args.kwargs['limit_page_length'], 21)
@@ -145,7 +166,7 @@ class FinanceRecordTests(unittest.TestCase):
     def test_finance_lists_keep_contextual_project_and_native_child_filter(self):
         from plus_point.finance_hub import list_records
         invoice = self.invoice()
-        for doctype in records.FIELDS:
+        for doctype in ('Payment Entry','Sales Invoice','Purchase Invoice','Expense Claim'):
             result = list_records(doctype, project=self.f.project.name)
             self.assertEqual(result['project']['name'], self.f.project.name)
             if doctype == 'Sales Invoice':

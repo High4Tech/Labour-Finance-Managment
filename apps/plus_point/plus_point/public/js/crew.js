@@ -88,6 +88,7 @@
   picker=new plus_point.CrewPicker(dialog.fields_dict.crew.$wrapper.get(0),{company:frm.doc.company,start:frm.doc.start_date,end:frm.doc.end_date,selected:JSON.parse(frm.doc.selected_crew||'[]'),onChange:changed,onImport:refresh=>importFor(dialog,frm.doc.company,refresh)});
  };
  plus_point.assign_workers=(defaults={},after)=>{
+  if(!frappe.boot.plus_point?.is_platform)return plus_point.load_feature('react_ui').then(()=>plus_point.react_assignment(defaults,after));
   let picker;const field=(fieldtype,fieldname,label,extra={})=>({fieldtype,fieldname,label:__(label),reqd:1,...(fieldtype==='Link'?{only_select:1}:{}),...extra});
   const dialog=new frappe.ui.Dialog({title:__('Assign workers'),size:'extra-large',fields:[
    field('Link','project','Event project',{options:'Project',default:defaults.project}),

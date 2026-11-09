@@ -12,6 +12,8 @@
   return checks.get(key);
  };
  plus_point.open_attendance_picker=()=>{
+  return plus_point.load_feature('react_ui').then(()=>plus_point.react_attendance_picker());
+  /* Native advanced picker retained below until authorized native consumers retire. */
   let dialog,busy=false;
   const company=plus_point.dashboard_company||frappe.boot.plus_point?.company_identity?.name;
   const error=message=>dialog.fields_dict.error.$wrapper.html(message?`<p class="pp-onboarding-errors" role="alert">${esc(message)}</p>`:'');
