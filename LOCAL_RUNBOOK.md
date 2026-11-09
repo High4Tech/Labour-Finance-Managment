@@ -10,7 +10,7 @@ Run `scripts/browser-setup-imports.cjs` with the same bundled Node/Playwright/Ed
 
 Run START_PLUS_POINT_DEV.cmd. The launcher generates missing strong local credentials in ignored .env, creates persistent named volumes, installs pinned releases, migrates schemas and starts Bench. Initial setup needs network access to official GitHub repositories, PyPI, npm and Docker Hub. Re-running preserves existing databases and refuses source commit drift. Use docker compose stop to stop; run `docker compose up -d --wait` or the launcher to resume. Do not delete volumes as a troubleshooting step.
 
-The container runs scripts/run-local.py as its supervised startup command. It waits for sites/.plus-point-ready, written only after successful bootstrap, then owns Bench (without the asset watcher) and the platform worker. If either exits, both process groups stop and Docker's unless-stopped policy restarts the app container. MariaDB and Redis also use unless-stopped. The app health check requests the configured site's /api/method/ping endpoint; a running container alone is not evidence of a reachable app. Logs remain in the persistent bench logs directory. No initial setup, migration or dependency download runs on an ordinary container restart. For older installations, run the launcher once after pulling this startup change so bootstrap can create the readiness marker.
+The container runs scripts/run-local.py as its supervised startup command. It waits for sites/.plus-point-ready, written only after successful bootstrap, then owns Bench (without the asset watcher) and the platform worker. If either exits, both process groups stop and Docker's unless-stopped policy restarts the app container. MariaDB and Redis also use unless-stopped. The app health check requests the configured site's /api/method/ping endpoint; a running container alone is not evidence of a reachable app. Supervisor and worker console output goes to Docker's `local` logger (10 MB × 3 files per container, rotated files compressed). Native CLI diagnostic files keep at most an 8 MiB active log and three compressed rotations, checked on startup and once per minute inside the existing supervisor loop. Other native Frappe rotating log handlers remain unchanged. Use `docker compose logs --tail 100 frappe` for current app/worker output. No initial setup, migration or dependency download runs on an ordinary container restart. For older installations, run the launcher once after pulling this startup change so bootstrap can create the readiness marker.
 
 Turning Docker back on resumes containers that were running when Docker stopped. A deliberate Compose Stop requires an explicit Compose Start/Up or the launcher. A closed browser preview can be reopened at the local app URL independently of these services.
 
@@ -80,7 +80,7 @@ Run the actual operations suite for budget guards, purchases/claims and rollback
 ## Diagnose safely
 
 ```powershell
-docker compose exec -T frappe tail -n 80 /home/frappe/frappe-bench/logs/bench-start.log
+docker compose logs --tail 80 frappe
 docker compose logs --tail 50 mariadb
 ```
 
@@ -98,3 +98,14 @@ Credential maintenance: scripts/rotate-local.py rotates local Administrator pass
 Use High4Tech → Signup approvals → Approve & create workspace after a simulated payment. Existing approved requests use Create company workspace. The container-owned platform worker creates a separate local site/database and native owner; setup takes a few minutes. Do not copy demo business data or set the owner to a shared Administrator password. The owner uses the registered email (optional company login ID), chooses a password through Company login → Set your password, then starts fresh company onboarding. The signup tab offers the same private link. No email is sent. If its private one-time link expires, Refresh password setup link before the first login; later password recovery uses Customer support. Retry workspace setup retains the bound site and data after a failure.
 
 Workspace hostnames are server-derived .localhost addresses served on port 8000. Keep Docker running. These trial subscriptions last 30 days and block software invoice generation. Payment remains simulated. Protected site configuration, each site's encryption key and database/uploads need native backups alongside the code; Git is not a customer-data backup. The provisioner refuses an unrelated existing site and does not delete sites or volumes.
+
+
+## Local disk usage and safe reclamation
+
+The Docker VHD contains installed framework images, Python/Node dependencies, all local site databases (company, demo, platform and QA), uploads, logs and free filesystem blocks. Its physical file size is not the company database size. The November 9 audit found about 61 MiB of company tables/indexes and about 6 MiB in the company site directory; framework metadata accounts for much of the database baseline.
+
+Keep database/uploads, native metadata, ledger/audit history and framework capabilities. Do not run volume/system prune, drop demo/QA databases, delete runtime dependencies or rebuild/compress all tables merely to shrink the VHD. Database binary/general/slow logs were off; default InnoDB Dynamic rows and per-table files were enabled. Native deleted-document compression already exists. Current database size does not justify a blanket compression/OPTIMIZE rewrite.
+
+Native `bench --site all backup --with-files --compress --backup-path <private-path>` produces compressed database/file backups. Verify compressed streams and copy them to protected storage outside the Docker disk. Backups contain private configuration and must stay outside Git. The storage-cleanup checkpoint keeps an additional compressed diagnostic archive before applying retention.
+
+After verified backups and clean shutdown, `scripts/compact-local-docker.ps1 -Apply` can trim and compact only the explicit D: Docker data disk. It requires administrator approval, stops/restarts Docker Desktop and does not shut down unrelated Ubuntu distributions or delete images/volumes. Review `.local/storage-compaction/result.json` and verify HTTP, database integrity and business-record counts afterward. This helper currently targets this workstation and the November 9 backup set; review its explicit paths before reusing elsewhere. Disk compaction releases unused blocks; it does not reduce the installed framework's runtime requirements.

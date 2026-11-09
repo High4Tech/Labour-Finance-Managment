@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from urllib.request import Request, urlopen
+from local_storage import maintain_logs, stream_worker_output
 
 BENCH = Path('/home/frappe/frappe-bench')
 READY = BENCH / 'sites/.plus-point-ready'
@@ -37,18 +38,28 @@ def main():
     if stopping:
         return 0
 
-    children, logs = [], []
+    stream_worker_output(BENCH)
+    try:
+        maintain_logs(BENCH)
+    except (OSError, RuntimeError) as error:
+        print(f'Local diagnostic log rotation needs review: {type(error).__name__}', flush=True)
+    children = []
+    next_log_check = time.monotonic() + 60
     try:
         for name, command in (
             ('bench-start', ['bench', 'start', '-c', 'watch=0']),
             ('platform-worker', [sys.executable, '/workspace/scripts/platform-worker.py']),
         ):
-            log = (BENCH / f'logs/{name}.log').open('a')
-            logs.append(log)
-            children.append(subprocess.Popen(command, cwd=BENCH, stdout=log,
+            children.append(subprocess.Popen(command, cwd=BENCH,
                                               stderr=subprocess.STDOUT, start_new_session=True))
         print('PLUS POINT app and platform worker started.', flush=True)
         while not stopping:
+            if time.monotonic() >= next_log_check:
+                try:
+                    maintain_logs(BENCH)
+                except (OSError, RuntimeError) as error:
+                    print(f'Local diagnostic log rotation needs review: {type(error).__name__}', flush=True)
+                next_log_check = time.monotonic() + 60
             if any(child.poll() is not None for child in children):
                 print('An app process stopped; Docker will restart the local app.', flush=True)
                 return 1
@@ -71,8 +82,6 @@ def main():
                 except ProcessLookupError:
                     pass
                 child.wait()
-        for log in logs:
-            log.close()
 
 
 if __name__ == '__main__':
